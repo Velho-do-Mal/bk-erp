@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Contas — BK ERP{% endblock %}
+{% block page_title %}Contas{% endblock %}
+{% block page_sub %}Contas bancárias e caixas{% endblock %}
+{% block topbar_actions %}<button class="btn btn-primary" onclick="abrirModal()">+ Nova Conta</button>{% endblock %}
+{% block content %}
+<div class="bk-card">
+  <div class="table-container">
+    <table class="table">
+      <thead><tr><th>Nome</th><th>Banco</th><th>Saldo Inicial</th><th>Saldo Atual</th><th>Status</th><th>Ações</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+<div id="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:999;align-items:center;justify-content:center;">
+  <div class="bk-card" style="width:480px;max-width:95vw;">
+    <h3 id="modal-titulo" style="margin:0 0 16px">Nova Conta</h3>
+    <input type="hidden" id="m-id">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div><label class="form-label">Nome *</label><input id="m-nome" class="form-control"></div>
+      <div><label class="form-label">Banco</label><input id="m-banco" class="form-control"></div>
+      <div><label class="form-label">Saldo Inicial (R$)</label><input id="m-saldo" class="form-control" type="number" step="0.01" value="0"></div>
+      <div style="display:flex;align-items:flex-end"><label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="m-ativa" checked> Ativa</label></div>
+      <div style="grid-column:1/-1"><label class="form-label">Observações</label><textarea id="m-obs" class="form-control" rows="2"></textarea></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-primary" onclick="salvar()">💾 Salvar</button>
+      <button class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-danger" id="btn-del" onclick="excluir()" style="display:none;margin-left:auto">🗑️ Excluir</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const CSRF='{{ csrf_token }}';
+let dados={{ contas_json|safe }};
+function fmt(v){return'R$ '+parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});}
+function renderTabela(){const tb=document.getElementById('tbody');if(!dados.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:#64748b">Nenhuma conta</td></tr>';return;}tb.innerHTML=dados.map(r=>`<tr><td><strong>${r.nome}</strong></td><td>${r.banco||'—'}</td><td>${fmt(r.saldo_inicial)}</td><td style="font-weight:600;color:${r.saldo_atual>=0?'#10B981':'#EF4444'}">${fmt(r.saldo_atual)}</td><td><span class="badge ${r.ativa?'badge-success':'badge-secondary'}">${r.ativa?'Ativa':'Inativa'}</span></td><td><button class="btn btn-secondary" style="padding:4px 10px;font-size:11px" onclick="editar(${r.id})">✏️ Editar</button></td></tr>`).join('');}
+function abrirModal(r=null){document.getElementById('m-id').value=r?.id||'';document.getElementById('m-nome').value=r?.nome||'';document.getElementById('m-banco').value=r?.banco||'';document.getElementById('m-saldo').value=r?.saldo_inicial||0;document.getElementById('m-ativa').checked=r?r.ativa:true;document.getElementById('m-obs').value=r?.observacoes||'';document.getElementById('modal-titulo').textContent=r?'Editar Conta':'Nova Conta';document.getElementById('btn-del').style.display=r?'':'none';document.getElementById('modal').style.display='flex';}
+function editar(id){abrirModal(dados.find(r=>r.id===id));}
+function fecharModal(){document.getElementById('modal').style.display='none';}
+async function salvar(){const nome=document.getElementById('m-nome').value.trim();if(!nome){alert('Nome obrigatório');return;}const payload={action:'save',id:document.getElementById('m-id').value||null,nome,banco:document.getElementById('m-banco').value,saldo_inicial:parseFloat(document.getElementById('m-saldo').value)||0,ativa:document.getElementById('m-ativa').checked,observacoes:document.getElementById('m-obs').value};const r=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify(payload)});if((await r.json()).ok)location.reload();}
+async function excluir(){const id=document.getElementById('m-id').value;if(!id||!confirm('Excluir conta?'))return;const r=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({action:'delete',id})});if((await r.json()).ok)location.reload();}
+renderTabela();
+</script>
+{% endblock %}

@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% block title %}Estoque — BK ERP{% endblock %}
+{% block page_title %}Estoque de Materiais{% endblock %}
+{% block page_sub %}Controle de compras, utilização e saldo{% endblock %}
+
+{% block topbar_actions %}
+<button class="btn btn-primary" onclick="abrirModal()">+ Novo Material</button>
+<button class="btn btn-secondary" onclick="salvarUtilizado()">💾 Salvar Utilizado</button>
+{% endblock %}
+
+{% block content %}
+
+<!-- KPIs -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px">
+  <div class="kpi-card kpi-blue">
+    <div class="kpi-label">Total de Itens</div>
+    <div class="kpi-value">{{ total_itens }}</div>
+  </div>
+  <div class="kpi-card kpi-green">
+    <div class="kpi-label">Total Investido</div>
+    <div class="kpi-value">R$ {{ total_investido|floatformat:2 }}</div>
+  </div>
+  <div class="kpi-card {% if itens_criticos > 0 %}kpi-red{% else %}kpi-green{% endif %}">
+    <div class="kpi-label">Itens Críticos (saldo ≤ 0)</div>
+    <div class="kpi-value">{{ itens_criticos }}</div>
+  </div>
+</div>
+
+<!-- Tabela editável -->
+<div class="bk-card">
+  <div style="font-size:12px;color:#94A3B8;margin-bottom:12px">
+    💡 Edite a coluna <strong>Utilizado</strong> diretamente na tabela e clique em <strong>Salvar Utilizado</strong>.
+  </div>
+  <div class="table-container">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Código</th><th>Descrição</th><th>Fornecedor</th><th>Projeto</th>
+          <th>Qtd. Comprada</th>
+          <th style="color:#3B82F6">Utilizado ✏️</th>
+          <th>Saldo</th>
+          <th>Valor Total</th><th>Data Compra</th><th>Validade</th><th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal cadastro -->
+<div id="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:999;align-items:center;justify-content:center;">
+  <div class="bk-card" style="width:680px;max-width:95vw;max-height:90vh;overflow-y:auto;">
+    <h3 id="modal-titulo" style="margin:0 0 16px">Novo Material</h3>
+    <input type="hidden" id="m-id">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div>
+        <label class="form-label">Código *</label>
+        <input id="m-cod" class="form-control" placeholder="Ex: EL-001">
+      </div>
+      <div>
+        <label class="form-label">Descrição *</label>
+        <input id="m-desc" class="form-control" placeholder="Ex: Cabo 185mm² 0,6/1kV">
+      </div>
+      <div>
+        <label class="form-label">Fornecedor</label>
+        <select id="m-forn" class="form-control">
+          <option value="">— Selecione —</option>
+          {% for f in fornecedores %}<option value="{{ f.id }}">{{ f.nome }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Projeto</label>
+        <input id="m-proj" class="form-control" placeholder="Nome livre do projeto">
+      </div>
+      <div>
+        <label class="form-label">Qtd. Comprada *</label>
+        <input id="m-qtd" class="form-control" type="number" step="0.001" min="0" placeholder="0">
+      </div>
+      <div>
+        <label class="form-label">Valor Total (R$)</label>
+        <input id="m-valor" class="form-control" type="number" step="0.01" min="0" placeholder="0,00">
+      </div>
+      <div>
+        <label class="form-label">Data da Compra</label>
+        <input id="m-data" class="form-control" type="date">
+      </div>
+      <div>
+        <label class="form-label">Validade (opcional)</label>
+        <input id="m-val" class="form-control" type="date">
+      </div>
+      <div style="grid-column:1/-1">
+        <label class="form-label">Observações</label>
+        <textarea id="m-obs" class="form-control" rows="2"></textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-primary" onclick="salvar()">💾 Salvar</button>
+      <button class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-danger" id="btn-del" onclick="excluir()" style="display:none;margin-left:auto">🗑️ Excluir</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+let dados = {{ materiais_json|safe }};
+
+function fmt(v) { return parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:3}); }
+function fmtR(v) { return 'R$ '+parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2}); }
+
+function renderTabela() {
+  const tb = document.getElementById('tbody');
+  if (!dados.length) { tb.innerHTML='<tr><td colspan="11" style="text-align:center;color:#64748b">Nenhum material cadastrado</td></tr>'; return; }
+  tb.innerHTML = dados.map((r,i) => `
+    <tr>
+      <td>${r.codigo}</td>
+      <td><strong>${r.descricao}</strong></td>
+      <td>${r.fornecedor_nome||'—'}</td>
+      <td>${r.projeto_nome||'—'}</td>
+      <td>${fmt(r.qtd_comprada)}</td>
+      <td>
+        <input type="number" class="form-control utilizado-input" 
+          data-id="${r.id}" value="${r.qtd_utilizada}" 
+          min="0" max="${r.qtd_comprada}" step="0.001"
+          style="width:90px;padding:4px 8px">
+      </td>
+      <td style="font-weight:600;color:${r.saldo>0?'#10B981':r.saldo===0?'#F59E0B':'#EF4444'}">${fmt(r.saldo)}</td>
+      <td>${fmtR(r.preco_total)}</td>
+      <td style="font-size:12px">${r.data_compra||'—'}</td>
+      <td style="font-size:12px;color:${r.data_validade && new Date(r.data_validade)<new Date()?'#EF4444':'inherit'}">${r.data_validade||'—'}</td>
+      <td><button class="btn btn-secondary" style="padding:4px 10px;font-size:11px" onclick="editar(${r.id})">✏️</button></td>
+    </tr>`).join('');
+}
+
+function abrirModal(r=null) {
+  document.getElementById('m-id').value = r?.id||'';
+  document.getElementById('m-cod').value = r?.codigo||'';
+  document.getElementById('m-desc').value = r?.descricao||'';
+  document.getElementById('m-forn').value = r?.fornecedor_id||'';
+  document.getElementById('m-proj').value = r?.projeto_nome||'';
+  document.getElementById('m-qtd').value = r?.qtd_comprada||'';
+  document.getElementById('m-valor').value = r?.preco_total||'';
+  document.getElementById('m-data').value = r?.data_compra||'';
+  document.getElementById('m-val').value = r?.data_validade||'';
+  document.getElementById('m-obs').value = r?.observacoes||'';
+  document.getElementById('modal-titulo').textContent = r ? 'Editar Material' : 'Novo Material';
+  document.getElementById('btn-del').style.display = r ? '' : 'none';
+  document.getElementById('modal').style.display = 'flex';
+}
+function editar(id) { abrirModal(dados.find(r=>r.id===id)); }
+function fecharModal() { document.getElementById('modal').style.display='none'; }
+
+async function salvar() {
+  const cod = document.getElementById('m-cod').value.trim();
+  const desc = document.getElementById('m-desc').value.trim();
+  if (!cod || !desc) { alert('Código e descrição obrigatórios'); return; }
+  const payload = {
+    action:'save', id: document.getElementById('m-id').value||null,
+    codigo:cod, descricao:desc,
+    fornecedor_id:document.getElementById('m-forn').value||null,
+    projeto_nome:document.getElementById('m-proj').value,
+    qtd_comprada:parseFloat(document.getElementById('m-qtd').value)||0,
+    preco_total:parseFloat(document.getElementById('m-valor').value)||0,
+    data_compra:document.getElementById('m-data').value||null,
+    data_validade:document.getElementById('m-val').value||null,
+    observacoes:document.getElementById('m-obs').value
+  };
+  const r = await fetch('', {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':CSRF}, body:JSON.stringify(payload)});
+  if ((await r.json()).ok) location.reload();
+}
+
+async function excluir() {
+  const id = document.getElementById('m-id').value;
+  if (!id || !confirm('Excluir material?')) return;
+  const r = await fetch('', {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':CSRF}, body:JSON.stringify({action:'delete',id})});
+  if ((await r.json()).ok) location.reload();
+}
+
+async function salvarUtilizado() {
+  const inputs = document.querySelectorAll('.utilizado-input');
+  const updates = [];
+  inputs.forEach(inp => {
+    const id = inp.dataset.id;
+    const qtd = parseFloat(inp.value)||0;
+    const original = dados.find(r=>r.id==id)?.qtd_utilizada||0;
+    if (Math.abs(qtd - original) > 0.0001) {
+      updates.push({id: parseInt(id), qtd_utilizada: qtd});
+    }
+  });
+  if (!updates.length) { alert('Nenhuma alteração detectada'); return; }
+  const r = await fetch('', {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':CSRF}, body:JSON.stringify({action:'save_utilizado', updates})});
+  const data = await r.json();
+  if (data.ok) { alert(`✅ ${data.n} item(ns) atualizado(s)`); location.reload(); }
+}
+
+renderTabela();
+</script>
+{% endblock %}

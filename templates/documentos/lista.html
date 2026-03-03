@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+{% block title %}Documentos — BK ERP{% endblock %}
+{% block page_title %}Gestão de Documentos{% endblock %}
+{% block page_sub %}Central de arquivos: contratos, ARTs, medições, notas, propostas{% endblock %}
+
+{% block topbar_actions %}
+<button class="btn btn-primary" onclick="document.getElementById('upload-panel').style.display='block'">+ Enviar Documento</button>
+{% endblock %}
+
+{% block content %}
+
+<!-- Upload panel -->
+<div id="upload-panel" style="display:none" class="bk-card" style="margin-bottom:16px">
+  <div class="bk-title" style="font-size:14px;margin-bottom:12px">Enviar Documento</div>
+  <form id="upload-form" enctype="multipart/form-data" onsubmit="enviarDoc(event)">
+    {% csrf_token %}
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+      <div>
+        <label class="form-label">Título *</label>
+        <input name="titulo" class="form-control" placeholder="Nome do documento">
+      </div>
+      <div>
+        <label class="form-label">Tipo</label>
+        <select name="tipo" class="form-control">
+          {% for val, label in tipos %}
+          <option value="{{ val }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Tags (vírgula)</label>
+        <input name="tags" class="form-control" placeholder="contrato, elétrica...">
+      </div>
+      <div>
+        <label class="form-label">Cliente</label>
+        <select name="cliente_id" class="form-control">
+          <option value="">—</option>
+          {% for c in clientes %}<option value="{{ c.id }}">{{ c.nome }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Fornecedor</label>
+        <select name="fornecedor_id" class="form-control">
+          <option value="">—</option>
+          {% for f in fornecedores %}<option value="{{ f.id }}">{{ f.nome }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Projeto (nome livre)</label>
+        <input name="projeto_nome" class="form-control" placeholder="Ex: SE Sertão 230kV">
+      </div>
+      <div>
+        <label class="form-label">Observações</label>
+        <textarea name="observacoes" class="form-control" rows="2"></textarea>
+      </div>
+      <div>
+        <label class="form-label">Arquivo *</label>
+        <input type="file" name="arquivo" class="form-control" required>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button type="submit" class="btn btn-primary">📤 Enviar</button>
+      <button type="button" class="btn btn-secondary" onclick="document.getElementById('upload-panel').style.display='none'">Cancelar</button>
+    </div>
+  </form>
+</div>
+
+<!-- Filtros -->
+<div class="bk-card" style="padding:12px 16px;margin-bottom:16px">
+  <form method="get" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+    <input type="text" name="q" value="{{ q }}" placeholder="🔍 Buscar título..." class="form-control" style="width:240px">
+    <select name="tipo" class="form-control" style="width:160px">
+      <option value="">Todos os tipos</option>
+      {% for val, label in tipos %}
+      <option value="{{ val }}" {% if tipo_f == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-secondary">Filtrar</button>
+    <a href="{% url 'documentos:lista' %}" class="btn btn-secondary">Limpar</a>
+  </form>
+</div>
+
+<!-- Tabela -->
+<div class="bk-card">
+  <div class="table-container">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Título</th><th>Tipo</th><th>Projeto</th><th>Cliente</th>
+          <th>Arquivo</th><th>Tags</th><th>Enviado em</th><th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+const docs = {{ docs_json|safe }};
+const TIPO_MAP = {
+  contrato:'Contrato', empresa:'Doc. Empresa', seguro:'Seguro',
+  funcionario:'Doc. Funcionário', cat:'CAT', procedimento:'Procedimento',
+  medicao:'Medição', nota:'Nota Fiscal', proposta:'Proposta', outro:'Outro'
+};
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('pt-BR');
+}
+
+function renderTabela() {
+  const tb = document.getElementById('tbody');
+  if (!docs.length) { tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:#64748b">Nenhum documento cadastrado</td></tr>'; return; }
+  tb.innerHTML = docs.map(r => `
+    <tr>
+      <td><strong>${r.titulo}</strong></td>
+      <td><span class="badge badge-secondary">${TIPO_MAP[r.tipo]||r.tipo}</span></td>
+      <td>${r.projeto_nome||'—'}</td>
+      <td>${r['cliente__nome']||'—'}</td>
+      <td style="font-size:12px;color:#94A3B8">${r.arquivo_nome||'—'}</td>
+      <td style="font-size:11px;color:#64748b">${r.tags||'—'}</td>
+      <td style="font-size:12px">${fmtDate(r.criado_em)}</td>
+      <td style="display:flex;gap:6px">
+        <a href="/documentos/download/${r.id}/" class="btn btn-secondary" style="padding:4px 10px;font-size:11px">⬇️ Baixar</a>
+        <button class="btn btn-danger" style="padding:4px 10px;font-size:11px" onclick="excluir(${r.id})">🗑️</button>
+      </td>
+    </tr>`).join('');
+}
+
+async function enviarDoc(e) {
+  e.preventDefault();
+  const form = document.getElementById('upload-form');
+  const fd = new FormData(form);
+  const r = await fetch('', {method:'POST', headers:{'X-CSRFToken':CSRF}, body:fd});
+  const data = await r.json();
+  if (data.ok) location.reload();
+  else alert('Erro ao enviar');
+}
+
+async function excluir(id) {
+  if (!confirm('Excluir documento?')) return;
+  const r = await fetch('', {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':CSRF}, body:JSON.stringify({action:'delete',id})});
+  if ((await r.json()).ok) location.reload();
+}
+
+renderTabela();
+</script>
+{% endblock %}

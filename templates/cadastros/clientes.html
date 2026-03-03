@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% block title %}Clientes — BK ERP{% endblock %}
+{% block page_title %}Clientes{% endblock %}
+{% block page_sub %}Cadastro de clientes{% endblock %}
+
+{% block topbar_actions %}
+<button class="btn btn-primary" onclick="abrirModal()">+ Novo Cliente</button>
+{% endblock %}
+
+{% block content %}
+<div class="bk-card">
+  <input type="text" id="busca" placeholder="🔍 Buscar por nome, documento..." class="form-control" style="max-width:360px;margin-bottom:16px" oninput="filtrar()">
+  <div class="table-container">
+    <table class="table" id="tbl">
+      <thead>
+        <tr>
+          <th>Nome</th><th>Documento</th><th>Email</th><th>Telefone</th><th>Status</th><th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999;align-items:center;justify-content:center;">
+  <div class="bk-card" style="width:560px;max-width:95vw;max-height:90vh;overflow-y:auto;">
+    <h3 id="modal-titulo" style="margin:0 0 16px">Novo Cliente</h3>
+    <input type="hidden" id="m-id">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div>
+        <label class="form-label">Nome *</label>
+        <input id="m-nome" class="form-control" placeholder="Razão Social / Nome">
+      </div>
+      <div>
+        <label class="form-label">Documento (CPF/CNPJ)</label>
+        <input id="m-doc" class="form-control" placeholder="00.000.000/0001-00">
+      </div>
+      <div>
+        <label class="form-label">Email</label>
+        <input id="m-email" class="form-control" type="email">
+      </div>
+      <div>
+        <label class="form-label">Telefone</label>
+        <input id="m-tel" class="form-control" placeholder="(48) 99999-0000">
+      </div>
+      <div style="grid-column:1/-1">
+        <label class="form-label">Observações</label>
+        <textarea id="m-obs" class="form-control" rows="3"></textarea>
+      </div>
+      <div>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="m-ativo" checked> Ativo
+        </label>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-primary" onclick="salvar()">💾 Salvar</button>
+      <button class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-danger" id="btn-del" onclick="excluir()" style="display:none;margin-left:auto">🗑️ Excluir</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF = '{{ csrf_token }}';
+let dados = {{ clientes_json|safe }};
+
+function filtrar() {
+  const q = document.getElementById('busca').value.toLowerCase();
+  renderTabela(dados.filter(r => (r.nome+r.documento+r.email).toLowerCase().includes(q)));
+}
+
+function renderTabela(list) {
+  const tb = document.getElementById('tbody');
+  if (!list.length) { tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#64748b">Nenhum cliente cadastrado</td></tr>'; return; }
+  tb.innerHTML = list.map(r => `
+    <tr>
+      <td><strong>${r.nome}</strong></td>
+      <td>${r.documento||'—'}</td>
+      <td>${r.email||'—'}</td>
+      <td>${r.telefone||'—'}</td>
+      <td><span class="badge ${r.ativo?'badge-success':'badge-secondary'}">${r.ativo?'Ativo':'Inativo'}</span></td>
+      <td><button class="btn btn-secondary" style="padding:4px 10px;font-size:11px" onclick="editar(${r.id})">✏️ Editar</button></td>
+    </tr>`).join('');
+}
+
+function abrirModal(r=null) {
+  document.getElementById('m-id').value = r?.id||'';
+  document.getElementById('m-nome').value = r?.nome||'';
+  document.getElementById('m-doc').value = r?.documento||'';
+  document.getElementById('m-email').value = r?.email||'';
+  document.getElementById('m-tel').value = r?.telefone||'';
+  document.getElementById('m-obs').value = r?.observacoes||'';
+  document.getElementById('m-ativo').checked = r ? r.ativo : true;
+  document.getElementById('modal-titulo').textContent = r ? 'Editar Cliente' : 'Novo Cliente';
+  document.getElementById('btn-del').style.display = r ? '' : 'none';
+  document.getElementById('modal').style.display = 'flex';
+}
+function editar(id) { abrirModal(dados.find(r=>r.id===id)); }
+function fecharModal() { document.getElementById('modal').style.display='none'; }
+
+async function salvar() {
+  const nome = document.getElementById('m-nome').value.trim();
+  if (!nome) { alert('Nome obrigatório'); return; }
+  const payload = {
+    action:'save', id: document.getElementById('m-id').value||null,
+    nome, documento: document.getElementById('m-doc').value,
+    email: document.getElementById('m-email').value,
+    telefone: document.getElementById('m-tel').value,
+    observacoes: document.getElementById('m-obs').value,
+    ativo: document.getElementById('m-ativo').checked
+  };
+  const r = await fetch('', {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':CSRF}, body: JSON.stringify(payload)});
+  if ((await r.json()).ok) location.reload();
+}
+
+async function excluir() {
+  const id = document.getElementById('m-id').value;
+  if (!id || !confirm('Excluir cliente?')) return;
+  const r = await fetch('', {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':CSRF}, body: JSON.stringify({action:'delete',id})});
+  if ((await r.json()).ok) location.reload();
+}
+
+renderTabela(dados);
+</script>
+{% endblock %}

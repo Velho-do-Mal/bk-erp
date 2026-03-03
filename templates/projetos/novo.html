@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Novo Projeto — BK ERP{% endblock %}
+{% block page_title %}Novo Projeto{% endblock %}
+{% block page_sub %}Preencha os dados iniciais do TAP{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:600px;">
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-group">
+      <label class="form-label">Nome do Projeto *</label>
+      <input type="text" name="nome" class="form-control" placeholder="Ex: Subestação 138kV — Município X" required>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select name="status" class="form-control">
+          <option value="rascunho">Rascunho</option>
+          <option value="planejamento">Planejamento</option>
+          <option value="execucao">Execução</option>
+          <option value="monitoramento">Monitoramento</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Data de Início</label>
+        <input type="date" name="data_inicio" class="form-control">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div class="form-group">
+        <label class="form-label">Gerente do Projeto</label>
+        <input type="text" name="gerente" class="form-control" placeholder="Nome do gerente">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Patrocinador</label>
+        <input type="text" name="patrocinador" class="form-control" placeholder="Nome do patrocinador">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:8px;">
+      <button type="submit" class="btn btn-primary">Criar Projeto</button>
+      <a href="{% url 'projetos:lista' %}" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

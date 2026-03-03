@@ -1,0 +1,270 @@
+{% extends 'base.html' %}
+{% block title %}Financeiro — BK ERP{% endblock %}
+{% block page_title %}Financeiro{% endblock %}
+{% block page_sub %}Dashboard financeiro{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'financeiro:transacoes' %}" class="btn btn-primary">+ Nova Transação</a>
+<a href="{% url 'financeiro:contas' %}" class="btn btn-secondary">Contas</a>
+<a href="{% url 'financeiro:categorias' %}" class="btn btn-secondary">Categorias</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- Filtros de Período -->
+<div class="bk-card" style="padding:12px 16px;margin-bottom:18px">
+  <form method="get" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+    <div>
+      <label class="form-label" style="font-size:11px">Data inicial</label>
+      <input type="date" name="data_ini" class="form-control" style="width:150px" value="{{ data_ini }}">
+    </div>
+    <div>
+      <label class="form-label" style="font-size:11px">Data final</label>
+      <input type="date" name="data_fim" class="form-control" style="width:150px" value="{{ data_fim }}">
+    </div>
+    <div>
+      <label class="form-label" style="font-size:11px">Exibir</label>
+      <select name="modo" class="form-control" style="width:140px">
+        <option value="todos"     {% if modo == 'todos'     %}selected{% endif %}>Todos</option>
+        <option value="realizado" {% if modo == 'realizado' %}selected{% endif %}>Realizado</option>
+        <option value="previsto"  {% if modo == 'previsto'  %}selected{% endif %}>Previsto</option>
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary">🔍 Filtrar</button>
+    <a href="{% url 'financeiro:dashboard' %}" class="btn btn-secondary">✕ Limpar</a>
+    <span style="margin-left:8px;font-size:11px;color:var(--bk-text-muted);align-self:center">
+      Período: <b>{{ data_ini }}</b> → <b>{{ data_fim }}</b> &nbsp;|&nbsp; Modo: <b>{{ modo }}</b>
+    </span>
+  </form>
+</div>
+
+<!-- KPI Cards -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:14px;margin-bottom:20px">
+  <div class="kpi-card kpi-green">
+    <div class="kpi-label">Total Recebido (geral)</div>
+    <div class="kpi-value">R$ {{ total_entrada|floatformat:2 }}</div>
+  </div>
+  <div class="kpi-card kpi-red">
+    <div class="kpi-label">Total Pago (geral)</div>
+    <div class="kpi-value">R$ {{ total_saida|floatformat:2 }}</div>
+  </div>
+  <div class="kpi-card {% if saldo >= 0 %}kpi-blue{% else %}kpi-red{% endif %}">
+    <div class="kpi-label">Saldo Realizado</div>
+    <div class="kpi-value">R$ {{ saldo|floatformat:2 }}</div>
+  </div>
+  <div class="kpi-card" style="border-left:3px solid #10B981">
+    <div class="kpi-label">Entradas (período)</div>
+    <div class="kpi-value" style="color:#10B981">R$ {{ ent_periodo|floatformat:2 }}</div>
+  </div>
+  <div class="kpi-card" style="border-left:3px solid #EF4444">
+    <div class="kpi-label">Saídas (período)</div>
+    <div class="kpi-value" style="color:#EF4444">R$ {{ said_periodo|floatformat:2 }}</div>
+  </div>
+  <div class="kpi-card {% if saldo_periodo >= 0 %}kpi-blue{% else %}kpi-red{% endif %}">
+    <div class="kpi-label">Saldo do Período</div>
+    <div class="kpi-value">R$ {{ saldo_periodo|floatformat:2 }}</div>
+  </div>
+  <div class="kpi-card kpi-yellow">
+    <div class="kpi-label">A Receber</div>
+    <div class="kpi-value">R$ {{ pendentes_receber|floatformat:2 }}</div>
+  </div>
+  <div class="kpi-card kpi-orange">
+    <div class="kpi-label">A Pagar</div>
+    <div class="kpi-value">R$ {{ pendentes_pagar|floatformat:2 }}</div>
+  </div>
+</div>
+
+<!-- Fluxo de Caixa -->
+<div class="bk-card" style="margin-bottom:18px">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+    <div class="bk-title" style="font-size:14px;margin:0">📊 Fluxo de Caixa — Entradas × Saídas × Acumulado</div>
+    <div style="display:flex;gap:12px">
+      <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#10B981">
+        <span style="width:12px;height:12px;background:#10B981;border-radius:2px;display:inline-block"></span>Entradas
+      </span>
+      <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#EF4444">
+        <span style="width:12px;height:12px;background:#EF4444;border-radius:2px;display:inline-block"></span>Saídas
+      </span>
+      <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#60A5FA">
+        <span style="width:20px;height:2px;background:#60A5FA;display:inline-block"></span>Acumulado
+      </span>
+    </div>
+  </div>
+  <div id="chart-fluxo" style="height:320px"></div>
+</div>
+
+<!-- Pizza + Centros de Custo -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px">
+  <div class="bk-card">
+    <div class="bk-title" style="font-size:13px;margin-bottom:12px">🍕 Saídas por Categoria</div>
+    <div id="chart-pizza-cat" style="height:300px"></div>
+  </div>
+  <div class="bk-card">
+    <div class="bk-title" style="font-size:13px;margin-bottom:12px">🏷️ Resultado por Centro de Custo</div>
+    <div id="chart-cc" style="height:300px"></div>
+  </div>
+</div>
+
+<!-- Últimas Transações -->
+<div class="bk-card">
+  <div class="bk-title" style="font-size:13px;margin-bottom:12px">🕐 Últimas Transações</div>
+  <div class="table-container">
+    <table class="table">
+      <thead>
+        <tr><th>Descrição</th><th>Tipo</th><th>Categoria</th><th>Valor</th><th>Competência</th><th>Status</th></tr>
+      </thead>
+      <tbody id="ultimas-tbody"></tbody>
+    </table>
+  </div>
+  <div style="margin-top:12px">
+    <a href="{% url 'financeiro:transacoes' %}" class="btn btn-secondary" style="font-size:12px">Ver todas →</a>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script>
+const ultimas  = {{ ultimas_json|safe }};
+const meses    = {{ meses_json|safe }};
+const catSaida = {{ cat_saida_json|safe }};
+const ccData   = {{ cc_json|safe }};
+
+const CFG = {responsive:true, displayModeBar:false};
+const BG  = {paper_bgcolor:'transparent', plot_bgcolor:'transparent'};
+
+// ── Últimas transações ──────────────────────────────────
+const tb = document.getElementById('ultimas-tbody');
+if (!ultimas.length) {
+  tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#64748b;padding:20px">Nenhuma transação</td></tr>';
+} else {
+  tb.innerHTML = ultimas.map(r => {
+    const v = parseFloat(r.valor).toLocaleString('pt-BR',{minimumFractionDigits:2});
+    return `<tr>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.descricao}</td>
+      <td><span class="badge ${r.tipo==='entrada'?'badge-success':'badge-danger'}">${r.tipo}</span></td>
+      <td style="font-size:11px;color:var(--bk-text-muted)">${r.categoria__nome||'—'}</td>
+      <td>R$ ${v}</td>
+      <td style="font-size:11px">${r.data_competencia||'—'}</td>
+      <td><span class="badge ${r.status==='realizado'?'badge-success':'badge-warning'}">${r.status}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── Fluxo de Caixa: barras + linha acumulado ────────────
+(function(){
+  const keys     = Object.keys(meses).sort();
+  if (!keys.length) {
+    document.getElementById('chart-fluxo').innerHTML =
+      '<p style="text-align:center;color:#64748b;padding:60px">Nenhum dado no período selecionado.</p>';
+    return;
+  }
+  const entradas = keys.map(k => meses[k]?.entrada  || 0);
+  const saidas   = keys.map(k => meses[k]?.saida    || 0);
+  const acum     = keys.map(k => meses[k]?.acumulado || 0);
+
+  Plotly.newPlot('chart-fluxo', [
+    {
+      x: keys, y: entradas, name: 'Entradas',
+      type: 'bar', marker: {color:'#10B981', opacity:0.85},
+      hovertemplate: '<b>%{x}</b><br>Entradas: R$ %{y:,.2f}<extra></extra>'
+    },
+    {
+      x: keys, y: saidas, name: 'Saídas',
+      type: 'bar', marker: {color:'#EF4444', opacity:0.85},
+      hovertemplate: '<b>%{x}</b><br>Saídas: R$ %{y:,.2f}<extra></extra>'
+    },
+    {
+      x: keys, y: acum, name: 'Acumulado',
+      type: 'scatter', mode: 'lines+markers', yaxis: 'y2',
+      line: {color:'#60A5FA', width:2.5},
+      marker: {color:'#60A5FA', size:6},
+      hovertemplate: '<b>%{x}</b><br>Acumulado: R$ %{y:,.2f}<extra></extra>'
+    }
+  ], Object.assign({}, BG, {
+    barmode: 'group',
+    font:    {color:'#94A3B8', size:11},
+    margin:  {t:10, b:60, l:80, r:80},
+    legend:  {orientation:'h', y:-0.18, font:{color:'#94A3B8'}, bgcolor:'transparent'},
+    xaxis: {gridcolor:'#1E293B', tickfont:{color:'#94A3B8'}},
+    yaxis: {
+      title: {text:'R$ (Entradas / Saídas)', font:{size:11, color:'#94A3B8'}},
+      gridcolor:'#1E293B', tickfont:{color:'#94A3B8'}, tickprefix:'R$ '
+    },
+    yaxis2: {
+      title: {text:'R$ (Acumulado)', font:{size:11, color:'#60A5FA'}},
+      overlaying:'y', side:'right',
+      tickfont:{color:'#60A5FA'}, tickprefix:'R$ ',
+      showgrid:false, zeroline:true, zerolinecolor:'#334155', zerolinewidth:1
+    },
+  }), CFG);
+})();
+
+// ── Pizza: Categorias de Saída ─────────────────────────
+(function(){
+  const el = document.getElementById('chart-pizza-cat');
+  if (!catSaida.length) {
+    el.innerHTML = '<p style="text-align:center;color:#64748b;padding:60px">Sem saídas no período.</p>';
+    return;
+  }
+  const CORES = ['#EF4444','#F97316','#F59E0B','#EAB308','#84CC16','#10B981',
+                 '#06B6D4','#3B82F6','#8B5CF6','#EC4899','#6B7280','#14B8A6'];
+  const total = catSaida.reduce((s,c)=>s+c.total, 0);
+
+  Plotly.newPlot('chart-pizza-cat', [{
+    type:    'pie',
+    labels:  catSaida.map(c=>c.nome),
+    values:  catSaida.map(c=>c.total),
+    marker:  {colors: CORES},
+    hole:    0.38,
+    textinfo:'percent',
+    hovertemplate: '<b>%{label}</b><br>R$ %{value:,.2f}<br>%{percent}<extra></extra>'
+  }], Object.assign({}, BG, {
+    font:   {color:'#94A3B8', size:11},
+    margin: {t:10, b:30, l:10, r:10},
+    legend: {font:{color:'#94A3B8'}, bgcolor:'transparent', orientation:'v'},
+    annotations: [{
+      text: `R$ ${total.toLocaleString('pt-BR',{minimumFractionDigits:2})}`,
+      x:0.5, y:0.5, showarrow:false,
+      font:{size:11, color:'#94A3B8'}
+    }]
+  }), CFG);
+})();
+
+// ── Centros de Custo: horizontal + % lucro ─────────────
+(function(){
+  const el = document.getElementById('chart-cc');
+  if (!ccData.length) {
+    el.innerHTML = '<p style="text-align:center;color:#64748b;padding:60px">Sem dados de centro de custo.</p>';
+    return;
+  }
+  const nomes  = ccData.map(c=>c.nome);
+  const saldos = ccData.map(c=>c.saldo);
+  const cores  = saldos.map(v=>v>=0?'#10B981':'#EF4444');
+  const textos = ccData.map(c=>`${c.pct>=0?'+':''}${c.pct}%`);
+
+  const lMarg = Math.min(200, Math.max(80, nomes.reduce((m,n)=>Math.max(m,n.length),0)*7));
+
+  Plotly.newPlot('chart-cc', [{
+    type: 'bar', orientation: 'h',
+    x: saldos, y: nomes,
+    marker: {color: cores, opacity:0.88},
+    text:   textos,
+    textposition: 'outside',
+    textfont: {color:'#94A3B8', size:11},
+    hovertemplate: '<b>%{y}</b><br>Saldo: R$ %{x:,.2f}<extra></extra>',
+    customdata: ccData.map(c=>[c.entrada,c.saida,c.pct]),
+    hovertemplate: '<b>%{y}</b><br>Entradas: R$ %{customdata[0]:,.2f}<br>Saídas: R$ %{customdata[1]:,.2f}<br>Saldo: R$ %{x:,.2f}<br>% Resultado: %{customdata[2]}%<extra></extra>'
+  }], Object.assign({}, BG, {
+    font:   {color:'#94A3B8', size:11},
+    margin: {t:10, b:40, l:lMarg, r:60},
+    xaxis:  {
+      gridcolor:'#1E293B', tickfont:{color:'#94A3B8'}, tickprefix:'R$ ',
+      zeroline:true, zerolinecolor:'#475569', zerolinewidth:1.5
+    },
+    yaxis:  {gridcolor:'#1E293B', tickfont:{color:'#94A3B8', size:11}},
+  }), CFG);
+})();
+</script>
+{% endblock %}

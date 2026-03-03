@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — BK ERP{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_sub %}Visão geral dos projetos{% endblock %}
+
+{% block topbar_actions %}
+{% if user.is_admin_erp %}
+<a href="{% url 'projetos:novo' %}" class="btn btn-primary btn-sm">
+  <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+  Novo Projeto
+</a>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<!-- KPIs -->
+<div class="kpi-grid">
+  <div class="kpi-card" style="border-left: 3px solid var(--bk-blue);">
+    <div class="kpi-label">Total de Projetos</div>
+    <div class="kpi-value">{{ total }}</div>
+    <div class="kpi-sub">na sua carteira</div>
+  </div>
+  <div class="kpi-card" style="border-left: 3px solid var(--bk-green);">
+    <div class="kpi-label">Em Andamento</div>
+    <div class="kpi-value" style="color:var(--bk-green)">{{ ativos }}</div>
+    <div class="kpi-sub">projetos ativos</div>
+  </div>
+  <div class="kpi-card" style="border-left: 3px solid var(--bk-gray);">
+    <div class="kpi-label">Encerrados</div>
+    <div class="kpi-value" style="color:var(--bk-text-muted)">{{ encerrados }}</div>
+    <div class="kpi-sub">concluídos</div>
+  </div>
+</div>
+
+<!-- Projetos Recentes -->
+<div class="card">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <h2 style="font-size:15px;font-weight:700;">Projetos Ativos</h2>
+    <a href="{% url 'projetos:lista' %}" class="btn btn-secondary btn-sm">Ver todos</a>
+  </div>
+  {% if projetos_recentes %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Nome</th>
+          <th>Status</th>
+          <th>Início</th>
+          <th>Gerente</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in projetos_recentes %}
+        <tr>
+          <td style="color:var(--bk-text-muted)">{{ p.id }}</td>
+          <td style="font-weight:600">{{ p.nome }}</td>
+          <td>
+            {% if p.status == 'execucao' %}<span class="badge badge-green">Execução</span>
+            {% elif p.status == 'planejamento' %}<span class="badge badge-blue">Planejamento</span>
+            {% elif p.status == 'monitoramento' %}<span class="badge badge-teal">Monitoramento</span>
+            {% elif p.status == 'suspenso' %}<span class="badge badge-orange">Suspenso</span>
+            {% else %}<span class="badge badge-gray">{{ p.get_status_display }}</span>
+            {% endif %}
+          </td>
+          <td style="color:var(--bk-text-muted)">{{ p.data_inicio|date:"d/m/Y"|default:"—" }}</td>
+          <td style="color:var(--bk-text-muted)">{{ p.gerente|default:"—" }}</td>
+          <td><a href="{% url 'projetos:detalhe' p.pk %}" class="btn btn-secondary btn-sm">Abrir →</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:40px;color:var(--bk-text-muted);">
+    <div style="font-size:32px;margin-bottom:8px;">📋</div>
+    <div>Nenhum projeto ativo encontrado.</div>
+    {% if user.is_admin_erp %}
+    <a href="{% url 'projetos:novo' %}" class="btn btn-primary" style="margin-top:16px">Criar Primeiro Projeto</a>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

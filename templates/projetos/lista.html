@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% block title %}Projetos — BK ERP{% endblock %}
+{% block page_title %}Gestão de Projetos{% endblock %}
+{% block page_sub %}PMBOK — TAP, EAP, Gantt, Controle{% endblock %}
+
+{% block topbar_actions %}
+{% if user.is_admin_erp %}
+<a href="{% url 'projetos:novo' %}" class="btn btn-primary btn-sm">
+  <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+  Novo Projeto
+</a>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+
+<!-- ATIVOS -->
+<div class="card" style="margin-bottom:20px;">
+  <h2 style="font-size:15px;font-weight:700;margin-bottom:16px;">
+    🟢 Projetos Ativos <span style="color:var(--bk-text-muted);font-weight:400;font-size:13px;">({{ projetos_ativos.count }})</span>
+  </h2>
+  {% if projetos_ativos %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Nome</th><th>Status</th><th>Início</th><th>Gerente</th><th>Patrocinador</th><th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in projetos_ativos %}
+        <tr>
+          <td style="color:var(--bk-text-muted)">{{ p.id }}</td>
+          <td style="font-weight:600;">{{ p.nome }}</td>
+          <td>
+            {% if p.status == 'execucao' %}<span class="badge badge-green">Execução</span>
+            {% elif p.status == 'planejamento' %}<span class="badge badge-blue">Planejamento</span>
+            {% elif p.status == 'monitoramento' %}<span class="badge badge-teal">Monitoramento</span>
+            {% elif p.status == 'suspenso' %}<span class="badge badge-orange">Suspenso</span>
+            {% elif p.status == 'rascunho' %}<span class="badge badge-gray">Rascunho</span>
+            {% else %}<span class="badge badge-gray">{{ p.get_status_display }}</span>
+            {% endif %}
+          </td>
+          <td style="color:var(--bk-text-muted)">{{ p.data_inicio|date:"d/m/Y"|default:"—" }}</td>
+          <td style="color:var(--bk-text-muted)">{{ p.gerente|default:"—" }}</td>
+          <td style="color:var(--bk-text-muted)">{{ p.patrocinador|default:"—" }}</td>
+          <td>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <a href="{% url 'projetos:detalhe' p.pk %}" class="btn btn-secondary btn-sm">Abrir</a>
+              {% if user.is_admin_erp %}
+              <a href="{% url 'projetos:acessos' p.pk %}" class="btn btn-sm" style="background:rgba(139,92,246,0.15);color:#C4B5FD;border:1px solid rgba(139,92,246,0.3);">Acessos</a>
+              <a href="{% url 'projetos:encerrar' p.pk %}" class="btn btn-danger btn-sm" onclick="return confirm('Encerrar projeto?')">Encerrar</a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:32px;color:var(--bk-text-muted);">
+    Nenhum projeto ativo.
+    {% if user.is_admin_erp %}<br><a href="{% url 'projetos:novo' %}" class="btn btn-primary" style="margin-top:12px">Criar Projeto</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<!-- ENCERRADOS -->
+{% if projetos_encerrados %}
+<div class="card">
+  <h2 style="font-size:15px;font-weight:700;margin-bottom:16px;">
+    ⚫ Projetos Encerrados <span style="color:var(--bk-text-muted);font-weight:400;font-size:13px;">({{ projetos_encerrados.count }})</span>
+  </h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>#</th><th>Nome</th><th>Início</th><th>Gerente</th><th>Ações</th></tr>
+      </thead>
+      <tbody>
+        {% for p in projetos_encerrados %}
+        <tr style="opacity:0.6;">
+          <td>{{ p.id }}</td>
+          <td>{{ p.nome }}</td>
+          <td>{{ p.data_inicio|date:"d/m/Y"|default:"—" }}</td>
+          <td>{{ p.gerente|default:"—" }}</td>
+          <td>
+            <div style="display:flex;gap:6px;">
+              <a href="{% url 'projetos:detalhe' p.pk %}" class="btn btn-secondary btn-sm">Ver</a>
+              {% if user.is_admin_erp %}
+              <a href="{% url 'projetos:reabrir' p.pk %}" class="btn btn-success btn-sm">Reabrir</a>
+              <a href="{% url 'projetos:excluir' p.pk %}" class="btn btn-danger btn-sm" onclick="return confirm('Excluir permanentemente?')">Excluir</a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

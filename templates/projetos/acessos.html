@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Acessos — {{ projeto.nome }}{% endblock %}
+{% block page_title %}Gerenciar Acessos{% endblock %}
+{% block page_sub %}{{ projeto.nome }}{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:600px;">
+  <h3 style="font-size:14px;font-weight:700;margin-bottom:4px;">👥 Clientes com acesso a este projeto</h3>
+  <p style="color:var(--bk-text-muted);font-size:13px;margin-bottom:20px;">Selecione os clientes que poderão visualizar TAP, EAP, Gantt e Controle.</p>
+
+  <form method="post">
+    {% csrf_token %}
+    {% if clientes %}
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
+      {% for cliente in clientes %}
+      <label style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bk-surface2);border:1px solid var(--bk-border);border-radius:8px;cursor:pointer;">
+        <input type="checkbox" name="usuarios" value="{{ cliente.id }}"
+          {% if cliente.id in acessos %}checked{% endif %}
+          style="width:16px;height:16px;accent-color:var(--bk-blue);">
+        <div>
+          <div style="font-weight:600;font-size:13px;">{{ cliente.get_full_name|default:cliente.username }}</div>
+          <div style="font-size:11px;color:var(--bk-text-muted);">{{ cliente.email }} · {{ cliente.empresa }}</div>
+        </div>
+      </label>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align:center;padding:32px;color:var(--bk-text-muted);">
+      Nenhum cliente cadastrado ainda.<br>
+      <a href="/admin/accounts/user/add/" class="btn btn-primary btn-sm" style="margin-top:12px">Cadastrar Cliente</a>
+    </div>
+    {% endif %}
+
+    <div style="display:flex;gap:10px;">
+      <button type="submit" class="btn btn-primary">Salvar Acessos</button>
+      <a href="{% url 'projetos:detalhe' projeto.pk %}" class="btn btn-secondary">Cancelar</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

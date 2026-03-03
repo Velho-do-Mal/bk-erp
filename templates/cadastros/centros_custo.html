@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}Centros de Custo — BK ERP{% endblock %}
+{% block page_title %}Centros de Custo{% endblock %}
+{% block page_sub %}Classificação de custos e receitas{% endblock %}
+{% block topbar_actions %}<button class="btn btn-primary" onclick="abrirModal()">+ Novo Centro</button>{% endblock %}
+{% block content %}
+<div class="bk-card">
+  <div class="table-container">
+    <table class="table"><thead><tr><th>Nome</th><th>Observações</th><th>Status</th><th>Ações</th></tr></thead>
+    <tbody id="tbody"></tbody></table>
+  </div>
+</div>
+<div id="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999;align-items:center;justify-content:center;">
+  <div class="bk-card" style="width:480px;max-width:95vw;">
+    <h3 id="modal-titulo" style="margin:0 0 16px">Novo Centro de Custo</h3>
+    <input type="hidden" id="m-id">
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div><label class="form-label">Nome *</label><input id="m-nome" class="form-control"></div>
+      <div><label class="form-label">Observações</label><textarea id="m-obs" class="form-control" rows="3"></textarea></div>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="m-ativo" checked> Ativo</label>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-primary" onclick="salvar()">💾 Salvar</button>
+      <button class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-danger" id="btn-del" onclick="excluir()" style="display:none;margin-left:auto">🗑️ Excluir</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+const CSRF='{{ csrf_token }}';
+let dados={{ centros_json|safe }};
+function renderTabela(){const tb=document.getElementById('tbody');if(!dados.length){tb.innerHTML='<tr><td colspan="4" style="text-align:center;color:#64748b">Nenhum centro cadastrado</td></tr>';return;}tb.innerHTML=dados.map(r=>`<tr><td><strong>${r.nome}</strong></td><td>${r.observacoes||'—'}</td><td><span class="badge ${r.ativo?'badge-success':'badge-secondary'}">${r.ativo?'Ativo':'Inativo'}</span></td><td><button class="btn btn-secondary" style="padding:4px 10px;font-size:11px" onclick="editar(${r.id})">✏️ Editar</button></td></tr>`).join('');}
+function abrirModal(r=null){document.getElementById('m-id').value=r?.id||'';document.getElementById('m-nome').value=r?.nome||'';document.getElementById('m-obs').value=r?.observacoes||'';document.getElementById('m-ativo').checked=r?r.ativo:true;document.getElementById('modal-titulo').textContent=r?'Editar Centro':'Novo Centro de Custo';document.getElementById('btn-del').style.display=r?'':'none';document.getElementById('modal').style.display='flex';}
+function editar(id){abrirModal(dados.find(r=>r.id===id));}
+function fecharModal(){document.getElementById('modal').style.display='none';}
+async function salvar(){const nome=document.getElementById('m-nome').value.trim();if(!nome){alert('Nome obrigatório');return;}const payload={action:'save',id:document.getElementById('m-id').value||null,nome,observacoes:document.getElementById('m-obs').value,ativo:document.getElementById('m-ativo').checked};const r=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify(payload)});if((await r.json()).ok)location.reload();}
+async function excluir(){const id=document.getElementById('m-id').value;if(!id||!confirm('Excluir?'))return;const r=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({action:'delete',id})});if((await r.json()).ok)location.reload();}
+renderTabela();
+</script>
+{% endblock %}

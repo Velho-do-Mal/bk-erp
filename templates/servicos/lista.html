@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% block title %}Serviços/Produtos — BK ERP{% endblock %}
+{% block page_title %}Catálogo de Serviços / Produtos{% endblock %}
+{% block page_sub %}Itens utilizados em Propostas e Controle de Documentos{% endblock %}
+
+{% block topbar_actions %}
+<button class="btn btn-primary" onclick="abrirModal()">+ Novo Item</button>
+{% endblock %}
+
+{% block content %}
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px">
+  <div class="kpi-card kpi-blue"><div class="kpi-label">Total Cadastros</div><div class="kpi-value">{{ total }}</div></div>
+  <div class="kpi-card kpi-green"><div class="kpi-label">Ativos</div><div class="kpi-value">{{ ativos }}</div></div>
+</div>
+
+<div class="bk-card">
+  <div style="margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap">
+    <input id="busca" class="form-control" placeholder="🔍 Buscar..." style="max-width:280px" oninput="renderTabela()">
+    <select id="filtro-tipo" class="form-control" style="width:140px" onchange="renderTabela()">
+      <option value="">Todos os tipos</option>
+      <option value="servico">Serviço</option>
+      <option value="produto">Produto</option>
+      <option value="ambos">Ambos</option>
+    </select>
+  </div>
+  <div class="table-container">
+    <table class="table">
+      <thead><tr><th>Código</th><th>Tipo</th><th>Nome</th><th>Descrição</th><th>Unidade</th><th>Preço Unitário</th><th>Status</th><th>Ações</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:999;align-items:center;justify-content:center;">
+  <div class="bk-card" style="width:580px;max-width:95vw;">
+    <h3 id="modal-titulo" style="margin:0 0 16px">Novo Item</h3>
+    <input type="hidden" id="m-id">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div><label class="form-label">Código</label><input id="m-cod" class="form-control" placeholder="SVC-001"></div>
+      <div><label class="form-label">Tipo *</label>
+        <select id="m-tipo" class="form-control">
+          <option value="servico">Serviço</option>
+          <option value="produto">Produto</option>
+          <option value="ambos">Ambos</option>
+        </select>
+      </div>
+      <div style="grid-column:1/-1"><label class="form-label">Nome *</label><input id="m-nome" class="form-control" required></div>
+      <div style="grid-column:1/-1"><label class="form-label">Descrição</label><textarea id="m-desc" class="form-control" rows="2"></textarea></div>
+      <div><label class="form-label">Unidade</label>
+        <select id="m-uni" class="form-control">
+          <option value="un">un</option><option value="hh">hh</option><option value="m">m</option>
+          <option value="m²">m²</option><option value="m³">m³</option><option value="kg">kg</option>
+          <option value="Gb">Gb</option><option value="Vb">Vb</option><option value="lote">lote</option>
+        </select>
+      </div>
+      <div><label class="form-label">Preço Unitário (R$)</label><input id="m-preco" class="form-control" type="number" step="0.01" min="0" value="0"></div>
+      <div style="display:flex;align-items:center;gap:8px;grid-column:1/-1">
+        <input type="checkbox" id="m-ativo" style="width:16px;height:16px" checked>
+        <label for="m-ativo" class="form-label" style="margin:0;cursor:pointer">Ativo</label>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-primary" onclick="salvar()">💾 Salvar</button>
+      <button class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-danger" id="btn-del" onclick="excluir()" style="display:none;margin-left:auto">🗑️ Excluir</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF='{{ csrf_token }}';
+let dados={{ items_json|safe }};
+const TIPO_LABEL={servico:'🔧 Serviço',produto:'📦 Produto',ambos:'🔀 Ambos'};
+
+function fmtR(v){return'R$ '+parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});}
+
+function renderTabela(){
+  const busca=document.getElementById('busca').value.toLowerCase();
+  const tipo=document.getElementById('filtro-tipo').value;
+  const filtered=dados.filter(r=>{
+    const match=(r.nome||'').toLowerCase().includes(busca)||(r.codigo||'').toLowerCase().includes(busca)||(r.descricao||'').toLowerCase().includes(busca);
+    const tipok=!tipo||r.tipo===tipo;
+    return match&&tipok;
+  });
+  const tb=document.getElementById('tbody');
+  if(!filtered.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:#64748b">Nenhum item encontrado</td></tr>';return;}
+  tb.innerHTML=filtered.map(r=>`<tr>
+    <td><code>${r.codigo||'—'}</code></td>
+    <td>${TIPO_LABEL[r.tipo]||r.tipo}</td>
+    <td style="font-weight:600">${r.nome}</td>
+    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--bk-text-muted)">${r.descricao||'—'}</td>
+    <td><span style="background:rgba(59,130,246,0.1);color:#93C5FD;padding:2px 8px;border-radius:4px;font-size:11px">${r.unidade||'un'}</span></td>
+    <td style="font-weight:600">${fmtR(r.preco_unitario)}</td>
+    <td><span class="badge ${r.ativo?'badge-success':'badge-danger'}" style="cursor:pointer" onclick="toggleAtivo(${r.id},this)">${r.ativo?'Ativo':'Inativo'}</span></td>
+    <td><button class="btn btn-secondary" style="padding:4px 10px;font-size:11px" onclick="editar(${r.id})">✏️</button></td>
+  </tr>`).join('');
+}
+
+function abrirModal(r=null){
+  document.getElementById('m-id').value=r?.id||'';
+  document.getElementById('m-cod').value=r?.codigo||'';
+  document.getElementById('m-tipo').value=r?.tipo||'servico';
+  document.getElementById('m-nome').value=r?.nome||'';
+  document.getElementById('m-desc').value=r?.descricao||'';
+  document.getElementById('m-uni').value=r?.unidade||'un';
+  document.getElementById('m-preco').value=r?.preco_unitario||0;
+  document.getElementById('m-ativo').checked=r?.ativo!==false;
+  document.getElementById('modal-titulo').textContent=r?'Editar Item':'Novo Item';
+  document.getElementById('btn-del').style.display=r?'':'none';
+  document.getElementById('modal').style.display='flex';
+}
+function editar(id){abrirModal(dados.find(r=>r.id===id));}
+function fecharModal(){document.getElementById('modal').style.display='none';}
+
+async function salvar(){
+  const nome=document.getElementById('m-nome').value.trim();
+  if(!nome){alert('Nome obrigatório');return;}
+  const payload={action:'save',id:document.getElementById('m-id').value||null,
+    codigo:document.getElementById('m-cod').value,tipo:document.getElementById('m-tipo').value,
+    nome,descricao:document.getElementById('m-desc').value,
+    unidade:document.getElementById('m-uni').value,
+    preco_unitario:parseFloat(document.getElementById('m-preco').value)||0,
+    ativo:document.getElementById('m-ativo').checked};
+  const r=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify(payload)});
+  if((await r.json()).ok)location.reload();
+}
+
+async function excluir(){
+  const id=document.getElementById('m-id').value;
+  if(!id||!confirm('Excluir item?'))return;
+  const r=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({action:'delete',id})});
+  if((await r.json()).ok)location.reload();
+}
+
+async function toggleAtivo(id,el){
+  const r=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({action:'toggle_ativo',id})});
+  const d=await r.json();
+  if(d.ok){el.textContent=d.ativo?'Ativo':'Inativo';el.className='badge '+(d.ativo?'badge-success':'badge-danger');}
+}
+
+renderTabela();
+</script>
+{% endblock %}

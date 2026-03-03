@@ -1,0 +1,187 @@
+{% extends 'base.html' %}
+{% block title %}Compras — BK ERP{% endblock %}
+{% block page_title %}Pedidos de Compra{% endblock %}
+{% block page_sub %}Integrado com Fornecedores e Financeiro{% endblock %}
+{% block topbar_actions %}
+<button class="btn btn-primary" onclick="abrirModal()">+ Novo Pedido</button>
+{% endblock %}
+{% block content %}
+<!-- KPIs -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px">
+  <div class="kpi-card kpi-blue"><div class="kpi-label">Total de Pedidos</div><div class="kpi-value">{{ total_pedidos }}</div></div>
+  <div class="kpi-card kpi-green"><div class="kpi-label">Valor Total</div><div class="kpi-value" style="font-size:20px">R$ {{ total_valor|floatformat:2 }}</div></div>
+  <div class="kpi-card kpi-yellow"><div class="kpi-label">Em Aberto</div><div class="kpi-value">{{ em_aberto }}</div></div>
+  <div class="kpi-card kpi-red"><div class="kpi-label">Canceladas</div><div class="kpi-value">{{ canceladas }}</div></div>
+</div>
+
+<div class="bk-card">
+  <div class="table-container">
+    <table class="table">
+      <thead><tr><th>Código</th><th>Fornecedor</th><th>Projeto</th><th>Data</th><th>Entrega Prev.</th><th>Valor</th><th>Status</th><th>Fin.</th><th>Ações</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:999;align-items:center;justify-content:center;overflow-y:auto;">
+  <div class="bk-card" style="width:820px;max-width:96vw;margin:20px auto;max-height:92vh;overflow-y:auto;">
+    <h3 id="modal-titulo" style="margin:0 0 16px">Novo Pedido de Compra</h3>
+    <input type="hidden" id="m-id">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+      <div><label class="form-label">Código *</label><input id="m-cod" class="form-control" placeholder="PC-2026-001"></div>
+      <div><label class="form-label">Fornecedor</label>
+        <select id="m-forn" class="form-control"><option value="">— Selecione —</option>
+          {% for f in fornecedores %}<option value="{{ f.id }}">{{ f.nome }}</option>{% endfor %}
+        </select>
+      </div>
+      <div><label class="form-label">Projeto</label><input id="m-proj" class="form-control" placeholder="Nome do projeto"></div>
+      <div><label class="form-label">Data do Pedido</label><input id="m-data" class="form-control" type="date"></div>
+      <div><label class="form-label">Entrega Prevista</label><input id="m-entrega" class="form-control" type="date"></div>
+      <div><label class="form-label">Entrega Real</label><input id="m-entrega-r" class="form-control" type="date"></div>
+      <div><label class="form-label">Status</label>
+        <select id="m-status" class="form-control">
+          <option value="aberta">Aberta</option><option value="aprovacao">Aguardando Aprovação</option>
+          <option value="aprovada">Aprovada</option><option value="recebida">Recebida</option>
+          <option value="encerrada">Encerrada</option><option value="cancelada">Cancelada</option>
+        </select>
+      </div>
+      <div style="grid-column:2/-1"><label class="form-label">Observações</label><input id="m-obs" class="form-control"></div>
+    </div>
+
+    <!-- Itens -->
+    <div style="margin-top:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <h4 style="margin:0;font-size:13px">Itens do Pedido</h4>
+        <button type="button" class="btn btn-secondary" style="font-size:12px;padding:4px 12px" onclick="addItem()">+ Item</button>
+      </div>
+      <table class="table" style="font-size:12px">
+        <thead><tr><th>Descrição</th><th>Código</th><th>Unidade</th><th>Qtd</th><th>Preço Unit.</th><th>Total</th><th></th></tr></thead>
+        <tbody id="itens-tbody"></tbody>
+      </table>
+      <div style="text-align:right;margin-top:8px;font-weight:700;font-size:14px">Total: R$ <span id="total-display">0,00</span></div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="salvar()">💾 Salvar</button>
+      <button class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-secondary" id="btn-fin" onclick="gerarFinanceiro()" style="display:none">💰 Gerar conta a pagar</button>
+      <button class="btn btn-danger" id="btn-del" onclick="excluir()" style="display:none;margin-left:auto">🗑️ Excluir</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF='{{ csrf_token }}';
+let dados={{ pedidos_json|safe }};
+let itens=[];
+
+const STATUS_BADGE={aberta:'badge-blue',aprovacao:'badge-warning',aprovada:'badge-success',
+  recebida:'badge-teal',encerrada:'badge-secondary',cancelada:'badge-danger'};
+function fmtDate(d){return d?d.substring(0,10):'—';}
+function fmtR(v){return'R$ '+parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});}
+
+function renderTabela(){
+  const tb=document.getElementById('tbody');
+  if(!dados.length){tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:#64748b">Nenhum pedido cadastrado</td></tr>';return;}
+  tb.innerHTML=dados.map(r=>`<tr>
+    <td><strong>${r.codigo}</strong></td>
+    <td>${r.fornecedor_nome||'—'}</td><td>${r.projeto_nome||'—'}</td>
+    <td>${fmtDate(r.data_pedido)}</td><td>${fmtDate(r.data_entrega_prevista)}</td>
+    <td style="font-weight:600">${fmtR(r.valor_total)}</td>
+    <td><span class="badge ${STATUS_BADGE[r.status]||'badge-secondary'}">${r.status}</span></td>
+    <td>${r.tem_financeiro?'<span class="badge badge-success">✓ Fin.</span>':'—'}</td>
+    <td><button class="btn btn-secondary" style="padding:4px 10px;font-size:11px" onclick="editar(${r.id})">✏️</button></td>
+  </tr>`).join('');
+}
+
+function addItem(it=null){
+  const i=itens.length;
+  itens.push(it||{descricao:'',codigo_material:'',unidade:'un',quantidade:1,preco_unitario:0,preco_total:0});
+  renderItens();
+}
+
+function renderItens(){
+  const tb=document.getElementById('itens-tbody');
+  tb.innerHTML=itens.map((it,i)=>`<tr>
+    <td><input class="form-control" style="min-width:160px" value="${it.descricao||''}" oninput="itens[${i}].descricao=this.value"></td>
+    <td><input class="form-control" style="width:80px" value="${it.codigo_material||''}" oninput="itens[${i}].codigo_material=this.value"></td>
+    <td><input class="form-control" style="width:60px" value="${it.unidade||'un'}" oninput="itens[${i}].unidade=this.value"></td>
+    <td><input class="form-control" style="width:70px" type="number" step="0.001" min="0" value="${it.quantidade||1}" oninput="itens[${i}].quantidade=parseFloat(this.value)||0;recalc(${i})"></td>
+    <td><input class="form-control" style="width:90px" type="number" step="0.01" min="0" value="${it.preco_unitario||0}" oninput="itens[${i}].preco_unitario=parseFloat(this.value)||0;recalc(${i})"></td>
+    <td style="font-weight:600;white-space:nowrap" id="it-total-${i}">${fmtR(it.preco_total||0)}</td>
+    <td><button type="button" onclick="itens.splice(${i},1);renderItens();calcTotal()" style="background:none;border:none;color:#EF4444;cursor:pointer;font-size:16px">✕</button></td>
+  </tr>`).join('');
+  calcTotal();
+}
+
+function recalc(i){
+  itens[i].preco_total=(itens[i].quantidade||0)*(itens[i].preco_unitario||0);
+  const el=document.getElementById(`it-total-${i}`);
+  if(el)el.textContent=fmtR(itens[i].preco_total);
+  calcTotal();
+}
+
+function calcTotal(){
+  const t=itens.reduce((s,it)=>s+(it.preco_total||0),0);
+  document.getElementById('total-display').textContent=t.toLocaleString('pt-BR',{minimumFractionDigits:2});
+}
+
+function abrirModal(r=null){
+  const today=new Date().toISOString().substring(0,10);
+  document.getElementById('m-id').value=r?.id||'';
+  document.getElementById('m-cod').value=r?.codigo||`PC-${new Date().getFullYear()}-${String(dados.length+1).padStart(3,'0')}`;
+  document.getElementById('m-forn').value=r?.fornecedor_id||'';
+  document.getElementById('m-proj').value=r?.projeto_nome||'';
+  document.getElementById('m-data').value=r?.data_pedido||today;
+  document.getElementById('m-entrega').value=r?.data_entrega_prevista||'';
+  document.getElementById('m-entrega-r').value=r?.data_entrega_real||'';
+  document.getElementById('m-status').value=r?.status||'aberta';
+  document.getElementById('m-obs').value=r?.observacoes||'';
+  itens=r?JSON.parse(JSON.stringify(r.itens||[])): [];
+  renderItens();
+  document.getElementById('modal-titulo').textContent=r?'Editar Pedido':'Novo Pedido de Compra';
+  document.getElementById('btn-del').style.display=r?'':'none';
+  document.getElementById('btn-fin').style.display=(r&&!r.tem_financeiro)?'':'none';
+  document.getElementById('modal').style.display='flex';
+}
+function editar(id){abrirModal(dados.find(r=>r.id===id));}
+function fecharModal(){document.getElementById('modal').style.display='none';}
+
+async function salvar(){
+  const cod=document.getElementById('m-cod').value.trim();
+  if(!cod){alert('Código obrigatório');return;}
+  const payload={action:'save',id:document.getElementById('m-id').value||null,
+    codigo:cod,fornecedor_id:document.getElementById('m-forn').value||null,
+    projeto_nome:document.getElementById('m-proj').value,
+    data_pedido:document.getElementById('m-data').value,
+    data_entrega_prevista:document.getElementById('m-entrega').value||null,
+    data_entrega_real:document.getElementById('m-entrega-r').value||null,
+    status:document.getElementById('m-status').value,
+    observacoes:document.getElementById('m-obs').value,
+    itens};
+  const r=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify(payload)});
+  if((await r.json()).ok)location.reload();
+}
+
+async function excluir(){
+  const id=document.getElementById('m-id').value;
+  if(!id||!confirm('Excluir pedido?'))return;
+  const r=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({action:'delete',id})});
+  if((await r.json()).ok)location.reload();
+}
+
+async function gerarFinanceiro(){
+  const id=document.getElementById('m-id').value;
+  if(!id)return;
+  const r=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({action:'gerar_financeiro',id})});
+  const d=await r.json();
+  alert(d.msg||(d.ok?'OK':'Erro'));
+  if(d.ok)location.reload();
+}
+
+renderTabela();
+</script>
+{% endblock %}
