@@ -102,3 +102,8 @@ AUTH_USER_MODEL = 'accounts.User'
 # Upload limits (logos e anexos)
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024   # 10 MB (JSON body)
 FILE_UPLOAD_MAX_MEMORY_SIZE  = 10 * 1024 * 1024   # 10 MB (multipart)
+
+CSRF_TRUSTED_ORIGINS = os.environ.get(
+    'CSRF_TRUSTED_ORIGINS',
+    'https://bk-erp-production.up.railway.app'
+).split(',')
