@@ -61,10 +61,10 @@ TEMPLATES = [
 WSGI_APPLICATION = 'bk_erp.wsgi.application'
 
 # Banco de dados
-DATABASE_URL = os.environ.get('DATABASE_URL', '')
-if DATABASE_URL:
-    import dj_database_url
-    DATABASES = {'default': dj_database_url.parse(DATABASE_URL)}
+import dj_database_url
+DATABASE_URL = os.environ.get('DATABASE_URL', '').strip()
+if DATABASE_URL and DATABASE_URL.startswith(('postgres', 'postgresql', 'cockroach', 'mysql', 'sqlite')):
+    DATABASES = {'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600, ssl_require=False)}
 else:
     DATABASES = {
         'default': {
