@@ -72,11 +72,20 @@
   <button class="tab-btn active" data-group="proj" data-tab="tab-tap">📜 TAP & Requisitos</button>
   <button class="tab-btn" data-group="proj" data-tab="tab-eap">📦 EAP / Curva S Trabalho</button>
   <button class="tab-btn" data-group="proj" data-tab="tab-gantt">📊 Gantt</button>
+  <button class="tab-btn" data-group="proj" data-tab="tab-financeiro">💰 Lançamentos Financeiros</button>
+  <button class="tab-btn" data-group="proj" data-tab="tab-fin-analise">📈 Financeiro (Análise)</button>
+  <button class="tab-btn" data-group="proj" data-tab="tab-kpis">📊 Qualidade (KPIs)</button>
   <button class="tab-btn" data-group="proj" data-tab="tab-controle">🗂️ Controle de Projetos</button>
   <button class="tab-btn" data-group="proj" data-tab="tab-riscos">⚠️ Riscos</button>
   <button class="tab-btn" data-group="proj" data-tab="tab-okr">🎯 OKRs</button>
+  <button class="tab-btn" data-group="proj" data-tab="tab-plano-acao">📌 Plano de Ação</button>
   <button class="tab-btn" data-group="proj" data-tab="tab-encerramento">🏁 Encerramento</button>
 </div>
+{% if is_admin %}
+<div style="margin-bottom:16px;text-align:right;">
+  <button class="btn btn-primary btn-sm" onclick="gerarRelatorioGeral()" style="background:linear-gradient(135deg,#0d47a1,#00bcd4);border:none;">🖨️ Imprimir Relatório Geral</button>
+</div>
+{% endif %}
 
 <!-- ══════════════════════════════
      TAB TAP
@@ -393,6 +402,104 @@
 </div>
 
 <!-- ══════════════════════════════
+     TAB LANÇAMENTOS FINANCEIROS
+══════════════════════════════ -->
+<div class="tab-panel" data-group="proj" id="tab-financeiro">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="font-size:14px;font-weight:700;color:#F59E0B;margin:0">💰 Lançamentos Financeiros</h3>
+      {% if is_admin %}
+      <button class="btn btn-primary btn-sm" onclick="addFinanceiro()">+ Lançamento</button>
+      {% endif %}
+    </div>
+
+    <!-- Resumo KPIs financeiros -->
+    <div id="fin-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:16px"></div>
+
+    <!-- Tabela de lançamentos -->
+    <div id="fin-lista" class="table-wrap"></div>
+
+    <!-- Curva S Financeira -->
+    <div style="margin-top:20px">
+      <h4 style="font-size:13px;font-weight:700;color:var(--bk-text-muted);margin-bottom:10px">Curva S Financeira (Previsto x Realizado)</h4>
+      <div id="fin-curva-s" style="width:100%;height:350px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     TAB FINANCEIRO ANÁLISE
+══════════════════════════════ -->
+<div class="tab-panel" data-group="proj" id="tab-fin-analise">
+  <div class="card">
+    <h3 style="font-size:14px;font-weight:700;color:#3B82F6;margin:0 0 16px 0">📈 Análise Financeira — Planejado × Realizado</h3>
+    <p style="font-size:12px;color:var(--bk-text-muted);margin-bottom:16px">Tabela comparativa, fluxo de caixa em barras e custo acumulado em linhas.</p>
+
+    <!-- Parecer -->
+    <div id="fin-parecer" style="padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:13px;font-weight:600"></div>
+
+    <!-- Métricas -->
+    <div id="fin-analise-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:16px"></div>
+
+    <!-- Tabela Planejado x Realizado -->
+    <div id="fin-analise-tabela" class="table-wrap" style="margin-bottom:20px"></div>
+
+    <!-- Gráfico Barras - Fluxo de Caixa -->
+    <h4 style="font-size:13px;font-weight:700;color:var(--bk-text-muted);margin-bottom:10px">Fluxo de Caixa Mensal (Barras)</h4>
+    <div id="fin-analise-barras" style="width:100%;height:350px"></div>
+
+    <!-- Gráfico Linhas - Acumulado -->
+    <h4 style="font-size:13px;font-weight:700;color:var(--bk-text-muted);margin:20px 0 10px 0">Custo Acumulado (Linhas)</h4>
+    <div id="fin-analise-linhas" style="width:100%;height:350px"></div>
+
+    <!-- Gráfico Diferença -->
+    <h4 style="font-size:13px;font-weight:700;color:var(--bk-text-muted);margin:20px 0 10px 0">Diferença Planejado - Realizado</h4>
+    <div id="fin-analise-diff" style="width:100%;height:300px"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     TAB KPIs
+══════════════════════════════ -->
+<div class="tab-panel" data-group="proj" id="tab-kpis">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="font-size:14px;font-weight:700;color:#10B981;margin:0">📊 KPIs de Qualidade</h3>
+      {% if is_admin %}
+      <button class="btn btn-primary btn-sm" onclick="addKPI()">+ KPI</button>
+      {% endif %}
+    </div>
+    <div id="kpi-lista" class="table-wrap"></div>
+    <div style="margin-top:20px">
+      <h4 style="font-size:13px;font-weight:700;color:var(--bk-text-muted);margin-bottom:10px">Gráfico do KPI</h4>
+      <div style="margin-bottom:8px">
+        <select id="kpi-sel-chart" class="form-control" style="max-width:300px;display:inline-block" onchange="renderKPIChart()">
+          <option value="">— Selecione o KPI —</option>
+        </select>
+      </div>
+      <div id="kpi-chart" style="width:100%;height:350px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     TAB PLANO DE AÇÃO
+══════════════════════════════ -->
+<div class="tab-panel" data-group="proj" id="tab-plano-acao">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="font-size:14px;font-weight:700;color:#8B5CF6;margin:0">📌 Plano de Ação (5W2H)</h3>
+      {% if is_admin %}
+      <button class="btn btn-primary btn-sm" onclick="addAcao()">+ Ação</button>
+      {% endif %}
+    </div>
+    <div id="acao-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px"></div>
+    <div id="acao-lista" class="table-wrap"></div>
+    <div id="acao-chart" style="width:100%;height:300px;margin-top:16px"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
      TAB ENCERRAMENTO
 ══════════════════════════════ -->
 <div class="tab-panel" data-group="proj" id="tab-encerramento">
@@ -452,6 +559,8 @@ let riscos = {{ projeto.dados.risks|default:'[]'|safe }};
 let licoes = {{ projeto.dados.lessons|default:'[]'|safe }};
 let okrs = {{ projeto.dados.okrs|default:'[]'|safe }};
 let closeData = {{ projeto.dados.close|default:'{}'|safe }};
+let kpis = {{ projeto.dados.kpis|default:'[]'|safe }};
+let actionPlan = {{ projeto.dados.actionPlan|default:'[]'|safe }};
 
 // ══════════════════════════════
 // FUNÇÕES DE DADOS
@@ -473,7 +582,7 @@ function getDadosAtuais() {
     },
     eapTasks: eapTasks,
     finances: finances,
-    kpis: {{ projeto.dados.kpis|default:'[]'|safe }},
+    kpis: kpis,
     risks: riscos,
     lessons: licoes,
     okrs: okrs,
@@ -483,7 +592,7 @@ function getDadosAtuais() {
       entregaveis: el('enc-entregaveis') ? el('enc-entregaveis').value : (closeData.entregaveis||''),
       desvios: el('enc-desvios') ? el('enc-desvios').value : (closeData.desvios||''),
     },
-    actionPlan: {{ projeto.dados.actionPlan|default:'[]'|safe }},
+    actionPlan: actionPlan,
   };
   return dados;
 }
@@ -1613,6 +1722,557 @@ function removeLicao(i) {
   salvarProjeto();
 }
 
+// ══════════════════════════════
+// FINANCEIRO - LANÇAMENTOS
+// ══════════════════════════════
+function fmtBRL(v) {
+  return 'R$ ' + Number(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+
+function renderFinanceiro() {
+  const kd = document.getElementById('fin-kpis');
+  const ld = document.getElementById('fin-lista');
+  if (!kd || !ld) return;
+
+  if (!finances.length) {
+    kd.innerHTML = '';
+    ld.innerHTML = '<div style="text-align:center;padding:30px;color:var(--bk-text-muted)">Nenhum lançamento financeiro.</div>';
+    Plotly.purge('fin-curva-s');
+    return;
+  }
+
+  let totE = 0, totS = 0;
+  finances.forEach(f => {
+    const v = parseFloat(f.valor||0);
+    if (f.tipo === 'Entrada') totE += v; else totS += v;
+  });
+  const saldo = totE - totS;
+
+  kd.innerHTML = `
+    <div class="kpi-card" style="border-left:3px solid #10B981"><div class="kpi-label">Entradas</div><div class="kpi-value" style="color:#10B981">${fmtBRL(totE)}</div></div>
+    <div class="kpi-card" style="border-left:3px solid #EF4444"><div class="kpi-label">Saídas</div><div class="kpi-value" style="color:#EF4444">${fmtBRL(totS)}</div></div>
+    <div class="kpi-card" style="border-left:3px solid #3B82F6"><div class="kpi-label">Saldo</div><div class="kpi-value" style="color:${saldo>=0?'#10B981':'#EF4444'}">${fmtBRL(saldo)}</div></div>
+  `;
+
+  ld.innerHTML = `<table class="table" style="font-size:12px">
+    <thead><tr><th>Tipo</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Dt Prevista</th><th>Dt Realizada</th><th>Status</th><th>Recorrência</th>${IS_ADMIN?'<th></th>':''}</tr></thead>
+    <tbody>${finances.map((f,i) => {
+      const st = f.realizado ? '<span style="color:#10B981;font-weight:600">Realizado</span>' : '<span style="color:#F59E0B">Pendente</span>';
+      const corTipo = f.tipo==='Entrada' ? '#10B981' : '#EF4444';
+      return `<tr>
+        <td><span style="color:${corTipo};font-weight:600">${escHtml(f.tipo||'')}</span></td>
+        <td>${escHtml(f.descricao||'')}</td>
+        <td>${escHtml(f.categoria||'—')}</td>
+        <td style="font-weight:600">${fmtBRL(f.valor)}</td>
+        <td>${f.dataPrevista||'—'}</td>
+        <td>${f.dataRealizada||'—'}</td>
+        <td>${st}</td>
+        <td>${f.recorrencia||'Nenhuma'}</td>
+        ${IS_ADMIN?`<td>
+          <button onclick="editFinanceiro(${i})" style="background:none;border:none;color:#3B82F6;cursor:pointer">✏️</button>
+          <button onclick="removeFinanceiro(${i})" style="background:none;border:none;color:#EF4444;cursor:pointer">✕</button>
+        </td>`:''}
+      </tr>`;
+    }).join('')}</tbody></table>`;
+
+  // Curva S Financeira
+  renderCurvaSFinanceira();
+}
+
+function renderCurvaSFinanceira() {
+  if (!finances.length) return;
+  const meses = {};
+  finances.forEach(f => {
+    const k = (f.dataPrevista||'').substring(0,7);
+    if (!k) return;
+    if (!meses[k]) meses[k] = {prev:0, real:0};
+    const v = parseFloat(f.valor||0) * (f.tipo==='Entrada'?1:-1);
+    meses[k].prev += v;
+    if (f.realizado && f.dataRealizada) {
+      const kr = f.dataRealizada.substring(0,7);
+      if (!meses[kr]) meses[kr] = {prev:0, real:0};
+      meses[kr].real += v;
+    }
+  });
+  const labels = Object.keys(meses).sort();
+  let ap=0, ar=0;
+  const prevAcum=[], realAcum=[];
+  labels.forEach(k => { ap+=meses[k].prev; ar+=meses[k].real; prevAcum.push(ap); realAcum.push(ar); });
+
+  Plotly.newPlot('fin-curva-s', [
+    {x:labels, y:prevAcum, mode:'lines+markers', name:'Previsto', line:{color:'#0d47a1'}},
+    {x:labels, y:realAcum, mode:'lines+markers', name:'Realizado', line:{color:'#10B981'}},
+  ], {template:'plotly_dark', margin:{t:30,b:40,l:60,r:20}, xaxis:{title:'Mês'}, yaxis:{title:'Valor (R$)'},
+      paper_bgcolor:'transparent', plot_bgcolor:'transparent', font:{color:'#9CA3AF'}}, {responsive:true});
+}
+
+function addFinanceiro() {
+  const tipo = prompt('Tipo (Entrada/Saída):', 'Saída');
+  if (!tipo) return;
+  const desc = prompt('Descrição:');
+  if (!desc) return;
+  const cat = tipo==='Saída' ? (prompt('Categoria (Mão de Obra/Custos Diretos/Impostos):','Custos Diretos')||'') : '';
+  const valor = parseFloat(prompt('Valor (R$):', '0'))||0;
+  const dataPrev = prompt('Data prevista (AAAA-MM-DD):', new Date().toISOString().slice(0,10))||'';
+  const realizado = confirm('Já foi realizado?');
+  const dataReal = realizado ? (prompt('Data realizada (AAAA-MM-DD):', new Date().toISOString().slice(0,10))||'') : '';
+  const rec = prompt('Recorrência (Nenhuma/Diária/Semanal/Quinzenal/Mensal):', 'Nenhuma')||'Nenhuma';
+
+  finances.push({
+    id: Date.now(), tipo, descricao:desc, categoria:cat, subcategoria:'',
+    valor, recorrencia:rec, qtdRecorrencias:1,
+    dataPrevista:dataPrev, realizado, dataRealizada:dataReal,
+  });
+  renderFinanceiro();
+  salvarProjeto();
+}
+
+function editFinanceiro(i) {
+  const f = finances[i];
+  f.descricao = prompt('Descrição:', f.descricao)||f.descricao;
+  f.valor = parseFloat(prompt('Valor:', f.valor))||f.valor;
+  f.dataPrevista = prompt('Data prevista:', f.dataPrevista)||f.dataPrevista;
+  f.realizado = confirm('Realizado?');
+  if (f.realizado) f.dataRealizada = prompt('Data realizada:', f.dataRealizada||new Date().toISOString().slice(0,10))||'';
+  else f.dataRealizada = '';
+  renderFinanceiro();
+  salvarProjeto();
+}
+
+function removeFinanceiro(i) {
+  if (!confirm('Excluir lançamento?')) return;
+  finances.splice(i,1);
+  renderFinanceiro();
+  salvarProjeto();
+}
+
+// ══════════════════════════════
+// FINANCEIRO ANÁLISE
+// ══════════════════════════════
+function renderFinanceiroAnalise() {
+  const parecerDiv = document.getElementById('fin-parecer');
+  const kpisDiv = document.getElementById('fin-analise-kpis');
+  const tabelaDiv = document.getElementById('fin-analise-tabela');
+  if (!parecerDiv) return;
+
+  if (!finances.length) {
+    parecerDiv.innerHTML = '';
+    parecerDiv.style.display = 'none';
+    if (kpisDiv) kpisDiv.innerHTML = '';
+    if (tabelaDiv) tabelaDiv.innerHTML = '<div style="text-align:center;padding:30px;color:var(--bk-text-muted)">Nenhum lançamento financeiro.</div>';
+    Plotly.purge('fin-analise-barras');
+    Plotly.purge('fin-analise-linhas');
+    Plotly.purge('fin-analise-diff');
+    return;
+  }
+
+  // Agrupar saídas por mês (planejado vs realizado)
+  const mesPlan = {}, mesReal = {};
+  finances.forEach(f => {
+    if (f.tipo !== 'Saída') return;
+    const v = parseFloat(f.valor||0);
+    const kp = (f.dataPrevista||'').substring(0,7);
+    if (kp) { mesPlan[kp] = (mesPlan[kp]||0) + v; }
+    if (f.realizado && f.dataRealizada) {
+      const kr = f.dataRealizada.substring(0,7);
+      mesReal[kr] = (mesReal[kr]||0) + v;
+    }
+  });
+
+  const allKeys = [...new Set([...Object.keys(mesPlan), ...Object.keys(mesReal)])].sort();
+  if (!allKeys.length) {
+    parecerDiv.style.display = 'none';
+    tabelaDiv.innerHTML = '<div style="text-align:center;padding:20px;color:var(--bk-text-muted)">Sem dados de saída para análise.</div>';
+    return;
+  }
+
+  const planV=[], realV=[], diffV=[], planAcum=[], realAcum=[];
+  let pa=0, ra=0, totPlan=0, totReal=0;
+  allKeys.forEach(k => {
+    const p = mesPlan[k]||0, r = mesReal[k]||0;
+    planV.push(p); realV.push(r); diffV.push(p-r);
+    pa+=p; ra+=r; planAcum.push(pa); realAcum.push(ra);
+    totPlan+=p; totReal+=r;
+  });
+  const totDiff = totPlan - totReal;
+  const pctDiff = totPlan ? ((totDiff/totPlan)*100) : 0;
+
+  // Parecer
+  let parecer, corParecer;
+  if (Math.abs(pctDiff) <= 5) {
+    parecer = `✅ Planejamento ASSERTIVO — Diferença de ${pctDiff.toFixed(1)}% entre custo planejado e realizado.`;
+    corParecer = 'rgba(16,185,129,0.12);border:1px solid rgba(16,185,129,0.3);color:#10B981';
+  } else if (pctDiff > 5) {
+    parecer = `⚠️ Planejamento SUPERESTIMADO — Custo realizado ${Math.abs(pctDiff).toFixed(1)}% abaixo do planejado.`;
+    corParecer = 'rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);color:#F59E0B';
+  } else {
+    parecer = `🔴 Planejamento SUBESTIMADO — Custo realizado ${Math.abs(pctDiff).toFixed(1)}% acima do planejado. Estouro de orçamento.`;
+    corParecer = 'rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.3);color:#EF4444';
+  }
+  parecerDiv.style.display = 'block';
+  parecerDiv.style.cssText = `padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:13px;font-weight:600;background:${corParecer}`;
+  parecerDiv.textContent = parecer;
+
+  // KPIs
+  if (kpisDiv) kpisDiv.innerHTML = `
+    <div class="kpi-card" style="border-left:3px solid #3B82F6"><div class="kpi-label">Total Planejado</div><div class="kpi-value">${fmtBRL(totPlan)}</div></div>
+    <div class="kpi-card" style="border-left:3px solid #EF4444"><div class="kpi-label">Total Realizado</div><div class="kpi-value">${fmtBRL(totReal)}</div></div>
+    <div class="kpi-card" style="border-left:3px solid #F59E0B"><div class="kpi-label">Diferença</div><div class="kpi-value">${fmtBRL(totDiff)}</div></div>
+    <div class="kpi-card" style="border-left:3px solid #8B5CF6"><div class="kpi-label">Variação %</div><div class="kpi-value">${pctDiff.toFixed(1)}%</div></div>
+  `;
+
+  // Tabela
+  if (tabelaDiv) {
+    let rows = allKeys.map((k,i) => `<tr>
+      <td>${k}</td><td style="text-align:right">${fmtBRL(planV[i])}</td><td style="text-align:right">${fmtBRL(realV[i])}</td>
+      <td style="text-align:right;color:${diffV[i]>=0?'#10B981':'#EF4444'}">${fmtBRL(diffV[i])}</td>
+      <td style="text-align:right">${fmtBRL(planAcum[i])}</td><td style="text-align:right">${fmtBRL(realAcum[i])}</td>
+    </tr>`).join('');
+    rows += `<tr style="font-weight:700;background:rgba(59,130,246,0.08)">
+      <td>TOTAL</td><td style="text-align:right">${fmtBRL(totPlan)}</td><td style="text-align:right">${fmtBRL(totReal)}</td>
+      <td style="text-align:right;color:${totDiff>=0?'#10B981':'#EF4444'}">${fmtBRL(totDiff)}</td>
+      <td style="text-align:right">${fmtBRL(pa)}</td><td style="text-align:right">${fmtBRL(ra)}</td>
+    </tr>`;
+    tabelaDiv.innerHTML = `<table class="table" style="font-size:12px">
+      <thead><tr><th>Mês</th><th style="text-align:right">Planejado</th><th style="text-align:right">Realizado</th>
+      <th style="text-align:right">Diferença</th><th style="text-align:right">Acum. Plan.</th><th style="text-align:right">Acum. Real.</th></tr></thead>
+      <tbody>${rows}</tbody></table>`;
+  }
+
+  // Gráfico barras
+  Plotly.newPlot('fin-analise-barras', [
+    {x:allKeys, y:planV, type:'bar', name:'Planejado', marker:{color:'#3B82F6', opacity:0.7}},
+    {x:allKeys, y:realV, type:'bar', name:'Realizado', marker:{color:'#EF4444', opacity:0.7}},
+  ], {barmode:'group', template:'plotly_dark', margin:{t:20,b:40,l:60,r:20},
+      paper_bgcolor:'transparent', plot_bgcolor:'transparent', font:{color:'#9CA3AF'},
+      xaxis:{title:'Mês'}, yaxis:{title:'Valor (R$)'}}, {responsive:true});
+
+  // Gráfico linhas acumulado
+  Plotly.newPlot('fin-analise-linhas', [
+    {x:allKeys, y:planAcum, mode:'lines+markers', name:'Planejado Acum.', line:{color:'#0d47a1', width:2.5}},
+    {x:allKeys, y:realAcum, mode:'lines+markers', name:'Realizado Acum.', line:{color:'#EF4444', width:2.5}},
+  ], {template:'plotly_dark', margin:{t:20,b:40,l:60,r:20},
+      paper_bgcolor:'transparent', plot_bgcolor:'transparent', font:{color:'#9CA3AF'},
+      xaxis:{title:'Mês'}, yaxis:{title:'Valor Acumulado (R$)'}}, {responsive:true});
+
+  // Gráfico diferença
+  const diffColors = diffV.map(d => d >= 0 ? '#10B981' : '#EF4444');
+  Plotly.newPlot('fin-analise-diff', [
+    {x:allKeys, y:diffV, type:'bar', marker:{color:diffColors}, name:'Diferença'},
+  ], {template:'plotly_dark', margin:{t:20,b:40,l:60,r:20},
+      paper_bgcolor:'transparent', plot_bgcolor:'transparent', font:{color:'#9CA3AF'},
+      xaxis:{title:'Mês'}, yaxis:{title:'Diferença (R$)'},
+      shapes:[{type:'line', x0:allKeys[0], x1:allKeys[allKeys.length-1], y0:0, y1:0, line:{color:'#6B7280', dash:'dash', width:1}}]
+  }, {responsive:true});
+}
+
+// ══════════════════════════════
+// KPIs
+// ══════════════════════════════
+function renderKPIs() {
+  const ld = document.getElementById('kpi-lista');
+  const sel = document.getElementById('kpi-sel-chart');
+  if (!ld) return;
+
+  if (!kpis.length) {
+    ld.innerHTML = '<div style="text-align:center;padding:30px;color:var(--bk-text-muted)">Nenhum KPI registrado.</div>';
+    if (sel) sel.innerHTML = '<option value="">— Nenhum KPI —</option>';
+    Plotly.purge('kpi-chart');
+    return;
+  }
+
+  ld.innerHTML = `<table class="table" style="font-size:12px">
+    <thead><tr><th>Nome</th><th>Unidade</th><th>Mês</th><th style="text-align:right">Previsto</th><th style="text-align:right">Realizado</th><th style="text-align:right">Diferença</th>${IS_ADMIN?'<th></th>':''}</tr></thead>
+    <tbody>${kpis.map((k,i) => {
+      const diff = (parseFloat(k.realizado||0) - parseFloat(k.previsto||0)).toFixed(2);
+      return `<tr>
+        <td>${escHtml(k.nome||'')}</td><td>${escHtml(k.unidade||'')}</td><td>M${k.mes||1}</td>
+        <td style="text-align:right">${parseFloat(k.previsto||0).toFixed(2)}</td>
+        <td style="text-align:right">${parseFloat(k.realizado||0).toFixed(2)}</td>
+        <td style="text-align:right;color:${parseFloat(diff)>=0?'#10B981':'#EF4444'}">${diff}</td>
+        ${IS_ADMIN?`<td>
+          <button onclick="editKPI(${i})" style="background:none;border:none;color:#3B82F6;cursor:pointer">✏️</button>
+          <button onclick="removeKPI(${i})" style="background:none;border:none;color:#EF4444;cursor:pointer">✕</button>
+        </td>`:''}
+      </tr>`;
+    }).join('')}</tbody></table>`;
+
+  // Populate select
+  const names = [...new Set(kpis.map(k => k.nome))];
+  if (sel) {
+    const curVal = sel.value;
+    sel.innerHTML = names.map(n => `<option value="${escHtml(n)}" ${n===curVal?'selected':''}>${escHtml(n)}</option>`).join('');
+    if (!curVal && names.length) sel.value = names[0];
+  }
+  renderKPIChart();
+}
+
+function renderKPIChart() {
+  const sel = document.getElementById('kpi-sel-chart');
+  if (!sel || !sel.value) { Plotly.purge('kpi-chart'); return; }
+  const nome = sel.value;
+  const serie = kpis.filter(k => k.nome === nome).sort((a,b) => (a.mes||0)-(b.mes||0));
+  if (!serie.length) return;
+  const meses = serie.map(s => `M${s.mes}`);
+  const prev = serie.map(s => parseFloat(s.previsto||0));
+  const real = serie.map(s => parseFloat(s.realizado||0));
+
+  Plotly.newPlot('kpi-chart', [
+    {x:meses, y:prev, mode:'lines+markers', name:'Previsto', line:{color:'#0d47a1'}},
+    {x:meses, y:real, mode:'lines+markers', name:'Realizado', line:{color:'#10B981'}},
+  ], {template:'plotly_dark', margin:{t:30,b:40,l:60,r:20},
+      paper_bgcolor:'transparent', plot_bgcolor:'transparent', font:{color:'#9CA3AF'},
+      yaxis:{title:serie[0].unidade||'Valor'}}, {responsive:true});
+}
+
+function addKPI() {
+  const nome = prompt('Nome do KPI:');
+  if (!nome) return;
+  const unidade = prompt('Unidade (%, horas, nº itens...):', '%')||'%';
+  const mes = parseInt(prompt('Mês de referência:', '1'))||1;
+  const prev = parseFloat(prompt('Valor previsto:', '0'))||0;
+  const real = parseFloat(prompt('Valor realizado:', '0'))||0;
+  kpis.push({nome, unidade, mesesProjeto:12, mes, previsto:prev, realizado:real});
+  renderKPIs();
+  salvarProjeto();
+}
+function editKPI(i) {
+  const k = kpis[i];
+  k.nome = prompt('Nome:', k.nome)||k.nome;
+  k.unidade = prompt('Unidade:', k.unidade)||k.unidade;
+  k.mes = parseInt(prompt('Mês:', k.mes))||k.mes;
+  k.previsto = parseFloat(prompt('Previsto:', k.previsto));
+  k.realizado = parseFloat(prompt('Realizado:', k.realizado));
+  renderKPIs();
+  salvarProjeto();
+}
+function removeKPI(i) {
+  if (!confirm('Excluir KPI?')) return;
+  kpis.splice(i,1);
+  renderKPIs();
+  salvarProjeto();
+}
+
+// ══════════════════════════════
+// PLANO DE AÇÃO
+// ══════════════════════════════
+function renderPlanoAcao() {
+  const kd = document.getElementById('acao-kpis');
+  const ld = document.getElementById('acao-lista');
+  if (!kd || !ld) return;
+
+  if (!actionPlan.length) {
+    kd.innerHTML = '';
+    ld.innerHTML = '<div style="text-align:center;padding:30px;color:var(--bk-text-muted)">Nenhuma ação registrada.</div>';
+    Plotly.purge('acao-chart');
+    return;
+  }
+
+  const total = actionPlan.length;
+  const pendentes = actionPlan.filter(a => a.status==='pendente').length;
+  const andamento = actionPlan.filter(a => a.status==='em_andamento').length;
+  const concluidas = actionPlan.filter(a => a.status==='concluido').length;
+  const canceladas = actionPlan.filter(a => a.status==='cancelado').length;
+
+  kd.innerHTML = `
+    <div class="kpi-card" style="border-left:3px solid var(--bk-blue)"><div class="kpi-label">Total</div><div class="kpi-value">${total}</div></div>
+    <div class="kpi-card" style="border-left:3px solid #F59E0B"><div class="kpi-label">Pendentes</div><div class="kpi-value" style="color:#F59E0B">${pendentes}</div></div>
+    <div class="kpi-card" style="border-left:3px solid #3B82F6"><div class="kpi-label">Em Andamento</div><div class="kpi-value" style="color:#3B82F6">${andamento}</div></div>
+    <div class="kpi-card" style="border-left:3px solid #10B981"><div class="kpi-label">Concluídas</div><div class="kpi-value" style="color:#10B981">${concluidas}</div></div>
+  `;
+
+  const statusColor = s => s==='concluido'?'#10B981':s==='em_andamento'?'#3B82F6':s==='cancelado'?'#94A3B8':'#F59E0B';
+  const statusLabel = s => s==='concluido'?'Concluído':s==='em_andamento'?'Em andamento':s==='cancelado'?'Cancelado':'Pendente';
+
+  ld.innerHTML = `<table class="table" style="font-size:12px">
+    <thead><tr><th>Ação</th><th>Responsável</th><th>Status</th><th>Prazo</th><th>Risco Relacionado</th>${IS_ADMIN?'<th></th>':''}</tr></thead>
+    <tbody>${actionPlan.map((a,i) => `<tr>
+      <td>${escHtml(a.descricao||'')}</td>
+      <td>${escHtml(a.responsavel||'—')}</td>
+      <td><span style="background:${statusColor(a.status)};color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">${statusLabel(a.status)}</span></td>
+      <td>${a.prazo||'—'}</td>
+      <td>${escHtml(a.risco_relacionado||'—')}</td>
+      ${IS_ADMIN?`<td>
+        <button onclick="editAcao(${i})" style="background:none;border:none;color:#3B82F6;cursor:pointer">✏️</button>
+        <button onclick="removeAcao(${i})" style="background:none;border:none;color:#EF4444;cursor:pointer">✕</button>
+      </td>`:''}
+    </tr>`).join('')}</tbody></table>`;
+
+  // Gráfico pizza
+  Plotly.newPlot('acao-chart', [{
+    values:[pendentes, andamento, concluidas, canceladas],
+    labels:['Pendente','Em Andamento','Concluído','Cancelado'],
+    type:'pie', hole:0.4,
+    marker:{colors:['#F59E0B','#3B82F6','#10B981','#94A3B8']},
+    textinfo:'label+percent', textfont:{size:11},
+  }], {template:'plotly_dark', margin:{t:20,b:20,l:20,r:20},
+       paper_bgcolor:'transparent', plot_bgcolor:'transparent', font:{color:'#9CA3AF'},
+       showlegend:false}, {responsive:true});
+}
+
+function addAcao() {
+  const desc = prompt('Descrição da ação:');
+  if (!desc) return;
+  const resp = prompt('Responsável:')||'';
+  const status = prompt('Status (pendente/em_andamento/concluido):', 'pendente')||'pendente';
+  const prazo = prompt('Prazo (AAAA-MM-DD):', new Date().toISOString().slice(0,10))||'';
+  let risco = null;
+  if (riscos.length && confirm('Associar a um risco?')) {
+    const idx = parseInt(prompt('Índice do risco (1-' + riscos.length + '):', '1'))||1;
+    risco = riscos[Math.min(idx-1, riscos.length-1)]?.descricao || null;
+  }
+  actionPlan.push({descricao:desc, responsavel:resp, status, prazo, risco_relacionado:risco});
+  renderPlanoAcao();
+  salvarProjeto();
+}
+function editAcao(i) {
+  const a = actionPlan[i];
+  a.descricao = prompt('Descrição:', a.descricao)||a.descricao;
+  a.responsavel = prompt('Responsável:', a.responsavel)||a.responsavel;
+  a.status = prompt('Status (pendente/em_andamento/concluido/cancelado):', a.status)||a.status;
+  a.prazo = prompt('Prazo:', a.prazo)||a.prazo;
+  renderPlanoAcao();
+  salvarProjeto();
+}
+function removeAcao(i) {
+  if (!confirm('Excluir ação?')) return;
+  actionPlan.splice(i,1);
+  renderPlanoAcao();
+  salvarProjeto();
+}
+
+// ══════════════════════════════
+// RELATÓRIO GERAL (IMPRESSÃO)
+// ══════════════════════════════
+function gerarRelatorioGeral() {
+  const dados = getDadosAtuais();
+  const tap = dados.tap || {};
+  const nome = tap.nome || 'Projeto';
+  const agora = new Date().toLocaleString('pt-BR');
+
+  // Tabela EAP
+  let eapHTML = '<p>Sem atividades na EAP.</p>';
+  if (eapTasks.length) {
+    eapHTML = `<table class="rpt-table"><thead><tr><th>Código</th><th>Descrição</th><th>Duração</th><th>Responsável</th><th>Status</th></tr></thead><tbody>
+    ${eapTasks.map(t => `<tr><td>${t.codigo||''}</td><td>${t.descricao||''}</td><td>${t.duracao||''}</td><td>${t.responsavel||''}</td><td>${t.status||''}</td></tr>`).join('')}
+    </tbody></table>`;
+  }
+
+  // Financeiro Análise
+  let finAnaliseHTML = '<p>Sem dados financeiros.</p>';
+  if (finances.length) {
+    const mesPlan={}, mesReal={};
+    finances.forEach(f => {
+      if (f.tipo!=='Saída') return;
+      const v=parseFloat(f.valor||0);
+      const kp=(f.dataPrevista||'').substring(0,7);
+      if(kp){mesPlan[kp]=(mesPlan[kp]||0)+v;}
+      if(f.realizado&&f.dataRealizada){const kr=f.dataRealizada.substring(0,7);mesReal[kr]=(mesReal[kr]||0)+v;}
+    });
+    const keys=[...new Set([...Object.keys(mesPlan),...Object.keys(mesReal)])].sort();
+    if(keys.length){
+      let pa2=0,ra2=0,tp=0,tr2=0;
+      let rows2=keys.map(k=>{const p=mesPlan[k]||0,r=mesReal[k]||0;pa2+=p;ra2+=r;tp+=p;tr2+=r;
+        return`<tr><td>${k}</td><td style="text-align:right">${fmtBRL(p)}</td><td style="text-align:right">${fmtBRL(r)}</td><td style="text-align:right">${fmtBRL(p-r)}</td><td style="text-align:right">${fmtBRL(pa2)}</td><td style="text-align:right">${fmtBRL(ra2)}</td></tr>`;
+      }).join('');
+      const td2=tp-tr2, pct2=tp?((td2/tp)*100):0;
+      let parecer2='';
+      if(Math.abs(pct2)<=5)parecer2=`✅ Planejamento ASSERTIVO (${pct2.toFixed(1)}%)`;
+      else if(pct2>5)parecer2=`⚠️ SUPERESTIMADO (${Math.abs(pct2).toFixed(1)}% abaixo)`;
+      else parecer2=`🔴 SUBESTIMADO (${Math.abs(pct2).toFixed(1)}% acima)`;
+      rows2+=`<tr style="font-weight:700;background:#eaf6ff"><td>TOTAL</td><td style="text-align:right">${fmtBRL(tp)}</td><td style="text-align:right">${fmtBRL(tr2)}</td><td style="text-align:right">${fmtBRL(td2)}</td><td style="text-align:right">${fmtBRL(pa2)}</td><td style="text-align:right">${fmtBRL(ra2)}</td></tr>`;
+      finAnaliseHTML=`<p style="font-weight:700;margin-bottom:8px">${parecer2}</p>
+      <table class="rpt-table"><thead><tr><th>Mês</th><th>Planejado</th><th>Realizado</th><th>Diferença</th><th>Acum.Plan.</th><th>Acum.Real.</th></tr></thead><tbody>${rows2}</tbody></table>`;
+    }
+  }
+
+  // Riscos
+  let riscosHTML = '<p>Sem riscos.</p>';
+  if (riscos.length) {
+    riscosHTML = `<table class="rpt-table"><thead><tr><th>Descrição</th><th>Categoria</th><th>Prob.</th><th>Impacto</th><th>Resposta</th></tr></thead><tbody>
+    ${riscos.map(r => `<tr><td>${r.descricao||''}</td><td>${r.categoria||''}</td><td>${r.probabilidade||''}</td><td>${r.impacto||''}</td><td>${r.resposta||''}</td></tr>`).join('')}
+    </tbody></table>`;
+  }
+
+  // KPIs
+  let kpisHTML = '<p>Sem KPIs.</p>';
+  if (kpis.length) {
+    kpisHTML = `<table class="rpt-table"><thead><tr><th>Nome</th><th>Unidade</th><th>Mês</th><th>Previsto</th><th>Realizado</th></tr></thead><tbody>
+    ${kpis.map(k => `<tr><td>${k.nome||''}</td><td>${k.unidade||''}</td><td>M${k.mes||1}</td><td>${parseFloat(k.previsto||0).toFixed(2)}</td><td>${parseFloat(k.realizado||0).toFixed(2)}</td></tr>`).join('')}
+    </tbody></table>`;
+  }
+
+  // Plano de Ação
+  let acaoHTML = '<p>Sem ações.</p>';
+  if (actionPlan.length) {
+    acaoHTML = `<table class="rpt-table"><thead><tr><th>Ação</th><th>Responsável</th><th>Status</th><th>Prazo</th><th>Risco</th></tr></thead><tbody>
+    ${actionPlan.map(a => `<tr><td>${a.descricao||''}</td><td>${a.responsavel||''}</td><td>${a.status||''}</td><td>${a.prazo||''}</td><td>${a.risco_relacionado||'—'}</td></tr>`).join('')}
+    </tbody></table>`;
+  }
+
+  // Lições
+  let licoesHTML = '<p>Sem lições.</p>';
+  if (licoes.length) {
+    licoesHTML = `<table class="rpt-table"><thead><tr><th>Tipo</th><th>Descrição</th></tr></thead><tbody>
+    ${licoes.map(l => `<tr><td>${l.tipo||''}</td><td>${l.descricao||''}</td></tr>`).join('')}
+    </tbody></table>`;
+  }
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Relatório — ${nome}</title>
+  <style>
+    body{font-family:"Segoe UI",Arial,sans-serif;margin:0;padding:0;background:#f4f6fb;color:#222}
+    .rpt-header{background:linear-gradient(120deg,#0d47a1,#00bcd4);color:#fff;padding:18px 30px;display:flex;justify-content:space-between;align-items:center}
+    .rpt-header .title{font-size:22px;font-weight:700}.rpt-header .sub{font-size:14px;opacity:.9}
+    .rpt-body{max-width:1100px;margin:20px auto;background:#fff;border-radius:10px;padding:24px;box-shadow:0 8px 28px rgba(0,0,0,.08)}
+    .rpt-section{font-size:16px;color:#0d47a1;font-weight:700;margin:20px 0 8px;border-bottom:2px solid #eaf6ff;padding-bottom:4px}
+    .rpt-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px}
+    .rpt-table th,.rpt-table td{border:1px solid #e6eef6;padding:6px 10px;text-align:left}
+    .rpt-table th{background:#eaf6ff;color:#0d47a1;font-weight:700}
+    .rpt-footer{text-align:center;color:#666;margin-top:20px;font-size:12px}
+    .rpt-grid{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0}
+    .rpt-card{flex:1;min-width:150px;background:#f8fafc;border:1px solid #eef6ff;padding:12px;border-radius:8px;text-align:center}
+    .rpt-card strong{display:block;font-size:11px;color:#666;margin-bottom:4px}
+    .rpt-card span{font-size:18px;font-weight:700;color:#0d47a1}
+    @media print{body{background:#fff}.rpt-body{box-shadow:none;margin:0;max-width:100%}}
+  </style></head><body>
+    <div class="rpt-header"><div><div class="title">Relatório Completo do Projeto</div><div class="sub">${nome} — ID ${PROJETO_ID}</div></div><div style="font-size:12px">${agora}</div></div>
+    <div class="rpt-body">
+      <div class="rpt-section">1. Identificação e TAP</div>
+      <p><strong>Gerente:</strong> ${tap.gerente||'—'} &nbsp; <strong>Patrocinador:</strong> ${tap.patrocinador||'—'} &nbsp; <strong>Data início:</strong> ${tap.dataInicio||'—'} &nbsp; <strong>Status:</strong> ${tap.status||'—'}</p>
+      <p><strong>Objetivo:</strong> ${(tap.objetivo||'—').replace(/\n/g,'<br>')}</p>
+      <p><strong>Escopo:</strong> ${(tap.escopo||'—').replace(/\n/g,'<br>')}</p>
+
+      <div class="rpt-section">2. EAP</div>
+      ${eapHTML}
+
+      <div class="rpt-section">3. Análise Financeira — Planejado × Realizado</div>
+      ${finAnaliseHTML}
+
+      <div class="rpt-section">4. KPIs</div>
+      ${kpisHTML}
+
+      <div class="rpt-section">5. Riscos</div>
+      ${riscosHTML}
+
+      <div class="rpt-section">6. Plano de Ação</div>
+      ${acaoHTML}
+
+      <div class="rpt-section">7. Lições Aprendidas</div>
+      ${licoesHTML}
+
+      <div class="rpt-section">8. Encerramento</div>
+      <p><strong>Resultado:</strong> ${closeData.resultado||'—'}</p>
+      <p><strong>Entregáveis:</strong> ${(closeData.entregaveis||'—').replace(/\n/g,'<br>')}</p>
+    </div>
+    <div class="rpt-footer">Relatório gerado em ${agora} — BK Engenharia e Tecnologia</div>
+  </body></html>`;
+
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => w.print(), 500);
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   renderEAP();
   renderGantt();
@@ -1621,6 +2281,9 @@ document.addEventListener('DOMContentLoaded', () => {
   renderRiscos();
   renderOKRs();
   renderEncerramento();
+  renderFinanceiro();
+  renderKPIs();
+  renderPlanoAcao();
 
   document.querySelectorAll('.tab-btn[data-group="proj"]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1632,6 +2295,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (tab === 'tab-riscos') renderRiscos();
         if (tab === 'tab-okr') renderOKRs();
         if (tab === 'tab-encerramento') renderEncerramento();
+        if (tab === 'tab-financeiro') renderFinanceiro();
+        if (tab === 'tab-fin-analise') renderFinanceiroAnalise();
+        if (tab === 'tab-kpis') renderKPIs();
+        if (tab === 'tab-plano-acao') renderPlanoAcao();
       }, 50);
     });
   });
