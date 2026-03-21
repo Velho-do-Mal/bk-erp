@@ -28,6 +28,14 @@
   .eap-table th, .eap-table td { padding: 8px 12px; font-size: 12px; }
   .eap-row-summary td { font-weight: 700; background: rgba(20,184,166,0.08); }
   .eap-row-normal td { }
+  .eap-level-0 td:first-child { font-weight:700; }
+  .eap-level-0 td { background:rgba(25,118,210,0.06); }
+  .eap-level-1 td { background:rgba(25,118,210,0.02); }
+  .eap-row-summary td { font-weight:700; background:rgba(20,184,166,0.10) !important; }
+  .eap-status-concluido { color:#2e7d32; font-weight:600; }
+  .eap-status-andamento { color:#1565c0; font-weight:600; }
+  .eap-status-atrasado  { color:#b71c1c; font-weight:600; }
+  .eap-status-nao { color:#546e7a; }
   .risk-matrix { display: grid; grid-template-columns: repeat(5,1fr); gap: 4px; }
   .risk-cell {
     padding: 8px; border-radius: 6px; text-align: center;
@@ -224,8 +232,13 @@
       {% if is_admin %}
       <button class="btn btn-primary btn-sm" onclick="adicionarTarefa()">+ Adicionar Tarefa</button>
       {% endif %}
+      <button id="btn-view-org" onclick="toggleEapView('organograma')" style="margin-left:6px;background:#eceff1;border:1px solid #b0bec5;border-radius:4px;padding:3px 8px;font-size:12px;cursor:pointer">🌲 Organograma</button>
+      <button id="btn-view-tab" onclick="toggleEapView('tabela')" style="display:none;margin-left:6px;background:#1976d2;color:#fff;border:none;border-radius:4px;padding:3px 8px;font-size:12px;cursor:pointer">📋 Tabela</button>
     </div>
-    <div class="table-wrap">
+    <div id="eap-organograma" style="display:none;overflow-x:auto;padding:10px 4px">
+      <div id="eap-org-tree"></div>
+    </div>
+    <div class="table-wrap" id="eap-tabela-view">
       <table class="eap-table" id="eap-table">
         <thead>
           <tr>
@@ -613,6 +626,24 @@ async function salvarProjeto() {
 // ══════════════════════════════
 // EAP TABLE
 // ══════════════════════════════
+function toggleEapView(view) {
+  var tabV = document.getElementById('eap-tabela-view');
+  var orgV = document.getElementById('eap-organograma');
+  var bOrg = document.getElementById('btn-view-org');
+  var bTab = document.getElementById('btn-view-tab');
+  if (view === 'organograma') {
+    if (tabV) tabV.style.display = 'none';
+    if (orgV) { orgV.style.display = 'block'; renderEapOrg(); }
+    if (bOrg) bOrg.style.display = 'none';
+    if (bTab) bTab.style.display = 'inline-block';
+  } else {
+    if (tabV) tabV.style.display = '';
+    if (orgV) orgV.style.display = 'none';
+    if (bOrg) bOrg.style.display = 'inline-block';
+    if (bTab) bTab.style.display = 'none';
+  }
+}
+
 function renderEAP() {
   const tbody = el('eap-tbody');
   if (!tbody) return;
@@ -648,7 +679,8 @@ function renderEAP() {
     }[status] || `<span class="badge badge-gray">${status}</span>`;
 
     const indent = `padding-left:${12 + depth*20}px`;
-    const rowClass = summary ? 'eap-row-summary' : 'eap-row-normal';
+    const _lv = t.codigo.split('.').length - 1;
+    const rowClass = (summary ? 'eap-row-summary' : 'eap-row-normal') + ' eap-level-' + _lv;
 
     let actionCell = '';
     if (IS_ADMIN) {
@@ -699,6 +731,35 @@ function renderEAP() {
         ${actionCell}
       </tr>`;
   });
+}
+
+function renderEapOrg() {
+  var el = document.getElementById('eap-org-tree');
+  if (!el) return;
+  if (!eapTasks || !eapTasks.length) { el.innerHTML='<p style="padding:16px;color:#666">Nenhuma atividade cadastrada.</p>'; return; }
+  var tMap = {};
+  eapTasks.forEach(function(tk){ tMap[tk.codigo] = tk; });
+  function gPar(c){ var p=c.split('.'); return p.length<=1?null:p.slice(0,-1).join('.'); }
+  var SC={'concluido':'#43a047','em-andamento':'#1976d2','atrasado':'#e53935','nao-iniciado':'#78909c'};
+  var SL={'concluido':'Concluído','em-andamento':'Em Andamento','atrasado':'Atrasado','nao-iniciado':'Não Iniciado'};
+  function nd(tk, lv) {
+    var col=SC[tk.status]||'#90a4ae';
+    var lbl=SL[tk.status]||(tk.status||'—');
+    var kids=eapTasks.filter(function(c){ return gPar(c.codigo)===tk.codigo; });
+    var bg=lv===0?'background:#e3f2fd;':lv===1?'background:#f5f7fa;':'' ;
+    var fw=lv===0?'font-weight:700;':'' ;
+    return '<div style="margin:3px 0">'
+      +'<div style="display:inline-flex;align-items:center;gap:8px;border:1.5px solid '+col+';border-radius:6px;padding:5px 10px;min-width:200px;max-width:520px;'+bg+fw+'">'
+      +'<span style="font-size:11px;color:#888;min-width:36px">'+tk.codigo+'</span>'
+      +'<span style="flex:1;font-size:12px">'+tk.nome+'</span>'
+      +'<span style="font-size:10px;background:'+col+';color:#fff;border-radius:10px;padding:1px 7px;white-space:nowrap">'+lbl+'</span>'
+      +'<span style="font-size:11px;color:#555;min-width:30px;text-align:right">'+((tk.pct||0)+'%')+'</span>'
+      +'</div>'
+      +(kids.length?'<div style="margin-left:30px;border-left:2px solid #e0e0e0;padding-left:6px">'+kids.map(function(k){return nd(k,lv+1);}).join('')+'</div>':'')
+      +'</div>';
+  }
+  var roots=eapTasks.filter(function(tk){ var p=gPar(tk.codigo); return !p||!tMap[p]; });
+  el.innerHTML='<div style="font-family:sans-serif;padding:6px">'+roots.map(function(r){return nd(r,0);}).join('')+'</div>';
 }
 
 function adicionarTarefa() {
@@ -2079,7 +2140,28 @@ function gerarRelatorioGeral() {
   const nome = tap.nome || 'Projeto';
   const agora = new Date().toLocaleString('pt-BR');
 
-  // Tabela EAP
+    // Organograma WBS
+  function _gp(c){var p=c.split('.');return p.length<=1?null:p.slice(0,-1).join('.');}
+  var _tm={}; eapTasks.forEach(function(tk){_tm[tk.codigo]=tk;});
+  var _SC={'concluido':'#43a047','em-andamento':'#1976d2','atrasado':'#e53935','nao-iniciado':'#78909c'};
+  var _SL={'concluido':'Concluído','em-andamento':'Em Andamento','atrasado':'Atrasado','nao-iniciado':'Não Iniciado'};
+  function _nd(tk,lv){var col=_SC[tk.status]||'#90a4ae';var lbl=_SL[tk.status]||(tk.status||'—');
+    var kids=eapTasks.filter(function(c){return _gp(c.codigo)===tk.codigo;});
+    var bg=lv===0?'background:#e3f2fd;':lv===1?'background:#f5f7fa;':'';var fw=lv===0?'font-weight:700;':'' ;
+    return '<div style="margin:3px 0"><div style="display:inline-flex;align-items:center;gap:8px;border:1.5px solid '+col+';border-radius:5px;padding:4px 8px;min-width:180px;max-width:500px;'+bg+fw+'">'
+      +'<span style="font-size:10px;color:#888;min-width:32px">'+tk.codigo+'</span>'
+      +'<span style="flex:1;font-size:11px">'+tk.nome+'</span>'
+      +'<span style="font-size:10px;background:'+col+';color:#fff;border-radius:8px;padding:1px 6px">'+lbl+'</span>'
+      +'<span style="font-size:10px;color:#555;min-width:28px;text-align:right">'+((tk.pct||0)+'%')+'</span></div>'
+      +(kids.length?'<div style="margin-left:24px;border-left:2px solid #e0e0e0;padding-left:5px">'+kids.map(function(k){return _nd(k,lv+1);}).join('')+'</div>':'')
+      +'</div>';
+  }
+  var _roots=eapTasks.filter(function(tk){var p=_gp(tk.codigo);return !p||!_tm[p];});
+  var orgHTML = eapTasks.length
+    ? '<div style="font-family:sans-serif;font-size:11px;padding:4px">'+_roots.map(function(r){return _nd(r,0);}).join('')+'</div>'
+    : '<p>Sem atividades na EAP.</p>';
+
+// Tabela EAP
   const _rptD = calcularDatas(); const _rptDM = {};
   _rptD.forEach(d => { _rptDM[d.codigo] = d; });
   let eapHTML = '<p>Sem atividades na EAP.</p>';
@@ -2211,28 +2293,31 @@ function gerarRelatorioGeral() {
       <p><strong>Objetivo:</strong> ${(tap.objetivo||'—').replace(/\n/g,'<br>')}</p>
       <p><strong>Escopo:</strong> ${(tap.escopo||'—').replace(/\n/g,'<br>')}</p>
 
-      <div class="rpt-section">2. EAP</div>
+      <div class="rpt-section">2. Organograma (WBS)</div>
+      ${orgHTML}
+
+      <div class="rpt-section">3. EAP Detalhada</div>
       ${eapHTML}
 
-      <div class="rpt-section">3. Controle de Projetos</div>
+      <div class="rpt-section">4. Controle de Projetos</div>
       ${controleHTML}
 
-      <div class="rpt-section">4. Análise Financeira — Planejado × Realizado</div>
+      <div class="rpt-section">5. Análise Financeira — Planejado × Realizado</div>
       ${finAnaliseHTML}
 
-      <div class="rpt-section">5. KPIs</div>
+      <div class="rpt-section">6. KPIs</div>
       ${kpisHTML}
 
-      <div class="rpt-section">5. Riscos</div>
+      <div class="rpt-section">7. Riscos</div>
       ${riscosHTML}
 
-      <div class="rpt-section">6. Plano de Ação</div>
+      <div class="rpt-section">8. Plano de Ação</div>
       ${acaoHTML}
 
-      <div class="rpt-section">7. Lições Aprendidas</div>
+      <div class="rpt-section">9. Lições Aprendidas</div>
       ${licoesHTML}
 
-      <div class="rpt-section">8. Encerramento</div>
+      <div class="rpt-section">10. Encerramento</div>
       <p><strong>Resultado:</strong> ${closeData.resultado||'—'}</p>
       <p><strong>Entregáveis:</strong> ${(closeData.entregaveis||'—').replace(/\n/g,'<br>')}</p>
     </div>
