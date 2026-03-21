@@ -391,6 +391,87 @@
 <!-- ══════════════════════════════
      TAB OKRs
 ══════════════════════════════ -->
+<div class="tab-panel" data-group="proj" id="tab-financeiro">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="font-size:14px;font-weight:700;color:#F59E0B;margin:0">💰 Lançamentos Financeiros</h3>
+      {% if is_admin %}
+      <button class="btn btn-primary btn-sm" onclick="addFinanceiro()">+ Lançamento</button>
+      {% endif %}
+    </div>
+
+    <!-- Resumo KPIs financeiros -->
+    <div id="fin-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:16px"></div>
+
+    <!-- Tabela de lançamentos -->
+    <div id="fin-lista" class="table-wrap"></div>
+
+    <!-- Curva S Financeira -->
+    <div style="margin-top:20px">
+      <h4 style="font-size:13px;font-weight:700;color:var(--bk-text-muted);margin-bottom:10px">Curva S Financeira (Previsto x Realizado)</h4>
+      <div id="fin-curva-s" style="width:100%;height:350px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     TAB FINANCEIRO ANÁLISE
+══════════════════════════════ -->
+<div class="tab-panel" data-group="proj" id="tab-fin-analise">
+  <div class="card">
+    <h3 style="font-size:14px;font-weight:700;color:#3B82F6;margin:0 0 16px 0">📈 Análise Financeira — Planejado × Realizado</h3>
+    <p style="font-size:12px;color:var(--bk-text-muted);margin-bottom:16px">Tabela comparativa, fluxo de caixa em barras e custo acumulado em linhas.</p>
+
+    <!-- Parecer -->
+    <div id="fin-parecer" style="padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:13px;font-weight:600"></div>
+
+    <!-- Métricas -->
+    <div id="fin-analise-kpis" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:16px"></div>
+
+    <!-- Tabela Planejado x Realizado -->
+    <div id="fin-analise-tabela" class="table-wrap" style="margin-bottom:20px"></div>
+
+    <!-- Gráfico Barras - Fluxo de Caixa -->
+    <h4 style="font-size:13px;font-weight:700;color:var(--bk-text-muted);margin-bottom:10px">Fluxo de Caixa Mensal (Barras)</h4>
+    <div id="fin-analise-barras" style="width:100%;height:350px"></div>
+
+    <!-- Gráfico Linhas - Acumulado -->
+    <h4 style="font-size:13px;font-weight:700;color:var(--bk-text-muted);margin:20px 0 10px 0">Custo Acumulado (Linhas)</h4>
+    <div id="fin-analise-linhas" style="width:100%;height:350px"></div>
+
+    <!-- Gráfico Diferença -->
+    <h4 style="font-size:13px;font-weight:700;color:var(--bk-text-muted);margin:20px 0 10px 0">Diferença Planejado - Realizado</h4>
+    <div id="fin-analise-diff" style="width:100%;height:300px"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     TAB KPIs
+══════════════════════════════ -->
+<div class="tab-panel" data-group="proj" id="tab-kpis">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h3 style="font-size:14px;font-weight:700;color:#10B981;margin:0">📊 KPIs de Qualidade</h3>
+      {% if is_admin %}
+      <button class="btn btn-primary btn-sm" onclick="addKPI()">+ KPI</button>
+      {% endif %}
+    </div>
+    <div id="kpi-lista" class="table-wrap"></div>
+    <div style="margin-top:20px">
+      <h4 style="font-size:13px;font-weight:700;color:var(--bk-text-muted);margin-bottom:10px">Gráfico do KPI</h4>
+      <div style="margin-bottom:8px">
+        <select id="kpi-sel-chart" class="form-control" style="max-width:300px;display:inline-block" onchange="renderKPIChart()">
+          <option value="">— Selecione o KPI —</option>
+        </select>
+      </div>
+      <div id="kpi-chart" style="width:100%;height:350px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     TAB PLANO DE AÇÃO
+══════════════════════════════ -->
 <div class="tab-panel" data-group="proj" id="tab-plano-acao">
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
