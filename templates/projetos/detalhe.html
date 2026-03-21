@@ -806,7 +806,7 @@ function renderGantt() {
   const ganttData = [{
     type: 'bar',
     orientation: 'h',
-    x: tasks.map(t => (t.endDate - t.startDate) / (1000*60*60*24)),
+    x: tasks.map(t => t.endDate - t.startDate),
     y: yLabels,
     base: tasks.map(t => t.startDate.getTime()),
     marker: { color: tasks.map(t => colors[t.status] || '#64748B') },
