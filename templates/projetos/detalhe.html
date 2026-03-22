@@ -450,7 +450,7 @@
         <div><label style="font-size:11px;color:#555;display:block;margin-bottom:3px">Data Realizada</label><input type="date" id="mov-data-real" style="width:100%;font-size:12px;border:1px solid #ccc;border-radius:4px;padding:4px 6px"></div>
       </div>
       <div style="margin-top:10px;display:flex;gap:8px">
-        <button class="btn btn-primary btn-sm" onclick="salvarMovimentacao()">Salvar</button>
+        <button class="btn btn-primary btn-sm" id="mov-save-btn" onclick="salvarMovimentacao()">Salvar</button>
         <button class="btn btn-sm" style="background:#eee;border:1px solid #ccc;border-radius:4px;padding:4px 12px" onclick="toggleFormMov()">Cancelar</button>
       </div>
     </div>
@@ -2239,7 +2239,20 @@ function gerarRelatorioGeral() {
     renderEapOrg();
     var _ot = document.getElementById('eap-org-tree');
     var _sv = _ot ? _ot.innerHTML : '';
-    return _sv ? '<div style="overflow-x:auto;padding:8px 0">'+_sv+'</div>' : '<p>Sem atividades na EAP.</p>';
+    var _svg = _ot ? _ot.querySelector('svg') : null;
+    if (_svg) {
+      var _nw = parseFloat(_svg.getAttribute('width')) || 0;
+      var _nh = parseFloat(_svg.getAttribute('height')) || 0;
+      var _maxW = 680;
+      if (_nw > _maxW) {
+        var _sc = _maxW / _nw;
+        _svg.setAttribute('viewBox', '0 0 ' + _nw + ' ' + _nh);
+        _svg.setAttribute('width', _maxW);
+        _svg.setAttribute('height', Math.ceil(_nh * _sc));
+      }
+    }
+    var _sv2 = _ot ? _ot.innerHTML : '';
+    return _sv2 ? '<div style="padding:8px 0">' + _sv2 + '</div>' : '<p>Sem atividades na EAP.</p>';
   })()
 
 // Tabela EAP
@@ -2456,20 +2469,26 @@ function salvarMovimentacao() {
   var cat = document.getElementById('mov-cat').value.trim();
   var dsc = document.getElementById('mov-desc').value.trim();
   var val = parseFloat(document.getElementById('mov-valor').value) || 0;
-  var rl  = document.getElementById('mov-real').checked;
+  var rlz = document.getElementById('mov-realizado').checked;
   var dr  = document.getElementById('mov-data-real').value;
-  if (!dp && !dsc) { alert('Informe a data prevista ou a descrição.'); return; }
-  finances.push({ id: Date.now(), tipo: tp, descricao: dsc, categoria: cat,
-    subcategoria: '', valor: val, recorrencia: 'nenhuma', qtdRecorrencias: 1,
-    dataPrevista: dp, realizado: rl, dataRealizada: rl ? dr : '' });
-  if (typeof salvarDadosProjeto === 'function') salvarDadosProjeto();
-  if (typeof renderFinanceiro === 'function') renderFinanceiro();
-  renderMovimentacao();
-  ['mov-data-prev','mov-cat','mov-desc','mov-valor','mov-data-real'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
-  var cb=document.getElementById('mov-real'); if(cb) cb.checked=false;
-  toggleFormMov();
+  if (!dp || !tp || !dsc || !val) { alert('Preencha Data Prevista, Tipo, Descrição e Valor.'); return; }
+  var editId = window._movEditId || null;
+  if (editId) {
+    var idx = finances.findIndex(function(f){return f.id===editId;});
+    if (idx !== -1) {
+      finances[idx].dataPrevista=dp; finances[idx].tipo=tp; finances[idx].categoria=cat;
+      finances[idx].descricao=dsc; finances[idx].valor=val; finances[idx].realizado=rlz; finances[idx].dataRealizada=dr;
+    }
+    window._movEditId = null;
+    var saveBtn = document.getElementById('mov-save-btn');
+    if (saveBtn) saveBtn.textContent = 'Salvar';
+  } else {
+    finances.push({id:Date.now(), dataPrevista:dp, tipo:tp, categoria:cat, descricao:dsc, valor:val, realizado:rlz, dataRealizada:dr});
+  }
+  if (typeof salvarDadosProjeto==='function') salvarDadosProjeto();
+  renderFinanceiro(); renderMovimentacao();
+  toggleFormMov(); toggleFormMov();
 }
-
 function removerMovimentacao(id) {
   if (!confirm('Remover esta movimentação?')) return;
   var idx = finances.findIndex(function(f){ return f.id === id; });
@@ -2479,6 +2498,25 @@ function removerMovimentacao(id) {
   renderMovimentacao();
 }
 
+function editarMovimentacao(id) {
+  var f = finances.find(function(x){return x.id===id;});
+  if (!f) return;
+  window._movEditId = id;
+  var setVal = function(elId, val){ var el=document.getElementById(elId); if(el) el.value=val||''; };
+  setVal('mov-data-prev', f.dataPrevista);
+  setVal('mov-tipo', f.tipo);
+  setVal('mov-cat', f.categoria);
+  setVal('mov-desc', f.descricao);
+  setVal('mov-valor', f.valor);
+  var rlzEl = document.getElementById('mov-realizado');
+  if (rlzEl) rlzEl.checked = !!f.realizado;
+  setVal('mov-data-real', f.dataRealizada);
+  var saveBtn = document.getElementById('mov-save-btn');
+  if (saveBtn) saveBtn.textContent = 'Atualizar';
+  var formEl = document.getElementById('form-movimentacao');
+  if (formEl) formEl.style.display = 'block';
+  formEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+}
 function renderMovimentacao() {
   var tbody = document.getElementById('mov-tbody');
   var kpis  = document.getElementById('mov-kpis');
@@ -2505,7 +2543,7 @@ function renderMovimentacao() {
       ? '<span style="background:#43a047;color:#fff;border-radius:10px;padding:1px 7px;font-size:10px">Receita</span>'
       : '<span style="background:#e53935;color:#fff;border-radius:10px;padding:1px 7px;font-size:10px">Despesa</span>';
     var realB = f.realizado ? '<span style="color:#2e7d32;font-weight:600">&#10004;</span>' : '<span style="color:#bbb">—</span>';
-    var delBtn = IS_ADMIN ? '<td><button class="btn btn-danger btn-sm" onclick="removerMovimentacao('+f.id+')">&#10005;</button></td>' : '';
+    var delBtn = IS_ADMIN ? '<td style="white-space:nowrap"><button class="btn btn-sm" style="background:#1976d2;color:#fff;margin-right:3px" onclick="editarMovimentacao('+f.id+')">&#9998;</button><button class="btn btn-danger btn-sm" onclick="removerMovimentacao('+f.id+')">&#10005;</button></td>' : '';
     return '<tr><td>'+dtP+'</td><td>'+badge+'</td><td>'+(f.categoria||'—')+'</td><td>'+(f.descricao||'—')+'</td>'+
       '<td style="text-align:right;font-weight:600">R$ '+fmt(f.valor||0)+'</td><td style="text-align:center">'+realB+'</td><td>'+dtR+'</td>'+delBtn+'</tr>';
   }).join('');
