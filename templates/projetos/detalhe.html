@@ -82,6 +82,7 @@
   <button class="tab-btn" data-group="proj" data-tab="tab-gantt">📊 Gantt</button>
   <button class="tab-btn" data-group="proj" data-tab="tab-financeiro">💰 Lançamentos Financeiros</button>
   <button class="tab-btn" data-group="proj" data-tab="tab-fin-analise">📈 Financeiro (Análise)</button>
+  <button class="tab-btn" data-group="proj" data-tab="tab-movimentacao">💸 Movimenta&#231;&#227;o Financeira</button>
   <button class="tab-btn" data-group="proj" data-tab="tab-kpis">📊 Qualidade (KPIs)</button>
   <button class="tab-btn" data-group="proj" data-tab="tab-controle">🗂️ Controle de Projetos</button>
   <button class="tab-btn" data-group="proj" data-tab="tab-riscos">⚠️ Riscos</button>
@@ -457,6 +458,47 @@
     <div id="fin-analise-diff" style="width:100%;height:300px"></div>
   </div>
 </div>
+<!-- ══════════════════════════════
+     TAB MOVIMENTACAO FINANCEIRA
+══════════════════════════════ -->
+<div class="tab-panel" data-group="proj" id="tab-movimentacao">
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+      <span style="font-size:16px;font-weight:700;color:#0d47a1">Movimenta&#231;&#227;o Financeira</span>
+      {% if is_admin %}
+      <button class="btn btn-primary btn-sm" onclick="toggleFormMov()">+ Nova Movimenta&#231;&#227;o</button>
+      {% endif %}
+    </div>
+    {% if is_admin %}
+    <div id="form-movimentacao" style="display:none;background:#f8fafc;border:1px solid #b0bec5;border-radius:8px;padding:14px;margin-bottom:16px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;align-items:end">
+        <div><label style="font-size:11px;color:#555;display:block;margin-bottom:3px">Data Prevista</label><input type="date" id="mov-data-prev" style="width:100%;font-size:12px;border:1px solid #ccc;border-radius:4px;padding:4px 6px"></div>
+        <div><label style="font-size:11px;color:#555;display:block;margin-bottom:3px">Tipo</label><select id="mov-tipo" style="width:100%;font-size:12px;border:1px solid #ccc;border-radius:4px;padding:4px 6px"><option value="despesa">Despesa</option><option value="receita">Receita</option></select></div>
+        <div><label style="font-size:11px;color:#555;display:block;margin-bottom:3px">Categoria</label><input type="text" id="mov-cat" placeholder="Ex: Material" style="width:100%;font-size:12px;border:1px solid #ccc;border-radius:4px;padding:4px 6px"></div>
+        <div><label style="font-size:11px;color:#555;display:block;margin-bottom:3px">Descri&#231;&#227;o</label><input type="text" id="mov-desc" placeholder="Detalhe o lan&#231;amento" style="width:100%;font-size:12px;border:1px solid #ccc;border-radius:4px;padding:4px 6px"></div>
+        <div><label style="font-size:11px;color:#555;display:block;margin-bottom:3px">Valor (R$)</label><input type="number" id="mov-valor" placeholder="0.00" step="0.01" min="0" style="width:100%;font-size:12px;border:1px solid #ccc;border-radius:4px;padding:4px 6px"></div>
+        <div><label style="font-size:11px;color:#555;display:block;margin-bottom:3px">Realizado?</label><input type="checkbox" id="mov-real" style="width:16px;height:16px;margin-top:6px"></div>
+        <div><label style="font-size:11px;color:#555;display:block;margin-bottom:3px">Data Realizada</label><input type="date" id="mov-data-real" style="width:100%;font-size:12px;border:1px solid #ccc;border-radius:4px;padding:4px 6px"></div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button class="btn btn-primary btn-sm" onclick="salvarMovimentacao()">Salvar</button>
+        <button class="btn btn-sm" style="background:#eee;border:1px solid #ccc;border-radius:4px;padding:4px 12px" onclick="toggleFormMov()">Cancelar</button>
+      </div>
+    </div>
+    {% endif %}
+    <div id="mov-kpis" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px"></div>
+    <div class="table-wrap">
+      <table class="eap-table" id="mov-table"><thead><tr>
+        <th style="width:90px">Data Prev.</th><th style="width:80px">Tipo</th>
+        <th>Categoria</th><th>Descri&#231;&#227;o</th>
+        <th style="width:110px;text-align:right">Valor</th>
+        <th style="width:70px">Real.</th><th style="width:90px">Data Real.</th>
+        {% if is_admin %}<th style="width:50px">A&#231;&#227;o</th>{% endif %}
+      </tr></thead><tbody id="mov-tbody"></tbody></table>
+    </div>
+  </div>
+</div>
+
 
 <!-- ══════════════════════════════
      TAB KPIs
@@ -698,8 +740,12 @@ function renderEAP() {
       : `${t.duracao||0}d`;
 
     const _de = _dateMap[t.codigo] || {};
-    const _dtIni = _de.startDate ? _de.startDate.toLocaleDateString('pt-BR') : '—';
-    const _dtFim = _de.endDate ? _de.endDate.toLocaleDateString('pt-BR') : '—';
+    const _dtIniISO = t.dtInicioManual || (_de.startDate ? _de.startDate.toISOString().split('T')[0] : '');
+    const _dtFimISO = t.dtConclusaoManual || (_de.endDate ? _de.endDate.toISOString().split('T')[0] : '');
+    const _dtIni = _dtIniISO ? new Date(_dtIniISO+'T12:00').toLocaleDateString('pt-BR') : '—';
+    const _dtFim = _dtFimISO ? new Date(_dtFimISO+'T12:00').toLocaleDateString('pt-BR') : '—';
+    const _dtIniCell = IS_ADMIN ? '<input type="date" value="'+_dtIniISO+'" onchange="setTkDate('+idx+',\'i\',this.value)" style="font-size:11px;border:1px solid #b0bec5;border-radius:3px;padding:1px 3px;width:108px">' : _dtIni;
+    const _dtFimCell = IS_ADMIN ? '<input type="date" value="'+_dtFimISO+'" onchange="setTkDate('+idx+',\'f\',this.value)" style="font-size:11px;border:1px solid #b0bec5;border-radius:3px;padding:1px 3px;width:108px">' : _dtFim;
 
     let pctCell = IS_ADMIN
       ? `<input type="number" class="form-control" style="font-size:12px;padding:4px 8px;width:65px" value="${pct}" min="0" max="100" onchange="eapTasks[${idx}].percentualConcluido=parseFloat(this.value)||0">`
@@ -723,8 +769,8 @@ function renderEAP() {
         <td style="${IS_ADMIN?'':''}${!IS_ADMIN?indent:''}">${nomeCell}</td>
         <td>${durCell}</td>
         <td><input type="text" class="form-control" style="font-size:11px;padding:3px 6px;" value="${escHtml(String(t.predecessoras||''))}" ${IS_ADMIN?`onchange="eapTasks[${idx}].predecessoras=this.value"`:'readonly'}></td>
-        <td>${_dtIni}</td>
-        <td>${_dtFim}</td>
+        <td>${_dtIniCell}</td>
+        <td>${_dtFimCell}</td>
         <td>${pctCell}</td>
         <td>${statusCell}</td>
         <td><input type="text" class="form-control" style="font-size:11px;padding:3px 6px;" value="${escHtml(t.responsavel||'')}" ${IS_ADMIN?`onchange="eapTasks[${idx}].responsavel=this.value"`:'readonly'}></td>
@@ -736,30 +782,48 @@ function renderEAP() {
 function renderEapOrg() {
   var el = document.getElementById('eap-org-tree');
   if (!el) return;
-  if (!eapTasks || !eapTasks.length) { el.innerHTML='<p style="padding:16px;color:#666">Nenhuma atividade cadastrada.</p>'; return; }
-  var tMap = {};
-  eapTasks.forEach(function(tk){ tMap[tk.codigo] = tk; });
-  function gPar(c){ var p=c.split('.'); return p.length<=1?null:p.slice(0,-1).join('.'); }
-  var SC={'concluido':'#43a047','em-andamento':'#1976d2','atrasado':'#e53935','nao-iniciado':'#78909c'};
-  var SL={'concluido':'Concluído','em-andamento':'Em Andamento','atrasado':'Atrasado','nao-iniciado':'Não Iniciado'};
-  function nd(tk, lv) {
-    var col=SC[tk.status]||'#90a4ae';
-    var lbl=SL[tk.status]||(tk.status||'—');
-    var kids=eapTasks.filter(function(c){ return gPar(c.codigo)===tk.codigo; });
-    var bg=lv===0?'background:#e3f2fd;':lv===1?'background:#f5f7fa;':'' ;
-    var fw=lv===0?'font-weight:700;':'' ;
-    return '<div style="margin:3px 0">'
-      +'<div style="display:inline-flex;align-items:center;gap:8px;border:1.5px solid '+col+';border-radius:6px;padding:5px 10px;min-width:200px;max-width:520px;'+bg+fw+'">'
-      +'<span style="font-size:11px;color:#888;min-width:36px">'+tk.codigo+'</span>'
-      +'<span style="flex:1;font-size:12px">'+tk.nome+'</span>'
-      +'<span style="font-size:10px;background:'+col+';color:#fff;border-radius:10px;padding:1px 7px;white-space:nowrap">'+lbl+'</span>'
-      +'<span style="font-size:11px;color:#555;min-width:30px;text-align:right">'+((tk.pct||0)+'%')+'</span>'
-      +'</div>'
-      +(kids.length?'<div style="margin-left:30px;border-left:2px solid #e0e0e0;padding-left:6px">'+kids.map(function(k){return nd(k,lv+1);}).join('')+'</div>':'')
-      +'</div>';
-  }
-  var roots=eapTasks.filter(function(tk){ var p=gPar(tk.codigo); return !p||!tMap[p]; });
-  el.innerHTML='<div style="font-family:sans-serif;padding:6px">'+roots.map(function(r){return nd(r,0);}).join('')+'</div>';
+  if (!eapTasks || !eapTasks.length) { el.innerHTML='<p style="padding:20px;color:#666;font-style:italic">Nenhuma atividade cadastrada.</p>'; return; }
+  var BW=132, BH=44, HG=20, VG=56;
+  var tm={};
+  eapTasks.forEach(function(tk){ tm[tk.codigo]=tk; });
+  function gp(c){ var a=c.split('.'); return a.length<=1?null:a.slice(0,-1).join('.'); }
+  function ch(c){ return eapTasks.filter(function(tk){ return gp(tk.codigo)===c; }); }
+  var roots=eapTasks.filter(function(tk){ var p=gp(tk.codigo); return !p||!tm[p]; });
+  function sw(c){ var k=ch(c); if(!k.length) return BW; var tot=k.reduce(function(s,x){return s+sw(x.codigo);},0)+HG*(k.length-1); return Math.max(BW,tot); }
+  var pos={};
+  function lay(c,x,y){ var k=ch(c),mw=sw(c); pos[c]={x:x+mw/2-BW/2,y:y}; if(k.length){ var tw=k.reduce(function(s,x){return s+sw(x.codigo);},0)+HG*(k.length-1); var cx=x+mw/2-tw/2; k.forEach(function(x){ lay(x.codigo,cx,y+BH+VG); cx+=sw(x.codigo)+HG; }); } }
+  var totRW=roots.reduce(function(s,r){return s+sw(r.codigo);},0)+HG*(roots.length-1);
+  var vW=Math.max(BW,totRW);
+  var rx0=vW/2-totRW/2;
+  roots.forEach(function(r){ lay(r.codigo,rx0,0); rx0+=sw(r.codigo)+HG; });
+  var OX=16, OY=BH+VG+16;
+  var maxX=0,maxY=0;
+  Object.keys(pos).forEach(function(k){ maxX=Math.max(maxX,pos[k].x+BW+OX); maxY=Math.max(maxY,pos[k].y+BH+OY); });
+  var sW=Math.max(maxX+20,vW+OX+20), sH=maxY+20;
+  function gcol(c){ var lv=c.split('.').length-1; return lv>=2?'#f9a825':'#2e7d32'; }
+  function gtc(c){ var lv=c.split('.').length-1; return lv>=2?'#1a1200':'#fff'; }
+  function xs(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function trunc(s,n){ s=xs(s); return s.length>n?s.slice(0,n-2)+'...':s; }
+  var svg='';
+  var vx=OX+vW/2-BW/2, vy=12;
+  var nomEl=document.querySelector('.projeto-nome,h1.page-title,.card-header h2,.project-name');
+  var projNom=nomEl?trunc(nomEl.textContent.trim(),16):'PROJETO';
+  svg+='<rect x="'+vx+'" y="'+vy+'" width="'+BW+'" height="'+BH+'" rx="5" fill="#c62828" stroke="#b71c1c" stroke-width="1.5"/>';
+  svg+='<text x="'+(vx+BW/2)+'" y="'+(vy+BH/2+4)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="11" font-weight="bold" fill="#fff">'+projNom+'</text>';
+  var vBot=vy+BH;
+  roots.forEach(function(r){ var rp=pos[r.codigo]; if(!rp) return; var tx=rp.x+BW/2+OX,ty=rp.y+OY,mY=(vBot+ty)/2; svg+='<polyline points="'+(vx+BW/2)+','+vBot+' '+(vx+BW/2)+','+mY+' '+tx+','+mY+' '+tx+','+ty+'" stroke="#666" stroke-width="1.5" fill="none"/>'; });
+  eapTasks.forEach(function(tk){ var pC=gp(tk.codigo); if(!pC||!tm[pC]||!pos[pC]||!pos[tk.codigo]) return; var pn=pos[pC],cn=pos[tk.codigo]; var fx=pn.x+BW/2+OX,fy=pn.y+BH+OY,tx=cn.x+BW/2+OX,ty=cn.y+OY,mY=(fy+ty)/2; svg+='<polyline points="'+fx+','+fy+' '+fx+','+mY+' '+tx+','+mY+' '+tx+','+ty+'" stroke="#666" stroke-width="1.5" fill="none"/>'; });
+  eapTasks.forEach(function(tk){ var n=pos[tk.codigo]; if(!n) return; var bx=n.x+OX,by=n.y+OY,c=gcol(tk.codigo),tc=gtc(tk.codigo); svg+='<rect x="'+bx+'" y="'+by+'" width="'+BW+'" height="'+BH+'" rx="4" fill="'+c+'" stroke="#444" stroke-width="1"/>';
+    svg+='<text x="'+(bx+BW/2)+'" y="'+(by+14)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" font-weight="bold" fill="'+tc+'">'+xs(tk.codigo)+'</text>';
+    svg+='<text x="'+(bx+BW/2)+'" y="'+(by+30)+'" text-anchor="middle" font-family="Arial,sans-serif" font-size="9" fill="'+tc+'">'+trunc(tk.nome||'',20)+'</text>'; });
+  el.innerHTML='<div style="overflow-x:auto;overflow-y:auto;max-height:560px;border:1px solid #ddd;border-radius:8px;background:#fafafa;padding:4px"><svg width="'+sW+'" height="'+sH+'" xmlns="http://www.w3.org/2000/svg">'+svg+'</svg></div>';
+}
+function setTkDate(idx, tipo, val) {
+  if (!eapTasks[idx]) return;
+  if (tipo === 'i') eapTasks[idx].dtInicioManual = val;
+  else eapTasks[idx].dtConclusaoManual = val;
+  // Persiste junto com o restante dos dados do projeto
+  if (typeof salvarDadosProjeto === 'function') salvarDadosProjeto();
 }
 
 function adicionarTarefa() {
@@ -2237,6 +2301,39 @@ function gerarRelatorioGeral() {
     }
   }
 
+  // Grafico financeiro SVG
+  if (finances.length) {
+    var _mP={}, _mR={};
+    finances.forEach(function(f){
+      var v=parseFloat(f.valor)||0;
+      var key=(f.dataPrevista||'').substring(0,7);
+      if(!key) return;
+      if (f.realizado) { _mR[key]=(_mR[key]||0)+v; }
+      else { _mP[key]=(_mP[key]||0)+v; }
+    });
+    var _keys=Object.keys(_mP).concat(Object.keys(_mR)).filter(function(v,i,a){return a.indexOf(v)===i;}).sort();
+    if (_keys.length) {
+      var _max=1;
+      _keys.forEach(function(k){ var mx=Math.max(_mP[k]||0,_mR[k]||0); if(mx>_max)_max=mx; });
+      var BH2=130, BW2=36, GAP=8, PAD=36;
+      var svgW2=PAD*2+_keys.length*(BW2*2+GAP+14);
+      var svgH2=BH2+70;
+      var bars='';
+      _keys.forEach(function(k,i){
+        var xBase=PAD+i*(BW2*2+GAP+14);
+        var hP=Math.max(2,Math.round(((_mP[k]||0)/_max)*BH2));
+        var hR=Math.max(2,Math.round(((_mR[k]||0)/_max)*BH2));
+        bars+='<rect x="'+xBase+'" y="'+(BH2-hP+16)+'" width="'+BW2+'" height="'+hP+'" fill="#1976d2" rx="2"/>';
+        bars+='<rect x="'+(xBase+BW2+4)+'" y="'+(BH2-hR+16)+'" width="'+BW2+'" height="'+hR+'" fill="#43a047" rx="2"/>';
+        var lbl=k.length>=7?k.substring(5,7)+"/"+k.substring(2,4):k;
+        bars+='<text x="'+(xBase+BW2)+'" y="'+(BH2+32)+'" text-anchor="middle" font-size="8" fill="#555">'+lbl+'</text>';
+      });
+      var lgd='<rect x="10" y="8" width="10" height="10" fill="#1976d2"/><text x="24" y="18" font-size="8" fill="#333">Planejado</text><rect x="90" y="8" width="10" height="10" fill="#43a047"/><text x="104" y="18" font-size="8" fill="#333">Realizado</text>';
+      var svgChart='<div style="overflow-x:auto;margin-bottom:12px"><svg xmlns="http://www.w3.org/2000/svg" width="'+svgW2+'" height="'+svgH2+'"><line x1="'+PAD+'" y1="14" x2="'+PAD+'" y2="'+(BH2+16)+'" stroke="#ccc" stroke-width="1"/><line x1="'+PAD+'" y1="'+(BH2+16)+'" x2="'+(svgW2-PAD)+'" y2="'+(BH2+16)+'" stroke="#ccc" stroke-width="1"/>'+bars+lgd+'</svg></div>';
+      finAnaliseHTML = svgChart + finAnaliseHTML;
+    }
+  }
+
   // Riscos
   let riscosHTML = '<p>Sem riscos.</p>';
   if (riscos.length) {
@@ -2330,6 +2427,73 @@ function gerarRelatorioGeral() {
   setTimeout(() => w.print(), 500);
 }
 
+// ═══ MOVIMENTAÇÃO FINANCEIRA ═══
+function toggleFormMov() {
+  var f = document.getElementById('form-movimentacao');
+  if (f) f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+
+function salvarMovimentacao() {
+  var dp  = document.getElementById('mov-data-prev').value;
+  var tp  = document.getElementById('mov-tipo').value;
+  var cat = document.getElementById('mov-cat').value.trim();
+  var dsc = document.getElementById('mov-desc').value.trim();
+  var val = parseFloat(document.getElementById('mov-valor').value) || 0;
+  var rl  = document.getElementById('mov-real').checked;
+  var dr  = document.getElementById('mov-data-real').value;
+  if (!dp && !dsc) { alert('Informe a data prevista ou a descrição.'); return; }
+  finances.push({ id: Date.now(), tipo: tp, descricao: dsc, categoria: cat,
+    subcategoria: '', valor: val, recorrencia: 'nenhuma', qtdRecorrencias: 1,
+    dataPrevista: dp, realizado: rl, dataRealizada: rl ? dr : '' });
+  if (typeof salvarDadosProjeto === 'function') salvarDadosProjeto();
+  if (typeof renderFinanceiro === 'function') renderFinanceiro();
+  renderMovimentacao();
+  ['mov-data-prev','mov-cat','mov-desc','mov-valor','mov-data-real'].forEach(function(id){ var el=document.getElementById(id); if(el) el.value=''; });
+  var cb=document.getElementById('mov-real'); if(cb) cb.checked=false;
+  toggleFormMov();
+}
+
+function removerMovimentacao(id) {
+  if (!confirm('Remover esta movimentação?')) return;
+  var idx = finances.findIndex(function(f){ return f.id === id; });
+  if (idx !== -1) { finances.splice(idx, 1); }
+  if (typeof salvarDadosProjeto === 'function') salvarDadosProjeto();
+  if (typeof renderFinanceiro === 'function') renderFinanceiro();
+  renderMovimentacao();
+}
+
+function renderMovimentacao() {
+  var tbody = document.getElementById('mov-tbody');
+  var kpis  = document.getElementById('mov-kpis');
+  if (!tbody) return;
+  var tPlan=0, tDesp=0, tRec=0;
+  finances.forEach(function(f) {
+    var v = parseFloat(f.valor)||0;
+    if (f.realizado) { if (f.tipo==='receita') tRec+=v; else tDesp+=v; }
+    else tPlan += v;
+  });
+  var saldo = tRec - tDesp;
+  var fmt = function(v){ return v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); };
+  if (kpis) kpis.innerHTML =
+    '<div style="background:#e3f2fd;border-radius:8px;padding:10px 16px;min-width:130px;text-align:center"><div style="font-size:10px;color:#555">Planejado</div><div style="font-size:18px;font-weight:700;color:#1565c0">R$ '+fmt(tPlan)+'</div></div>' +
+    '<div style="background:#fce4ec;border-radius:8px;padding:10px 16px;min-width:130px;text-align:center"><div style="font-size:10px;color:#555">Despesas Realiz.</div><div style="font-size:18px;font-weight:700;color:#c62828">R$ '+fmt(tDesp)+'</div></div>' +
+    '<div style="background:#e8f5e9;border-radius:8px;padding:10px 16px;min-width:130px;text-align:center"><div style="font-size:10px;color:#555">Receitas Realiz.</div><div style="font-size:18px;font-weight:700;color:#2e7d32">R$ '+fmt(tRec)+'</div></div>' +
+    '<div style="background:'+( saldo>=0?'#e8f5e9':'#fce4ec')+';border-radius:8px;padding:10px 16px;min-width:130px;text-align:center"><div style="font-size:10px;color:#555">Saldo</div><div style="font-size:18px;font-weight:700;color:'+( saldo>=0?'#2e7d32':'#c62828')+'">R$ '+fmt(saldo)+'</div></div>';
+  var sorted = finances.slice().sort(function(a,b){ return (a.dataPrevista||'')<(b.dataPrevista||'')?-1:1; });
+  if (!sorted.length) { tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:#888;padding:20px">Nenhuma movimentação cadastrada.</td></tr>'; return; }
+  tbody.innerHTML = sorted.map(function(f) {
+    var dtP = f.dataPrevista ? new Date(f.dataPrevista+'T12:00').toLocaleDateString('pt-BR') : '—';
+    var dtR = f.dataRealizada ? new Date(f.dataRealizada+'T12:00').toLocaleDateString('pt-BR') : '—';
+    var badge = f.tipo==='receita'
+      ? '<span style="background:#43a047;color:#fff;border-radius:10px;padding:1px 7px;font-size:10px">Receita</span>'
+      : '<span style="background:#e53935;color:#fff;border-radius:10px;padding:1px 7px;font-size:10px">Despesa</span>';
+    var realB = f.realizado ? '<span style="color:#2e7d32;font-weight:600">&#10004;</span>' : '<span style="color:#bbb">—</span>';
+    var delBtn = IS_ADMIN ? '<td><button class="btn btn-danger btn-sm" onclick="removerMovimentacao('+f.id+')">&#10005;</button></td>' : '';
+    return '<tr><td>'+dtP+'</td><td>'+badge+'</td><td>'+(f.categoria||'—')+'</td><td>'+(f.descricao||'—')+'</td>'+
+      '<td style="text-align:right;font-weight:600">R$ '+fmt(f.valor||0)+'</td><td style="text-align:center">'+realB+'</td><td>'+dtR+'</td>'+delBtn+'</tr>';
+  }).join('');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   renderEAP();
   renderGantt();
@@ -2340,6 +2504,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderFinanceiro();
   renderKPIs();
   renderPlanoAcao();
+  renderMovimentacao();
 
   document.querySelectorAll('.tab-btn[data-group="proj"]').forEach(btn => {
     btn.addEventListener('click', () => {
