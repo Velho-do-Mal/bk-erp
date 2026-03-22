@@ -756,20 +756,20 @@ function renderEapOrg() {
     return;
   }
   var BW=148, BH=40, HG=28, VG=64, PAD=20, LBL_W=80;
-  // Build virtual PROJETO root
   var projName = (function(){
     var n = document.querySelector('.projeto-nome, h1.page-title, .card-header h2, .project-name');
     return n ? n.textContent.trim().toUpperCase() : 'PROJETO';
   })();
+  // Build nodes
   var root = {id:'ROOT', label:projName, code:'', children:[], depth:0};
-  var nodeMap = {ROOT: root};
-  // Create nodes
+  var nodeMap = {'': root};
   eapTasks.forEach(function(t, i) {
-    var lbl = (t.codigo ? t.codigo + ' ' : '') + t.nome.toUpperCase();
-    var nd = {id:'t'+i, label:lbl, code:t.codigo||'', children:[], depth:0};
+    var desc = (t.descricao || t.nome || t.titulo || ('Tarefa '+(i+1)));
+    var lbl = (t.codigo ? t.codigo + ' ' : '') + desc.toUpperCase();
+    var nd = {id:'t'+i, label:lbl, code:t.codigo||('t'+i), children:[], depth:0};
     nodeMap[t.codigo||('t'+i)] = nd;
   });
-  // Build hierarchy
+  // Build hierarchy from codigo dots or nivel field
   eapTasks.forEach(function(t, i) {
     var nd = nodeMap[t.codigo||('t'+i)];
     var parts = (t.codigo||'').split('.').filter(Boolean);
@@ -781,72 +781,56 @@ function renderEapOrg() {
       else root.children.push(nd);
     }
   });
-  // Set depths
-  function setDepth(n, d) { n.depth = d; n.children.forEach(function(c){setDepth(c,d+1);}); }
+  // Set depths recursively
+  function setDepth(n, d) { n.depth=d; n.children.forEach(function(c){setDepth(c,d+1);}); }
   setDepth(root, 0);
   // Subtree width
   function sw(n) {
     if (!n.children.length) return BW;
     return Math.max(BW, n.children.reduce(function(s,c){return s+sw(c)+HG;},0)-HG);
   }
-  // Layout
+  // Layout positions
   var positioned = [];
   function lay(n, x, y) {
-    n.x = x; n.y = y;
-    positioned.push(n);
-    var total = sw(n);
-    var cx = x - total/2;
-    n.children.forEach(function(c) {
-      var cw = sw(c);
-      lay(c, cx + cw/2, y + BH + VG);
-      cx += cw + HG;
+    n.x=x; n.y=y; positioned.push(n);
+    var total=sw(n), cx=x-total/2;
+    n.children.forEach(function(c){
+      var cw=sw(c); lay(c,cx+cw/2,y+BH+VG); cx+=cw+HG;
     });
   }
-  lay(root, PAD + sw(root)/2, PAD);
-  var maxX = Math.max.apply(null, positioned.map(function(n){return n.x+BW/2;}));
-  var maxY = Math.max.apply(null, positioned.map(function(n){return n.y+BH;}));
-  var maxDepth = Math.max.apply(null, positioned.map(function(n){return n.depth;}));
-  var svgW = maxX + PAD + LBL_W;
-  var svgH = maxY + PAD;
-  // Color helpers
-  function bgColor(d) { if(d===0) return '#c62828'; if(d===1) return '#2e7d32'; return '#f9a825'; }
-  function txtColor(d) { return d>=2?'#333':'#fff'; }
-  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="'+svgW+'" height="'+svgH+'" style="font-family:Arial,sans-serif">';
-  // Level separator lines + NIVEL labels
-  for (var d=0; d<=maxDepth; d++) {
-    var rowY = PAD + d*(BH+VG);
-    if (d>0) {
-      svg += '<line x1="0" y1="'+(rowY-VG/2)+'" x2="'+svgW+'" y2="'+(rowY-VG/2)+'" stroke="#ddd" stroke-dasharray="5,4" stroke-width="1"/>';
-    }
-    svg += '<text x="'+(svgW-LBL_W+8)+'" y="'+(rowY+BH/2+4)+'" fill="#999" font-size="9.5" font-weight="bold" font-family="Arial">NÍVEL '+(d+1)+'</text>';
+  lay(root, PAD+sw(root)/2, PAD);
+  var maxX=Math.max.apply(null,positioned.map(function(n){return n.x+BW/2;}));
+  var maxY=Math.max.apply(null,positioned.map(function(n){return n.y+BH;}));
+  var maxDepth=Math.max.apply(null,positioned.map(function(n){return n.depth;}));
+  var svgW=maxX+PAD+LBL_W, svgH=maxY+PAD;
+  function bgColor(d){if(d===0)return '#c62828';if(d===1)return '#2e7d32';return '#f9a825';}
+  function txtColor(d){return d>=2?'#333':'#fff';}
+  var svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+svgW+'" height="'+svgH+'" style="font-family:Arial,sans-serif">';
+  // Level rows + labels
+  for(var d=0;d<=maxDepth;d++){
+    var rowY=PAD+d*(BH+VG);
+    if(d>0) svg+='<line x1="0" y1="'+(rowY-VG/2)+'" x2="'+svgW+'" y2="'+(rowY-VG/2)+'" stroke="#ddd" stroke-dasharray="5,4" stroke-width="1"/>';
+    svg+='<text x="'+(svgW-LBL_W+8)+'" y="'+(rowY+BH/2+4)+'" fill="#aaa" font-size="9" font-weight="bold">NÍVEL '+(d+1)+'</text>';
   }
-  // Connectors (orthogonal L-shape)
-  positioned.forEach(function(n) {
-    n.children.forEach(function(c) {
-      var mid = n.y + BH + VG/2;
-      svg += '<polyline points="'+n.x+','+(n.y+BH)+' '+n.x+','+mid+' '+c.x+','+mid+' '+c.x+','+c.y+'" fill="none" stroke="#333" stroke-width="1.5"/>';
+  // Connectors
+  positioned.forEach(function(n){
+    n.children.forEach(function(c){
+      var mid=n.y+BH+VG/2;
+      svg+='<polyline points="'+n.x+','+(n.y+BH)+' '+n.x+','+mid+' '+c.x+','+mid+' '+c.x+','+c.y+'" fill="none" stroke="#555" stroke-width="1.5"/>';
     });
   });
-  // Boxes + labels
-  positioned.forEach(function(n) {
-    var bx = n.x - BW/2, by = n.y;
-    var bg = bgColor(n.depth), tc = txtColor(n.depth);
-    svg += '<rect x="'+bx+'" y="'+by+'" width="'+BW+'" height="'+BH+'" rx="2" ry="2" fill="'+bg+'"/>';
-    var lbl = n.label;
-    var lines = [];
-    if (lbl.length > 19) {
-      var sp = lbl.lastIndexOf(' ', Math.floor(lbl.length/2));
-      lines = sp>0 ? [lbl.slice(0,sp), lbl.slice(sp+1)] : [lbl.slice(0,18), lbl.slice(18)];
-    } else { lines = [lbl]; }
-    if (lines.length === 1) {
-      svg += '<text x="'+n.x+'" y="'+(by+BH/2+4)+'" text-anchor="middle" fill="'+tc+'" font-size="10" font-weight="bold">'+lines[0]+'</text>';
-    } else {
-      svg += '<text x="'+n.x+'" y="'+(by+BH/2-4)+'" text-anchor="middle" fill="'+tc+'" font-size="9" font-weight="bold">'+lines[0]+'</text>';
-      svg += '<text x="'+n.x+'" y="'+(by+BH/2+8)+'" text-anchor="middle" fill="'+tc+'" font-size="9" font-weight="bold">'+lines[1]+'</text>';
-    }
+  // Boxes + text
+  positioned.forEach(function(n){
+    var bx=n.x-BW/2, by=n.y, bg=bgColor(n.depth), tc=txtColor(n.depth);
+    svg+='<rect x="'+bx+'" y="'+by+'" width="'+BW+'" height="'+BH+'" rx="2" fill="'+bg+'"/>';
+    var lbl=n.label, lines=[];
+    if(lbl.length>19){var sp=lbl.lastIndexOf(' ',Math.floor(lbl.length/2));lines=sp>0?[lbl.slice(0,sp),lbl.slice(sp+1)]:[lbl.slice(0,18),lbl.slice(18)];}
+    else{lines=[lbl];}
+    if(lines.length===1){svg+='<text x="'+n.x+'" y="'+(by+BH/2+4)+'" text-anchor="middle" fill="'+tc+'" font-size="10" font-weight="bold">'+lines[0]+'</text>';}
+    else{svg+='<text x="'+n.x+'" y="'+(by+BH/2-4)+'" text-anchor="middle" fill="'+tc+'" font-size="9" font-weight="bold">'+lines[0]+'</text><text x="'+n.x+'" y="'+(by+BH/2+8)+'" text-anchor="middle" fill="'+tc+'" font-size="9" font-weight="bold">'+lines[1]+'</text>';}
   });
-  svg += '</svg>';
-  el.innerHTML = svg;
+  svg+='</svg>';
+  el.innerHTML=svg;
 }
 function setTkDate(idx, tipo, val) {
   if (!eapTasks[idx]) return;
