@@ -15,4 +15,5 @@ urlpatterns = [
     path('', include('apps.compras.urls')),
     path('', include('apps.vendas.urls')),
     path('', include('apps.servicos.urls')),
+    path('', include('apps.orcamento.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
