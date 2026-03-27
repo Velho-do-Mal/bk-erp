@@ -1,4 +1,4 @@
- import os
+import os
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -27,8 +27,8 @@ INSTALLED_APPS = [
     'apps.compras',
     'apps.vendas',
     'apps.servicos',
-
-    'apps.orcamento',]
+    'apps.orcamento',
+]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -108,4 +108,3 @@ CSRF_TRUSTED_ORIGINS = os.environ.get(
     'CSRF_TRUSTED_ORIGINS',
     'https://bk-erp-production.up.railway.app'
 ).split(',')
- 
