@@ -301,9 +301,20 @@
   </div>
 
   <!-- ALTERAÇÕES DE ESCOPO -->
-  {% if tap.alteracoesEscopo %}
   <div class="card" style="margin-top:16px;">
     <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;color:var(--bk-orange);">⚠️ Alterações de Escopo</h3>
+
+    {% if is_admin %}
+    <div class="form-group" style="margin-bottom:14px;">
+      <label class="form-label">Inserir alterações de escopo</label>
+      <textarea id="tap-alteracoes-escopo" class="form-control" style="min-height:120px;" placeholder="Digite uma alteração por linha. Você pode usar 'AAAA-MM-DD | descrição' ou apenas a descrição.">{{ tap.alteracoesEscopo|default:'[]'|safe }}</textarea>
+      <div style="font-size:11px;color:var(--bk-text-muted);margin-top:6px;">
+        Uma linha por alteração. Exemplo: 2026-03-27 | Inclusão do estudo elétrico complementar
+      </div>
+    </div>
+    {% endif %}
+
+    {% if tap.alteracoesEscopo %}
     <div class="table-wrap">
       <table>
         <thead><tr><th>Data</th><th>Descrição</th></tr></thead>
@@ -317,8 +328,10 @@
         </tbody>
       </table>
     </div>
+    {% elif not is_admin %}
+    <div class="readonly-field">—</div>
+    {% endif %}
   </div>
-  {% endif %}
 
   {% if is_admin %}
   <div style="margin-top:16px;">
@@ -692,6 +705,34 @@ let actionPlan = {{ projeto.dados.actionPlan|default:'[]'|safe }};
 // FUNÇÕES DE DADOS
 // ══════════════════════════════
 
+function parseAlteracoesEscopo() {
+  const campo = el('tap-alteracoes-escopo');
+  if (!campo) return {{ tap.alteracoesEscopo|default:'[]'|safe }};
+
+  const bruto = (campo.value || '').trim();
+  if (!bruto) return [];
+
+  try {
+    const parsed = JSON.parse(bruto);
+    if (Array.isArray(parsed)) {
+      return parsed.map(item => ({
+        data: item && item.data ? String(item.data) : new Date().toISOString().split('T')[0],
+        descricao: item && item.descricao ? String(item.descricao) : String(item || '')
+      })).filter(item => item.descricao.trim());
+    }
+  } catch (e) {}
+
+  return bruto
+    .split(/\r?\n/)
+    .map(l => l.trim())
+    .filter(Boolean)
+    .map(linha => {
+      const m = linha.match(/^(\d{4}-\d{2}-\d{2})\s*[|;-]\s*(.+)$/);
+      if (m) return { data: m[1], descricao: m[2].trim() };
+      return { data: new Date().toISOString().split('T')[0], descricao: linha };
+    });
+}
+
 function getDadosAtuais() {
   const dados = {
     tap: {
@@ -704,7 +745,7 @@ function getDadosAtuais() {
       escopo: el('tap-escopo') ? el('tap-escopo').value : "{{ tap.escopo|default:''|escapejs }}",
       premissas: el('tap-premissas') ? el('tap-premissas').value : "{{ tap.premissas|default:''|escapejs }}",
       requisitos: el('tap-requisitos') ? el('tap-requisitos').value : "{{ tap.requisitos|default:''|escapejs }}",
-      alteracoesEscopo: {{ tap.alteracoesEscopo|default:'[]'|safe }},
+      alteracoesEscopo: parseAlteracoesEscopo(),
     },
     eapTasks: eapTasks,
     finances: finances,
