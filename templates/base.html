@@ -59,6 +59,10 @@
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
       Serviços/Produtos
     </a>
+    <a href="{% url 'orcamento:dashboard' %}" class="nav-item {% if 'orcamento' in request.path %}active{% endif %}">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 13h.01M13 13h.01M17 13h.01M17 9h.01M13 9h.01M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2m4 0H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2z"/></svg>
+      Orçamento
+    </a>
 
     <div class="nav-section" style="margin-top:12px">Cadastros</div>
     <a href="{% url 'cadastros:clientes' %}" class="nav-item {% if 'clientes' in request.path %}active{% endif %}">
