@@ -27,7 +27,8 @@ INSTALLED_APPS = [
     'apps.compras',
     'apps.vendas',
     'apps.servicos',
-]
+
+    'apps.orcamento',]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
