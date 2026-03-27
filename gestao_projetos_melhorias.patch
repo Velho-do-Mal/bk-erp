@@ -1,0 +1,297 @@
+*** Begin Patch
+*** Update File: templates/projetos/detalhe.html
+@@
+-{% block extra_css %}  {% endblock %}
++{% block extra_css %}
++<style>
++  .excel-grid-wrap{
++    overflow:auto;
++    border:1px solid var(--bk-border);
++    border-radius:12px;
++    background:#fff;
++  }
++  .excel-grid{
++    width:100%;
++    min-width:1280px;
++    border-collapse:separate;
++    border-spacing:0;
++    background:#fff;
++  }
++  .excel-grid thead th{
++    position:sticky;
++    top:0;
++    z-index:2;
++    background:#f3f6fb;
++    color:#1f2937;
++    font-size:11px;
++    font-weight:700;
++    text-transform:uppercase;
++    letter-spacing:.02em;
++    border-right:1px solid #dbe3ef;
++    border-bottom:1px solid #dbe3ef;
++    padding:10px 8px;
++    white-space:nowrap;
++  }
++  .excel-grid tbody td{
++    border-right:1px solid #e5e7eb;
++    border-bottom:1px solid #e5e7eb;
++    padding:0;
++    background:#fff;
++    vertical-align:middle;
++  }
++  .excel-grid tbody tr:hover td{ background:#fafcff; }
++  .excel-grid .grid-input,
++  .excel-grid .grid-select,
++  .excel-grid .grid-textarea{
++    width:100%;
++    border:0;
++    outline:0;
++    background:transparent;
++    padding:8px 10px;
++    font-size:12px;
++    min-height:36px;
++  }
++  .excel-grid .grid-textarea{
++    resize:vertical;
++    min-height:44px;
++  }
++  .excel-grid .grid-delete{
++    display:flex;
++    align-items:center;
++    justify-content:center;
++    min-height:36px;
++  }
++  .excel-grid .grid-delete .btn{
++    min-width:30px;
++    padding:4px 8px;
++  }
++  .eap-org-shell{
++    border:1px solid var(--bk-border);
++    border-radius:12px;
++    background:#fff;
++    overflow:hidden;
++  }
++  .eap-org-toolbar{
++    display:flex;
++    gap:8px;
++    flex-wrap:wrap;
++    align-items:center;
++    justify-content:space-between;
++    padding:10px 12px;
++    border-bottom:1px solid var(--bk-border);
++    background:#f8fafc;
++  }
++  .eap-org-actions{
++    display:flex;
++    gap:8px;
++    flex-wrap:wrap;
++  }
++  .eap-org-stage{
++    width:100%;
++    min-height:520px;
++    overflow:auto;
++    background:
++      linear-gradient(90deg, rgba(148,163,184,.10) 1px, transparent 1px) 0 0/24px 24px,
++      linear-gradient(rgba(148,163,184,.10) 1px, transparent 1px) 0 0/24px 24px,
++      #ffffff;
++  }
++  #eap-org-tree{
++    min-width:100%;
++    min-height:520px;
++    display:flex;
++    align-items:flex-start;
++    justify-content:flex-start;
++    padding:16px;
++    transform-origin: top left;
++  }
++</style>
++{% endblock %}
+@@
+-  <div class="table-wrap" id="eap-tabela-view">
+-  <table class="eap-table" id="eap-table">
++  <div class="excel-grid-wrap" id="eap-tabela-view">
++  <table class="eap-table excel-grid" id="eap-table">
+@@
+-  <div id="eap-organograma" style="overflow-x:auto;padding:16px 10px 10px;margin-top:20px">
+-  <div id="eap-org-tree"></div>
++  <div id="eap-organograma" class="eap-org-shell" style="margin-top:20px">
++    <div class="eap-org-toolbar">
++      <strong style="font-size:12px;color:#334155">Organograma da EAP</strong>
++      <div class="eap-org-actions">
++        <button type="button" class="btn btn-secondary btn-sm" onclick="zoomEapOrg(-0.1)">− Zoom</button>
++        <button type="button" class="btn btn-secondary btn-sm" onclick="zoomEapOrg(0.1)">+ Zoom</button>
++        <button type="button" class="btn btn-secondary btn-sm" onclick="resetEapOrgZoom()">100%</button>
++      </div>
++    </div>
++    <div class="eap-org-stage">
++      <div id="eap-org-tree"></div>
++    </div>
+   </div>
+@@
+-  <div style="overflow-x:auto">
+-  <table class="table" style="font-size:11px;min-width:900px">
++  <div class="excel-grid-wrap">
++  <table class="table excel-grid" style="font-size:11px;min-width:1120px">
+@@
+-  <th style="width:120px">Status</th>
+-  {% if is_admin %}<th style="width:32px"></th>{% endif %}
++  <th style="width:120px">Status</th>
++  <th style="width:220px">Alterações</th>
++  {% if is_admin %}<th style="width:48px">Ação</th>{% endif %}
+*** Replace Function: renderEAP
+function renderEAP() {
+  const tbody = el('eap-tbody');
+  if (!tbody) return;
+
+  tbody.innerHTML = '';
+
+  const codes = eapTasks.map(t => String(t.codigo || '').trim());
+  const isSummary = {};
+  codes.forEach(c => {
+    const parts = c.split('.');
+    for (let i = 1; i < parts.length; i++) {
+      const parent = parts.slice(0, i).join('.');
+      isSummary[parent] = true;
+    }
+  });
+
+  const _dateTasks = calcularDatas();
+  const _dateMap = {};
+  _dateTasks.forEach(dt => { _dateMap[dt.codigo] = dt; });
+
+  eapTasks.forEach((t, idx) => {
+    const cod = String(t.codigo || '').trim();
+    const depth = cod.split('.').length - 1;
+    const summary = isSummary[cod] || false;
+    const pct = parseFloat(t.percentualConcluido || t.pct || 0);
+    const status = t.status || 'nao-iniciado';
+    const indent = 12 + depth * 20;
+
+    const _de = _dateMap[t.codigo] || {};
+    const _dtIniISO = t.dtInicioManual || (_de.startDate ? _de.startDate.toISOString().split('T')[0] : '');
+    const _dtFimISO = t.dtConclusaoManual || (_de.endDate ? _de.endDate.toISOString().split('T')[0] : '');
+
+    const statusRead = {
+      'concluido': 'Concluído',
+      'em-andamento': 'Em Andamento',
+      'atrasado': 'Atrasado',
+      'nao-iniciado': 'Não Iniciado'
+    }[status] || status;
+
+    const tr = document.createElement('tr');
+    tr.className = ((summary ? 'eap-row-summary' : 'eap-row-normal') + ' eap-level-' + depth);
+
+    tr.innerHTML = `
+      <td><input type="text" class="grid-input" value="${escHtml(cod)}" ${IS_ADMIN ? `onchange="eapTasks[${idx}].codigo=this.value"` : 'readonly'}></td>
+      <td>
+        ${IS_ADMIN
+          ? `<input type="text" class="grid-input" style="padding-left:${indent}px;${summary ? 'font-weight:700;' : ''}" value="${escHtml(t.nome || '')}" onchange="eapTasks[${idx}].nome=this.value">`
+          : `<div class="grid-input" style="padding-left:${indent}px;${summary ? 'font-weight:700;' : ''}">${escHtml(t.nome || '')}</div>`
+        }
+      </td>
+      <td>${IS_ADMIN
+          ? `<input type="number" class="grid-input" value="${t.duracao || 0}" onchange="eapTasks[${idx}].duracao=parseInt(this.value)||0">`
+          : `<div class="grid-input">${t.duracao || 0}</div>`}
+      </td>
+      <td><input type="text" class="grid-input" value="${escHtml(String(t.predecessoras || ''))}" ${IS_ADMIN ? `onchange="eapTasks[${idx}].predecessoras=this.value"` : 'readonly'}></td>
+      <td>${IS_ADMIN
+          ? `<input type="date" class="grid-input" value="${_dtIniISO}" onchange="setTkDate(${idx},'i',this.value)">`
+          : `<div class="grid-input">${_dtIniISO ? new Date(_dtIniISO + 'T12:00').toLocaleDateString('pt-BR') : '—'}</div>`}
+      </td>
+      <td>${IS_ADMIN
+          ? `<input type="date" class="grid-input" value="${_dtFimISO}" onchange="setTkDate(${idx},'f',this.value)">`
+          : `<div class="grid-input">${_dtFimISO ? new Date(_dtFimISO + 'T12:00').toLocaleDateString('pt-BR') : '—'}</div>`}
+      </td>
+      <td>${IS_ADMIN
+          ? `<input type="number" class="grid-input" value="${pct}" min="0" max="100" onchange="eapTasks[${idx}].percentualConcluido=parseFloat(this.value)||0">`
+          : `<div class="grid-input">${pct}%</div>`}
+      </td>
+      <td>${IS_ADMIN
+          ? `<select class="grid-select" onchange="eapTasks[${idx}].status=this.value">
+              <option value="nao-iniciado" ${status === 'nao-iniciado' ? 'selected' : ''}>Não Iniciado</option>
+              <option value="em-andamento" ${status === 'em-andamento' ? 'selected' : ''}>Em Andamento</option>
+              <option value="concluido" ${status === 'concluido' ? 'selected' : ''}>Concluído</option>
+              <option value="atrasado" ${status === 'atrasado' ? 'selected' : ''}>Atrasado</option>
+            </select>`
+          : `<div class="grid-input">${statusRead}</div>`}
+      </td>
+      <td><input type="text" class="grid-input" value="${escHtml(t.responsavel || '')}" ${IS_ADMIN ? `onchange="eapTasks[${idx}].responsavel=this.value"` : 'readonly'}></td>
+      ${IS_ADMIN
+        ? `<td class="grid-delete"><button type="button" class="btn btn-danger btn-sm" onclick="removerTarefa(${idx})">✕</button></td>`
+        : ''}
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+*** Add After Function: renderEAP
+let eapOrgZoom = 1;
+
+function zoomEapOrg(step) {
+  eapOrgZoom = Math.max(0.4, Math.min(2.4, Number((eapOrgZoom + step).toFixed(2))));
+  const tree = document.getElementById('eap-org-tree');
+  if (tree) tree.style.transform = `scale(${eapOrgZoom})`;
+}
+
+function resetEapOrgZoom() {
+  eapOrgZoom = 1;
+  const tree = document.getElementById('eap-org-tree');
+  if (tree) tree.style.transform = 'scale(1)';
+}
+
+*** Replace In Function: renderEapOrg
+-  el.innerHTML=svg;
++  el.innerHTML = svg;
++  el.style.transform = `scale(${eapOrgZoom})`;
+
+*** Add/Replace Function: renderControleDocsGrid
+function renderControleDocsGrid(docs, isAdmin) {
+  const tbody = document.getElementById('ctrl-docs-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  (docs || []).forEach((doc, idx) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td><input type="text" class="grid-input" value="${escHtml(doc.codigo || '')}" ${isAdmin ? `onchange="controleDocs[${idx}].codigo=this.value"` : 'readonly'}></td>
+      <td><input type="text" class="grid-input" value="${escHtml(doc.atividade || '')}" ${isAdmin ? `onchange="controleDocs[${idx}].atividade=this.value"` : 'readonly'}></td>
+      <td><input type="text" class="grid-input" value="${escHtml(doc.doc_numero || '')}" ${isAdmin ? `onchange="controleDocs[${idx}].doc_numero=this.value"` : 'readonly'}></td>
+      <td><input type="text" class="grid-input" value="${escHtml(doc.responsavel || '')}" ${isAdmin ? `onchange="controleDocs[${idx}].responsavel=this.value"` : 'readonly'}></td>
+      <td><input type="date" class="grid-input" value="${escHtml(doc.data_inicio || '')}" ${isAdmin ? `onchange="controleDocs[${idx}].data_inicio=this.value"` : 'readonly'}></td>
+      <td><input type="date" class="grid-input" value="${escHtml(doc.data_conclusao || '')}" ${isAdmin ? `onchange="controleDocs[${idx}].data_conclusao=this.value"` : 'readonly'}></td>
+      <td><input type="number" class="grid-input" min="0" max="100" value="${Number(doc.percentual || 0)}" ${isAdmin ? `onchange="controleDocs[${idx}].percentual=parseInt(this.value)||0"` : 'readonly'}></td>
+      <td>
+        ${isAdmin
+          ? `<select class="grid-select" onchange="controleDocs[${idx}].status=this.value">
+              <option value="nao_iniciado" ${doc.status === 'nao_iniciado' ? 'selected' : ''}>Não iniciado</option>
+              <option value="em_andamento" ${doc.status === 'em_andamento' ? 'selected' : ''}>Em andamento - BK</option>
+              <option value="em_analise" ${doc.status === 'em_analise' ? 'selected' : ''}>Em análise - Cliente</option>
+              <option value="em_revisao" ${doc.status === 'em_revisao' ? 'selected' : ''}>Em revisão - BK</option>
+              <option value="concluido" ${doc.status === 'concluido' ? 'selected' : ''}>Concluído</option>
+              <option value="cancelado" ${doc.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
+            </select>`
+          : `<div class="grid-input">${escHtml(doc.status || '')}</div>`
+        }
+      </td>
+      <td>
+        ${isAdmin
+          ? `<textarea class="grid-textarea" onchange="controleDocs[${idx}].observacao=this.value">${escHtml(doc.observacao || '')}</textarea>`
+          : `<div class="grid-input">${escHtml(doc.observacao || '')}</div>`
+        }
+      </td>
+      ${isAdmin
+        ? `<td class="grid-delete"><button type="button" class="btn btn-danger btn-sm" onclick="excluirDocumentoControle(${idx})">✕</button></td>`
+        : ''}
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+*** Add Helper Function
+function excluirDocumentoControle(idx) {
+  if (!Array.isArray(controleDocs)) return;
+  if (!confirm('Excluir esta linha?')) return;
+  controleDocs.splice(idx, 1);
+  renderControleDocsGrid(controleDocs, IS_ADMIN);
+}
+*** End Patch
