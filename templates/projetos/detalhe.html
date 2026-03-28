@@ -1597,7 +1597,6 @@ function _docTableHTML(docs) {
   if(!docs.length) return '<p style="text-align:center;color:#888;padding:20px">Nenhum documento.</p>';
   const rows = docs.map((d,i)=>{
     const s=DOC_STATUS_MAP[d.status]||{l:d.status||'—',c:'#64748B'};
-    const pct=Math.min(100,Math.max(0,parseInt(d.percentual||0)));
     return `<tr>
       <td style="text-align:center;font-family:monospace">${escHtml(d.codigo||'')}</td>
       <td>${escHtml(d.atividade||d.doc_nome||'—')}</td>
@@ -1605,8 +1604,8 @@ function _docTableHTML(docs) {
       <td>${escHtml(d.responsavel||'—')}</td>
       <td style="text-align:center">${d.data_inicio||'—'}</td>
       <td style="text-align:center">${d.data_conclusao||'—'}</td>
-      <td style="text-align:center;font-weight:700">${pct}%</td>
       <td><span class="badge" style="background:${s.c}22;color:${s.c};border-color:${s.c}44">${s.l}</span></td>
+      <td>${escHtml(d.observacao||'—')}</td>
     </tr>`;
   }).join('');
   return `<table><thead><tr>
