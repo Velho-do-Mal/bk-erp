@@ -469,7 +469,7 @@ def exportar_excel(request, orcamento_id):
     writer.writerow([])
 
     writer.writerow(["MATERIAIS"])
-    writer.writerow(["Cód. Cliente", "Cod. BK", Descrição", "Unidade", "Quantidade", "Valor Unitário", "Valor Total"])
+    writer.writerow(["Cód. Cliente", "Cód. BK", "Descrição", "Unidade", "Quantidade", "Valor Unitário", "Valor Total"])
     for item in orcamento.itens_material.select_related("material").all():
         writer.writerow([
             item.material.codigo_cliente,
