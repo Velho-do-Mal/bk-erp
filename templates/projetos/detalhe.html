@@ -1602,6 +1602,7 @@ function _docTableHTML(docs) {
       <td style="text-align:center;font-family:monospace">${escHtml(d.codigo||'')}</td>
       <td>${escHtml(d.atividade||d.doc_nome||'—')}</td>
       <td style="text-align:center">${escHtml(d.doc_numero||'—')}</td>
+      <td>${escHtml(d.rev||'—')}</td>
       <td>${escHtml(d.responsavel||'—')}</td>
       <td style="text-align:center">${d.data_inicio||'—'}</td>
       <td style="text-align:center">${d.data_conclusao||'—'}</td>
@@ -2453,7 +2454,7 @@ function gerarRelatorioGeral() {
       + '<div style="background:#e2e3e5;padding:10px 20px;border-radius:6px;text-align:center"><strong>'
         + _pctG + '%</strong><br>% Geral</div></div>'
       + '<table class="rpt-table"><thead><tr>'
-        + '<th>Cód.</th><th>Atividade</th><th>Responsável</th><th>%</th><th>Status</th>'
+        + '<th>Cód.</th><th>Atividade</th><th>Rev.</th><th>Responsável</th><th>%</th><th>Status</th>'
         + '</tr></thead><tbody>'
       + eapTasks.map(t => '<tr><td>' + t.codigo + '</td><td>' + t.nome
           + '</td><td>' + (t.responsavel||'—') + '</td><td>' + (t.pct||0)
