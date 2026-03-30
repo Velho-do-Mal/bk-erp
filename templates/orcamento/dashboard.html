@@ -80,6 +80,18 @@
             </select>
           </div>
           <div>
+            <label>Projeto (Gestão de Projetos)</label>
+            <select id="projeto_id" onchange="preencherNomePorProjeto(this)">
+              <option value="">Selecione (opcional)</option>
+              {% for projeto in projetos %}
+              <option value="{{ projeto.id }}" {% if orcamento and orcamento.obra and orcamento.obra.projeto_id == projeto.id %}selected{% endif %}>{{ projeto.nome }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div style="height:10px"></div>
+        <div class="grid grid-2">
+          <div>
             <label>Nome da obra</label>
             <input type="text" id="obra_nome" value="{% if orcamento and orcamento.obra %}{{ orcamento.obra.nome }}{% endif %}" placeholder="Ex.: SE Juruá">
           </div>
@@ -248,6 +260,14 @@
 
     function payloadHeaders(){ return {'Content-Type':'application/json','X-CSRFToken': csrfToken}; }
 
+    function preencherNomePorProjeto(sel){
+      const txt = sel.options[sel.selectedIndex].text;
+      const campo = document.getElementById('obra_nome');
+      if (sel.value && !campo.value.trim()) {
+        campo.value = txt;
+      }
+    }
+
     function salvarObra(){
       fetch("{% url 'orcamento:salvar_obra' %}", {
         method:'POST',
@@ -256,6 +276,7 @@
           id: OBRA_ID,
           cliente_id: document.getElementById('cliente_id').value || null,
           nome: document.getElementById('obra_nome').value,
+          projeto_id: document.getElementById('projeto_id').value || null,
           nome_orcamento: document.getElementById('nome_orcamento').value
         })
       }).then(r=>r.json()).then(data=>{
@@ -272,7 +293,6 @@
         document.getElementById('mat_descricao').focus();
         return;
       }
-
       const payload = {
         codigo_cliente: document.getElementById('mat_codigo_cliente').value,
         codigo_bk: document.getElementById('mat_codigo_bk').value,
@@ -280,35 +300,22 @@
         unidade: document.getElementById('mat_unidade').value || 'un',
         valor_unitario: document.getElementById('mat_valor_unitario').value || 0
       };
-
       try {
         if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
-
         const response = await fetch("{% url 'orcamento:salvar_material' %}", {
-          method:'POST',
-          headers: payloadHeaders(),
-          body: JSON.stringify(payload)
+          method:'POST', headers: payloadHeaders(), body: JSON.stringify(payload)
         });
-
         const data = await response.json();
-
-        if (!response.ok || !data.ok) {
-          alert(data.erro || data.mensagem || 'Não foi possível salvar o material.');
-          return;
-        }
-
+        if (!response.ok || !data.ok) { alert(data.erro || data.mensagem || 'Não foi possível salvar.'); return; }
         alert(data.mensagem || 'Material salvo com sucesso.');
-
         document.getElementById('mat_codigo_cliente').value = '';
         document.getElementById('mat_codigo_bk').value = '';
         document.getElementById('mat_descricao').value = '';
         document.getElementById('mat_unidade').value = 'un';
         document.getElementById('mat_valor_unitario').value = '';
-
         location.reload();
       } catch (error) {
-        console.error('Erro ao salvar material:', error);
-        alert('Ocorreu um erro ao salvar o material. Abra o console do navegador para ver detalhes.');
+        alert('Erro ao salvar material. Veja o console.');
       } finally {
         if (btn) { btn.disabled = false; btn.textContent = 'Salvar material'; }
       }
@@ -316,8 +323,7 @@
 
     function editarMaterial(id){
       fetch("{% url 'orcamento:salvar_material' %}", {
-        method:'POST',
-        headers: payloadHeaders(),
+        method:'POST', headers: payloadHeaders(),
         body: JSON.stringify({
           id: id,
           codigo_cliente: document.getElementById(`edit_mat_codigo_cliente_${id}`).value,
@@ -342,22 +348,15 @@
       return materiaisData.filter(m => String(m.descricao||'').toLowerCase().includes(q) || String(m.codigo_cliente||'').toLowerCase().includes(q) || String(m.codigo_bk||'').toLowerCase().includes(q) || String(m.id||'').includes(q));
     }
 
-    function adicionarLinhaMaterial(){
-      linhasMateriais.push({termo:'', material_id:'', unidade:'', quantidade:1, valor_unitario:0});
-      renderGradeMateriais();
-    }
-
-    function removerLinhaMaterial(idx){
-      linhasMateriais.splice(idx,1);
-      renderGradeMateriais();
-    }
+    function adicionarLinhaMaterial(){ linhasMateriais.push({termo:'', material_id:'', unidade:'', quantidade:1, valor_unitario:0}); renderGradeMateriais(); }
+    function removerLinhaMaterial(idx){ linhasMateriais.splice(idx,1); renderGradeMateriais(); }
 
     function selecionarMaterialLinha(idx, materialId){
-      const material = materiaisData.find(m => String(m.id) === String(materialId));
-      linhasMateriais[idx].material_id = material ? material.id : '';
-      linhasMateriais[idx].termo = material ? material.descricao : linhasMateriais[idx].termo;
-      linhasMateriais[idx].unidade = material ? (material.unidade || '') : '';
-      linhasMateriais[idx].valor_unitario = material ? Number(material.valor_unitario || 0) : 0;
+      const m = materiaisData.find(m => String(m.id) === String(materialId));
+      linhasMateriais[idx].material_id = m ? m.id : '';
+      linhasMateriais[idx].termo = m ? m.descricao : linhasMateriais[idx].termo;
+      linhasMateriais[idx].unidade = m ? (m.unidade || '') : '';
+      linhasMateriais[idx].valor_unitario = m ? Number(m.valor_unitario || 0) : 0;
       renderGradeMateriais();
     }
 
@@ -370,16 +369,16 @@
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>
-            <input class="grid-input" type="text" value="${escapeHtml(linha.termo || '')}" placeholder="Digite para filtrar material" oninput="linhasMateriais[${idx}].termo=this.value; renderGradeMateriais()">
+            <input class="grid-input" type="text" value="${escapeHtml(linha.termo||'')}" placeholder="Digite para filtrar material" oninput="linhasMateriais[${idx}].termo=this.value; renderGradeMateriais()">
             <select class="grid-select" onchange="selecionarMaterialLinha(${idx}, this.value)">
               <option value="">Selecione o material</option>
-              ${options.map(m => `<option value="${m.id}" ${String(linha.material_id) === String(m.id) ? 'selected' : ''}>${escapeHtml(m.descricao)} | ${escapeHtml(m.codigo_bk || '')} | ${escapeHtml(m.codigo_cliente || '')}</option>`).join('')}
+              ${options.map(m => `<option value="${m.id}" ${String(linha.material_id)===String(m.id)?'selected':''}>${escapeHtml(m.descricao)} | ${escapeHtml(m.codigo_bk||'')} | ${escapeHtml(m.codigo_cliente||'')}</option>`).join('')}
             </select>
           </td>
-          <td><input class="grid-input" type="text" value="${escapeHtml(String(linha.material_id || ''))}" readonly></td>
-          <td><input class="grid-input" type="text" value="${escapeHtml(linha.unidade || '')}" readonly></td>
-          <td><input class="grid-input" type="number" min="0" step="0.001" value="${linha.quantidade ?? 1}" onchange="linhasMateriais[${idx}].quantidade=this.value"></td>
-          <td><input class="grid-input" type="number" min="0" step="0.01" value="${linha.valor_unitario ?? 0}" onchange="linhasMateriais[${idx}].valor_unitario=this.value"></td>
+          <td><input class="grid-input" type="text" value="${escapeHtml(String(linha.material_id||''))}" readonly></td>
+          <td><input class="grid-input" type="text" value="${escapeHtml(linha.unidade||'')}" readonly></td>
+          <td><input class="grid-input" type="number" min="0" step="0.001" value="${linha.quantidade??1}" onchange="linhasMateriais[${idx}].quantidade=this.value"></td>
+          <td><input class="grid-input" type="number" min="0" step="0.01" value="${linha.valor_unitario??0}" onchange="linhasMateriais[${idx}].valor_unitario=this.value"></td>
           <td><div class="grid-action row"><button type="button" class="btn btn-success" onclick="salvarLinhaMaterial(${idx})">Salvar</button><button type="button" class="btn btn-danger" onclick="removerLinhaMaterial(${idx})">Excluir</button></div></td>
         `;
         tbody.appendChild(tr);
@@ -392,13 +391,9 @@
       if (!ORCAMENTO_ID) return alert('Crie o orçamento primeiro.');
       if (!linha || !linha.material_id) return alert('Selecione um material.');
       fetch("{% url 'orcamento:salvar_item_material' %}", {
-        method:'POST',
-        headers: payloadHeaders(),
+        method:'POST', headers: payloadHeaders(),
         body: JSON.stringify({orcamento_id: ORCAMENTO_ID, material_id: linha.material_id, quantidade: linha.quantidade, valor_unitario: linha.valor_unitario})
-      }).then(r=>r.json()).then(data=>{
-        alert(data.mensagem || data.erro || 'Processado.');
-        if (data.ok) location.reload();
-      });
+      }).then(r=>r.json()).then(data=>{ alert(data.mensagem || data.erro || 'Processado.'); if (data.ok) location.reload(); });
     }
 
     function getServicosFiltrados(term){
@@ -407,22 +402,15 @@
       return servicosData.filter(s => String(s.nome||'').toLowerCase().includes(q) || String(s.id||'').includes(q));
     }
 
-    function adicionarLinhaServico(){
-      linhasServicos.push({termo:'', servico_id:'', unidade:'', quantidade:1, valor_unitario:0});
-      renderGradeServicos();
-    }
-
-    function removerLinhaServico(idx){
-      linhasServicos.splice(idx,1);
-      renderGradeServicos();
-    }
+    function adicionarLinhaServico(){ linhasServicos.push({termo:'', servico_id:'', unidade:'', quantidade:1, valor_unitario:0}); renderGradeServicos(); }
+    function removerLinhaServico(idx){ linhasServicos.splice(idx,1); renderGradeServicos(); }
 
     function selecionarServicoLinha(idx, servicoId){
-      const servico = servicosData.find(s => String(s.id) === String(servicoId));
-      linhasServicos[idx].servico_id = servico ? servico.id : '';
-      linhasServicos[idx].termo = servico ? servico.nome : linhasServicos[idx].termo;
-      linhasServicos[idx].unidade = servico ? (servico.unidade || '') : '';
-      linhasServicos[idx].valor_unitario = servico ? Number(servico.preco_unitario || 0) : 0;
+      const s = servicosData.find(s => String(s.id) === String(servicoId));
+      linhasServicos[idx].servico_id = s ? s.id : '';
+      linhasServicos[idx].termo = s ? s.nome : linhasServicos[idx].termo;
+      linhasServicos[idx].unidade = s ? (s.unidade || '') : '';
+      linhasServicos[idx].valor_unitario = s ? Number(s.preco_unitario || 0) : 0;
       renderGradeServicos();
     }
 
@@ -435,16 +423,16 @@
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>
-            <input class="grid-input" type="text" value="${escapeHtml(linha.termo || '')}" placeholder="Digite para filtrar serviço" oninput="linhasServicos[${idx}].termo=this.value; renderGradeServicos()">
+            <input class="grid-input" type="text" value="${escapeHtml(linha.termo||'')}" placeholder="Digite para filtrar serviço" oninput="linhasServicos[${idx}].termo=this.value; renderGradeServicos()">
             <select class="grid-select" onchange="selecionarServicoLinha(${idx}, this.value)">
               <option value="">Selecione o serviço</option>
-              ${options.map(s => `<option value="${s.id}" ${String(linha.servico_id) === String(s.id) ? 'selected' : ''}>${escapeHtml(s.nome)} | ID ${s.id}</option>`).join('')}
+              ${options.map(s => `<option value="${s.id}" ${String(linha.servico_id)===String(s.id)?'selected':''}>${escapeHtml(s.nome)} | ID ${s.id}</option>`).join('')}
             </select>
           </td>
-          <td><input class="grid-input" type="text" value="${escapeHtml(String(linha.servico_id || ''))}" readonly></td>
-          <td><input class="grid-input" type="text" value="${escapeHtml(linha.unidade || '')}" readonly></td>
-          <td><input class="grid-input" type="number" min="0" step="0.001" value="${linha.quantidade ?? 1}" onchange="linhasServicos[${idx}].quantidade=this.value"></td>
-          <td><input class="grid-input" type="number" min="0" step="0.01" value="${linha.valor_unitario ?? 0}" onchange="linhasServicos[${idx}].valor_unitario=this.value"></td>
+          <td><input class="grid-input" type="text" value="${escapeHtml(String(linha.servico_id||''))}" readonly></td>
+          <td><input class="grid-input" type="text" value="${escapeHtml(linha.unidade||'')}" readonly></td>
+          <td><input class="grid-input" type="number" min="0" step="0.001" value="${linha.quantidade??1}" onchange="linhasServicos[${idx}].quantidade=this.value"></td>
+          <td><input class="grid-input" type="number" min="0" step="0.01" value="${linha.valor_unitario??0}" onchange="linhasServicos[${idx}].valor_unitario=this.value"></td>
           <td><div class="grid-action row"><button type="button" class="btn btn-success" onclick="salvarLinhaServico(${idx})">Salvar</button><button type="button" class="btn btn-danger" onclick="removerLinhaServico(${idx})">Excluir</button></div></td>
         `;
         tbody.appendChild(tr);
@@ -457,13 +445,9 @@
       if (!ORCAMENTO_ID) return alert('Crie o orçamento primeiro.');
       if (!linha || !linha.servico_id) return alert('Selecione um serviço.');
       fetch("{% url 'orcamento:salvar_item_servico' %}", {
-        method:'POST',
-        headers: payloadHeaders(),
+        method:'POST', headers: payloadHeaders(),
         body: JSON.stringify({orcamento_id: ORCAMENTO_ID, servico_id: linha.servico_id, quantidade: linha.quantidade, valor_unitario: linha.valor_unitario})
-      }).then(r=>r.json()).then(data=>{
-        alert(data.mensagem || data.erro || 'Processado.');
-        if (data.ok) location.reload();
-      });
+      }).then(r=>r.json()).then(data=>{ alert(data.mensagem || data.erro || 'Processado.'); if (data.ok) location.reload(); });
     }
 
     document.addEventListener('DOMContentLoaded', function(){
