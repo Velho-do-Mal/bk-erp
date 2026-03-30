@@ -8,7 +8,9 @@ class MaterialCadastro(models.Model):
     codigo_bk = models.CharField(max_length=255, blank=True, verbose_name='Código BK')
     descricao = models.CharField(max_length=1000, verbose_name='Descrição')
     unidade = models.CharField(max_length=50, default='un', verbose_name='Unidade')
-    valor_unitario = models.DecimalField(max_digits=14, decimal_places=2, default=0, verbose_name='Valor Unitário')
+    valor_unitario = models.DecimalField(
+        max_digits=14, decimal_places=2, default=0, verbose_name='Valor Unitário'
+    )
     ativo = models.BooleanField(default=True, verbose_name='Ativo')
     criado_em = models.DateTimeField(auto_now_add=True)
 
@@ -22,11 +24,14 @@ class MaterialCadastro(models.Model):
 
 
 class Obra(models.Model):
-    cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, null=True, blank=True, verbose_name='Cliente')
+    cliente = models.ForeignKey(
+        Cliente, on_delete=models.PROTECT, null=True, blank=True, verbose_name='Cliente'
+    )
     projeto = models.ForeignKey(
         'projetos.Projeto',
         on_delete=models.SET_NULL,
-        null=True, blank=True,
+        null=True,
+        blank=True,
         related_name='obras_orcamento',
         verbose_name='Projeto',
     )
@@ -58,10 +63,18 @@ class Orcamento(models.Model):
 
 
 class ItemMaterial(models.Model):
-    orcamento = models.ForeignKey(Orcamento, on_delete=models.CASCADE, related_name='itens_material')
-    material = models.ForeignKey(MaterialCadastro, on_delete=models.PROTECT, verbose_name='Material')
-    quantidade = models.DecimalField(max_digits=14, decimal_places=3, default=1, verbose_name='Quantidade')
-    valor_unitario = models.DecimalField(max_digits=14, decimal_places=2, default=0, verbose_name='Valor Unitário')
+    orcamento = models.ForeignKey(
+        Orcamento, on_delete=models.CASCADE, related_name='itens_material'
+    )
+    material = models.ForeignKey(
+        MaterialCadastro, on_delete=models.PROTECT, verbose_name='Material'
+    )
+    quantidade = models.DecimalField(
+        max_digits=14, decimal_places=3, default=1, verbose_name='Quantidade'
+    )
+    valor_unitario = models.DecimalField(
+        max_digits=14, decimal_places=2, default=0, verbose_name='Valor Unitário'
+    )
 
     class Meta:
         verbose_name = 'Item de Material'
@@ -81,10 +94,18 @@ class ItemMaterial(models.Model):
 
 
 class ItemServico(models.Model):
-    orcamento = models.ForeignKey(Orcamento, on_delete=models.CASCADE, related_name='itens_servico')
-    servico = models.ForeignKey(ProdutoServico, on_delete=models.PROTECT, verbose_name='Serviço')
-    quantidade = models.DecimalField(max_digits=14, decimal_places=3, default=1, verbose_name='Quantidade')
-    valor_unitario = models.DecimalField(max_digits=14, decimal_places=2, default=0, verbose_name='Valor Unitário')
+    orcamento = models.ForeignKey(
+        Orcamento, on_delete=models.CASCADE, related_name='itens_servico'
+    )
+    servico = models.ForeignKey(
+        ProdutoServico, on_delete=models.PROTECT, verbose_name='Serviço'
+    )
+    quantidade = models.DecimalField(
+        max_digits=14, decimal_places=3, default=1, verbose_name='Quantidade'
+    )
+    valor_unitario = models.DecimalField(
+        max_digits=14, decimal_places=2, default=0, verbose_name='Valor Unitário'
+    )
 
     class Meta:
         verbose_name = 'Item de Serviço'
