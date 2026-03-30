@@ -203,7 +203,7 @@ def salvar_material(request):
     data = _request_data(request)
     descricao = (data.get("descricao") or "").strip()
     if not descricao:
-        return JsonResponse({"ok": False, "erro": "Descrição é obrigatória."}, status=400)
+        return JsonResponse({"ok": False, "erro": "Descricao e obrigatoria."}, status=400)
 
     material_id = data.get("id")
     codigo_cliente = (data.get("codigo_cliente") or "").strip()
@@ -239,7 +239,6 @@ def salvar_obra(request):
     cliente_id = data.get("cliente_id")
     cliente = get_object_or_404(Cliente, id=cliente_id) if cliente_id else None
 
-    # CORRECAO 1: buscar e salvar o Projeto vinculado
     projeto = None
     projeto_id = data.get("projeto_id")
     if projeto_id and Projeto is not None:
@@ -250,7 +249,7 @@ def salvar_obra(request):
 
     nome = (data.get("nome") or (projeto.nome if projeto else "") or "").strip()
     if not nome:
-        return JsonResponse({"ok": False, "erro": "Nome da obra é obrigatório."}, status=400)
+        return JsonResponse({"ok": False, "erro": "Nome da obra e obrigatorio."}, status=400)
 
     obra_id = data.get("id")
     if obra_id:
@@ -264,7 +263,7 @@ def salvar_obra(request):
         obra = Obra.objects.create(nome=nome, cliente=cliente, projeto=projeto)
         criada = True
 
-    nome_orcamento = (data.get("nome_orcamento") or "Orçamento").strip() or "Orçamento"
+    nome_orcamento = (data.get("nome_orcamento") or "Orcamento").strip() or "Orcamento"
     orcamento, _ = Orcamento.objects.get_or_create(obra=obra, defaults={"nome": nome_orcamento})
     if orcamento.nome != nome_orcamento:
         orcamento.nome = nome_orcamento
@@ -292,9 +291,9 @@ def salvar_item_material(request):
     material_id = data.get("material_id")
 
     if not orcamento_id:
-        return JsonResponse({"ok": False, "erro": "orcamento_id é obrigatório."}, status=400)
+        return JsonResponse({"ok": False, "erro": "orcamento_id e obrigatorio."}, status=400)
     if not material_id:
-        return JsonResponse({"ok": False, "erro": "material_id é obrigatório."}, status=400)
+        return JsonResponse({"ok": False, "erro": "material_id e obrigatorio."}, status=400)
 
     orcamento = get_object_or_404(Orcamento, id=orcamento_id)
     material = get_object_or_404(MaterialCadastro, id=material_id)
@@ -302,10 +301,8 @@ def salvar_item_material(request):
     valor_unitario = _to_decimal(data.get("valor_unitario"), default=str(material.valor_unitario or 0))
 
     item = ItemMaterial.objects.create(
-        orcamento=orcamento,
-        material=material,
-        quantidade=quantidade,
-        valor_unitario=valor_unitario,
+        orcamento=orcamento, material=material,
+        quantidade=quantidade, valor_unitario=valor_unitario,
     )
     return JsonResponse({"ok": True, "mensagem": "Item adicionado.", "item": _item_material_to_dict(item), "totais": _totais_orcamento(orcamento)})
 
@@ -315,11 +312,11 @@ def excluir_item_material(request):
     data = _request_data(request)
     item_id = data.get("id") or data.get("item_id")
     if not item_id:
-        return JsonResponse({"ok": False, "erro": "id do item é obrigatório."}, status=400)
+        return JsonResponse({"ok": False, "erro": "id do item e obrigatorio."}, status=400)
     item = get_object_or_404(ItemMaterial, id=item_id)
     orcamento = item.orcamento
     item.delete()
-    return JsonResponse({"ok": True, "mensagem": "Item excluído.", "totais": _totais_orcamento(orcamento)})
+    return JsonResponse({"ok": True, "mensagem": "Item excluido.", "totais": _totais_orcamento(orcamento)})
 
 
 @require_GET
@@ -341,9 +338,9 @@ def salvar_item_servico(request):
     servico_id = data.get("servico_id")
 
     if not orcamento_id:
-        return JsonResponse({"ok": False, "erro": "orcamento_id é obrigatório."}, status=400)
+        return JsonResponse({"ok": False, "erro": "orcamento_id e obrigatorio."}, status=400)
     if not servico_id:
-        return JsonResponse({"ok": False, "erro": "servico_id é obrigatório."}, status=400)
+        return JsonResponse({"ok": False, "erro": "servico_id e obrigatorio."}, status=400)
 
     orcamento = get_object_or_404(Orcamento, id=orcamento_id)
     servico = get_object_or_404(ProdutoServico, id=servico_id)
@@ -351,10 +348,8 @@ def salvar_item_servico(request):
     valor_unitario = _to_decimal(data.get("valor_unitario"), default=str(servico.preco_unitario or 0))
 
     item = ItemServico.objects.create(
-        orcamento=orcamento,
-        servico=servico,
-        quantidade=quantidade,
-        valor_unitario=valor_unitario,
+        orcamento=orcamento, servico=servico,
+        quantidade=quantidade, valor_unitario=valor_unitario,
     )
     return JsonResponse({"ok": True, "mensagem": "Item adicionado.", "item": _item_servico_to_dict(item), "totais": _totais_orcamento(orcamento)})
 
@@ -364,11 +359,11 @@ def excluir_item_servico(request):
     data = _request_data(request)
     item_id = data.get("id") or data.get("item_id")
     if not item_id:
-        return JsonResponse({"ok": False, "erro": "id do item é obrigatório."}, status=400)
+        return JsonResponse({"ok": False, "erro": "id do item e obrigatorio."}, status=400)
     item = get_object_or_404(ItemServico, id=item_id)
     orcamento = item.orcamento
     item.delete()
-    return JsonResponse({"ok": True, "mensagem": "Item excluído.", "totais": _totais_orcamento(orcamento)})
+    return JsonResponse({"ok": True, "mensagem": "Item excluido.", "totais": _totais_orcamento(orcamento)})
 
 
 @require_GET
@@ -383,26 +378,26 @@ def exportar_excel(request, orcamento_id):
     response.write("\ufeff")
 
     writer = csv.writer(response, delimiter=";")
-    writer.writerow(["Orçamento", orcamento.nome])
+    writer.writerow(["Orcamento", orcamento.nome])
     writer.writerow(["Obra", orcamento.obra.nome])
     writer.writerow(["Cliente", orcamento.obra.cliente.nome if orcamento.obra.cliente else ""])
     writer.writerow(["Projeto", orcamento.obra.projeto.nome if orcamento.obra.projeto else ""])
     writer.writerow([])
 
     writer.writerow(["MATERIAIS"])
-    writer.writerow(["Descrição", "Unidade", "Quantidade", "Valor Unitário", "Valor Total"])
+    writer.writerow(["Cod. BK", "Cod. Cliente", "Descricao", "Unidade", "Quantidade", "Valor Unitario", "Valor Total"])
     for item in orcamento.itens_material.select_related("material").all():
-        writer.writerow([item.material.descricao, item.material.unidade, item.quantidade, item.valor_unitario, item.valor_total])
+        writer.writerow([item.material.codigo_bk, item.material.codigo_cliente, item.material.descricao, item.material.unidade, item.quantidade, item.valor_unitario, item.valor_total])
 
     writer.writerow([])
-    writer.writerow(["SERVIÇOS"])
-    writer.writerow(["Nome", "Unidade", "Quantidade", "Valor Unitário", "Valor Total"])
+    writer.writerow(["SERVICOS"])
+    writer.writerow(["Nome", "Unidade", "Quantidade", "Valor Unitario", "Valor Total"])
     for item in orcamento.itens_servico.select_related("servico").all():
         writer.writerow([item.servico.nome, item.servico.unidade, item.quantidade, item.valor_unitario, item.valor_total])
 
     totais = _totais_orcamento(orcamento)
     writer.writerow([])
     writer.writerow(["Total Materiais", totais["total_materiais"]])
-    writer.writerow(["Total Serviços", totais["total_servicos"]])
+    writer.writerow(["Total Servicos", totais["total_servicos"]])
     writer.writerow(["Total Geral", totais["total_geral"]])
     return response
