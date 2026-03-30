@@ -96,7 +96,7 @@
           </div>
         </div>
         <div style="height:14px"></div>
-        <button class="btn btn-success" onclick="salvarObra()">Salvar obra / orçamento</button>
+        <button type="button" class="btn btn-success" onclick="salvarObra()">Salvar obra / orçamento</button>
       </div>
 
       <div class="card">
@@ -121,7 +121,7 @@
         <div><label>Valor unitário</label><input type="number" id="mat_valor_unitario" step="0.01" min="0"></div>
       </div>
       <div style="height:14px"></div>
-      <button class="btn" onclick="salvarMaterial()">Salvar material</button>
+      <button type="button" class="btn" onclick="salvarMaterial()">Salvar material</button>
     </div>
 
     <div style="height:16px"></div>
@@ -151,7 +151,7 @@
               <td><input class="grid-input" type="text" id="edit_mat_descricao_{{ m.id }}" value="{{ m.descricao|default:'' }}"></td>
               <td><input class="grid-input" type="text" id="edit_mat_unidade_{{ m.id }}" value="{{ m.unidade|default:'un' }}"></td>
               <td><input class="grid-input" type="number" step="0.01" min="0" id="edit_mat_valor_{{ m.id }}" value="{{ m.valor_unitario|default:0 }}"></td>
-              <td><div class="grid-action"><button class="btn btn-success" type="button" onclick="editarMaterial({{ m.id }})">Salvar</button></div></td>
+              <td><div class="grid-action"><button type="button" class="btn btn-success" onclick="editarMaterial({{ m.id }})">Salvar</button></div></td>
             </tr>
             {% empty %}
             <tr><td colspan="7" class="empty">Nenhum material cadastrado.</td></tr>
@@ -171,7 +171,7 @@
           <div class="grid-helper">Grade editável estilo Excel.</div>
           <span class="mini-pill">Filtro na lista suspensa</span>
         </div>
-        <button class="btn btn-success" type="button" onclick="adicionarLinhaMaterial()">+ Linha</button>
+        <button type="button" class="btn btn-success" onclick="adicionarLinhaMaterial()">+ Linha</button>
       </div>
       <div class="excel-grid-wrap">
         <table class="excel-grid">
@@ -203,7 +203,7 @@
           <div class="grid-helper">Mesmo padrão visual da grade de materiais.</div>
           <span class="mini-pill">Filtro na lista suspensa</span>
         </div>
-        <button class="btn btn-success" type="button" onclick="adicionarLinhaServico()">+ Linha</button>
+        <button type="button" class="btn btn-success" onclick="adicionarLinhaServico()">+ Linha</button>
       </div>
       <div class="excel-grid-wrap">
         <table class="excel-grid">
@@ -264,21 +264,54 @@
       });
     }
 
-    function salvarMaterial(){
-      fetch("{% url 'orcamento:salvar_material' %}", {
-        method:'POST',
-        headers: payloadHeaders(),
-        body: JSON.stringify({
-          codigo_cliente: document.getElementById('mat_codigo_cliente').value,
-          codigo_bk: document.getElementById('mat_codigo_bk').value,
-          descricao: document.getElementById('mat_descricao').value,
-          unidade: document.getElementById('mat_unidade').value,
-          valor_unitario: document.getElementById('mat_valor_unitario').value
-        })
-      }).then(r=>r.json()).then(data=>{
-        alert(data.mensagem || data.erro || 'Processado.');
-        if (data.ok) location.reload();
-      });
+    async function salvarMaterial(){
+      const btn = document.querySelector('button[onclick="salvarMaterial()"]');
+      const descricao = document.getElementById('mat_descricao').value.trim();
+      if (!descricao) {
+        alert('Informe a descrição do material.');
+        document.getElementById('mat_descricao').focus();
+        return;
+      }
+
+      const payload = {
+        codigo_cliente: document.getElementById('mat_codigo_cliente').value,
+        codigo_bk: document.getElementById('mat_codigo_bk').value,
+        descricao: descricao,
+        unidade: document.getElementById('mat_unidade').value || 'un',
+        valor_unitario: document.getElementById('mat_valor_unitario').value || 0
+      };
+
+      try {
+        if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
+
+        const response = await fetch("{% url 'orcamento:salvar_material' %}", {
+          method:'POST',
+          headers: payloadHeaders(),
+          body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || !data.ok) {
+          alert(data.erro || data.mensagem || 'Não foi possível salvar o material.');
+          return;
+        }
+
+        alert(data.mensagem || 'Material salvo com sucesso.');
+
+        document.getElementById('mat_codigo_cliente').value = '';
+        document.getElementById('mat_codigo_bk').value = '';
+        document.getElementById('mat_descricao').value = '';
+        document.getElementById('mat_unidade').value = 'un';
+        document.getElementById('mat_valor_unitario').value = '';
+
+        location.reload();
+      } catch (error) {
+        console.error('Erro ao salvar material:', error);
+        alert('Ocorreu um erro ao salvar o material. Abra o console do navegador para ver detalhes.');
+      } finally {
+        if (btn) { btn.disabled = false; btn.textContent = 'Salvar material'; }
+      }
     }
 
     function editarMaterial(id){
