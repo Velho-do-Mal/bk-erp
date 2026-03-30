@@ -1289,7 +1289,7 @@ function renderControle() {
         };
         const color = statusColors[t.status] || '#64748B';
         const statusLabels = {
-          'concluido': '✅ Concluído', 'em-andamento': '🔵 Em Andamento',
+          'concluido': '✅ Aprovado', 'em-andamento': '🔵 Em Andamento',
           'atrasado': '🔴 Atrasado', 'nao-iniciado': '⚪ Não Iniciado'
         };
         return `
@@ -1353,7 +1353,7 @@ const DOC_STATUS = [
   {v:'em_andamento',l:'Em andamento',c:'#3B82F6',resp:'BK'},
   {v:'em_analise',  l:'Em análise',  c:'#F59E0B',resp:'CLIENTE'},
   {v:'em_revisao',  l:'Em revisão',  c:'#8B5CF6',resp:'BK'},
-  {v:'concluido',   l:'Concluído',   c:'#10B981',resp:'BK'},
+  {v:'concluido',   l:'Aprovado',   c:'#10B981',resp:'BK'},
   {v:'cancelado',   l:'Cancelado',   c:'#EF4444',resp:'BK'},
 ];
 const DOC_STATUS_MAP = Object.fromEntries(DOC_STATUS.map(o=>[o.v,o]));
@@ -1376,6 +1376,7 @@ async function carregarControle() {
     const sv=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v||'';};
     sv('ctrl-cliente', ctrlMeta.cliente_nome);
     sv('ctrl-num', ctrlMeta.projeto_numero);
+    sv('ctrl-num', ctrlMeta.revisao);
     sv('ctrl-status', ctrlMeta.projeto_status);
 
     const showImg = (imgId, lblId, uri) => {
