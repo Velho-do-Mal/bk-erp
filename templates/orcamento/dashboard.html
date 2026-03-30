@@ -175,6 +175,93 @@
 
     <div style="height:16px"></div>
 
+    {% if orcamento %}
+    <div class="card">
+      <div class="section-title">Itens do Orçamento</div>
+
+      <div style="margin-bottom:18px">
+        <div style="font-size:13px;color:var(--muted);margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.05em">Materiais</div>
+        <div class="excel-grid-wrap">
+          <table class="excel-grid" style="min-width:900px">
+            <thead>
+              <tr>
+                <th style="width:80px">#</th>
+                <th style="width:160px">Cód. BK</th>
+                <th style="width:160px">Cód. Cliente</th>
+                <th>Descrição</th>
+                <th style="width:110px">Unidade</th>
+                <th style="width:130px">Quantidade</th>
+                <th style="width:150px">Valor Unit.</th>
+                <th style="width:150px">Valor Total</th>
+                <th style="width:90px">Ação</th>
+              </tr>
+            </thead>
+            <tbody id="lista_itens_material">
+              {% for item in itens_material %}
+              <tr id="row_mat_{{ item.id }}">
+                <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">{{ forloop.counter }}</span></td>
+                <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">{{ item.material_codigo_bk|default:'' }}</span></td>
+                <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">{{ item.material_codigo_cliente|default:'' }}</span></td>
+                <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">{{ item.material }}</span></td>
+                <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">{{ item.unidade }}</span></td>
+                <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">{{ item.quantidade }}</span></td>
+                <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">R$ {{ item.valor_unitario|floatformat:2 }}</span></td>
+                <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">R$ {{ item.valor_total|floatformat:2 }}</span></td>
+                <td><div class="grid-action"><button type="button" class="btn btn-danger" onclick="excluirItemMaterial({{ item.id }}, this)">✕</button></div></td>
+              </tr>
+              {% empty %}
+              <tr id="lista_mat_empty"><td colspan="9" class="empty">Nenhum material adicionado.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.05em">Serviços</div>
+        <div class="excel-grid-wrap">
+          <table class="excel-grid" style="min-width:760px">
+            <thead>
+              <tr>
+                <th style="width:80px">#</th>
+                <th>Serviço</th>
+                <th style="width:110px">Unidade</th>
+                <th style="width:130px">Quantidade</th>
+                <th style="width:150px">Valor Unit.</th>
+                <th style="width:150px">Valor Total</th>
+                <th style="width:90px">Ação</th>
+              </tr>
+            </thead>
+            <tbody id="lista_itens_servico">
+              {% for item in itens_servico %}
+              <tr id="row_svc_{{ item.id }}">
+                <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">{{ forloop.counter }}</span></td>
+                <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">{{ item.servico }}</span></td>
+                <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">{{ item.unidade }}</span></td>
+                <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">{{ item.quantidade }}</span></td>
+                <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">R$ {{ item.valor_unitario|floatformat:2 }}</span></td>
+                <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">R$ {{ item.valor_total|floatformat:2 }}</span></td>
+                <td><div class="grid-action"><button type="button" class="btn btn-danger" onclick="excluirItemServico({{ item.id }}, this)">✕</button></div></td>
+              </tr>
+              {% empty %}
+              <tr id="lista_svc_empty"><td colspan="7" class="empty">Nenhum serviço adicionado.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style="height:14px"></div>
+      <div class="totals">
+        <div class="total-box"><div class="t">Materiais</div><div class="v" id="total_mat_live">R$ {{ totais.total_materiais|floatformat:2 }}</div></div>
+        <div class="total-box"><div class="t">Serviços</div><div class="v" id="total_svc_live">R$ {{ totais.total_servicos|floatformat:2 }}</div></div>
+        <div class="total-box"><div class="t">Total geral</div><div class="v" id="total_geral_live">R$ {{ totais.total_geral|floatformat:2 }}</div></div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div style="height:16px"></div>
+
     <div class="card">
       <div class="section-title">Adicionar material ao orçamento</div>
       {% if orcamento %}
@@ -393,7 +480,56 @@
       fetch("{% url 'orcamento:salvar_item_material' %}", {
         method:'POST', headers: payloadHeaders(),
         body: JSON.stringify({orcamento_id: ORCAMENTO_ID, material_id: linha.material_id, quantidade: linha.quantidade, valor_unitario: linha.valor_unitario})
-      }).then(r=>r.json()).then(data=>{ alert(data.mensagem || data.erro || 'Processado.'); if (data.ok) location.reload(); });
+      }).then(r=>r.json()).then(data=>{
+        if (!data.ok) return alert(data.erro || 'Erro ao salvar.');
+        // Adicionar linha na lista de itens sem reload
+        const material = materiaisData.find(m => String(m.id) === String(linha.material_id));
+        adicionarLinhaListaMaterial(data.item, material);
+        atualizarTotais(data.totais);
+        linhasMateriais.splice(idx, 1);
+        renderGradeMateriais();
+      });
+    }
+
+    function adicionarLinhaListaMaterial(item, material) {
+      const tbody = document.getElementById('lista_itens_material');
+      if (!tbody) return;
+      // Remover linha "vazio" se existir
+      const empty = document.getElementById('lista_mat_empty');
+      if (empty) empty.remove();
+      const rowCount = tbody.querySelectorAll('tr').length + 1;
+      const tr = document.createElement('tr');
+      tr.id = 'row_mat_' + item.id;
+      tr.innerHTML = `
+        <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">${rowCount}</span></td>
+        <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">${escapeHtml(material ? material.codigo_bk||'' : '')}</span></td>
+        <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">${escapeHtml(material ? material.codigo_cliente||'' : '')}</span></td>
+        <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">${escapeHtml(item.material||'')}</span></td>
+        <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">${escapeHtml(item.unidade||'')}</span></td>
+        <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">${item.quantidade}</span></td>
+        <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">R$ ${Number(item.valor_unitario).toFixed(2)}</span></td>
+        <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">R$ ${Number(item.valor_total).toFixed(2)}</span></td>
+        <td><div class="grid-action"><button type="button" class="btn btn-danger" onclick="excluirItemMaterial(${item.id}, this)">✕</button></div></td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    function excluirItemMaterial(id, btn) {
+      if (!confirm('Excluir este material do orçamento?')) return;
+      fetch("{% url 'orcamento:excluir_item_material' %}", {
+        method:'POST', headers: payloadHeaders(),
+        body: JSON.stringify({id: id})
+      }).then(r=>r.json()).then(data=>{
+        if (!data.ok) return alert(data.erro || 'Erro ao excluir.');
+        const row = document.getElementById('row_mat_' + id);
+        if (row) row.remove();
+        atualizarTotais(data.totais);
+        // Se ficou vazio, mostrar mensagem
+        const tbody = document.getElementById('lista_itens_material');
+        if (tbody && tbody.querySelectorAll('tr').length === 0) {
+          tbody.innerHTML = '<tr id="lista_mat_empty"><td colspan="9" class="empty">Nenhum material adicionado.</td></tr>';
+        }
+      });
     }
 
     function getServicosFiltrados(term){
@@ -447,7 +583,59 @@
       fetch("{% url 'orcamento:salvar_item_servico' %}", {
         method:'POST', headers: payloadHeaders(),
         body: JSON.stringify({orcamento_id: ORCAMENTO_ID, servico_id: linha.servico_id, quantidade: linha.quantidade, valor_unitario: linha.valor_unitario})
-      }).then(r=>r.json()).then(data=>{ alert(data.mensagem || data.erro || 'Processado.'); if (data.ok) location.reload(); });
+      }).then(r=>r.json()).then(data=>{
+        if (!data.ok) return alert(data.erro || 'Erro ao salvar.');
+        adicionarLinhaListaServico(data.item);
+        atualizarTotais(data.totais);
+        linhasServicos.splice(idx, 1);
+        renderGradeServicos();
+      });
+    }
+
+    function adicionarLinhaListaServico(item) {
+      const tbody = document.getElementById('lista_itens_servico');
+      if (!tbody) return;
+      const empty = document.getElementById('lista_svc_empty');
+      if (empty) empty.remove();
+      const rowCount = tbody.querySelectorAll('tr').length + 1;
+      const tr = document.createElement('tr');
+      tr.id = 'row_svc_' + item.id;
+      tr.innerHTML = `
+        <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">${rowCount}</span></td>
+        <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">${escapeHtml(item.servico||'')}</span></td>
+        <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">${escapeHtml(item.unidade||'')}</span></td>
+        <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">${item.quantidade}</span></td>
+        <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">R$ ${Number(item.valor_unitario).toFixed(2)}</span></td>
+        <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">R$ ${Number(item.valor_total).toFixed(2)}</span></td>
+        <td><div class="grid-action"><button type="button" class="btn btn-danger" onclick="excluirItemServico(${item.id}, this)">✕</button></div></td>
+      `;
+      tbody.appendChild(tr);
+    }
+
+    function excluirItemServico(id, btn) {
+      if (!confirm('Excluir este serviço do orçamento?')) return;
+      fetch("{% url 'orcamento:excluir_item_servico' %}", {
+        method:'POST', headers: payloadHeaders(),
+        body: JSON.stringify({id: id})
+      }).then(r=>r.json()).then(data=>{
+        if (!data.ok) return alert(data.erro || 'Erro ao excluir.');
+        const row = document.getElementById('row_svc_' + id);
+        if (row) row.remove();
+        atualizarTotais(data.totais);
+        const tbody = document.getElementById('lista_itens_servico');
+        if (tbody && tbody.querySelectorAll('tr').length === 0) {
+          tbody.innerHTML = '<tr id="lista_svc_empty"><td colspan="7" class="empty">Nenhum serviço adicionado.</td></tr>';
+        }
+      });
+    }
+
+    function atualizarTotais(totais) {
+      if (!totais) return;
+      const fmt = v => 'R$ ' + Number(v||0).toFixed(2).replace('.', ',');
+      const el = id => document.getElementById(id);
+      if (el('total_mat_live')) el('total_mat_live').textContent = fmt(totais.total_materiais);
+      if (el('total_svc_live')) el('total_svc_live').textContent = fmt(totais.total_servicos);
+      if (el('total_geral_live')) el('total_geral_live').textContent = fmt(totais.total_geral);
     }
 
     document.addEventListener('DOMContentLoaded', function(){
