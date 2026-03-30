@@ -488,7 +488,7 @@
             <th style="width:70px">Cod.</th>
             <th>Atividade</th>
             <th style="width:100px">Nº Atividade</th>
-            <th style="width:50px">rev.</th>
+            <th style="width:50px">Rev.</th>
             <th style="width:110px">Responsável</th>
             <th style="width:108px">Início</th>
             <th style="width:108px">Fim</th>
@@ -1444,6 +1444,7 @@ function renderCtrlDocs() {
       <td><input class="grid-input" value="${escHtml(d.codigo||'')}" oninput="ctrlDocs[${i}].codigo=this.value"></td>
       <td><input class="grid-input" value="${escHtml(d.atividade||'')}" oninput="ctrlDocs[${i}].atividade=this.value"></td>
       <td><input class="grid-input" value="${escHtml(d.doc_numero||'')}" oninput="ctrlDocs[${i}].doc_numero=this.value"></td>
+      <td><input class="grid-input" value="${escHtml(d.revisao||'')}" oninput="ctrlDocs[${i}].doc_numero=this.value"></td>
       <td><input class="grid-input" value="${escHtml(d.responsavel||'')}" oninput="ctrlDocs[${i}].responsavel=this.value"></td>
       <td><input type="date" class="grid-input" value="${d.data_inicio||''}" onchange="ctrlDocs[${i}].data_inicio=this.value"></td>
       <td><input type="date" class="grid-input" value="${d.data_conclusao||''}" onchange="ctrlDocs[${i}].data_conclusao=this.value"></td>
@@ -1460,7 +1461,7 @@ function renderCtrlDocs() {
 }
 
 function addDoc() {
-  ctrlDocs.push({id:null,codigo:'',atividade:'',doc_numero:'',responsavel:'',
+  ctrlDocs.push({id:null,codigo:'',atividade:'',doc_numero:'',revisao'',responsavel:'',
     data_inicio:'',data_conclusao:'',percentual:0,status:'nao_iniciado',
     observacao:'',dias_bk:0,dias_cli:0});
   renderCtrlDocs();
@@ -1480,6 +1481,7 @@ function removerDoc(i) {
 async function salvarMeta() {
   ctrlMeta.cliente_nome   = document.getElementById('ctrl-cliente')?.value||'';
   ctrlMeta.projeto_numero = document.getElementById('ctrl-num')?.value||'';
+  ctrlMeta.revisao = document.getElementById('ctrl-num')?.value||''; 
   ctrlMeta.projeto_status = document.getElementById('ctrl-status')?.value||'';
   // NÃO envia logo URIs no JSON (são salvas via uploadLogo multipart separado)
   const payload = {
@@ -1602,7 +1604,7 @@ function _docTableHTML(docs) {
       <td style="text-align:center;font-family:monospace">${escHtml(d.codigo||'')}</td>
       <td>${escHtml(d.atividade||d.doc_nome||'—')}</td>
       <td style="text-align:center">${escHtml(d.doc_numero||'—')}</td>
-      <td>${escHtml(d.rev||'—')}</td>
+      <td>${escHtml(d.revisao||'—')}</td>
       <td>${escHtml(d.responsavel||'—')}</td>
       <td style="text-align:center">${d.data_inicio||'—'}</td>
       <td style="text-align:center">${d.data_conclusao||'—'}</td>
