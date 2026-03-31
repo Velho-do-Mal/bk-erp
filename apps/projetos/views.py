@@ -256,6 +256,7 @@ def controle_docs(request, pk):
             cfg.cliente_nome = data.get('cliente_nome', '').strip()
             cfg.projeto_numero = data.get('projeto_numero', '').strip()
             cfg.projeto_status = data.get('projeto_status', '').strip()
+            cfg.revisao = data.get('revisao', '').strip()
             cfg.save()
             return JsonResponse({'ok': True})
 
@@ -273,6 +274,7 @@ def controle_docs(request, pk):
                 obj.servico_nome = d.get('codigo', '').strip()
                 obj.doc_nome = d.get('atividade', '').strip()
                 obj.doc_numero = d.get('doc_numero', '').strip()
+                obj.revisao = d.get('revisao', '').strip()
                 obj.responsavel_bk = d.get('responsavel', '').strip()
                 obj.data_inicio = _to_date(d.get('data_inicio'))
                 obj.data_conclusao = _to_date(d.get('data_conclusao'))
@@ -313,13 +315,14 @@ def controle_docs(request, pk):
         meta = {
             'cliente_nome': cfg.cliente_nome,
             'projeto_numero': cfg.projeto_numero,
+            'revisao': cfg.revisao,
             'projeto_status': cfg.projeto_status,
             'logo_bk_uri': logo_bk_uri,
             'logo_cliente_uri': logo_cli_uri,
         }
     except ControleDocConfig.DoesNotExist:
-        meta = {'cliente_nome': '', 'projeto_numero': '', 'projeto_status': '',
-                'logo_bk_uri': '', 'logo_cliente_uri': ''}
+        meta = {'cliente_nome': '', 'projeto_numero': '', 'revisao': '',
+                'projeto_status': '', 'logo_bk_uri': '', 'logo_cliente_uri': ''}
 
     docs_qs = DocumentoControle.objects.filter(projeto=projeto).order_by('id')
     docs = []
@@ -330,6 +333,7 @@ def controle_docs(request, pk):
             'codigo': doc.servico_nome,
             'atividade': doc.doc_nome,
             'doc_numero': doc.doc_numero,
+            'revisao': doc.revisao,
             'responsavel': doc.responsavel_bk,
             'data_inicio': str(doc.data_inicio) if doc.data_inicio else '',
             'data_conclusao': str(doc.data_conclusao) if doc.data_conclusao else '',
