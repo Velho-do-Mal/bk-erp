@@ -1614,10 +1614,9 @@ function _docTableHTML(docs) {
     </tr>`;
   }).join('');
   return `<table><thead><tr>
-    <th>Cod.</th><th>Atividade</th><th>Nº Atividade</th><th>Responsável</th>
-    <th>Início</th><th>Fim</th><th>Status</th><th>Alterações</th>
-  </tr></thead><tbody>${rows}</tbody></table>`;
-}
+    <th>Cod.</th><th>Atividade</th><th>Nº Atividade<
+    </tr></thead><tbody>${rows}</tbody></table>`;
+  }
 
 function _openPrint(html) {
   const w=window.open('','_blank','width=1150,height=860');
