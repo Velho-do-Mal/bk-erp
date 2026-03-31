@@ -1614,7 +1614,7 @@ function _docTableHTML(docs) {
     </tr>`;
   }).join('');
   return `<table><thead><tr>
-    <th>Cod.</th><th>Atividade</th><th>Nº Atividade<
+    <th>Cód.</th><th>Atividade</th><th>Nº Atividade</th><th>Revisão</th><th>Responsável</th><th>Início</th><th>Fim</th><th>Status</th><th>Alterações</th><
     </tr></thead><tbody>${rows}</tbody></table>`;
   }
 
@@ -1694,7 +1694,7 @@ function imprimirGerencial() {
     <h3>📊 Tempo por Documento — BK × Cliente</h3>
     <table>
       <thead><tr>
-        <th>Cod.</th><th>Atividade</th><th>Nº Atividade</th><th>Status</th>
+        <th>Cód.</th><th>Atividade</th><th>Nº Atividade</th><th>Revisão</th><th>Responsável</th><th>Início</th><th>Fim</th><th>Status</th><th>Alterações</th></th><th>Status</th>
         <th style="color:#3B82F6">Dias BK</th><th style="color:#F59E0B">Dias Cliente</th><th>Total</th>
       </tr></thead>
       <tbody>${detalheRows}
