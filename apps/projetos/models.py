@@ -77,6 +77,7 @@ class ControleDocConfig(models.Model):
     cliente_nome = models.CharField(max_length=200, blank=True)
     projeto_numero = models.CharField(max_length=100, blank=True)
     projeto_status = models.CharField(max_length=100, blank=True)
+    revisao = models.CharField(max_length=50, blank=True, default='')
     logo_bk_nome = models.CharField(max_length=200, blank=True)
     logo_bk_tipo = models.CharField(max_length=100, blank=True)
     logo_bk_dados = models.BinaryField(null=True, blank=True)
