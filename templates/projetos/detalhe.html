@@ -1444,7 +1444,7 @@ function renderCtrlDocs() {
     return `<tr>
       <td><input class="grid-input" value="${escHtml(d.codigo||'')}" oninput="ctrlDocs[${i}].codigo=this.value"></td>
       <td><input class="grid-input" value="${escHtml(d.atividade||'')}" oninput="ctrlDocs[${i}].atividade=this.value"></td>
-      <td><input class="grid-input" value="${escHtml(d.doc_numero||'')}" oninput="ctrlDocs[${i}].doc_numero=this.value"></td>
+      <td><input class="grid-input" value="${escHtml(d.doc_numero||'')}" oninput="ctrlDocs[${i}].revisao=this.value">></td>
       <td><input class="grid-input" value="${escHtml(d.revisao||'')}" oninput="ctrlDocs[${i}].revisao=this.value"></td>
       <td><input class="grid-input" value="${escHtml(d.responsavel||'')}" oninput="ctrlDocs[${i}].responsavel=this.value"></td>
       <td><input type="date" class="grid-input" value="${d.data_inicio||''}" onchange="ctrlDocs[${i}].data_inicio=this.value"></td>
