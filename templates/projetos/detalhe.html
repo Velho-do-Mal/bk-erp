@@ -431,10 +431,6 @@
         <input id="ctrl-num" class="form-control" placeholder="BK-2026-001">
       </div>
       <div>
-        <label class="form-label">Revisão</label>
-        <input id="ctrl-revisao" class="form-control" placeholder="R0">
-      </div>
-      <div>
         <label class="form-label">Status do Projeto</label>
         <input id="ctrl-status" class="form-control" placeholder="Em execução">
       </div>
@@ -492,11 +488,10 @@
             <th style="width:70px">Cod.</th>
             <th>Atividade</th>
             <th style="width:100px">Nº Atividade</th>
-            <th style="width:50px">Rev.</th>
             <th style="width:110px">Responsável</th>
             <th style="width:108px">Início</th>
             <th style="width:108px">Fim</th>
-            <th style="width:50px">% Conc.</th>
+            <th style="width:60px">% Conc.</th>
             <th style="width:120px">Status</th>
             <th style="width:220px">Alterações</th>
             {% if is_admin %}<th style="width:48px">Ação</th>{% endif %}
@@ -569,7 +564,7 @@
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px">
       <span style="font-size:16px;font-weight:700;color:#0d47a1">Movimenta&#231;&#227;o Financeira</span>
       {% if is_admin %}
-      <button class="btn btn-primary btn-sm" onclick="toggleFormMov()">+ Nova Movimenta&#231;&#227;o</button>
+      <button class="btn btn-primary btn-sm" onclick="toggleFormMov(true)">+ Nova Movimenta&#231;&#227;o</button>
       {% endif %}
     </div>
     {% if is_admin %}
@@ -1293,7 +1288,7 @@ function renderControle() {
         };
         const color = statusColors[t.status] || '#64748B';
         const statusLabels = {
-          'concluido': '✅ Aprovado', 'em-andamento': '🔵 Em Andamento',
+          'concluido': '✅ Concluído', 'em-andamento': '🔵 Em Andamento',
           'atrasado': '🔴 Atrasado', 'nao-iniciado': '⚪ Não Iniciado'
         };
         return `
@@ -1357,7 +1352,7 @@ const DOC_STATUS = [
   {v:'em_andamento',l:'Em andamento',c:'#3B82F6',resp:'BK'},
   {v:'em_analise',  l:'Em análise',  c:'#F59E0B',resp:'CLIENTE'},
   {v:'em_revisao',  l:'Em revisão',  c:'#8B5CF6',resp:'BK'},
-  {v:'concluido',   l:'Aprovado',   c:'#10B981',resp:'BK'},
+  {v:'concluido',   l:'Concluído',   c:'#10B981',resp:'BK'},
   {v:'cancelado',   l:'Cancelado',   c:'#EF4444',resp:'BK'},
 ];
 const DOC_STATUS_MAP = Object.fromEntries(DOC_STATUS.map(o=>[o.v,o]));
@@ -1380,7 +1375,6 @@ async function carregarControle() {
     const sv=(id,v)=>{const el=document.getElementById(id);if(el)el.value=v||'';};
     sv('ctrl-cliente', ctrlMeta.cliente_nome);
     sv('ctrl-num', ctrlMeta.projeto_numero);
-    sv('ctrl-revisao', ctrlMeta.revisao);
     sv('ctrl-status', ctrlMeta.projeto_status);
 
     const showImg = (imgId, lblId, uri) => {
@@ -1449,7 +1443,6 @@ function renderCtrlDocs() {
       <td><input class="grid-input" value="${escHtml(d.codigo||'')}" oninput="ctrlDocs[${i}].codigo=this.value"></td>
       <td><input class="grid-input" value="${escHtml(d.atividade||'')}" oninput="ctrlDocs[${i}].atividade=this.value"></td>
       <td><input class="grid-input" value="${escHtml(d.doc_numero||'')}" oninput="ctrlDocs[${i}].doc_numero=this.value"></td>
-      <td><input class="grid-input" value="${escHtml(d.revisao||'')}" oninput="ctrlDocs[${i}].revisao=this.value"></td>
       <td><input class="grid-input" value="${escHtml(d.responsavel||'')}" oninput="ctrlDocs[${i}].responsavel=this.value"></td>
       <td><input type="date" class="grid-input" value="${d.data_inicio||''}" onchange="ctrlDocs[${i}].data_inicio=this.value"></td>
       <td><input type="date" class="grid-input" value="${d.data_conclusao||''}" onchange="ctrlDocs[${i}].data_conclusao=this.value"></td>
@@ -1466,7 +1459,7 @@ function renderCtrlDocs() {
 }
 
 function addDoc() {
-  ctrlDocs.push({id:null,codigo:'',atividade:'',doc_numero:'',revisao:'',responsavel:'',
+  ctrlDocs.push({id:null,codigo:'',atividade:'',doc_numero:'',responsavel:'',
     data_inicio:'',data_conclusao:'',percentual:0,status:'nao_iniciado',
     observacao:'',dias_bk:0,dias_cli:0});
   renderCtrlDocs();
@@ -1486,7 +1479,6 @@ function removerDoc(i) {
 async function salvarMeta() {
   ctrlMeta.cliente_nome   = document.getElementById('ctrl-cliente')?.value||'';
   ctrlMeta.projeto_numero = document.getElementById('ctrl-num')?.value||'';
-  ctrlMeta.revisao = document.getElementById('ctrl-revisao')?.value||'';
   ctrlMeta.projeto_status = document.getElementById('ctrl-status')?.value||'';
   // NÃO envia logo URIs no JSON (são salvas via uploadLogo multipart separado)
   const payload = {
@@ -1605,21 +1597,21 @@ function _docTableHTML(docs) {
   if(!docs.length) return '<p style="text-align:center;color:#888;padding:20px">Nenhum documento.</p>';
   const rows = docs.map((d,i)=>{
     const s=DOC_STATUS_MAP[d.status]||{l:d.status||'—',c:'#64748B'};
+    const pct=Math.min(100,Math.max(0,parseInt(d.percentual||0)));
     return `<tr>
       <td style="text-align:center;font-family:monospace">${escHtml(d.codigo||'')}</td>
       <td>${escHtml(d.atividade||d.doc_nome||'—')}</td>
       <td style="text-align:center">${escHtml(d.doc_numero||'—')}</td>
-      <td style="text-align:center">${escHtml(d.revisao||'—')}</td>
       <td>${escHtml(d.responsavel||'—')}</td>
       <td style="text-align:center">${d.data_inicio||'—'}</td>
       <td style="text-align:center">${d.data_conclusao||'—'}</td>
+      <td style="text-align:center;font-weight:700">${pct}%</td>
       <td><span class="badge" style="background:${s.c}22;color:${s.c};border-color:${s.c}44">${s.l}</span></td>
-      <td>${escHtml(d.observacao||'—')}</td>
     </tr>`;
   }).join('');
   return `<table><thead><tr>
-    <th>Cód.</th><th>Atividade</th><th>Nº Atividade</th><th>Rev.</th>
-    <th>Responsável</th><th>Início</th><th>Fim</th><th>Status</th><th>Alterações</th>
+    <th>Cod.</th><th>Atividade</th><th>Nº Atividade</th><th>Responsável</th>
+    <th>Início</th><th>Fim</th><th>Status</th><th>Alterações</th>
   </tr></thead><tbody>${rows}</tbody></table>`;
 }
 
@@ -1699,7 +1691,7 @@ function imprimirGerencial() {
     <h3>📊 Tempo por Documento — BK × Cliente</h3>
     <table>
       <thead><tr>
-        <th>Cód.</th><th>Atividade</th><th>Nº Atividade</th><th>Revisão</th><th>Responsável</th><th>Início</th><th>Fim</th><th>Status</th><th>Alterações</th></th><th>Status</th>
+        <th>Cod.</th><th>Atividade</th><th>Nº Atividade</th><th>Status</th>
         <th style="color:#3B82F6">Dias BK</th><th style="color:#F59E0B">Dias Cliente</th><th>Total</th>
       </tr></thead>
       <tbody>${detalheRows}
@@ -2461,7 +2453,7 @@ function gerarRelatorioGeral() {
       + '<div style="background:#e2e3e5;padding:10px 20px;border-radius:6px;text-align:center"><strong>'
         + _pctG + '%</strong><br>% Geral</div></div>'
       + '<table class="rpt-table"><thead><tr>'
-        + '<th>Cód.</th><th>Atividade</th><th>Rev.</th><th>Responsável</th><th>%</th><th>Status</th>'
+        + '<th>Cód.</th><th>Atividade</th><th>Responsável</th><th>%</th><th>Status</th>'
         + '</tr></thead><tbody>'
       + eapTasks.map(t => '<tr><td>' + t.codigo + '</td><td>' + t.nome
           + '</td><td>' + (t.responsavel||'—') + '</td><td>' + (t.pct||0)
@@ -2624,84 +2616,152 @@ function gerarRelatorioGeral() {
 }
 
 // ═══ MOVIMENTAÇÃO FINANCEIRA ═══
-function toggleFormMov() {
-  var f = document.getElementById('form-movimentacao');
-  if (f) f.style.display = f.style.display === 'none' ? 'block' : 'none';
+function limparFormMov() {
+  var setVal = function(id, val){ var el = document.getElementById(id); if (el) el.value = val || ''; };
+  setVal('mov-data-prev', '');
+  setVal('mov-tipo', 'despesa');
+  setVal('mov-cat', '');
+  setVal('mov-desc', '');
+  setVal('mov-valor', '');
+  setVal('mov-data-real', '');
+  var rlzEl = document.getElementById('mov-real');
+  if (rlzEl) rlzEl.checked = false;
+  window._movEditId = null;
+  var saveBtn = document.getElementById('mov-save-btn');
+  if (saveBtn) saveBtn.textContent = 'Salvar';
 }
 
-function salvarMovimentacao() {
+function toggleFormMov(forceOpen) {
+  var f = document.getElementById('form-movimentacao');
+  if (!f) return;
+  if (forceOpen === true) {
+    limparFormMov();
+    f.style.display = 'block';
+    f.scrollIntoView({behavior:'smooth', block:'nearest'});
+    return;
+  }
+  if (forceOpen === false) {
+    f.style.display = 'none';
+    return;
+  }
+  f.style.display = f.style.display === 'none' ? 'block' : 'none';
+  if (f.style.display === 'block' && !window._movEditId) limparFormMov();
+}
+
+async function persistirMovimentacaoProjeto() {
+  if (typeof salvarProjeto === 'function') {
+    await salvarProjeto();
+  }
+}
+
+async function salvarMovimentacao() {
   var dp  = document.getElementById('mov-data-prev').value;
   var tp  = document.getElementById('mov-tipo').value;
   var cat = document.getElementById('mov-cat').value.trim();
   var dsc = document.getElementById('mov-desc').value.trim();
   var val = parseFloat(document.getElementById('mov-valor').value) || 0;
-  var rlz = document.getElementById('mov-realizado').checked;
+  var rlzEl = document.getElementById('mov-real');
+  var rlz = rlzEl ? rlzEl.checked : false;
   var dr  = document.getElementById('mov-data-real').value;
-  if (!dp || !tp || !dsc || !val) { alert('Preencha Data Prevista, Tipo, Descrição e Valor.'); return; }
+
+  if (!dp || !tp || !dsc || !val) {
+    alert('Preencha Data Prevista, Tipo, Descrição e Valor.');
+    return;
+  }
+
   var editId = window._movEditId || null;
   if (editId) {
-    var idx = finances.findIndex(function(f){return f.id===editId;});
+    var idx = finances.findIndex(function(f){ return f.id === editId; });
     if (idx !== -1) {
-      finances[idx].dataPrevista=dp; finances[idx].tipo=tp; finances[idx].categoria=cat;
-      finances[idx].descricao=dsc; finances[idx].valor=val; finances[idx].realizado=rlz; finances[idx].dataRealizada=dr;
+      finances[idx].dataPrevista = dp;
+      finances[idx].tipo = tp;
+      finances[idx].categoria = cat;
+      finances[idx].descricao = dsc;
+      finances[idx].valor = val;
+      finances[idx].realizado = rlz;
+      finances[idx].dataRealizada = dr;
     }
     window._movEditId = null;
     var saveBtn = document.getElementById('mov-save-btn');
     if (saveBtn) saveBtn.textContent = 'Salvar';
   } else {
-    finances.push({id:Date.now(), dataPrevista:dp, tipo:tp, categoria:cat, descricao:dsc, valor:val, realizado:rlz, dataRealizada:dr});
+    finances.push({
+      id: Date.now(),
+      dataPrevista: dp,
+      tipo: tp,
+      categoria: cat,
+      descricao: dsc,
+      valor: val,
+      realizado: rlz,
+      dataRealizada: dr
+    });
   }
-  if (typeof salvarDadosProjeto==='function') salvarDadosProjeto();
-  renderFinanceiro(); renderMovimentacao();
-  toggleFormMov(); toggleFormMov();
+
+  await persistirMovimentacaoProjeto();
+  if (typeof renderFinanceiro === 'function') renderFinanceiro();
+  renderMovimentacao();
+  limparFormMov();
+  toggleFormMov(false);
 }
-function removerMovimentacao(id) {
+
+async function removerMovimentacao(id) {
   if (!confirm('Remover esta movimentação?')) return;
   var idx = finances.findIndex(function(f){ return f.id === id; });
-  if (idx !== -1) { finances.splice(idx, 1); }
-  if (typeof salvarDadosProjeto === 'function') salvarDadosProjeto();
+  if (idx !== -1) finances.splice(idx, 1);
+  await persistirMovimentacaoProjeto();
   if (typeof renderFinanceiro === 'function') renderFinanceiro();
   renderMovimentacao();
 }
 
 function editarMovimentacao(id) {
-  var f = finances.find(function(x){return x.id===id;});
+  var f = finances.find(function(x){ return x.id === id; });
   if (!f) return;
   window._movEditId = id;
-  var setVal = function(elId, val){ var el=document.getElementById(elId); if(el) el.value=val||''; };
+  var setVal = function(elId, val){ var el=document.getElementById(elId); if(el) el.value = val || ''; };
   setVal('mov-data-prev', f.dataPrevista);
   setVal('mov-tipo', f.tipo);
   setVal('mov-cat', f.categoria);
   setVal('mov-desc', f.descricao);
   setVal('mov-valor', f.valor);
-  var rlzEl = document.getElementById('mov-realizado');
+  var rlzEl = document.getElementById('mov-real');
   if (rlzEl) rlzEl.checked = !!f.realizado;
   setVal('mov-data-real', f.dataRealizada);
   var saveBtn = document.getElementById('mov-save-btn');
   if (saveBtn) saveBtn.textContent = 'Atualizar';
   var formEl = document.getElementById('form-movimentacao');
-  if (formEl) formEl.style.display = 'block';
-  formEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+  if (formEl) {
+    formEl.style.display = 'block';
+    formEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
 }
+
 function renderMovimentacao() {
   var tbody = document.getElementById('mov-tbody');
   var kpis  = document.getElementById('mov-kpis');
   if (!tbody) return;
+
   var tPlan=0, tDesp=0, tRec=0;
   finances.forEach(function(f) {
     var v = parseFloat(f.valor)||0;
     if (f.realizado) { if (f.tipo==='receita') tRec+=v; else tDesp+=v; }
     else tPlan += v;
   });
+
   var saldo = tRec - tDesp;
   var fmt = function(v){ return v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); };
+
   if (kpis) kpis.innerHTML =
     '<div style="background:#e3f2fd;border-radius:8px;padding:10px 16px;min-width:130px;text-align:center"><div style="font-size:10px;color:#555">Planejado</div><div style="font-size:18px;font-weight:700;color:#1565c0">R$ '+fmt(tPlan)+'</div></div>' +
     '<div style="background:#fce4ec;border-radius:8px;padding:10px 16px;min-width:130px;text-align:center"><div style="font-size:10px;color:#555">Despesas Realiz.</div><div style="font-size:18px;font-weight:700;color:#c62828">R$ '+fmt(tDesp)+'</div></div>' +
     '<div style="background:#e8f5e9;border-radius:8px;padding:10px 16px;min-width:130px;text-align:center"><div style="font-size:10px;color:#555">Receitas Realiz.</div><div style="font-size:18px;font-weight:700;color:#2e7d32">R$ '+fmt(tRec)+'</div></div>' +
     '<div style="background:'+( saldo>=0?'#e8f5e9':'#fce4ec')+';border-radius:8px;padding:10px 16px;min-width:130px;text-align:center"><div style="font-size:10px;color:#555">Saldo</div><div style="font-size:18px;font-weight:700;color:'+( saldo>=0?'#2e7d32':'#c62828')+'">R$ '+fmt(saldo)+'</div></div>';
-  var sorted = finances.slice().sort(function(a,b){ return (a.dataPrevista||'')<(b.dataPrevista||'')?-1:1; });
-  if (!sorted.length) { tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:#888;padding:20px">Nenhuma movimentação cadastrada.</td></tr>'; return; }
+
+  var sorted = finances.slice().sort(function(a,b){ return (a.dataPrevista||'') < (b.dataPrevista||'') ? -1 : 1; });
+  if (!sorted.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#888;padding:20px">Nenhuma movimentação cadastrada.</td></tr>';
+    return;
+  }
+
   tbody.innerHTML = sorted.map(function(f) {
     var dtP = f.dataPrevista ? new Date(f.dataPrevista+'T12:00').toLocaleDateString('pt-BR') : '—';
     var dtR = f.dataRealizada ? new Date(f.dataRealizada+'T12:00').toLocaleDateString('pt-BR') : '—';
@@ -2714,7 +2774,6 @@ function renderMovimentacao() {
       '<td style="text-align:right;font-weight:600">R$ '+fmt(f.valor||0)+'</td><td style="text-align:center">'+realB+'</td><td>'+dtR+'</td>'+delBtn+'</tr>';
   }).join('');
 }
-
 document.addEventListener('DOMContentLoaded', () => {
   renderEAP();
   renderGantt();
