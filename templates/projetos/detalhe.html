@@ -2080,7 +2080,7 @@ function removeFinanceiro(i) {
   salvarProjeto();
 }
 
-// ══════════════════════════════
+/ ══════════════════════════════
 // FINANCEIRO ANÁLISE
 // ══════════════════════════════
 function renderFinanceiroAnalise() {
@@ -2103,7 +2103,7 @@ function renderFinanceiroAnalise() {
   // Agrupar saídas por mês (planejado vs realizado)
   const mesPlan = {}, mesReal = {};
   finances.forEach(f => {
-    if (f.tipo !== 'Saída') return;
+    if (!['saída','saida','despesa'].includes(String(f.tipo||'').toLowerCase())) return;
     const v = parseFloat(f.valor||0);
     const kp = (f.dataPrevista||'').substring(0,7);
     if (kp) { mesPlan[kp] = (mesPlan[kp]||0) + v; }
@@ -2116,7 +2116,11 @@ function renderFinanceiroAnalise() {
   const allKeys = [...new Set([...Object.keys(mesPlan), ...Object.keys(mesReal)])].sort();
   if (!allKeys.length) {
     parecerDiv.style.display = 'none';
-    tabelaDiv.innerHTML = '<div style="text-align:center;padding:20px;color:var(--bk-text-muted)">Sem dados de saída para análise.</div>';
+    if (kpisDiv) kpisDiv.innerHTML = '';
+    tabelaDiv.innerHTML = '<div style="text-align:center;padding:20px;color:var(--bk-text-muted)">Sem dados de despesas planejadas/realizadas para análise.</div>';
+    Plotly.purge('fin-analise-barras');
+    Plotly.purge('fin-analise-linhas');
+    Plotly.purge('fin-analise-diff');
     return;
   }
 
@@ -2199,6 +2203,7 @@ function renderFinanceiroAnalise() {
       shapes:[{type:'line', x0:allKeys[0], x1:allKeys[allKeys.length-1], y0:0, y1:0, line:{color:'#6B7280', dash:'dash', width:1}}]
   }, {responsive:true});
 }
+
 // ══════════════════════════════
 // KPIs
 // ══════════════════════════════
