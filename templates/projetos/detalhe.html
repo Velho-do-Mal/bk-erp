@@ -569,7 +569,7 @@
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:14px">
       <span style="font-size:16px;font-weight:700;color:#0d47a1">Movimenta&#231;&#227;o Financeira</span>
       {% if is_admin %}
-      <button class="btn btn-primary btn-sm" onclick="toggleFormMov()">+ Nova Movimenta&#231;&#227;o</button>
+      <button class="btn btn-primary btn-sm" onclick="toggleFormMov(true)">+ Nova Movimentação</button>
       {% endif %}
     </div>
     {% if is_admin %}
@@ -2627,94 +2627,217 @@ function gerarRelatorioGeral() {
 }
 
 // ═══ MOVIMENTAÇÃO FINANCEIRA ═══
-function toggleFormMov() {
-  var f = document.getElementById('form-movimentacao');
-  if (f) f.style.display = f.style.display === 'none' ? 'block' : 'none';
+function limparFormMov() {
+  const setVal = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.value = value || '';
+  };
+
+  setVal('mov-data-prev', '');
+  setVal('mov-tipo', 'despesa');
+  setVal('mov-cat', '');
+  setVal('mov-desc', '');
+  setVal('mov-valor', '');
+  setVal('mov-data-real', '');
+
+  const chk = document.getElementById('mov-real');
+  if (chk) chk.checked = false;
+
+  window._movEditId = null;
+
+  const saveBtn = document.getElementById('mov-save-btn');
+  if (saveBtn) saveBtn.textContent = 'Salvar';
 }
 
-function salvarMovimentacao() {
-  var dp  = document.getElementById('mov-data-prev').value;
-  var tp  = document.getElementById('mov-tipo').value;
-  var cat = document.getElementById('mov-cat').value.trim();
-  var dsc = document.getElementById('mov-desc').value.trim();
-  var val = parseFloat(document.getElementById('mov-valor').value) || 0;
-  var rlz = document.getElementById('mov-realizado').checked;
-  var dr  = document.getElementById('mov-data-real').value;
-  if (!dp || !tp || !dsc || !val) { alert('Preencha Data Prevista, Tipo, Descrição e Valor.'); return; }
-  var editId = window._movEditId || null;
+function toggleFormMov(forceOpen = null) {
+  const form = document.getElementById('form-movimentacao');
+  if (!form) return;
+
+  if (forceOpen === true) {
+    limparFormMov();
+    form.style.display = 'block';
+    form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    return;
+  }
+
+  if (forceOpen === false) {
+    form.style.display = 'none';
+    return;
+  }
+
+  const opened = form.style.display !== 'none';
+  form.style.display = opened ? 'none' : 'block';
+
+  if (!opened && !window._movEditId) {
+    limparFormMov();
+  }
+}
+
+async function persistirMovimentacaoProjeto() {
+  if (typeof salvarProjeto === 'function') {
+    await salvarProjeto();
+  }
+}
+
+async function salvarMovimentacao() {
+  const dp  = document.getElementById('mov-data-prev')?.value || '';
+  const tp  = document.getElementById('mov-tipo')?.value || 'despesa';
+  const cat = document.getElementById('mov-cat')?.value?.trim() || '';
+  const dsc = document.getElementById('mov-desc')?.value?.trim() || '';
+  const val = parseFloat(document.getElementById('mov-valor')?.value) || 0;
+  const rlz = !!document.getElementById('mov-real')?.checked;
+  const dr  = document.getElementById('mov-data-real')?.value || '';
+
+  if (!dp || !tp || !dsc || !val) {
+    alert('Preencha Data Prevista, Tipo, Descrição e Valor.');
+    return;
+  }
+
+  const editId = window._movEditId || null;
+
   if (editId) {
-    var idx = finances.findIndex(function(f){return f.id===editId;});
+    const idx = finances.findIndex(f => f.id === editId);
     if (idx !== -1) {
-      finances[idx].dataPrevista=dp; finances[idx].tipo=tp; finances[idx].categoria=cat;
-      finances[idx].descricao=dsc; finances[idx].valor=val; finances[idx].realizado=rlz; finances[idx].dataRealizada=dr;
+      finances[idx].dataPrevista = dp;
+      finances[idx].tipo = tp;
+      finances[idx].categoria = cat;
+      finances[idx].descricao = dsc;
+      finances[idx].valor = val;
+      finances[idx].realizado = rlz;
+      finances[idx].dataRealizada = dr;
     }
     window._movEditId = null;
-    var saveBtn = document.getElementById('mov-save-btn');
+
+    const saveBtn = document.getElementById('mov-save-btn');
     if (saveBtn) saveBtn.textContent = 'Salvar';
   } else {
-    finances.push({id:Date.now(), dataPrevista:dp, tipo:tp, categoria:cat, descricao:dsc, valor:val, realizado:rlz, dataRealizada:dr});
+    finances.push({
+      id: Date.now(),
+      dataPrevista: dp,
+      tipo: tp,
+      categoria: cat,
+      descricao: dsc,
+      valor: val,
+      realizado: rlz,
+      dataRealizada: dr
+    });
   }
-  if (typeof salvarDadosProjeto==='function') salvarDadosProjeto();
-  renderFinanceiro(); renderMovimentacao();
-  toggleFormMov(); toggleFormMov();
-}
-function removerMovimentacao(id) {
-  if (!confirm('Remover esta movimentação?')) return;
-  var idx = finances.findIndex(function(f){ return f.id === id; });
-  if (idx !== -1) { finances.splice(idx, 1); }
-  if (typeof salvarDadosProjeto === 'function') salvarDadosProjeto();
+
+  await persistirMovimentacaoProjeto();
+
   if (typeof renderFinanceiro === 'function') renderFinanceiro();
+  if (typeof renderFinanceiroAnalise === 'function') renderFinanceiroAnalise();
+  renderMovimentacao();
+
+  limparFormMov();
+  toggleFormMov(false);
+}
+
+async function removerMovimentacao(id) {
+  if (!confirm('Remover esta movimentação?')) return;
+
+  const idx = finances.findIndex(f => f.id === id);
+  if (idx !== -1) finances.splice(idx, 1);
+
+  await persistirMovimentacaoProjeto();
+
+  if (typeof renderFinanceiro === 'function') renderFinanceiro();
+  if (typeof renderFinanceiroAnalise === 'function') renderFinanceiroAnalise();
   renderMovimentacao();
 }
 
 function editarMovimentacao(id) {
-  var f = finances.find(function(x){return x.id===id;});
+  const f = finances.find(x => x.id === id);
   if (!f) return;
+
   window._movEditId = id;
-  var setVal = function(elId, val){ var el=document.getElementById(elId); if(el) el.value=val||''; };
+
+  const setVal = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.value = value || '';
+  };
+
   setVal('mov-data-prev', f.dataPrevista);
   setVal('mov-tipo', f.tipo);
   setVal('mov-cat', f.categoria);
   setVal('mov-desc', f.descricao);
   setVal('mov-valor', f.valor);
-  var rlzEl = document.getElementById('mov-realizado');
-  if (rlzEl) rlzEl.checked = !!f.realizado;
   setVal('mov-data-real', f.dataRealizada);
-  var saveBtn = document.getElementById('mov-save-btn');
+
+  const chk = document.getElementById('mov-real');
+  if (chk) chk.checked = !!f.realizado;
+
+  const saveBtn = document.getElementById('mov-save-btn');
   if (saveBtn) saveBtn.textContent = 'Atualizar';
-  var formEl = document.getElementById('form-movimentacao');
-  if (formEl) formEl.style.display = 'block';
-  formEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+
+  const formEl = document.getElementById('form-movimentacao');
+  if (formEl) {
+    formEl.style.display = 'block';
+    formEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
 }
+
 function renderMovimentacao() {
-  var tbody = document.getElementById('mov-tbody');
-  var kpis  = document.getElementById('mov-kpis');
+  const tbody = document.getElementById('mov-tbody');
+  const kpis  = document.getElementById('mov-kpis');
   if (!tbody) return;
-  var tPlan=0, tDesp=0, tRec=0;
+
+  let tPlan = 0, tDesp = 0, tRec = 0;
+
   finances.forEach(function(f) {
-    var v = parseFloat(f.valor)||0;
-    if (f.realizado) { if (f.tipo==='receita') tRec+=v; else tDesp+=v; }
-    else tPlan += v;
+    const v = parseFloat(f.valor) || 0;
+    if (f.realizado) {
+      if (String(f.tipo).toLowerCase() === 'receita') tRec += v;
+      else tDesp += v;
+    } else {
+      tPlan += v;
+    }
   });
-  var saldo = tRec - tDesp;
-  var fmt = function(v){ return v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); };
-  if (kpis) kpis.innerHTML =
-    '<div style="background:#e3f2fd;border-radius:8px;padding:10px 16px;min-width:130px;text-align:center"><div style="font-size:10px;color:#555">Planejado</div><div style="font-size:18px;font-weight:700;color:#1565c0">R$ '+fmt(tPlan)+'</div></div>' +
-    '<div style="background:#fce4ec;border-radius:8px;padding:10px 16px;min-width:130px;text-align:center"><div style="font-size:10px;color:#555">Despesas Realiz.</div><div style="font-size:18px;font-weight:700;color:#c62828">R$ '+fmt(tDesp)+'</div></div>' +
-    '<div style="background:#e8f5e9;border-radius:8px;padding:10px 16px;min-width:130px;text-align:center"><div style="font-size:10px;color:#555">Receitas Realiz.</div><div style="font-size:18px;font-weight:700;color:#2e7d32">R$ '+fmt(tRec)+'</div></div>' +
-    '<div style="background:'+( saldo>=0?'#e8f5e9':'#fce4ec')+';border-radius:8px;padding:10px 16px;min-width:130px;text-align:center"><div style="font-size:10px;color:#555">Saldo</div><div style="font-size:18px;font-weight:700;color:'+( saldo>=0?'#2e7d32':'#c62828')+'">R$ '+fmt(saldo)+'</div></div>';
-  var sorted = finances.slice().sort(function(a,b){ return (a.dataPrevista||'')<(b.dataPrevista||'')?-1:1; });
-  if (!sorted.length) { tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:#888;padding:20px">Nenhuma movimentação cadastrada.</td></tr>'; return; }
+
+  const saldo = tRec - tDesp;
+  const fmt = v => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  if (kpis) {
+    kpis.innerHTML =
+      '<div style="background:#e3f2fd;border-radius:8px;padding:10px 16px;min-width:130px;text-align:center"><div style="font-size:10px;color:#555">Planejado</div><div style="font-size:18px;font-weight:700;color:#1565c0">R$ ' + fmt(tPlan) + '</div></div>' +
+      '<div style="background:#fce4ec;border-radius:8px;padding:10px 16px;min-width:130px;text-align:center"><div style="font-size:10px;color:#555">Despesas Realiz.</div><div style="font-size:18px;font-weight:700;color:#c62828">R$ ' + fmt(tDesp) + '</div></div>' +
+      '<div style="background:#e8f5e9;border-radius:8px;padding:10px 16px;min-width:130px;text-align:center"><div style="font-size:10px;color:#555">Receitas Realiz.</div><div style="font-size:18px;font-weight:700;color:#2e7d32">R$ ' + fmt(tRec) + '</div></div>' +
+      '<div style="background:' + (saldo >= 0 ? '#e8f5e9' : '#fce4ec') + ';border-radius:8px;padding:10px 16px;min-width:130px;text-align:center"><div style="font-size:10px;color:#555">Saldo</div><div style="font-size:18px;font-weight:700;color:' + (saldo >= 0 ? '#2e7d32' : '#c62828') + '">R$ ' + fmt(saldo) + '</div></div>';
+  }
+
+  const sorted = finances.slice().sort((a, b) => (a.dataPrevista || '') < (b.dataPrevista || '') ? -1 : 1);
+
+  if (!sorted.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#888;padding:20px">Nenhuma movimentação cadastrada.</td></tr>';
+    return;
+  }
+
   tbody.innerHTML = sorted.map(function(f) {
-    var dtP = f.dataPrevista ? new Date(f.dataPrevista+'T12:00').toLocaleDateString('pt-BR') : '—';
-    var dtR = f.dataRealizada ? new Date(f.dataRealizada+'T12:00').toLocaleDateString('pt-BR') : '—';
-    var badge = f.tipo==='receita'
+    const dtP = f.dataPrevista ? new Date(f.dataPrevista + 'T12:00').toLocaleDateString('pt-BR') : '—';
+    const dtR = f.dataRealizada ? new Date(f.dataRealizada + 'T12:00').toLocaleDateString('pt-BR') : '—';
+
+    const badge = String(f.tipo).toLowerCase() === 'receita'
       ? '<span style="background:#43a047;color:#fff;border-radius:10px;padding:1px 7px;font-size:10px">Receita</span>'
       : '<span style="background:#e53935;color:#fff;border-radius:10px;padding:1px 7px;font-size:10px">Despesa</span>';
-    var realB = f.realizado ? '<span style="color:#2e7d32;font-weight:600">&#10004;</span>' : '<span style="color:#bbb">—</span>';
-    var delBtn = IS_ADMIN ? '<td style="white-space:nowrap"><button class="btn btn-sm" style="background:#1976d2;color:#fff;margin-right:3px" onclick="editarMovimentacao('+f.id+')">&#9998;</button><button class="btn btn-danger btn-sm" onclick="removerMovimentacao('+f.id+')">&#10005;</button></td>' : '';
-    return '<tr><td>'+dtP+'</td><td>'+badge+'</td><td>'+(f.categoria||'—')+'</td><td>'+(f.descricao||'—')+'</td>'+
-      '<td style="text-align:right;font-weight:600">R$ '+fmt(f.valor||0)+'</td><td style="text-align:center">'+realB+'</td><td>'+dtR+'</td>'+delBtn+'</tr>';
+
+    const realB = f.realizado
+      ? '<span style="color:#2e7d32;font-weight:600">&#10004;</span>'
+      : '<span style="color:#bbb">—</span>';
+
+    const actionTd = IS_ADMIN
+      ? '<td style="white-space:nowrap"><button class="btn btn-sm" style="background:#1976d2;color:#fff;margin-right:3px" onclick="editarMovimentacao(' + f.id + ')">&#9998;</button><button class="btn btn-danger btn-sm" onclick="removerMovimentacao(' + f.id + ')">&#10005;</button></td>'
+      : '';
+
+    return '<tr>' +
+      '<td>' + dtP + '</td>' +
+      '<td>' + badge + '</td>' +
+      '<td>' + (f.categoria || '—') + '</td>' +
+      '<td>' + (f.descricao || '—') + '</td>' +
+      '<td style="text-align:right;font-weight:600">R$ ' + fmt(f.valor || 0) + '</td>' +
+      '<td style="text-align:center">' + realB + '</td>' +
+      '<td>' + dtR + '</td>' +
+      actionTd +
+      '</tr>';
   }).join('');
 }
 
