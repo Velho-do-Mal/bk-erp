@@ -15,6 +15,7 @@ class Projeto(models.Model):
     nome = models.CharField(max_length=300)
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='rascunho')
     data_inicio = models.DateField(null=True, blank=True)
+    data_conclusao = models.DateField(null=True, blank=True)
     gerente = models.CharField(max_length=200, blank=True)
     patrocinador = models.CharField(max_length=200, blank=True)
     encerrado = models.BooleanField(default=False)
@@ -50,6 +51,14 @@ class Projeto(models.Model):
 
     def get_action_plan(self):
         return self.dados.get('actionPlan', [])
+
+    @property
+    def dias_para_conclusao(self):
+        from datetime import date
+        if self.data_conclusao:
+            delta = self.data_conclusao - date.today()
+            return delta.days
+        return None
 
 
 class ProjetoAcesso(models.Model):

@@ -25,12 +25,14 @@ def check_acesso(user, projeto):
 
 @login_required
 def lista(request):
+    from datetime import date
     projetos = get_projetos_usuario(request.user)
     ativos = projetos.filter(encerrado=False)
     encerrados = projetos.filter(encerrado=True)
     return render(request, 'projetos/lista.html', {
         'projetos_ativos': ativos,
         'projetos_encerrados': encerrados,
+        'today': date.today(),
     })
 
 
@@ -63,12 +65,14 @@ def novo(request):
         nome = request.POST.get('nome', 'Novo Projeto')
         status = request.POST.get('status', 'rascunho')
         data_inicio = request.POST.get('data_inicio') or None
+        data_conclusao = request.POST.get('data_conclusao') or None
         gerente = request.POST.get('gerente', '')
         patrocinador = request.POST.get('patrocinador', '')
         dados_iniciais = {
             'tap': {
                 'nome': nome, 'status': status,
                 'dataInicio': str(data_inicio) if data_inicio else '',
+                'dataConclusao': str(data_conclusao) if data_conclusao else '',
                 'gerente': gerente, 'patrocinador': patrocinador,
                 'objetivo': '', 'escopo': '', 'premissas': '',
                 'requisitos': '', 'alteracoesEscopo': [],
@@ -77,7 +81,7 @@ def novo(request):
             'risks': [], 'lessons': [], 'close': {}, 'actionPlan': [],
         }
         p = Projeto.objects.create(
-            nome=nome, status=status, data_inicio=data_inicio,
+            nome=nome, status=status, data_inicio=data_inicio, data_conclusao=data_conclusao,
             gerente=gerente, patrocinador=patrocinador, dados=dados_iniciais,
         )
         messages.success(request, f'Projeto "{nome}" criado com sucesso!')
@@ -99,11 +103,17 @@ def salvar_dados(request, pk):
         projeto.status = tap.get('status', projeto.status)
         projeto.gerente = tap.get('gerente', '')
         projeto.patrocinador = tap.get('patrocinador', '')
-        data_str = tap.get('dataInicio', '')
-        if data_str:
-            from datetime import date
+        from datetime import date
+        data_ini_str = tap.get('dataInicio', '')
+        if data_ini_str:
             try:
-                projeto.data_inicio = date.fromisoformat(data_str)
+                projeto.data_inicio = date.fromisoformat(data_ini_str)
+            except Exception:
+                pass
+        data_fim_str = tap.get('dataConclusao', '')
+        if data_fim_str:
+            try:
+                projeto.data_conclusao = date.fromisoformat(data_fim_str)
             except Exception:
                 pass
         projeto.save()

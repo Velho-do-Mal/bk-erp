@@ -24,7 +24,7 @@
     <table>
       <thead>
         <tr>
-          <th>#</th><th>Nome</th><th>Status</th><th>Início</th><th>Gerente</th><th>Patrocinador</th><th>Ações</th>
+          <th>#</th><th>Nome</th><th>Status</th><th>Início</th><th>Conclusão</th><th>Gerente</th><th>Patrocinador</th><th>Prazo</th><th>Ações</th>
         </tr>
       </thead>
       <tbody>
@@ -42,8 +42,24 @@
             {% endif %}
           </td>
           <td style="color:var(--bk-text-muted)">{{ p.data_inicio|date:"d/m/Y"|default:"—" }}</td>
+          <td style="color:var(--bk-text-muted)">{{ p.data_conclusao|date:"d/m/Y"|default:"—" }}</td>
           <td style="color:var(--bk-text-muted)">{{ p.gerente|default:"—" }}</td>
           <td style="color:var(--bk-text-muted)">{{ p.patrocinador|default:"—" }}</td>
+          <td>
+            {% if p.status != 'encerrado' and p.data_conclusao %}
+              {% with hoje=today %}
+                {% if p.data_conclusao < hoje %}
+                  <span class="badge badge-danger" title="Conclusão era em {{ p.data_conclusao|date:'d/m/Y' }}">🔴 Atrasado</span>
+                {% elif p.dias_para_conclusao <= 3 %}
+                  <span class="badge badge-orange" title="Faltam {{ p.dias_para_conclusao }} dias">🟡 No Limite</span>
+                {% else %}
+                  <span class="badge badge-green">🟢 No Prazo</span>
+                {% endif %}
+              {% endwith %}
+            {% else %}
+              <span style="color:var(--bk-text-muted)">—</span>
+            {% endif %}
+          </td>
           <td>
             <div style="display:flex;gap:6px;flex-wrap:wrap;">
               <a href="{% url 'projetos:detalhe' p.pk %}" class="btn btn-secondary btn-sm">Abrir</a>

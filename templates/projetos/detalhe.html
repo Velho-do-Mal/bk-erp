@@ -175,6 +175,9 @@
   {% if projeto.data_inicio %}
   <span style="color:var(--bk-text-muted);font-size:13px;">📅 Início: {{ projeto.data_inicio|date:"d/m/Y" }}</span>
   {% endif %}
+  {% if projeto.data_conclusao %}
+  <span style="color:var(--bk-text-muted);font-size:13px;">🏁 Conclusão: {{ projeto.data_conclusao|date:"d/m/Y" }}</span>
+  {% endif %}
   {% if projeto.patrocinador %}
   <span style="color:var(--bk-text-muted);font-size:13px;">💼 {{ projeto.patrocinador }}</span>
   {% endif %}
@@ -218,13 +221,21 @@
           <div class="readonly-field">{{ tap.nome|default:"—" }}</div>
           {% endif %}
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
           <div class="form-group">
             <label class="form-label">Data de Início</label>
             {% if is_admin %}
             <input type="date" id="tap-dataInicio" class="form-control" value="{{ tap.dataInicio|default:'' }}">
             {% else %}
             <div class="readonly-field">{{ tap.dataInicio|default:"—" }}</div>
+            {% endif %}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Data de Conclusão</label>
+            {% if is_admin %}
+            <input type="date" id="tap-dataConclusao" class="form-control" value="{{ tap.dataConclusao|default:'' }}">
+            {% else %}
+            <div class="readonly-field">{{ tap.dataConclusao|default:"—" }}</div>
             {% endif %}
           </div>
           <div class="form-group">
@@ -743,6 +754,7 @@ function getDadosAtuais() {
     tap: {
       nome: el('tap-nome') ? el('tap-nome').value : "{{ tap.nome|default:''|escapejs }}",
       dataInicio: el('tap-dataInicio') ? el('tap-dataInicio').value : "{{ tap.dataInicio|default:''|escapejs }}",
+      dataConclusao: el('tap-dataConclusao') ? el('tap-dataConclusao').value : "{{ tap.dataConclusao|default:''|escapejs }}",
       status: el('tap-status') ? el('tap-status').value : "{{ tap.status|default:''|escapejs }}",
       gerente: el('tap-gerente') ? el('tap-gerente').value : "{{ tap.gerente|default:''|escapejs }}",
       patrocinador: el('tap-patrocinador') ? el('tap-patrocinador').value : "{{ tap.patrocinador|default:''|escapejs }}",
