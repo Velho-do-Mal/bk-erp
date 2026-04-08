@@ -447,7 +447,7 @@ def orcamento(request):
                 
             row = {
                 'id': cat.id,
-                'nome': str(cat),
+                'nome': cat.nome,
                 'meses': meses_valores,
                 'total': sum(meses_valores)
             }
