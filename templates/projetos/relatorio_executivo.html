@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Relatório Executivo de Portfólio — BK ERP</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #1e293b; line-height: 1.6; background: #fff; }
+        .hdr { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #1e40af; padding-bottom: 20px; margin-bottom: 30px; }
+        .title { font-size: 28px; font-weight: 800; color: #1e40af; text-transform: uppercase; letter-spacing: 1px; }
+        .subtitle { font-size: 14px; color: #64748b; margin-top: 5px; }
+        .section { margin-top: 40px; border-left: 5px solid #1e40af; padding-left: 15px; font-size: 20px; font-weight: 700; color: #1e40af; margin-bottom: 20px; background: #f8fafc; padding-top: 5px; padding-bottom: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        th, td { border: 1px solid #e2e8f0; padding: 12px 15px; text-align: left; font-size: 13px; }
+        th { background: #f1f5f9; color: #475569; font-weight: 700; text-transform: uppercase; font-size: 11px; }
+        tr:nth-child(even) { background: #f8fafc; }
+        .badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; color: #fff; display: inline-block; white-space: nowrap; }
+        .bg-green { background: #10b981; }
+        .bg-blue { background: #3b82f6; }
+        .bg-red { background: #ef4444; }
+        .bg-orange { background: #f59e0b; }
+        .bg-gray { background: #94a3b8; }
+        .footer { margin-top: 60px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+        @media print {
+            body { padding: 0; }
+            .no-print { display: none; }
+            .page-break { page-break-before: always; }
+        }
+        .btn-print { background: #1e40af; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="text-align: right;">
+        <button onclick="window.print()" class="btn-print">🖨️ Imprimir Agora</button>
+        <button onclick="window.close()" class="btn-print" style="background:#64748b">Fechar</button>
+    </div>
+
+    <div class="hdr">
+        <div>
+            <div class="title">BK Engenharia e Tecnologia</div>
+            <div class="subtitle">Gestão Empresarial — Relatório Executivo de Portfólio</div>
+        </div>
+        <div style="text-align:right; font-size:13px; color: #64748b;">
+            <strong>Data de Emissão:</strong> {{ agora }}<br>
+            <strong>Responsável:</strong> {{ user.get_full_name|default:user.username }}
+        </div>
+    </div>
+    
+    <div class="section">1. Projetos Ativos</div>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nome do Projeto</th>
+                <th>Status</th>
+                <th>Início</th>
+                <th>Conclusão</th>
+                <th>Gerente</th>
+                <th>Prazo</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in projetos_ativos %}
+            <tr>
+                <td style="color:#64748b">#{{ p.id }}</td>
+                <td><strong>{{ p.nome }}</strong></td>
+                <td>
+                    {% if p.status == 'execucao' %}<span class="badge bg-green">Execução</span>
+                    {% elif p.status == 'planejamento' %}<span class="badge bg-blue">Planejamento</span>
+                    {% elif p.status == 'monitoramento' %}<span class="badge bg-blue">Monitoramento</span>
+                    {% elif p.status == 'suspenso' %}<span class="badge bg-orange">Suspenso</span>
+                    {% else %}<span class="badge bg-gray">{{ p.get_status_display }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ p.data_inicio|date:"d/m/Y"|default:"—" }}</td>
+                <td>{{ p.data_conclusao|date:"d/m/Y"|default:"—" }}</td>
+                <td>{{ p.gerente|default:"—" }}</td>
+                <td>
+                    {% if p.status != 'encerrado' and p.data_conclusao %}
+                        {% if p.data_conclusao < today %}
+                            <span class="badge bg-red">🔴 Atrasado</span>
+                        {% elif p.dias_para_conclusao <= 3 %}
+                            <span class="badge bg-orange">🟡 No Limite</span>
+                        {% else %}
+                            <span class="badge bg-green">🟢 No Prazo</span>
+                        {% endif %}
+                    {% else %}
+                        <span style="color:#94a3b8">—</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="section">2. Projetos Encerrados</div>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nome do Projeto</th>
+                <th>Início</th>
+                <th>Conclusão</th>
+                <th>Gerente</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in projetos_encerrados %}
+            <tr style="color: #94a3b8">
+                <td>#{{ p.id }}</td>
+                <td>{{ p.nome }}</td>
+                <td>{{ p.data_inicio|date:"d/m/Y"|default:"—" }}</td>
+                <td>{{ p.data_conclusao|date:"d/m/Y"|default:"—" }}</td>
+                <td>{{ p.gerente|default:"—" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" style="text-align:center">Nenhum projeto encerrado no período.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Relatório gerado automaticamente pelo sistema BK ERP — Todos os direitos reservados &copy; 2026
+    </div>
+
+    <script>
+        // Dispara a impressão automaticamente após carregar
+        window.onload = function() {
+            setTimeout(function() {
+                // window.print(); // Descomente se quiser que abra o diálogo de impressão na hora
+            }, 1000);
+        };
+    </script>
+</body>
+</html>

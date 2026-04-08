@@ -1,4 +1,6 @@
 import json
+import json
+from datetime import date
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, Http404
@@ -25,7 +27,6 @@ def check_acesso(user, projeto):
 
 @login_required
 def lista(request):
-    from datetime import date
     projetos = get_projetos_usuario(request.user)
     ativos = projetos.filter(encerrado=False)
     encerrados = projetos.filter(encerrado=True)
@@ -33,6 +34,21 @@ def lista(request):
         'projetos_ativos': ativos,
         'projetos_encerrados': encerrados,
         'today': date.today(),
+    })
+
+
+@login_required
+def relatorio_executivo(request):
+    """Gera uma página HTML formatada para impressão do portfólio."""
+    projetos = get_projetos_usuario(request.user)
+    ativos = projetos.filter(encerrado=False).order_by('-id')
+    encerrados = projetos.filter(encerrado=True).order_by('-id')
+    
+    return render(request, 'projetos/relatorio_executivo.html', {
+        'projetos_ativos': ativos,
+        'projetos_encerrados': encerrados,
+        'today': date.today(),
+        'agora': date.today().strftime('%d/%m/%Y'),
     })
 
 

@@ -5,6 +5,7 @@ app_name = 'projetos'
 
 urlpatterns = [
     path('', views.lista, name='lista'),
+    path('relatorio-executivo/', views.relatorio_executivo, name='relatorio_executivo'),
     path('novo/', views.novo, name='novo'),
     path('<int:pk>/', views.detalhe, name='detalhe'),
     path('<int:pk>/salvar/', views.salvar_dados, name='salvar'),

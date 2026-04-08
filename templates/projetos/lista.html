@@ -5,10 +5,10 @@
 
 {% block topbar_actions %}
 <div style="display:flex;gap:8px;">
-  <button onclick="imprimirRelatorioGeralPortfolio()" class="btn btn-secondary btn-sm" style="background:rgba(59,130,246,0.1);color:#60A5FA;border:1px solid rgba(59,130,246,0.2);">
+  <a href="{% url 'projetos:relatorio_executivo' %}" target="_blank" class="btn btn-secondary btn-sm" style="background:rgba(59,130,246,0.1);color:#60A5FA;border:1px solid rgba(59,130,246,0.2);">
     <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right:4px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2"/></svg>
     Relatório Executivo
-  </button>
+  </a>
   {% if user.is_admin_erp %}
   <a href="{% url 'projetos:novo' %}" class="btn btn-primary btn-sm">
     <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
@@ -16,80 +16,6 @@
   </a>
   {% endif %}
 </div>
-
-<script>
-function imprimirRelatorioGeralPortfolio() {
-  const agora = new Date().toLocaleString('pt-BR');
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Relatório Executivo de Portfólio</title>
-    <style>
-      body{font-family:sans-serif;padding:40px;color:#333;line-height:1.6}
-      .hdr{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #0d47a1;padding-bottom:20px;margin-bottom:30px}
-      .title{font-size:24px;font-weight:bold;color:#0d47a1}
-      .section{margin-top:30px;border-left:4px solid #0d47a1;padding-left:15px;font-size:18px;font-weight:bold;color:#0d47a1;margin-bottom:15px}
-      table{width:100%;border-collapse:collapse;margin-bottom:20px}
-      th,td{border:1px solid #ddd;padding:10px;text-align:left;font-size:12px}
-      th{background:#f5f5f5}
-      .badge{padding:2px 8px;border-radius:10px;font-size:10px;font-weight:bold;color:#fff}
-      .bg-green{background:#2e7d32}.bg-blue{background:#1565c0}.bg-red{background:#c62828}.bg-orange{background:#ef6c00}.bg-gray{background:#757575}
-      @media print{button{display:none}}
-    </style></head><body>
-    <div class="hdr">
-      <div><div class="title">BK Engenharia e Tecnologia</div><div>Relatório Executivo de Portfólio</div></div>
-      <div style="text-align:right;font-size:12px">${agora}</div>
-    </div>
-    
-    <div class="section">1. Visão Geral do Portfólio</div>
-    <p>Resumo dos projetos ativos no sistema.</p>
-    <table><thead><tr><th>ID</th><th>Projeto</th><th>Status</th><th>Início</th><th>Conclusão</th><th>Gerente</th><th>Prazo</th></tr></thead><tbody>
-      ${Array.from(document.querySelectorAll('tbody tr')).filter(tr => tr.style.opacity !== '0.6').map(tr => {
-        const tds = tr.querySelectorAll('td');
-        if(tds.length < 8) return '';
-        return \`<tr>
-          <td>\${tds[0].innerText}</td>
-          <td><b>\${tds[1].innerText}</b></td>
-          <td>\${tds[2].innerHTML}</td>
-          <td>\${tds[3].innerText}</td>
-          <td>\${tds[4].innerText}</td>
-          <td>\${tds[5].innerText}</td>
-          <td>\${tds[7].innerHTML}</td>
-        </tr>\`;
-      }).join('')}
-    </tbody></table>
-
-    <div class="section">2. Projetos Encerrados</div>
-    <table><thead><tr><th>ID</th><th>Projeto</th><th>Início</th><th>Gerente</th></tr></thead><tbody>
-      ${Array.from(document.querySelectorAll('tbody tr')).filter(tr => tr.style.opacity === '0.6').map(tr => {
-        const tds = tr.querySelectorAll('td');
-        return \`<tr>
-          <td>\${tds[0].innerText}</td>
-          <td>\${tds[1].innerText}</td>
-          <td>\${tds[2].innerText}</td>
-          <td>\${tds[3].innerText}</td>
-        </tr>\`;
-      }).join('')}
-    </tbody></table>
-
-    <div style="margin-top:50px;text-align:center;font-size:10px;color:#888;border-top:1px solid #eee;padding-top:10px">
-      Relatório gerado automaticamente pelo BK ERP — Gestão Empresarial
-    </div>
-    <script>
-      window.onload = function() {
-        setTimeout(function() {
-          window.print();
-        }, 500);
-      };
-    <\/script>
-  </body></html>`;
-  
-  const w = window.open('', '_blank', 'width=1150,height=860');
-  if (w) {
-    w.document.write(html);
-    w.document.close();
-  } else {
-    alert('O bloqueador de pop-ups impediu a abertura do relatório. Por favor, autorize pop-ups para este site.');
-  }
-}
-</script>
 {% endblock %}
 
 {% block content %}
