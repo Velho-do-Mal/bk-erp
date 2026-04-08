@@ -1,20 +1,76 @@
 {% extends 'base.html' %}
 {% block title %}Dashboard — BK ERP{% endblock %}
-{% block page_title %}Dashboard{% endblock %}
-{% block page_sub %}Visão geral dos projetos{% endblock %}
+{% block page_title %}Dashboard Executivo{% endblock %}
+{% block page_sub %}Visão 360º da BK Engenharia{% endblock %}
 
 {% block topbar_actions %}
 {% if user.is_admin_erp %}
-<a href="{% url 'projetos:novo' %}" class="btn btn-primary btn-sm">
-  <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-  Novo Projeto
-</a>
+<div class="flex gap-2">
+    <a href="{% url 'projetos:novo' %}" class="btn btn-primary btn-sm">
+      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      Novo Projeto
+    </a>
+</div>
 {% endif %}
 {% endblock %}
 
 {% block content %}
-<!-- KPIs -->
+<style>
+    .dashboard-section-title { font-size: 16px; font-weight: 700; margin: 24px 0 16px; color: var(--bk-blue); display: flex; align-items: center; gap: 8px; }
+    .kpi-card { transition: transform 0.2s; }
+    .kpi-card:hover { transform: translateY(-2px); }
+    .chart-container { background: #fff; border-radius: 8px; padding: 20px; border: 1px solid var(--bk-border); height: 300px; }
+</style>
+
+<!-- SEÇÃO 1: KPIs FINANCEIROS E VENDAS -->
+<div class="dashboard-section-title">
+    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m.599-1c.51-.598.81-1.364.81-2.201 0-1.105-.895-2-2-2s-2 .895-2 2c0 .837.3 1.603.81 2.201M12 16c-1.11 0-2.08-.402-2.599-1M12 16v1m0-1V7"/></svg>
+    Indicadores Financeiros e Comerciais
+</div>
 <div class="kpi-grid">
+  <!-- Financeiro -->
+  <div class="kpi-card" style="border-left: 3px solid var(--bk-green);">
+    <div class="kpi-label">Saldo Atual</div>
+    <div class="kpi-value" style="color:var(--bk-green)">R$ {{ saldo_atual|floatformat:2 }}</div>
+    <div class="kpi-sub">Disponível em contas</div>
+  </div>
+  <!-- Vendas -->
+  <div class="kpi-card" style="border-left: 3px solid var(--bk-blue);">
+    <div class="kpi-label">Taxa de Conversão</div>
+    <div class="kpi-value" style="color:var(--bk-blue)">{{ taxa_conversao }}%</div>
+    <div class="kpi-sub">Propostas aprovadas</div>
+  </div>
+  <div class="kpi-card" style="border-left: 3px solid var(--bk-teal);">
+    <div class="kpi-label">Ticket Médio</div>
+    <div class="kpi-value" style="color:var(--bk-teal)">R$ {{ ticket_medio|floatformat:2 }}</div>
+    <div class="kpi-sub">Valor médio por proposta</div>
+  </div>
+  <!-- Compras -->
+  <div class="kpi-card" style="border-left: 3px solid var(--bk-orange);">
+    <div class="kpi-label">Compras no Mês</div>
+    <div class="kpi-value" style="color:var(--bk-orange)">R$ {{ compras_mes|floatformat:2 }}</div>
+    <div class="kpi-sub">{{ pedidos_pendentes }} pedidos pendentes</div>
+  </div>
+</div>
+
+<!-- SEÇÃO 2: GRÁFICOS ANALÍTICOS -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    <div class="chart-container">
+        <h3 style="font-size:14px;font-weight:700;margin-bottom:16px;color:var(--bk-text-muted)">Composição de Despesas (Top 5)</h3>
+        <canvas id="chartFinanceiro"></canvas>
+    </div>
+    <div class="chart-container">
+        <h3 style="font-size:14px;font-weight:700;margin-bottom:16px;color:var(--bk-text-muted)">Funil de Vendas (Leads por Estágio)</h3>
+        <canvas id="chartVendas"></canvas>
+    </div>
+</div>
+
+<!-- SEÇÃO 3: PROJETOS -->
+<div class="dashboard-section-title">
+    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+    Gestão de Projetos
+</div>
+<div class="kpi-grid mb-6">
   <div class="kpi-card" style="border-left: 3px solid var(--bk-blue);">
     <div class="kpi-label">Total de Projetos</div>
     <div class="kpi-value">{{ total }}</div>
@@ -32,10 +88,9 @@
   </div>
 </div>
 
-<!-- Projetos Recentes -->
 <div class="card">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-    <h2 style="font-size:15px;font-weight:700;">Projetos Ativos</h2>
+    <h2 style="font-size:15px;font-weight:700;">Projetos Ativos Recentes</h2>
     <a href="{% url 'projetos:lista' %}" class="btn btn-secondary btn-sm">Ver todos</a>
   </div>
   {% if projetos_recentes %}
@@ -76,10 +131,57 @@
   <div style="text-align:center;padding:40px;color:var(--bk-text-muted);">
     <div style="font-size:32px;margin-bottom:8px;">📋</div>
     <div>Nenhum projeto ativo encontrado.</div>
-    {% if user.is_admin_erp %}
-    <a href="{% url 'projetos:novo' %}" class="btn btn-primary" style="margin-top:16px">Criar Primeiro Projeto</a>
-    {% endif %}
   </div>
   {% endif %}
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Gráfico Financeiro (Rosca)
+    const ctxFin = document.getElementById('chartFinanceiro').getContext('2d');
+    const dataFin = {{ chart_financeiro_json|safe }};
+    new Chart(ctxFin, {
+        type: 'doughnut',
+        data: {
+            labels: dataFin.labels,
+            datasets: [{
+                data: dataFin.values,
+                backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } }
+            }
+        }
+    });
+
+    // Gráfico de Vendas (Barras Horizontais - Funil)
+    const ctxVen = document.getElementById('chartVendas').getContext('2d');
+    new Chart(ctxVen, {
+        type: 'bar',
+        data: {
+            labels: {{ pipeline_labels_json|safe }},
+            datasets: [{
+                label: 'Leads',
+                data: {{ pipeline_data_json|safe }},
+                backgroundColor: '#3b82f6',
+                borderRadius: 4
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { grid: { display: false }, ticks: { stepSize: 1 } },
+                y: { grid: { display: false } }
+            }
+        }
+    });
+</script>
 {% endblock %}
