@@ -2458,13 +2458,15 @@ function gerarRelatorioGeral() {
 
   // Controle de Projetos (Vindo da aba Controle de Projetos / ctrlDocs)
   let controleHTML = '<p>Nenhuma atividade cadastrada no Controle de Projetos.</p>';
-  if (window.ctrlDocs && window.ctrlDocs.length) {
-    const _docs = window.ctrlDocs;
+  const docsToUse = (window.ctrlDocs && window.ctrlDocs.length) ? window.ctrlDocs : (typeof ctrlDocs !== 'undefined' ? ctrlDocs : []);
+  
+  if (docsToUse.length) {
+    const _docs = docsToUse;
     const _concl = _docs.filter(d => d.status === 'concluido' || d.status === 'aprovado').length;
-    const _eand = _docs.filter(d => d.status === 'em_elaboracao' || d.status === 'em_analise').length;
+    const _eand = _docs.filter(d => d.status === 'em_elaboracao' || d.status === 'em_analise' || d.status === 'em_andamento').length;
     const _atras = _docs.filter(d => d.status === 'atrasado').length;
     const _ninit = _docs.filter(d => !d.status || d.status === 'nao_iniciado').length;
-    const _pctG = Math.round(_docs.reduce((s,d) => s+(parseFloat(d.percentual)||0),0)/_docs.length);
+    const _pctG = Math.round(_docs.reduce((s,d) => s+(parseFloat(d.percentual||0)),0)/_docs.length);
     
     controleHTML = '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px">'
       + '<div style="background:#d4edda;padding:10px 20px;border-radius:6px;text-align:center"><strong>'
