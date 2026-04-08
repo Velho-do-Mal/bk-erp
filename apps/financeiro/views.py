@@ -406,7 +406,7 @@ def orcamento(request):
     hoje = date.today()
     ano_selecionado = int(request.GET.get('ano', hoje.year))
     
-    # Categorias organizadas por tipo
+    # Categorias organizadas por tipo (todas as ativas)
     categorias_entrada = Categoria.objects.filter(tipo__in=['entrada', 'ambos']).order_by('nome')
     categorias_saida = Categoria.objects.filter(tipo__in=['saida', 'ambos']).order_by('nome')
     
@@ -435,16 +435,22 @@ def orcamento(request):
             reais_map[cat_id] = {}
         reais_map[cat_id][mes] = float(r['total'])
         
-    # Estrutura para o template
+    # Estrutura para o template (Garante que TODAS as categorias apareçam)
     def build_grid(categorias, data_map):
         grid = []
         for cat in categorias:
+            # Pega os valores do mapa ou 0.0 se não existir
+            meses_valores = []
+            for m in range(1, 13):
+                val = data_map.get(cat.id, {}).get(m, 0.0)
+                meses_valores.append(float(val))
+                
             row = {
                 'id': cat.id,
                 'nome': str(cat),
-                'meses': [data_map.get(cat.id, {}).get(m, 0.0) for m in range(1, 13)],
+                'meses': meses_valores,
+                'total': sum(meses_valores)
             }
-            row['total'] = sum(row['meses'])
             grid.append(row)
         return grid
         
