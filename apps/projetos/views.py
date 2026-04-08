@@ -120,6 +120,12 @@ def relatorio_executivo(request):
         'fin_saldo': saldo_final,
         'fin_variacao': variacao_fluxo,
         'fin_categorias_json': json.dumps(fin_categorias),
+        # Dados para Gráfico de Linhas (Exemplo de Evolução Mensal)
+        'fin_evolucao_json': json.dumps({
+            'labels': ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
+            'planejado': [120000, 135000, 110000, 145000, 130000, 150000],
+            'realizado': [105000, 128000, 115000, 142000, 125000, 148000]
+        }),
     })
 
 
