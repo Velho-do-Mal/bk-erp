@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+{% block title %}Orçamento — BK ERP{% endblock %}
+{% block page_title %}Orçamento{% endblock %}
+{% block page_sub %}Planejamento Financeiro Anual{% endblock %}
+
+{% block topbar_actions %}
+<div style="display:flex;gap:12px;align-items:center">
+    <label class="form-label" style="margin:0;font-size:12px">Ano de Análise:</label>
+    <select id="select-ano" class="form-control" style="width:100px" onchange="window.location.href='?ano='+this.value">
+        {% for a in anos_disponiveis %}
+        <option value="{{ a }}" {% if a == ano %}selected{% endif %}>{{ a }}</option>
+        {% endfor %}
+    </select>
+    <a href="{% url 'financeiro:dashboard' %}" class="btn btn-secondary">Voltar ao Dashboard</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<style>
+    .excel-table { width: 100%; border-collapse: collapse; font-size: 12px; background: #fff; margin-bottom: 24px; border: 1px solid #e2e8f0; }
+    .excel-table th, .excel-table td { border: 1px solid #e2e8f0; padding: 6px 8px; text-align: right; }
+    .excel-table th { background: #f8fafc; font-weight: 600; color: #475569; text-align: center; }
+    .excel-table td:first-child { text-align: left; font-weight: 500; background: #f8fafc; width: 200px; }
+    .excel-table input { width: 100%; border: none; text-align: right; background: transparent; outline: none; padding: 2px; }
+    .excel-table input:focus { background: #f1f5f9; box-shadow: inset 0 0 0 1px #3b82f6; }
+    .excel-table .total-col { font-weight: 600; background: #f1f5f9; }
+    .excel-table .header-row { background: #f1f5f9; font-weight: 700; text-align: left; padding-left: 12px; }
+    .section-title { font-size: 14px; font-weight: 700; margin: 20px 0 10px; color: #1e293b; display: flex; align-items: center; gap: 8px; }
+    .read-only { background: #f8fafc; color: #64748b; }
+    .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+</style>
+
+<!-- Dashboards de Orçamento -->
+<div class="dashboard-grid">
+    <div class="bk-card">
+        <div class="bk-title" style="font-size:13px;margin-bottom:12px">📊 Previsto vs. Realizado (Mensal)</div>
+        <div id="chart-prev-real" style="height:300px"></div>
+    </div>
+    <div class="bk-card">
+        <div class="bk-title" style="font-size:13px;margin-bottom:12px">📈 Fluxo de Caixa (Previsto vs. Realizado)</div>
+        <div id="chart-fluxo-comp" style="height:300px"></div>
+    </div>
+</div>
+
+<!-- Tabela de Orçamento (Editável) -->
+<div class="bk-card">
+    <div class="section-title">📝 Orçamento Previsto - {{ ano }} (Editável)</div>
+    
+    <div class="header-row" style="background:#ecfdf5; color:#065f46; padding:8px">🟢 ENTRADAS</div>
+    <div class="table-container" style="overflow-x:auto">
+        <table class="excel-table">
+            <thead>
+                <tr>
+                    <th>Categoria</th><th>Jan</th><th>Fev</th><th>Mar</th><th>Abr</th><th>Mai</th><th>Jun</th>
+                    <th>Jul</th><th>Ago</th><th>Set</th><th>Out</th><th>Nov</th><th>Dez</th><th class="total-col">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in grid_previsto_entrada %}
+                <tr>
+                    <td>{{ row.nome }}</td>
+                    {% for val in row.meses %}
+                    <td><input type="number" step="0.01" value="{{ val|floatformat:2 }}" onchange="salvarOrcamento({{ row.id }}, {{ forloop.counter }}, this.value)"></td>
+                    {% endfor %}
+                    <td class="total-col">R$ {{ row.total|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="header-row" style="background:#fef2f2; color:#991b1b; padding:8px">🔴 SAÍDAS</div>
+    <div class="table-container" style="overflow-x:auto">
+        <table class="excel-table">
+            <thead>
+                <tr>
+                    <th>Categoria</th><th>Jan</th><th>Fev</th><th>Mar</th><th>Abr</th><th>Mai</th><th>Jun</th>
+                    <th>Jul</th><th>Ago</th><th>Set</th><th>Out</th><th>Nov</th><th>Dez</th><th class="total-col">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in grid_previsto_saida %}
+                <tr>
+                    <td>{{ row.nome }}</td>
+                    {% for val in row.meses %}
+                    <td><input type="number" step="0.01" value="{{ val|floatformat:2 }}" onchange="salvarOrcamento({{ row.id }}, {{ forloop.counter }}, this.value)"></td>
+                    {% endfor %}
+                    <td class="total-col">R$ {{ row.total|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Tabela de Resultados Reais (Não Editável) -->
+<div class="bk-card" style="margin-top:24px">
+    <div class="section-title">📊 Resultados Reais - {{ ano }} (Leitura)</div>
+    
+    <div class="header-row" style="background:#f0fdf4; color:#166534; padding:8px">🟢 ENTRADAS REAIS</div>
+    <div class="table-container" style="overflow-x:auto">
+        <table class="excel-table">
+            <thead>
+                <tr>
+                    <th>Categoria</th><th>Jan</th><th>Fev</th><th>Mar</th><th>Abr</th><th>Mai</th><th>Jun</th>
+                    <th>Jul</th><th>Ago</th><th>Set</th><th>Out</th><th>Nov</th><th>Dez</th><th class="total-col">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in grid_real_entrada %}
+                <tr>
+                    <td>{{ row.nome }}</td>
+                    {% for val in row.meses %}
+                    <td class="read-only">R$ {{ val|floatformat:2 }}</td>
+                    {% endfor %}
+                    <td class="total-col">R$ {{ row.total|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="header-row" style="background:#fff1f2; color:#9f1239; padding:8px">🔴 SAÍDAS REAIS</div>
+    <div class="table-container" style="overflow-x:auto">
+        <table class="excel-table">
+            <thead>
+                <tr>
+                    <th>Categoria</th><th>Jan</th><th>Fev</th><th>Mar</th><th>Abr</th><th>Mai</th><th>Jun</th>
+                    <th>Jul</th><th>Ago</th><th>Set</th><th>Out</th><th>Nov</th><th>Dez</th><th class="total-col">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in grid_real_saida %}
+                <tr>
+                    <td>{{ row.nome }}</td>
+                    {% for val in row.meses %}
+                    <td class="read-only">R$ {{ val|floatformat:2 }}</td>
+                    {% endfor %}
+                    <td class="total-col">R$ {{ row.total|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script>
+    const anoAtual = {{ ano }};
+    const totaisPrev = {{ totais_previsto_json|safe }};
+    const totaisReal = {{ totais_real_json|safe }};
+    const fluxoPrev = {{ fluxo_previsto_json|safe }};
+    const fluxoReal = {{ fluxo_real_json|safe }};
+    
+    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const CFG = {responsive:true, displayModeBar:false};
+    const BG  = {paper_bgcolor:'transparent', plot_bgcolor:'transparent'};
+
+    // ── Gráfico Previsto vs Realizado (Barras) ────────────
+    (function(){
+        const saldoPrev = meses.map((_, i) => totaisPrev.entrada[i] - totaisPrev.saida[i]);
+        const saldoReal = meses.map((_, i) => totaisReal.entrada[i] - totaisReal.saida[i]);
+
+        Plotly.newPlot('chart-prev-real', [
+            { x: meses, y: saldoPrev, name: 'Saldo Previsto', type: 'bar', marker: {color:'#94a3b8'} },
+            { x: meses, y: saldoReal, name: 'Saldo Realizado', type: 'bar', marker: {color:'#3b82f6'} }
+        ], Object.assign({}, BG, {
+            barmode: 'group',
+            margin: {t:10, b:40, l:60, r:10},
+            legend: {orientation:'h', y:-0.2},
+            yaxis: {tickprefix:'R$ '}
+        }), CFG);
+    })();
+
+    // ── Gráfico Fluxo de Caixa (Linhas) ──────────────────
+    (function(){
+        const acumPrev = fluxoPrev.map(f => f.acumulado);
+        const acumReal = fluxoReal.map(f => f.acumulado);
+
+        Plotly.newPlot('chart-fluxo-comp', [
+            { x: meses, y: acumPrev, name: 'Caixa Previsto', type: 'scatter', mode: 'lines+markers', line: {dash:'dot', color:'#94a3b8'} },
+            { x: meses, y: acumReal, name: 'Caixa Realizado', type: 'scatter', mode: 'lines+markers', line: {color:'#10b981', width:3} }
+        ], Object.assign({}, BG, {
+            margin: {t:10, b:40, l:60, r:10},
+            legend: {orientation:'h', y:-0.2},
+            yaxis: {tickprefix:'R$ '}
+        }), CFG);
+    })();
+
+    // ── Função para Salvar Orçamento via AJAX ─────────────
+    async function salvarOrcamento(catId, mes, valor) {
+        try {
+            const response = await fetch("{% url 'financeiro:salvar_orcamento' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    categoria_id: catId,
+                    ano: anoAtual,
+                    mes: mes,
+                    valor: valor
+                })
+            });
+            const result = await response.json();
+            if (result.ok) {
+                console.log('Salvo com sucesso');
+                // Opcional: Recarregar para atualizar totais e gráficos
+                // window.location.reload(); 
+            } else {
+                alert('Erro ao salvar: ' + result.error);
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Erro de conexão ao salvar orçamento.');
+        }
+    }
+</script>
+{% endblock %}

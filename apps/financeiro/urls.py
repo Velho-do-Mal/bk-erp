@@ -9,4 +9,6 @@ urlpatterns = [
     path('financeiro/transacoes/<int:pk>/anexo/', views.download_anexo, name='download_anexo'),
     path('financeiro/contas/', views.contas, name='contas'),
     path('financeiro/categorias/', views.categorias, name='categorias'),
+    path('financeiro/orcamento/', views.orcamento, name='orcamento'),
+    path('financeiro/orcamento/salvar/', views.salvar_orcamento, name='salvar_orcamento'),
 ]

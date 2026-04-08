@@ -397,3 +397,115 @@ def categorias(request):
             return JsonResponse({'ok': True})
     qs = list(Categoria.objects.values('id', 'nome', 'tipo', 'pai_id', 'observacoes'))
     return render(request, 'financeiro/categorias.html', {'categorias_json': json.dumps(qs)})
+
+
+@login_required
+def orcamento(request):
+    from django.db.models.functions import ExtractMonth
+    
+    hoje = date.today()
+    ano_selecionado = int(request.GET.get('ano', hoje.year))
+    
+    # Categorias organizadas por tipo
+    categorias_entrada = Categoria.objects.filter(tipo__in=['entrada', 'ambos']).order_by('nome')
+    categorias_saida = Categoria.objects.filter(tipo__in=['saida', 'ambos']).order_by('nome')
+    
+    # Dados de Orçamento (Previsto)
+    orcamentos_raw = Orcamento.objects.filter(ano=ano_selecionado).values('categoria_id', 'mes', 'valor')
+    orc_map = {}
+    for o in orcamentos_raw:
+        cat_id = o['categoria_id']
+        mes = o['mes']
+        if cat_id not in orc_map:
+            orc_map[cat_id] = {}
+        orc_map[cat_id][mes] = float(o['valor'])
+        
+    # Dados Reais (Transações Realizadas)
+    reais_raw = (
+        Transacao.objects.filter(data_competencia__year=ano_selecionado, status='realizado')
+        .annotate(mes=ExtractMonth('data_competencia'))
+        .values('categoria_id', 'mes')
+        .annotate(total=Sum('valor'))
+    )
+    reais_map = {}
+    for r in reais_raw:
+        cat_id = r['categoria_id']
+        mes = r['mes']
+        if cat_id not in reais_map:
+            reais_map[cat_id] = {}
+        reais_map[cat_id][mes] = float(r['total'])
+        
+    # Estrutura para o template
+    def build_grid(categorias, data_map):
+        grid = []
+        for cat in categorias:
+            row = {
+                'id': cat.id,
+                'nome': str(cat),
+                'meses': [data_map.get(cat.id, {}).get(m, 0.0) for m in range(1, 13)],
+            }
+            row['total'] = sum(row['meses'])
+            grid.append(row)
+        return grid
+        
+    grid_previsto_entrada = build_grid(categorias_entrada, orc_map)
+    grid_previsto_saida = build_grid(categorias_saida, orc_map)
+    grid_real_entrada = build_grid(categorias_entrada, reais_map)
+    grid_real_saida = build_grid(categorias_saida, reais_map)
+    
+    # Totais mensais para dashboards
+    totais_previsto = {
+        'entrada': [sum(row['meses'][m] for row in grid_previsto_entrada) for m in range(12)],
+        'saida': [sum(row['meses'][m] for row in grid_previsto_saida) for m in range(12)],
+    }
+    totais_real = {
+        'entrada': [sum(row['meses'][m] for row in grid_real_entrada) for m in range(12)],
+        'saida': [sum(row['meses'][m] for row in grid_real_saida) for m in range(12)],
+    }
+    
+    # Fluxo de Caixa (Mensal e Acumulado)
+    fluxo_previsto = []
+    fluxo_real = []
+    acum_p = 0
+    acum_r = 0
+    for m in range(12):
+        saldo_p = totais_previsto['entrada'][m] - totais_previsto['saida'][m]
+        saldo_r = totais_real['entrada'][m] - totais_real['saida'][m]
+        acum_p += saldo_p
+        acum_r += saldo_r
+        fluxo_previsto.append({'mes': m+1, 'saldo': saldo_p, 'acumulado': acum_p})
+        fluxo_real.append({'mes': m+1, 'saldo': saldo_r, 'acumulado': acum_r})
+
+    ctx = {
+        'ano': ano_selecionado,
+        'anos_disponiveis': range(hoje.year - 2, hoje.year + 5),
+        'grid_previsto_entrada': grid_previsto_entrada,
+        'grid_previsto_saida': grid_previsto_saida,
+        'grid_real_entrada': grid_real_entrada,
+        'grid_real_saida': grid_real_saida,
+        'totais_previsto_json': json.dumps(totais_previsto),
+        'totais_real_json': json.dumps(totais_real),
+        'fluxo_previsto_json': json.dumps(fluxo_previsto),
+        'fluxo_real_json': json.dumps(fluxo_real),
+    }
+    return render(request, 'financeiro/orcamento.html', ctx)
+
+
+@login_required
+def salvar_orcamento(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            cat_id = int(data.get('categoria_id'))
+            ano = int(data.get('ano'))
+            mes = int(data.get('mes'))
+            valor = Decimal(str(data.get('valor', 0)))
+            
+            orc, created = Orcamento.objects.update_or_create(
+                categoria_id=cat_id, ano=ano, mes=mes,
+                defaults={'valor': valor}
+            )
+            return JsonResponse({'ok': True, 'id': orc.id})
+        except Exception as e:
+            return JsonResponse({'ok': False, 'error': str(e)}, status=400)
+    return JsonResponse({'ok': False}, status=405)
