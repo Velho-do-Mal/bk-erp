@@ -2456,14 +2456,16 @@ function gerarRelatorioGeral() {
       }).join('') + '</tbody></table>';
   }
 
-  // Controle de Projetos
-  let controleHTML = '<p>Nenhuma atividade cadastrada.</p>';
-  if (eapTasks.length) {
-    const _concl = eapTasks.filter(t => t.status === 'concluido').length;
-    const _eand = eapTasks.filter(t => t.status === 'em-andamento').length;
-    const _atras = eapTasks.filter(t => t.status === 'atrasado').length;
-    const _ninit = eapTasks.filter(t => !t.status || t.status === 'nao-iniciado').length;
-    const _pctG = Math.round(eapTasks.reduce((s,t) => s+(t.pct||0),0)/eapTasks.length);
+  // Controle de Projetos (Vindo da aba Controle de Projetos / ctrlDocs)
+  let controleHTML = '<p>Nenhuma atividade cadastrada no Controle de Projetos.</p>';
+  if (window.ctrlDocs && window.ctrlDocs.length) {
+    const _docs = window.ctrlDocs;
+    const _concl = _docs.filter(d => d.status === 'concluido' || d.status === 'aprovado').length;
+    const _eand = _docs.filter(d => d.status === 'em_elaboracao' || d.status === 'em_analise').length;
+    const _atras = _docs.filter(d => d.status === 'atrasado').length;
+    const _ninit = _docs.filter(d => !d.status || d.status === 'nao_iniciado').length;
+    const _pctG = Math.round(_docs.reduce((s,d) => s+(parseFloat(d.percentual)||0),0)/_docs.length);
+    
     controleHTML = '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px">'
       + '<div style="background:#d4edda;padding:10px 20px;border-radius:6px;text-align:center"><strong>'
         + _concl + '</strong><br>Concluídas</div>'
@@ -2476,11 +2478,15 @@ function gerarRelatorioGeral() {
       + '<div style="background:#e2e3e5;padding:10px 20px;border-radius:6px;text-align:center"><strong>'
         + _pctG + '%</strong><br>% Geral</div></div>'
       + '<table class="rpt-table"><thead><tr>'
-        + '<th>Cód.</th><th>Atividade</th><th>Rev.</th><th>Responsável</th><th>%</th><th>Status</th>'
+        + '<th>Cód.</th><th>Atividade</th><th>Nº Atividade</th><th>Rev.</th><th>Responsável</th><th>%</th><th>Status</th>'
         + '</tr></thead><tbody>'
-      + eapTasks.map(t => '<tr><td>' + t.codigo + '</td><td>' + t.nome
-          + '</td><td>' + (t.responsavel||'—') + '</td><td>' + (t.pct||0)
-          + '%</td><td>' + (t.status||'—') + '</td></tr>').join('')
+      + _docs.map(d => {
+          const s = DOC_STATUS_MAP[d.status] || {l: d.status || '—', c: '#64748B'};
+          return '<tr><td>' + (d.codigo||'—') + '</td><td>' + (d.atividade||d.doc_nome||'—')
+            + '</td><td>' + (d.doc_numero||'—') + '</td><td>' + (d.revisao||'—')
+            + '</td><td>' + (d.responsavel||'—') + '</td><td>' + (d.percentual||0)
+            + '%</td><td><span style="color:'+s.c+';font-weight:bold">' + s.l + '</span></td></tr>';
+      }).join('')
       + '</tbody></table>';
   }
 
@@ -2512,7 +2518,49 @@ function gerarRelatorioGeral() {
     }
   }
 
-  // Grafico financeiro SVG
+  // Gráficos de Status e Financeiros (SVG para Impressão)
+  let chartsHTML = '';
+  
+  // 1. Gráfico de Pizza de Status (Controle de Projetos)
+  if (window.ctrlDocs && window.ctrlDocs.length) {
+    const _docs = window.ctrlDocs;
+    const _concl = _docs.filter(d => d.status === 'concluido' || d.status === 'aprovado').length;
+    const _eand = _docs.filter(d => d.status === 'em_elaboracao' || d.status === 'em_analise').length;
+    const _atras = _docs.filter(d => d.status === 'atrasado').length;
+    const _ninit = _docs.filter(d => !d.status || d.status === 'nao_iniciado').length;
+    const total = _docs.length;
+    
+    const colors = ['#43a047', '#1976d2', '#e53935', '#78909c'];
+    const values = [_concl, _eand, _atras, _ninit];
+    const labels = ['Concluído', 'Em Andamento', 'Atrasado', 'Não Iniciado'];
+    
+    let currentAngle = 0;
+    let paths = '';
+    values.forEach((v, i) => {
+      if (v === 0) return;
+      const angle = (v / total) * 360;
+      const x1 = 50 + 40 * Math.cos(Math.PI * currentAngle / 180);
+      const y1 = 50 + 40 * Math.sin(Math.PI * currentAngle / 180);
+      currentAngle += angle;
+      const x2 = 50 + 40 * Math.cos(Math.PI * currentAngle / 180);
+      const y2 = 50 + 40 * Math.sin(Math.PI * currentAngle / 180);
+      const largeArc = angle > 180 ? 1 : 0;
+      paths += `<path d="M 50 50 L ${x1} ${y1} A 40 40 0 ${largeArc} 1 ${x2} ${y2} Z" fill="${colors[i]}"/>`;
+    });
+    
+    chartsHTML += `<div style="display:flex;gap:20px;align-items:center;margin-bottom:20px;background:#f8fafc;padding:15px;border-radius:8px;border:1px solid #e2e8f0">
+      <svg viewBox="0 0 100 100" width="150" height="150">${paths}</svg>
+      <div style="font-size:11px">
+        <h4 style="margin:0 0 8px 0;color:#0d47a1">Status das Atividades</h4>
+        ${labels.map((l, i) => `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+          <div style="width:10px;height:10px;background:${colors[i]};border-radius:2px"></div>
+          <span>${l}: <strong>${values[i]}</strong> (${Math.round(values[i]/total*100)}%)</span>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  // 2. Gráfico Financeiro (Barras)
   if (finances.length) {
     var _mP={}, _mR={};
     finances.forEach(function(f){
@@ -2526,22 +2574,24 @@ function gerarRelatorioGeral() {
     if (_keys.length) {
       var _max=1;
       _keys.forEach(function(k){ var mx=Math.max(_mP[k]||0,_mR[k]||0); if(mx>_max)_max=mx; });
-      var BH2=130, BW2=36, GAP=8, PAD=36;
-      var svgW2=PAD*2+_keys.length*(BW2*2+GAP+14);
-      var svgH2=BH2+70;
+      var BH2=100, BW2=25, GAP=5, PAD=40;
+      var svgW2=PAD*2+_keys.length*(BW2*2+GAP+10);
+      var svgH2=BH2+50;
       var bars='';
       _keys.forEach(function(k,i){
-        var xBase=PAD+i*(BW2*2+GAP+14);
+        var xBase=PAD+i*(BW2*2+GAP+10);
         var hP=Math.max(2,Math.round(((_mP[k]||0)/_max)*BH2));
         var hR=Math.max(2,Math.round(((_mR[k]||0)/_max)*BH2));
-        bars+='<rect x="'+xBase+'" y="'+(BH2-hP+16)+'" width="'+BW2+'" height="'+hP+'" fill="#1976d2" rx="2"/>';
-        bars+='<rect x="'+(xBase+BW2+4)+'" y="'+(BH2-hR+16)+'" width="'+BW2+'" height="'+hR+'" fill="#43a047" rx="2"/>';
-        var lbl=k.length>=7?k.substring(5,7)+"/"+k.substring(2,4):k;
-        bars+='<text x="'+(xBase+BW2)+'" y="'+(BH2+32)+'" text-anchor="middle" font-size="8" fill="#555">'+lbl+'</text>';
+        bars+='<rect x="'+xBase+'" y="'+(BH2-hP+10)+'" width="'+BW2+'" height="'+hP+'" fill="#1976d2" rx="2"/>';
+        bars+='<rect x="'+(xBase+BW2+2)+'" y="'+(BH2-hR+10)+'" width="'+BW2+'" height="'+hR+'" fill="#43a047" rx="2"/>';
+        var lbl=k.substring(5,7)+"/"+k.substring(2,4);
+        bars+='<text x="'+(xBase+BW2)+'" y="'+(BH2+25)+'" text-anchor="middle" font-size="8" fill="#555">'+lbl+'</text>';
       });
-      var lgd='<rect x="10" y="8" width="10" height="10" fill="#1976d2"/><text x="24" y="18" font-size="8" fill="#333">Planejado</text><rect x="90" y="8" width="10" height="10" fill="#43a047"/><text x="104" y="18" font-size="8" fill="#333">Realizado</text>';
-      var svgChart='<div style="overflow-x:auto;margin-bottom:12px"><svg xmlns="http://www.w3.org/2000/svg" width="'+svgW2+'" height="'+svgH2+'"><line x1="'+PAD+'" y1="14" x2="'+PAD+'" y2="'+(BH2+16)+'" stroke="#ccc" stroke-width="1"/><line x1="'+PAD+'" y1="'+(BH2+16)+'" x2="'+(svgW2-PAD)+'" y2="'+(BH2+16)+'" stroke="#ccc" stroke-width="1"/>'+bars+lgd+'</svg></div>';
-      finAnaliseHTML = svgChart + finAnaliseHTML;
+      var lgd='<rect x="10" y="0" width="8" height="8" fill="#1976d2"/><text x="22" y="8" font-size="8" fill="#333">Planejado</text><rect x="80" y="0" width="8" height="8" fill="#43a047"/><text x="92" y="8" font-size="8" fill="#333">Realizado</text>';
+      chartsHTML += `<div style="background:#f8fafc;padding:15px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:20px">
+        <h4 style="margin:0 0 10px 0;color:#0d47a1;font-size:11px">Fluxo de Caixa (Mensal)</h4>
+        <svg xmlns="http://www.w3.org/2000/svg" width="${svgW2}" height="${svgH2}">${lgd}${bars}</svg>
+      </div>`;
     }
   }
 
@@ -2595,13 +2645,19 @@ function gerarRelatorioGeral() {
     @media print{body{background:#fff}.rpt-body{box-shadow:none;margin:0;max-width:100%}}
   </style></head><body>
     <div class="rpt-header"><div><div class="title">Relatório Completo do Projeto</div><div class="sub">${nome} — ID ${PROJETO_ID}</div></div><div style="font-size:12px">${agora}</div></div>
-    <div class="rpt-body">
-      <div class="rpt-section">1. Identificação e TAP</div>
-      <p><strong>Gerente:</strong> ${tap.gerente||'—'} &nbsp; <strong>Patrocinador:</strong> ${tap.patrocinador||'—'} &nbsp; <strong>Data início:</strong> ${tap.dataInicio||'—'} &nbsp; <strong>Status:</strong> ${tap.status||'—'}</p>
-      <p><strong>Objetivo:</strong> ${(tap.objetivo||'—').replace(/\n/g,'<br>')}</p>
-      <p><strong>Escopo:</strong> ${(tap.escopo||'—').replace(/\n/g,'<br>')}</p>
+	    <div class="rpt-body">
+	      <div class="rpt-section">1. Identificação e TAP</div>
+	      <p><strong>Gerente:</strong> ${tap.gerente||'—'} &nbsp; <strong>Patrocinador:</strong> ${tap.patrocinador||'—'} &nbsp; <strong>Data início:</strong> ${tap.dataInicio||'—'} &nbsp; <strong>Status:</strong> ${tap.status||'—'}</p>
+	      <p><strong>Objetivo:</strong> ${(tap.objetivo||'—').replace(/\n/g,'<br>')}</p>
+	      <p><strong>Escopo:</strong> ${(tap.escopo||'—').replace(/\n/g,'<br>')}</p>
+	      <p><strong>Premissas e Restrições:</strong> ${(tap.premissas||'—').replace(/\n/g,'<br>')}</p>
+	      <p><strong>Requisitos Principais:</strong> ${(tap.requisitos||'—').replace(/\n/g,'<br>')}</p>
 
-      <div class="rpt-section">2. Organograma (WBS)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px">
+          ${chartsHTML}
+        </div>
+
+	      <div class="rpt-section">2. Organograma (WBS)</div>
       ${orgHTML}
 
       <div class="rpt-section">3. EAP Detalhada</div>
@@ -2625,10 +2681,10 @@ function gerarRelatorioGeral() {
       <div class="rpt-section">9. Lições Aprendidas</div>
       ${licoesHTML}
 
-      <div class="rpt-section">10. Encerramento</div>
-      <p><strong>Resultado:</strong> ${closeData.resultado||'—'}</p>
-      <p><strong>Entregáveis:</strong> ${(closeData.entregaveis||'—').replace(/\n/g,'<br>')}</p>
-    </div>
+	      <div class="rpt-section">10. Encerramento</div>
+	      <p><strong>Resultado:</strong> ${closeData.resultado||'—'}</p>
+	      <p><strong>Entregáveis:</strong> ${(closeData.entregaveis||'—').replace(/\n/g,'<br>')}</p>
+	    </div>
     <div class="rpt-footer">Relatório gerado em ${agora} — BK Engenharia e Tecnologia</div>
   </body></html>`;
 
