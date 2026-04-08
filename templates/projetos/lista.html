@@ -72,12 +72,22 @@ function imprimirRelatorioGeralPortfolio() {
     <div style="margin-top:50px;text-align:center;font-size:10px;color:#888;border-top:1px solid #eee;padding-top:10px">
       Relatório gerado automaticamente pelo BK ERP — Gestão Empresarial
     </div>
+    <script>
+      window.onload = function() {
+        setTimeout(function() {
+          window.print();
+        }, 500);
+      };
+    <\/script>
   </body></html>`;
   
-  const w = window.open('', '_blank');
-  w.document.write(html);
-  w.document.close();
-  setTimeout(() => w.print(), 500);
+  const w = window.open('', '_blank', 'width=1150,height=860');
+  if (w) {
+    w.document.write(html);
+    w.document.close();
+  } else {
+    alert('O bloqueador de pop-ups impediu a abertura do relatório. Por favor, autorize pop-ups para este site.');
+  }
 }
 </script>
 {% endblock %}
