@@ -407,15 +407,15 @@ def orcamento(request):
     ano_selecionado = int(request.GET.get('ano', hoje.year))
     
     # Categorias organizadas por tipo (todas as ativas)
-    categorias_entrada = Categoria.objects.filter(tipo__in=['entrada', 'ambos']).order_by('nome')
-    categorias_saida = Categoria.objects.filter(tipo__in=['saida', 'ambos']).order_by('nome')
+    categorias_entrada = Categoria.objects.filter(Q(tipo='entrada') | Q(tipo='ambos')).order_by('nome')
+    categorias_saida = Categoria.objects.filter(Q(tipo='saida') | Q(tipo='ambos')).order_by('nome')
     
     # Dados de Orçamento (Previsto)
     orcamentos_raw = Orcamento.objects.filter(ano=ano_selecionado).values('categoria_id', 'mes', 'valor')
     orc_map = {}
     for o in orcamentos_raw:
         cat_id = o['categoria_id']
-        mes = o['mes']
+        mes = int(o['mes'])
         if cat_id not in orc_map:
             orc_map[cat_id] = {}
         orc_map[cat_id][mes] = float(o['valor'])
@@ -423,14 +423,14 @@ def orcamento(request):
     # Dados Reais (Transações Realizadas)
     reais_raw = (
         Transacao.objects.filter(data_competencia__year=ano_selecionado, status='realizado')
-        .annotate(mes=ExtractMonth('data_competencia'))
-        .values('categoria_id', 'mes')
+        .annotate(mes_num=ExtractMonth('data_competencia'))
+        .values('categoria_id', 'mes_num')
         .annotate(total=Sum('valor'))
     )
     reais_map = {}
     for r in reais_raw:
         cat_id = r['categoria_id']
-        mes = r['mes']
+        mes = int(r['mes_num'])
         if cat_id not in reais_map:
             reais_map[cat_id] = {}
         reais_map[cat_id][mes] = float(r['total'])
