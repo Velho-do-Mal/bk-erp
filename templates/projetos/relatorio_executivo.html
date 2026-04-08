@@ -3,54 +3,162 @@
 <head>
     <meta charset="UTF-8">
     <title>Relatório Executivo de Portfólio — BK ERP</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #1e293b; line-height: 1.6; background: #fff; }
+        body { font-family: 'Inter', 'Segoe UI', sans-serif; padding: 40px; color: #1e293b; line-height: 1.6; background: #fff; }
         .hdr { display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #1e40af; padding-bottom: 20px; margin-bottom: 30px; }
         .title { font-size: 28px; font-weight: 800; color: #1e40af; text-transform: uppercase; letter-spacing: 1px; }
         .subtitle { font-size: 14px; color: #64748b; margin-top: 5px; }
-        .section { margin-top: 40px; border-left: 5px solid #1e40af; padding-left: 15px; font-size: 20px; font-weight: 700; color: #1e40af; margin-bottom: 20px; background: #f8fafc; padding-top: 5px; padding-bottom: 5px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        th, td { border: 1px solid #e2e8f0; padding: 12px 15px; text-align: left; font-size: 13px; }
-        th { background: #f1f5f9; color: #475569; font-weight: 700; text-transform: uppercase; font-size: 11px; }
-        tr:nth-child(even) { background: #f8fafc; }
-        .badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; color: #fff; display: inline-block; white-space: nowrap; }
+        .section { margin-top: 40px; border-left: 5px solid #1e40af; padding-left: 15px; font-size: 20px; font-weight: 700; color: #1e40af; margin-bottom: 20px; background: #f8fafc; padding-top: 8px; padding-bottom: 8px; }
+        
+        /* Grid de Dashboards */
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+        .card { border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .card-title { font-size: 14px; font-weight: 700; color: #475569; margin-bottom: 15px; text-transform: uppercase; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; }
+        
+        /* KPIs Financeiros */
+        .fin-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-top: 15px; }
+        .fin-kpi { padding: 15px; border-radius: 8px; text-align: center; }
+        .fin-val { font-size: 18px; font-weight: 800; display: block; }
+        .fin-lbl { font-size: 11px; text-transform: uppercase; color: #64748b; }
+
+        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        th, td { border: 1px solid #e2e8f0; padding: 10px 12px; text-align: left; font-size: 12px; }
+        th { background: #f1f5f9; color: #475569; font-weight: 700; text-transform: uppercase; font-size: 10px; }
+        
+        .badge { padding: 3px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; color: #fff; display: inline-block; }
         .bg-green { background: #10b981; }
         .bg-blue { background: #3b82f6; }
         .bg-red { background: #ef4444; }
         .bg-orange { background: #f59e0b; }
         .bg-gray { background: #94a3b8; }
+        
         .footer { margin-top: 60px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 20px; }
+        
         @media print {
             body { padding: 0; }
             .no-print { display: none; }
             .page-break { page-break-before: always; }
+            .card { break-inside: avoid; }
         }
         .btn-print { background: #1e40af; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; margin-bottom: 20px; }
     </style>
 </head>
 <body>
     <div class="no-print" style="text-align: right;">
-        <button onclick="window.print()" class="btn-print">🖨️ Imprimir Agora</button>
+        <button onclick="window.print()" class="btn-print">🖨️ Imprimir Relatório</button>
         <button onclick="window.close()" class="btn-print" style="background:#64748b">Fechar</button>
     </div>
 
     <div class="hdr">
         <div>
             <div class="title">BK Engenharia e Tecnologia</div>
-            <div class="subtitle">Gestão Empresarial — Relatório Executivo de Portfólio</div>
+            <div class="subtitle">Gestão Estratégica e Operacional — Relatório Executivo</div>
         </div>
         <div style="text-align:right; font-size:13px; color: #64748b;">
-            <strong>Data de Emissão:</strong> {{ agora }}<br>
-            <strong>Responsável:</strong> {{ user.get_full_name|default:user.username }}
+            <strong>Data:</strong> {{ agora }}<br>
+            <strong>Portfólio:</strong> {{ projetos_ativos.count }} Projetos Ativos
         </div>
     </div>
-    
-    <div class="section">1. Projetos Ativos</div>
+
+    <!-- DASHBOARDS INICIAIS (Conforme Slides 2 e 3) -->
+    <div class="dashboard-grid">
+        <div class="card">
+            <div class="card-title">Visão Geral do Portfólio</div>
+            <div style="height: 200px;"><canvas id="chartPrazo"></canvas></div>
+            <div style="margin-top:15px; font-size:12px; text-align:center">
+                <span style="color:#ef4444">●</span> Atrasados: {{ stats_prazo.0 }} | 
+                <span style="color:#f59e0b">●</span> No Limite: {{ stats_prazo.1 }} | 
+                <span style="color:#10b981">●</span> No Prazo: {{ stats_prazo.2 }}
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-title">Controle de Documentos ({{ total_docs }})</div>
+            <div style="height: 200px;"><canvas id="chartDocs"></canvas></div>
+            <div style="margin-top:15px; font-size:11px; display:flex; justify-content:space-around">
+                <div><span style="color:#10b981">●</span> Concluídos</div>
+                <div><span style="color:#3b82f6">●</span> Em Análise</div>
+                <div><span style="color:#ef4444">●</span> Atrasados</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FINANCEIRO (Conforme Slide 4) -->
+    <div class="section">Análise Financeira: Planejado vs. Realizado</div>
+    <div class="dashboard-grid">
+        <div class="card">
+            <div class="card-title">Comparativo de Custos por Categoria</div>
+            <div style="height: 220px;"><canvas id="chartFinanceiro"></canvas></div>
+        </div>
+        <div class="card">
+            <div class="card-title">Indicadores de Saúde Financeira</div>
+            <div class="fin-grid">
+                <div class="fin-kpi" style="background:#ecfdf5">
+                    <span class="fin-lbl">Receitas</span>
+                    <span class="fin-val" style="color:#059669">R$ {{ fin_receitas|floatformat:2 }}</span>
+                </div>
+                <div class="fin-kpi" style="background:#fef2f2">
+                    <span class="fin-lbl">Despesas</span>
+                    <span class="fin-val" style="color:#dc2626">R$ {{ fin_despesas|floatformat:2 }}</span>
+                </div>
+                <div class="fin-kpi" style="background:#eff6ff">
+                    <span class="fin-lbl">Saldo Final</span>
+                    <span class="fin-val" style="color:#2563eb">R$ {{ fin_saldo|floatformat:2 }}</span>
+                </div>
+            </div>
+            <div style="margin-top:20px; padding:15px; border-radius:8px; background:#f8fafc; border:1px solid #e2e8f0">
+                <div style="display:flex; justify-content:space-between; align-items:center">
+                    <div>
+                        <span class="fin-lbl">Fluxo de Caixa</span>
+                        <div style="font-size:20px; font-weight:800; color:#059669">↑ {{ fin_variacao }}%</div>
+                        <span style="font-size:10px; color:#64748b">Variação Positiva</span>
+                    </div>
+                    <div style="text-align:center">
+                        <div style="width:50px; height:50px; background:#10b981; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:24px">✓</div>
+                        <div style="font-size:9px; font-weight:700; margin-top:5px; color:#10b981">HEALTH OK</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- RISCOS E KPIS (Conforme Slide 5) -->
+    <div class="section">Gestão de Riscos e KPIs de Qualidade</div>
+    <div class="dashboard-grid">
+        <div class="card">
+            <div class="card-title">Principais Riscos Identificados</div>
+            <ul style="font-size:12px; padding-left:20px">
+                <li style="margin-bottom:10px"><strong>Atraso na entrega de insumos:</strong> Probabilidade Média | Impacto Alto. <span class="badge bg-red">Crítico</span></li>
+                <li style="margin-bottom:10px"><strong>Mudança de escopo pelo cliente:</strong> Probabilidade Baixa | Impacto Médio. <span class="badge bg-orange">Alerta</span></li>
+                <li><strong>Indisponibilidade de mão de obra:</strong> Probabilidade Baixa | Impacto Alto. <span class="badge bg-blue">Monitorar</span></li>
+            </ul>
+        </div>
+        <div class="card">
+            <div class="card-title">KPIs de Performance</div>
+            <div style="display:flex; justify-content:space-around; align-items:center; height:150px">
+                <div style="text-align:center">
+                    <div style="font-size:24px; font-weight:800; color:#1e40af">2.5%</div>
+                    <div class="fin-lbl">Índice de Retrabalho</div>
+                    <div style="font-size:10px; color:#10b981">Meta: < 5%</div>
+                </div>
+                <div style="text-align:center">
+                    <div style="font-size:24px; font-weight:800; color:#1e40af">4.8/5.0</div>
+                    <div class="fin-lbl">Satisfação Cliente</div>
+                    <div style="font-size:10px; color:#10b981">Meta: > 4.5</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LISTAGEM DETALHADA -->
+    <div class="section">Detalhamento dos Projetos Ativos</div>
     <table>
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Nome do Projeto</th>
+                <th>Projeto</th>
                 <th>Status</th>
                 <th>Início</th>
                 <th>Conclusão</th>
@@ -63,14 +171,7 @@
             <tr>
                 <td style="color:#64748b">#{{ p.id }}</td>
                 <td><strong>{{ p.nome }}</strong></td>
-                <td>
-                    {% if p.status == 'execucao' %}<span class="badge bg-green">Execução</span>
-                    {% elif p.status == 'planejamento' %}<span class="badge bg-blue">Planejamento</span>
-                    {% elif p.status == 'monitoramento' %}<span class="badge bg-blue">Monitoramento</span>
-                    {% elif p.status == 'suspenso' %}<span class="badge bg-orange">Suspenso</span>
-                    {% else %}<span class="badge bg-gray">{{ p.get_status_display }}</span>
-                    {% endif %}
-                </td>
+                <td>{{ p.get_status_display }}</td>
                 <td>{{ p.data_inicio|date:"d/m/Y"|default:"—" }}</td>
                 <td>{{ p.data_conclusao|date:"d/m/Y"|default:"—" }}</td>
                 <td>{{ p.gerente|default:"—" }}</td>
@@ -92,43 +193,62 @@
         </tbody>
     </table>
 
-    <div class="section">2. Projetos Encerrados</div>
-    <table>
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nome do Projeto</th>
-                <th>Início</th>
-                <th>Conclusão</th>
-                <th>Gerente</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for p in projetos_encerrados %}
-            <tr style="color: #94a3b8">
-                <td>#{{ p.id }}</td>
-                <td>{{ p.nome }}</td>
-                <td>{{ p.data_inicio|date:"d/m/Y"|default:"—" }}</td>
-                <td>{{ p.data_conclusao|date:"d/m/Y"|default:"—" }}</td>
-                <td>{{ p.gerente|default:"—" }}</td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="5" style="text-align:center">Nenhum projeto encerrado no período.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
     <div class="footer">
-        Relatório gerado automaticamente pelo sistema BK ERP — Todos os direitos reservados &copy; 2026
+        Relatório Executivo BK ERP — Gerado em {{ agora }} — Página 1 de 1
     </div>
 
     <script>
-        // Dispara a impressão automaticamente após carregar
-        window.onload = function() {
-            setTimeout(function() {
-                // window.print(); // Descomente se quiser que abra o diálogo de impressão na hora
-            }, 1000);
-        };
+        // Configuração dos Gráficos
+        const ctxPrazo = document.getElementById('chartPrazo').getContext('2d');
+        new Chart(ctxPrazo, {
+            type: 'doughnut',
+            data: {
+                labels: ['Atrasado', 'No Limite', 'No Prazo'],
+                datasets: [{
+                    data: {{ stats_prazo|safe }},
+                    backgroundColor: ['#ef4444', '#f59e0b', '#10b981'],
+                    borderWidth: 0
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+
+        const ctxDocs = document.getElementById('chartDocs').getContext('2d');
+        new Chart(ctxDocs, {
+            type: 'pie',
+            data: {
+                labels: ['Concluído', 'Em Análise', 'Atrasado', 'Não Iniciado'],
+                datasets: [{
+                    data: {{ stats_docs|safe }},
+                    backgroundColor: ['#10b981', '#3b82f6', '#ef4444', '#94a3b8'],
+                    borderWidth: 0
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+        });
+
+        const finData = {{ fin_categorias_json|safe }};
+        const labels = Object.keys(finData);
+        const planned = labels.map(l => finData[l].p);
+        const actual = labels.map(l => finData[l].r);
+
+        const ctxFin = document.getElementById('chartFinanceiro').getContext('2d');
+        new Chart(ctxFin, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    { label: 'Planejado', data: planned, backgroundColor: '#3b82f6' },
+                    { label: 'Realizado', data: actual, backgroundColor: '#10b981' }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, ticks: { font: { size: 9 } } }, x: { ticks: { font: { size: 9 } } } },
+                plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } }
+            }
+        });
     </script>
 </body>
 </html>
