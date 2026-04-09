@@ -23,7 +23,11 @@
     .totals{display:flex;gap:10px;flex-wrap:wrap}.total-box{flex:1 1 220px;background:#0c1528;border:1px solid var(--line);border-radius:12px;padding:14px}.total-box .t{font-size:12px;color:var(--muted);text-transform:uppercase}.total-box .v{font-size:26px;font-weight:800;margin-top:8px}
     .table-wrap,.excel-grid-wrap{overflow:auto;border:1px solid var(--grid-line);border-radius:14px;background:var(--grid-bg)} table{width:100%;border-collapse:collapse;min-width:800px}
     th,td{padding:10px 12px;border-bottom:1px solid var(--grid-line);text-align:left;font-size:14px} th{background:#13213b;color:#cfe0ff;position:sticky;top:0}
-    .excel-grid{width:100%;min-width:1320px;border-collapse:separate;border-spacing:0;background:var(--grid-bg)}
+    .saved-table{width:100%;border-collapse:collapse;min-width:600px;font-size:13px}
+    .saved-table th{background:#1e3a5f;color:#93c5fd;padding:8px 10px;border-bottom:1px solid var(--grid-line);text-align:left}
+    .saved-table td{padding:8px 10px;border-bottom:1px solid var(--grid-line);color:#e2e8f0;background:#0f1c30}
+    .saved-table tr:hover td{background:#162035}
+    .excel-grid{width:100%;min-width:1100px;border-collapse:separate;border-spacing:0;background:var(--grid-bg)}
     .excel-grid thead th{position:sticky;top:0;z-index:2;background:var(--grid-head);color:#fff;font-size:13px;font-weight:700;border-bottom:1px solid var(--grid-line);border-right:1px solid var(--grid-line);padding:10px 10px;white-space:nowrap}
     .excel-grid tbody td{border-right:1px solid var(--grid-line);border-bottom:1px solid var(--grid-line);padding:0;background:var(--grid-bg);vertical-align:middle;color:var(--grid-text)}
     .excel-grid tbody tr:nth-child(even) td{background:#fafcff}.excel-grid tbody tr:hover td{background:var(--grid-hover)}
@@ -46,15 +50,17 @@
       </div>
     </div>
 
+    <!-- KPIs -->
     <div class="grid grid-4">
       <div class="card kpi"><div class="label">Obras</div><div class="value">{{ obras|length }}</div></div>
       <div class="card kpi"><div class="label">Clientes</div><div class="value">{{ clientes|length }}</div></div>
-      <div class="card kpi"><div class="label">Materiais</div><div class="value">{{ materiais|length }}</div></div>
+      <div class="card kpi"><div class="label">Produtos</div><div class="value">{{ produtos|length }}</div></div>
       <div class="card kpi"><div class="label">Serviços</div><div class="value">{{ servicos|length }}</div></div>
     </div>
 
     <div style="height:16px"></div>
 
+    <!-- Obra + Totais -->
     <div class="grid grid-2">
       <div class="card">
         <div class="section-title">Obra / Orçamento</div>
@@ -96,84 +102,134 @@
       <div class="card">
         <div class="section-title">Totais</div>
         <div class="totals">
-          <div class="total-box"><div class="t">Materiais</div><div class="v">R$ {{ totais.total_materiais|floatformat:2 }}</div></div>
-          <div class="total-box"><div class="t">Serviços</div><div class="v">R$ {{ totais.total_servicos|floatformat:2 }}</div></div>
-          <div class="total-box"><div class="t">Total geral</div><div class="v">R$ {{ totais.total_geral|floatformat:2 }}</div></div>
+          <div class="total-box"><div class="t">Materiais</div><div class="v" id="total-mat">R$ {{ totais.total_materiais|floatformat:2 }}</div></div>
+          <div class="total-box"><div class="t">Serviços</div><div class="v" id="total-svc">R$ {{ totais.total_servicos|floatformat:2 }}</div></div>
+          <div class="total-box"><div class="t">Total geral</div><div class="v" id="total-geral">R$ {{ totais.total_geral|floatformat:2 }}</div></div>
         </div>
       </div>
     </div>
 
     <div style="height:16px"></div>
 
+    <!-- ===== MATERIAIS ===== -->
+    {% if orcamento %}
     <div class="card">
-      <div class="section-title">Cadastrar material</div>
-      <div class="grid grid-2">
-        <div><label>Código cliente</label><input type="text" id="mat_codigo_cliente"></div>
-        <div><label>Código BK</label><input type="text" id="mat_codigo_bk"></div>
-        <div style="grid-column:1/-1"><label>Descrição</label><input type="text" id="mat_descricao"></div>
-        <div><label>Unidade</label><input type="text" id="mat_unidade" value="un"></div>
-        <div><label>Valor unitário</label><input type="number" id="mat_valor_unitario" step="0.01" min="0"></div>
-      </div>
-      <div style="height:14px"></div>
-      <button type="button" class="btn" id="btn-salvar-material" onclick="salvarMaterial()">Salvar material</button>
-    </div>
-
-    <div style="height:16px"></div>
-
-    <div class="card">
-      <div class="section-title">Materiais cadastrados</div>
-      <div class="grid-helper" style="margin-bottom:12px">Edição direta em grade, semelhante à tabela da imagem.</div>
-      <div class="excel-grid-wrap">
-        <table class="excel-grid">
-          <thead><tr><th style="width:120px">ID</th><th style="width:180px">Código Cliente</th><th style="width:180px">Código BK</th><th>Descrição</th><th style="width:120px">Unidade</th><th style="width:160px">Valor Unitário</th><th style="width:130px">Ação</th></tr></thead>
-          <tbody>
-            {% for m in materiais %}
+      <div class="section-title">Materiais no orçamento</div>
+      <div style="overflow:auto;border:1px solid var(--grid-line);border-radius:10px;margin-bottom:18px">
+        <table class="saved-table">
+          <thead>
             <tr>
-              <td><input class="grid-input" type="text" value="{{ m.id }}" readonly></td>
-              <td><input class="grid-input" type="text" id="edit_mat_codigo_cliente_{{ m.id }}" value="{{ m.codigo_cliente|default:'' }}"></td>
-              <td><input class="grid-input" type="text" id="edit_mat_codigo_bk_{{ m.id }}" value="{{ m.codigo_bk|default:'' }}"></td>
-              <td><input class="grid-input" type="text" id="edit_mat_descricao_{{ m.id }}" value="{{ m.descricao|default:'' }}"></td>
-              <td><input class="grid-input" type="text" id="edit_mat_unidade_{{ m.id }}" value="{{ m.unidade|default:'un' }}"></td>
-              <td><input class="grid-input" type="number" step="0.01" min="0" id="edit_mat_valor_{{ m.id }}" value="{{ m.valor_unitario|default:0 }}"></td>
-              <td><div class="grid-action"><button type="button" class="btn btn-success" onclick="editarMaterial({{ m.id }})">Salvar</button></div></td>
+              <th>Código</th><th>Material / Produto</th><th>Unidade</th>
+              <th style="text-align:right">Qtde</th><th style="text-align:right">V. Unit.</th>
+              <th style="text-align:right">V. Total</th><th style="width:80px;text-align:center">Ação</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-materiais-salvos">
+            {% for item in itens_material %}
+            <tr id="mat-row-{{ item.id }}">
+              <td>{{ item.codigo }}</td>
+              <td>{{ item.produto }}</td>
+              <td>{{ item.unidade }}</td>
+              <td style="text-align:right">{{ item.quantidade }}</td>
+              <td style="text-align:right">R$ {{ item.valor_unitario|floatformat:2 }}</td>
+              <td style="text-align:right;color:#34d399;font-weight:700">R$ {{ item.valor_total|floatformat:2 }}</td>
+              <td style="text-align:center">
+                <button type="button" class="btn btn-danger" style="padding:4px 10px;font-size:12px"
+                  onclick="excluirItemMaterial({{ item.id }})">✕</button>
+              </td>
             </tr>
             {% empty %}
-            <tr><td colspan="7" class="empty">Nenhum material cadastrado.</td></tr>
+            <tr id="mat-empty-row"><td colspan="7" class="empty">Nenhum material lançado ainda.</td></tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
-    </div>
 
-    <div style="height:16px"></div>
-
-    <div class="card">
-      <div class="section-title">Adicionar material ao orçamento</div>
-      {% if orcamento %}
-      <div class="grid-toolbar"><div class="toolbar-left"><div class="grid-helper">Grade editável estilo Excel.</div><span class="mini-pill">Filtro na lista suspensa</span></div><button type="button" class="btn btn-success" onclick="adicionarLinhaMaterial()">+ Linha</button></div>
+      <div class="grid-toolbar">
+        <div class="toolbar-left">
+          <div class="grid-helper">Adicionar materiais / produtos do cadastro.</div>
+          <span class="mini-pill">Busca por nome ou código</span>
+        </div>
+        <button type="button" class="btn btn-success" onclick="adicionarLinhaMaterial()">+ Linha</button>
+      </div>
       <div class="excel-grid-wrap">
         <table class="excel-grid">
-          <thead><tr><th style="width:360px">Material</th><th style="width:120px">ID</th><th style="width:140px">Unidade</th><th style="width:160px">Quantidade</th><th style="width:180px">Valor unitário</th><th style="width:150px">Ação</th></tr></thead>
+          <thead>
+            <tr>
+              <th style="width:380px">Material</th>
+              <th style="width:110px">Código</th>
+              <th style="width:110px">Unidade</th>
+              <th style="width:150px">Quantidade</th>
+              <th style="width:160px">Valor unitário</th>
+              <th style="width:140px">Ação</th>
+            </tr>
+          </thead>
           <tbody id="grade_materiais_orcamento"></tbody>
         </table>
       </div>
-      {% else %}<div class="empty">Crie a obra e o orçamento primeiro.</div>{% endif %}
     </div>
 
     <div style="height:16px"></div>
 
+    <!-- ===== SERVIÇOS ===== -->
     <div class="card">
-      <div class="section-title">Adicionar serviço ao orçamento</div>
-      {% if orcamento %}
-      <div class="grid-toolbar"><div class="toolbar-left"><div class="grid-helper">Mesmo padrão visual da grade de materiais.</div><span class="mini-pill">Filtro na lista suspensa</span></div><button type="button" class="btn btn-success" onclick="adicionarLinhaServico()">+ Linha</button></div>
+      <div class="section-title">Serviços no orçamento</div>
+      <div style="overflow:auto;border:1px solid var(--grid-line);border-radius:10px;margin-bottom:18px">
+        <table class="saved-table">
+          <thead>
+            <tr>
+              <th>Código</th><th>Serviço</th><th>Unidade</th>
+              <th style="text-align:right">Qtde</th><th style="text-align:right">V. Unit.</th>
+              <th style="text-align:right">V. Total</th><th style="width:80px;text-align:center">Ação</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-servicos-salvos">
+            {% for item in itens_servico %}
+            <tr id="svc-row-{{ item.id }}">
+              <td>{{ item.codigo }}</td>
+              <td>{{ item.servico }}</td>
+              <td>{{ item.unidade }}</td>
+              <td style="text-align:right">{{ item.quantidade }}</td>
+              <td style="text-align:right">R$ {{ item.valor_unitario|floatformat:2 }}</td>
+              <td style="text-align:right;color:#34d399;font-weight:700">R$ {{ item.valor_total|floatformat:2 }}</td>
+              <td style="text-align:center">
+                <button type="button" class="btn btn-danger" style="padding:4px 10px;font-size:12px"
+                  onclick="excluirItemServico({{ item.id }})">✕</button>
+              </td>
+            </tr>
+            {% empty %}
+            <tr id="svc-empty-row"><td colspan="7" class="empty">Nenhum serviço lançado ainda.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="grid-toolbar">
+        <div class="toolbar-left">
+          <div class="grid-helper">Adicionar serviços do cadastro.</div>
+          <span class="mini-pill">Busca por nome ou código</span>
+        </div>
+        <button type="button" class="btn btn-success" onclick="adicionarLinhaServico()">+ Linha</button>
+      </div>
       <div class="excel-grid-wrap">
         <table class="excel-grid">
-          <thead><tr><th style="width:360px">Serviço</th><th style="width:120px">ID</th><th style="width:140px">Unidade</th><th style="width:160px">Quantidade</th><th style="width:180px">Valor unitário</th><th style="width:150px">Ação</th></tr></thead>
+          <thead>
+            <tr>
+              <th style="width:380px">Serviço</th>
+              <th style="width:110px">Código</th>
+              <th style="width:110px">Unidade</th>
+              <th style="width:150px">Quantidade</th>
+              <th style="width:160px">Valor unitário</th>
+              <th style="width:140px">Ação</th>
+            </tr>
+          </thead>
           <tbody id="grade_servicos_orcamento"></tbody>
         </table>
       </div>
-      {% else %}<div class="empty">Crie a obra e o orçamento primeiro.</div>{% endif %}
     </div>
+    {% else %}
+    <div class="card"><div class="empty">Selecione ou crie uma obra/orçamento para lançar materiais e serviços.</div></div>
+    {% endif %}
   </div>
 
   <script>
@@ -181,21 +237,24 @@
     const OBRA_ID = {% if orcamento and orcamento.obra %}{{ orcamento.obra.id }}{% else %}null{% endif %};
     const csrfToken = '{{ csrf_token }}';
 
-    const materiaisData = [
-      {% for m in materiais %}
-      {id: {{ m.id }}, codigo_cliente: "{{ m.codigo_cliente|default:''|escapejs }}", codigo_bk: "{{ m.codigo_bk|default:''|escapejs }}", descricao: "{{ m.descricao|escapejs }}", unidade: "{{ m.unidade|default:'un'|escapejs }}", valor_unitario: {{ m.valor_unitario|default:0 }}}{% if not forloop.last %},{% endif %}
-      {% endfor %}
+    // Produtos/materiais (tipo produto ou ambos) — do módulo Serviços/Produtos
+    const produtosData = [
+      {% for p in produtos %}{id:{{ p.id }},nome:"{{ p.nome|escapejs }}",codigo:"{{ p.codigo|default:''|escapejs }}",unidade:"{{ p.unidade|default:'un'|escapejs }}",preco_unitario:{{ p.preco_unitario|default:0 }}}{% if not forloop.last %},{% endif %}{% endfor %}
     ];
+
+    // Serviços (tipo servico ou ambos) — do módulo Serviços/Produtos
     const servicosData = [
-      {% for s in servicos %}
-      {id: {{ s.id }}, nome: "{{ s.nome|escapejs }}", unidade: "{{ s.unidade|default:'un'|escapejs }}", preco_unitario: {{ s.preco_unitario|default:0 }}}{% if not forloop.last %},{% endif %}
-      {% endfor %}
+      {% for s in servicos %}{id:{{ s.id }},nome:"{{ s.nome|escapejs }}",codigo:"{{ s.codigo|default:''|escapejs }}",unidade:"{{ s.unidade|default:'un'|escapejs }}",preco_unitario:{{ s.preco_unitario|default:0 }}}{% if not forloop.last %},{% endif %}{% endfor %}
     ];
 
     let linhasMateriais = [];
     let linhasServicos = [];
 
     function payloadHeaders(){ return {'Content-Type':'application/json','X-CSRFToken': csrfToken}; }
+
+    function escapeHtml(v){
+      return String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'", '&#39;');
+    }
 
     function atualizarNomeObraPorProjeto(){
       const sel = document.getElementById('projeto_id');
@@ -220,162 +279,255 @@
       });
     }
 
-    async function salvarMaterial(){
-      const btn = document.getElementById('btn-salvar-material');
-      const descricao = document.getElementById('mat_descricao').value.trim();
-      if (!descricao) {
-        alert('Informe a descrição do material.');
-        document.getElementById('mat_descricao').focus();
-        return;
-      }
-
-      const payload = {
-        codigo_cliente: document.getElementById('mat_codigo_cliente').value,
-        codigo_bk: document.getElementById('mat_codigo_bk').value,
-        descricao: descricao,
-        unidade: document.getElementById('mat_unidade').value || 'un',
-        valor_unitario: document.getElementById('mat_valor_unitario').value || 0
-      };
-
-      try {
-        if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
-        const response = await fetch("{% url 'orcamento:salvar_material' %}", {
-          method:'POST',
-          headers: payloadHeaders(),
-          body: JSON.stringify(payload)
-        });
-
-        const text = await response.text();
-        let data = {};
-        try { data = JSON.parse(text); } catch (_) {
-          alert('O servidor não devolveu JSON válido ao salvar o material.');
-          console.error('Resposta bruta salvar_material:', text);
-          return;
-        }
-
-        if (!response.ok || !data.ok) {
-          alert(data.erro || data.mensagem || `Falha ao salvar material (HTTP ${response.status}).`);
-          console.error('Erro salvar_material:', data);
-          return;
-        }
-
-        alert(data.mensagem || 'Material salvo com sucesso.');
-        document.getElementById('mat_codigo_cliente').value = '';
-        document.getElementById('mat_codigo_bk').value = '';
-        document.getElementById('mat_descricao').value = '';
-        document.getElementById('mat_unidade').value = 'un';
-        document.getElementById('mat_valor_unitario').value = '';
-        location.reload();
-      } catch (error) {
-        console.error('Erro ao salvar material:', error);
-        alert('Erro de comunicação ao salvar o material.');
-      } finally {
-        if (btn) { btn.disabled = false; btn.textContent = 'Salvar material'; }
-      }
+    // ─── Totais ───────────────────────────────────────────────────────────────
+    function atualizarTotais(totais){
+      if (!totais) return;
+      const fmt = v => 'R$ ' + Number(v).toFixed(2).replace('.', ',');
+      const el = id => document.getElementById(id);
+      if (el('total-mat'))   el('total-mat').textContent   = fmt(totais.total_materiais);
+      if (el('total-svc'))   el('total-svc').textContent   = fmt(totais.total_servicos);
+      if (el('total-geral')) el('total-geral').textContent = fmt(totais.total_geral);
     }
 
-    function editarMaterial(id){
-      fetch("{% url 'orcamento:salvar_material' %}", {
-        method:'POST',
-        headers: payloadHeaders(),
-        body: JSON.stringify({
-          id: id,
-          codigo_cliente: document.getElementById(`edit_mat_codigo_cliente_${id}`).value,
-          codigo_bk: document.getElementById(`edit_mat_codigo_bk_${id}`).value,
-          descricao: document.getElementById(`edit_mat_descricao_${id}`).value,
-          unidade: document.getElementById(`edit_mat_unidade_${id}`).value,
-          valor_unitario: document.getElementById(`edit_mat_valor_${id}`).value
-        })
+    // ─── Materiais — itens já salvos ─────────────────────────────────────────
+    function excluirItemMaterial(itemId){
+      if (!confirm('Excluir este material do orçamento?')) return;
+      fetch("{% url 'orcamento:excluir_item_material' %}", {
+        method:'POST', headers: payloadHeaders(),
+        body: JSON.stringify({id: itemId})
       }).then(r=>r.json()).then(data=>{
-        alert(data.mensagem || data.erro || 'Processado.');
-        if (data.ok) location.reload();
+        if (data.ok){
+          const row = document.getElementById('mat-row-' + itemId);
+          if (row) row.remove();
+          atualizarTotais(data.totais);
+          // Mostra linha "vazia" se não restar itens
+          const tbody = document.getElementById('tbody-materiais-salvos');
+          if (tbody && tbody.querySelectorAll('tr').length === 0)
+            tbody.innerHTML = '<tr id="mat-empty-row"><td colspan="7" class="empty">Nenhum material lançado ainda.</td></tr>';
+        } else { alert(data.erro || 'Erro ao excluir.'); }
       });
     }
 
-    function escapeHtml(v){
-      return String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'", '&#39;');
-    }
-
-    function getMateriaisFiltrados(term){
+    // ─── Materiais — adicionar linhas ─────────────────────────────────────────
+    function getProdutosFiltrados(term){
       const q = String(term || '').trim().toLowerCase();
-      if (!q) return materiaisData;
-      return materiaisData.filter(m => String(m.descricao||'').toLowerCase().includes(q) || String(m.codigo_cliente||'').toLowerCase().includes(q) || String(m.codigo_bk||'').toLowerCase().includes(q) || String(m.id||'').includes(q));
+      if (!q) return produtosData;
+      return produtosData.filter(p =>
+        String(p.nome||'').toLowerCase().includes(q) ||
+        String(p.codigo||'').toLowerCase().includes(q)
+      );
     }
 
-    function adicionarLinhaMaterial(){ linhasMateriais.push({termo:'', material_id:'', unidade:'', quantidade:1, valor_unitario:0}); renderGradeMateriais(); }
-    function removerLinhaMaterial(idx){ linhasMateriais.splice(idx,1); renderGradeMateriais(); }
-    function selecionarMaterialLinha(idx, materialId){
-      const material = materiaisData.find(m => String(m.id) === String(materialId));
-      linhasMateriais[idx].material_id = material ? material.id : '';
-      linhasMateriais[idx].termo = material ? material.descricao : linhasMateriais[idx].termo;
-      linhasMateriais[idx].unidade = material ? (material.unidade || '') : '';
-      linhasMateriais[idx].valor_unitario = material ? Number(material.valor_unitario || 0) : 0;
+    function adicionarLinhaMaterial(){
+      linhasMateriais.push({termo:'', produto_id:'', codigo:'', unidade:'', quantidade:1, valor_unitario:0});
       renderGradeMateriais();
     }
+    function removerLinhaMaterial(idx){ linhasMateriais.splice(idx,1); renderGradeMateriais(); }
+
+    function selecionarProdutoLinha(idx, produtoId){
+      const produto = produtosData.find(p => String(p.id) === String(produtoId));
+      linhasMateriais[idx].produto_id   = produto ? produto.id : '';
+      linhasMateriais[idx].termo        = produto ? produto.nome : linhasMateriais[idx].termo;
+      linhasMateriais[idx].codigo       = produto ? (produto.codigo || '') : '';
+      linhasMateriais[idx].unidade      = produto ? (produto.unidade || '') : '';
+      linhasMateriais[idx].valor_unitario = produto ? Number(produto.preco_unitario || 0) : 0;
+      renderGradeMateriais();
+    }
+
     function renderGradeMateriais(){
-      const tbody = document.getElementById('grade_materiais_orcamento'); if (!tbody) return; tbody.innerHTML = '';
+      const tbody = document.getElementById('grade_materiais_orcamento');
+      if (!tbody) return;
+      tbody.innerHTML = '';
       linhasMateriais.forEach((linha, idx) => {
-        const options = getMateriaisFiltrados(linha.termo).slice(0,80);
+        const options = getProdutosFiltrados(linha.termo).slice(0, 80);
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td><input class="grid-input" type="text" value="${escapeHtml(linha.termo || '')}" placeholder="Digite para filtrar material" oninput="linhasMateriais[${idx}].termo=this.value; renderGradeMateriais()"><select class="grid-select" onchange="selecionarMaterialLinha(${idx}, this.value)"><option value="">Selecione o material</option>${options.map(m => `<option value="${m.id}" ${String(linha.material_id) === String(m.id) ? 'selected' : ''}>${escapeHtml(m.descricao)} | ${escapeHtml(m.codigo_bk || '')} | ${escapeHtml(m.codigo_cliente || '')}</option>`).join('')}</select></td>
-          <td><input class="grid-input" type="text" value="${escapeHtml(String(linha.material_id || ''))}" readonly></td>
-          <td><input class="grid-input" type="text" value="${escapeHtml(linha.unidade || '')}" readonly></td>
-          <td><input class="grid-input" type="number" min="0" step="0.001" value="${linha.quantidade ?? 1}" onchange="linhasMateriais[${idx}].quantidade=this.value"></td>
-          <td><input class="grid-input" type="number" min="0" step="0.01" value="${linha.valor_unitario ?? 0}" onchange="linhasMateriais[${idx}].valor_unitario=this.value"></td>
-          <td><div class="grid-action row"><button type="button" class="btn btn-success" onclick="salvarLinhaMaterial(${idx})">Salvar</button><button type="button" class="btn btn-danger" onclick="removerLinhaMaterial(${idx})">Excluir</button></div></td>`;
+          <td>
+            <input class="grid-input" type="text" value="${escapeHtml(linha.termo || '')}"
+              placeholder="Buscar por nome ou código"
+              oninput="linhasMateriais[${idx}].termo=this.value; renderGradeMateriais()">
+            <select class="grid-select" onchange="selecionarProdutoLinha(${idx}, this.value)">
+              <option value="">Selecione o produto</option>
+              ${options.map(p => `<option value="${p.id}" ${String(linha.produto_id)===String(p.id)?'selected':''}>${escapeHtml(p.nome)} — ${escapeHtml(p.codigo||'s/código')}</option>`).join('')}
+            </select>
+          </td>
+          <td><input class="grid-input" type="text" value="${escapeHtml(linha.codigo||'')}" readonly></td>
+          <td><input class="grid-input" type="text" value="${escapeHtml(linha.unidade||'')}" readonly></td>
+          <td><input class="grid-input" type="number" min="0" step="0.001" value="${linha.quantidade??1}"
+              onchange="linhasMateriais[${idx}].quantidade=this.value"></td>
+          <td><input class="grid-input" type="number" min="0" step="0.01" value="${linha.valor_unitario??0}"
+              onchange="linhasMateriais[${idx}].valor_unitario=this.value"></td>
+          <td><div class="grid-action row">
+            <button type="button" class="btn btn-success" onclick="salvarLinhaMaterial(${idx})">Salvar</button>
+            <button type="button" class="btn btn-danger" onclick="removerLinhaMaterial(${idx})">✕</button>
+          </div></td>`;
         tbody.appendChild(tr);
       });
-      if (!linhasMateriais.length) tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhuma linha lançada. Clique em "+ Linha".</td></tr>';
+      if (!linhasMateriais.length)
+        tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhuma linha. Clique em "+ Linha" para adicionar.</td></tr>';
     }
+
     function salvarLinhaMaterial(idx){
       const linha = linhasMateriais[idx];
       if (!ORCAMENTO_ID) return alert('Crie o orçamento primeiro.');
-      if (!linha || !linha.material_id) return alert('Selecione um material.');
-      fetch("{% url 'orcamento:salvar_item_material' %}", {method:'POST', headers: payloadHeaders(), body: JSON.stringify({orcamento_id: ORCAMENTO_ID, material_id: linha.material_id, quantidade: linha.quantidade, valor_unitario: linha.valor_unitario})}).then(r=>r.json()).then(data=>{ alert(data.mensagem || data.erro || 'Processado.'); if (data.ok) location.reload(); });
+      if (!linha || !linha.produto_id) return alert('Selecione um produto/material.');
+      fetch("{% url 'orcamento:salvar_item_material' %}", {
+        method:'POST', headers: payloadHeaders(),
+        body: JSON.stringify({
+          orcamento_id: ORCAMENTO_ID,
+          produto_id: linha.produto_id,
+          quantidade: linha.quantidade,
+          valor_unitario: linha.valor_unitario
+        })
+      }).then(r=>r.json()).then(data=>{
+        if (data.ok){
+          linhasMateriais.splice(idx, 1);
+          renderGradeMateriais();
+          atualizarTotais(data.totais);
+          // Adiciona a nova linha na tabela de salvos
+          const tbody = document.getElementById('tbody-materiais-salvos');
+          const emptyRow = document.getElementById('mat-empty-row');
+          if (emptyRow) emptyRow.remove();
+          const item = data.item;
+          const tr = document.createElement('tr');
+          tr.id = 'mat-row-' + item.id;
+          tr.innerHTML = `
+            <td>${escapeHtml(item.codigo||'')}</td>
+            <td>${escapeHtml(item.produto||'')}</td>
+            <td>${escapeHtml(item.unidade||'')}</td>
+            <td style="text-align:right">${Number(item.quantidade).toFixed(3)}</td>
+            <td style="text-align:right">R$ ${Number(item.valor_unitario).toFixed(2)}</td>
+            <td style="text-align:right;color:#34d399;font-weight:700">R$ ${Number(item.valor_total).toFixed(2)}</td>
+            <td style="text-align:center">
+              <button type="button" class="btn btn-danger" style="padding:4px 10px;font-size:12px"
+                onclick="excluirItemMaterial(${item.id})">✕</button>
+            </td>`;
+          tbody.appendChild(tr);
+        } else { alert(data.erro || 'Erro ao salvar.'); }
+      });
     }
 
+    // ─── Serviços — itens já salvos ───────────────────────────────────────────
+    function excluirItemServico(itemId){
+      if (!confirm('Excluir este serviço do orçamento?')) return;
+      fetch("{% url 'orcamento:excluir_item_servico' %}", {
+        method:'POST', headers: payloadHeaders(),
+        body: JSON.stringify({id: itemId})
+      }).then(r=>r.json()).then(data=>{
+        if (data.ok){
+          const row = document.getElementById('svc-row-' + itemId);
+          if (row) row.remove();
+          atualizarTotais(data.totais);
+          const tbody = document.getElementById('tbody-servicos-salvos');
+          if (tbody && tbody.querySelectorAll('tr').length === 0)
+            tbody.innerHTML = '<tr id="svc-empty-row"><td colspan="7" class="empty">Nenhum serviço lançado ainda.</td></tr>';
+        } else { alert(data.erro || 'Erro ao excluir.'); }
+      });
+    }
+
+    // ─── Serviços — adicionar linhas ──────────────────────────────────────────
     function getServicosFiltrados(term){
       const q = String(term || '').trim().toLowerCase();
       if (!q) return servicosData;
-      return servicosData.filter(s => String(s.nome||'').toLowerCase().includes(q) || String(s.id||'').includes(q));
+      return servicosData.filter(s =>
+        String(s.nome||'').toLowerCase().includes(q) ||
+        String(s.codigo||'').toLowerCase().includes(q)
+      );
     }
-    function adicionarLinhaServico(){ linhasServicos.push({termo:'', servico_id:'', unidade:'', quantidade:1, valor_unitario:0}); renderGradeServicos(); }
+
+    function adicionarLinhaServico(){
+      linhasServicos.push({termo:'', servico_id:'', codigo:'', unidade:'', quantidade:1, valor_unitario:0});
+      renderGradeServicos();
+    }
     function removerLinhaServico(idx){ linhasServicos.splice(idx,1); renderGradeServicos(); }
+
     function selecionarServicoLinha(idx, servicoId){
       const servico = servicosData.find(s => String(s.id) === String(servicoId));
-      linhasServicos[idx].servico_id = servico ? servico.id : '';
-      linhasServicos[idx].termo = servico ? servico.nome : linhasServicos[idx].termo;
-      linhasServicos[idx].unidade = servico ? (servico.unidade || '') : '';
+      linhasServicos[idx].servico_id    = servico ? servico.id : '';
+      linhasServicos[idx].termo         = servico ? servico.nome : linhasServicos[idx].termo;
+      linhasServicos[idx].codigo        = servico ? (servico.codigo || '') : '';
+      linhasServicos[idx].unidade       = servico ? (servico.unidade || '') : '';
       linhasServicos[idx].valor_unitario = servico ? Number(servico.preco_unitario || 0) : 0;
       renderGradeServicos();
     }
+
     function renderGradeServicos(){
-      const tbody = document.getElementById('grade_servicos_orcamento'); if (!tbody) return; tbody.innerHTML = '';
+      const tbody = document.getElementById('grade_servicos_orcamento');
+      if (!tbody) return;
+      tbody.innerHTML = '';
       linhasServicos.forEach((linha, idx) => {
-        const options = getServicosFiltrados(linha.termo).slice(0,80);
+        const options = getServicosFiltrados(linha.termo).slice(0, 80);
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td><input class="grid-input" type="text" value="${escapeHtml(linha.termo || '')}" placeholder="Digite para filtrar serviço" oninput="linhasServicos[${idx}].termo=this.value; renderGradeServicos()"><select class="grid-select" onchange="selecionarServicoLinha(${idx}, this.value)"><option value="">Selecione o serviço</option>${options.map(s => `<option value="${s.id}" ${String(linha.servico_id) === String(s.id) ? 'selected' : ''}>${escapeHtml(s.nome)} | ID ${s.id}</option>`).join('')}</select></td>
-          <td><input class="grid-input" type="text" value="${escapeHtml(String(linha.servico_id || ''))}" readonly></td>
-          <td><input class="grid-input" type="text" value="${escapeHtml(linha.unidade || '')}" readonly></td>
-          <td><input class="grid-input" type="number" min="0" step="0.001" value="${linha.quantidade ?? 1}" onchange="linhasServicos[${idx}].quantidade=this.value"></td>
-          <td><input class="grid-input" type="number" min="0" step="0.01" value="${linha.valor_unitario ?? 0}" onchange="linhasServicos[${idx}].valor_unitario=this.value"></td>
-          <td><div class="grid-action row"><button type="button" class="btn btn-success" onclick="salvarLinhaServico(${idx})">Salvar</button><button type="button" class="btn btn-danger" onclick="removerLinhaServico(${idx})">Excluir</button></div></td>`;
+          <td>
+            <input class="grid-input" type="text" value="${escapeHtml(linha.termo || '')}"
+              placeholder="Buscar por nome ou código"
+              oninput="linhasServicos[${idx}].termo=this.value; renderGradeServicos()">
+            <select class="grid-select" onchange="selecionarServicoLinha(${idx}, this.value)">
+              <option value="">Selecione o serviço</option>
+              ${options.map(s => `<option value="${s.id}" ${String(linha.servico_id)===String(s.id)?'selected':''}>${escapeHtml(s.nome)} — ${escapeHtml(s.codigo||'s/código')}</option>`).join('')}
+            </select>
+          </td>
+          <td><input class="grid-input" type="text" value="${escapeHtml(linha.codigo||'')}" readonly></td>
+          <td><input class="grid-input" type="text" value="${escapeHtml(linha.unidade||'')}" readonly></td>
+          <td><input class="grid-input" type="number" min="0" step="0.001" value="${linha.quantidade??1}"
+              onchange="linhasServicos[${idx}].quantidade=this.value"></td>
+          <td><input class="grid-input" type="number" min="0" step="0.01" value="${linha.valor_unitario??0}"
+              onchange="linhasServicos[${idx}].valor_unitario=this.value"></td>
+          <td><div class="grid-action row">
+            <button type="button" class="btn btn-success" onclick="salvarLinhaServico(${idx})">Salvar</button>
+            <button type="button" class="btn btn-danger" onclick="removerLinhaServico(${idx})">✕</button>
+          </div></td>`;
         tbody.appendChild(tr);
       });
-      if (!linhasServicos.length) tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhuma linha lançada. Clique em "+ Linha".</td></tr>';
+      if (!linhasServicos.length)
+        tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhuma linha. Clique em "+ Linha" para adicionar.</td></tr>';
     }
+
     function salvarLinhaServico(idx){
       const linha = linhasServicos[idx];
       if (!ORCAMENTO_ID) return alert('Crie o orçamento primeiro.');
       if (!linha || !linha.servico_id) return alert('Selecione um serviço.');
-      fetch("{% url 'orcamento:salvar_item_servico' %}", {method:'POST', headers: payloadHeaders(), body: JSON.stringify({orcamento_id: ORCAMENTO_ID, servico_id: linha.servico_id, quantidade: linha.quantidade, valor_unitario: linha.valor_unitario})}).then(r=>r.json()).then(data=>{ alert(data.mensagem || data.erro || 'Processado.'); if (data.ok) location.reload(); });
+      fetch("{% url 'orcamento:salvar_item_servico' %}", {
+        method:'POST', headers: payloadHeaders(),
+        body: JSON.stringify({
+          orcamento_id: ORCAMENTO_ID,
+          servico_id: linha.servico_id,
+          quantidade: linha.quantidade,
+          valor_unitario: linha.valor_unitario
+        })
+      }).then(r=>r.json()).then(data=>{
+        if (data.ok){
+          linhasServicos.splice(idx, 1);
+          renderGradeServicos();
+          atualizarTotais(data.totais);
+          const tbody = document.getElementById('tbody-servicos-salvos');
+          const emptyRow = document.getElementById('svc-empty-row');
+          if (emptyRow) emptyRow.remove();
+          const item = data.item;
+          const tr = document.createElement('tr');
+          tr.id = 'svc-row-' + item.id;
+          tr.innerHTML = `
+            <td>${escapeHtml(item.codigo||'')}</td>
+            <td>${escapeHtml(item.servico||'')}</td>
+            <td>${escapeHtml(item.unidade||'')}</td>
+            <td style="text-align:right">${Number(item.quantidade).toFixed(3)}</td>
+            <td style="text-align:right">R$ ${Number(item.valor_unitario).toFixed(2)}</td>
+            <td style="text-align:right;color:#34d399;font-weight:700">R$ ${Number(item.valor_total).toFixed(2)}</td>
+            <td style="text-align:center">
+              <button type="button" class="btn btn-danger" style="padding:4px 10px;font-size:12px"
+                onclick="excluirItemServico(${item.id})">✕</button>
+            </td>`;
+          tbody.appendChild(tr);
+        } else { alert(data.erro || 'Erro ao salvar.'); }
+      });
     }
 
     document.addEventListener('DOMContentLoaded', function(){
       atualizarNomeObraPorProjeto();
-      if (ORCAMENTO_ID){ adicionarLinhaMaterial(); adicionarLinhaServico(); }
+      // Inicia as grades vazias (sem linha pré-adicionada)
+      renderGradeMateriais();
+      renderGradeServicos();
     });
   </script>
 </body>

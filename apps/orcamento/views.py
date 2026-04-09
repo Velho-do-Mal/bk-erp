@@ -8,18 +8,19 @@ from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render
-from django.template import TemplateDoesNotExist
 from django.views.decorators.http import require_GET, require_http_methods
 
 from apps.cadastros.models import Cliente
 from apps.servicos.models import ProdutoServico
-from .models import MaterialCadastro, Obra, Orcamento, ItemMaterial, ItemServico
+from .models import Obra, Orcamento, ItemMaterial, ItemServico
 
 try:
     from apps.projetos.models import Projeto
 except Exception:
     Projeto = None
 
+
+# ─── helpers ────────────────────────────────────────────────────────────────
 
 def _to_decimal(value, default="0"):
     if value in (None, "", []):
@@ -53,39 +54,26 @@ def _request_data(request):
     return request.POST.dict()
 
 
-def _material_to_dict(material: MaterialCadastro) -> dict:
+def _produto_to_dict(p: ProdutoServico) -> dict:
     return {
-        "id": material.id,
-        "codigo_cliente": material.codigo_cliente,
-        "codigo_bk": material.codigo_bk,
-        "descricao": material.descricao,
-        "unidade": material.unidade,
-        "valor_unitario": float(material.valor_unitario or 0),
-        "ativo": material.ativo,
-    }
-
-
-def _servico_to_dict(servico: ProdutoServico) -> dict:
-    return {
-        "id": servico.id,
-        "codigo": servico.codigo,
-        "nome": servico.nome,
-        "descricao": servico.descricao,
-        "unidade": servico.unidade,
-        "preco_unitario": float(servico.preco_unitario or 0),
-        "tipo": servico.tipo,
-        "ativo": servico.ativo,
+        "id": p.id,
+        "codigo": p.codigo,
+        "nome": p.nome,
+        "descricao": p.descricao,
+        "unidade": p.unidade,
+        "preco_unitario": float(p.preco_unitario or 0),
+        "tipo": p.tipo,
+        "ativo": p.ativo,
     }
 
 
 def _item_material_to_dict(item: ItemMaterial) -> dict:
     return {
         "id": item.id,
-        "material_id": item.material_id,
-        "material": item.material.descricao,
-        "material_codigo_bk": item.material.codigo_bk,
-        "material_codigo_cliente": item.material.codigo_cliente,
-        "unidade": item.material.unidade,
+        "produto_id": item.produto_id,
+        "produto": item.produto.nome,
+        "codigo": item.produto.codigo,
+        "unidade": item.produto.unidade,
         "quantidade": float(item.quantidade or 0),
         "valor_unitario": float(item.valor_unitario or 0),
         "valor_total": float(item.valor_total or 0),
@@ -97,6 +85,7 @@ def _item_servico_to_dict(item: ItemServico) -> dict:
         "id": item.id,
         "servico_id": item.servico_id,
         "servico": item.servico.nome,
+        "codigo": item.servico.codigo,
         "unidade": item.servico.unidade,
         "quantidade": float(item.quantidade or 0),
         "valor_unitario": float(item.valor_unitario or 0),
@@ -107,12 +96,10 @@ def _item_servico_to_dict(item: ItemServico) -> dict:
 def _totais_orcamento(orcamento: Orcamento | None) -> dict:
     if not orcamento:
         return {"total_materiais": 0.0, "total_servicos": 0.0, "total_geral": 0.0}
-    total_materiais = Decimal("0")
-    total_servicos = Decimal("0")
-    for item in orcamento.itens_material.select_related("material").all():
-        total_materiais += item.valor_total or Decimal("0")
-    for item in orcamento.itens_servico.select_related("servico").all():
-        total_servicos += item.valor_total or Decimal("0")
+    total_materiais = sum(i.valor_total or Decimal("0")
+                          for i in orcamento.itens_material.select_related("produto").all())
+    total_servicos = sum(i.valor_total or Decimal("0")
+                         for i in orcamento.itens_servico.select_related("servico").all())
     total_geral = total_materiais + total_servicos
     return {
         "total_materiais": float(total_materiais),
@@ -121,13 +108,23 @@ def _totais_orcamento(orcamento: Orcamento | None) -> dict:
     }
 
 
+# ─── views ──────────────────────────────────────────────────────────────────
+
 @require_GET
 def dashboard(request):
     obras = Obra.objects.select_related("cliente", "projeto").all()
     clientes = Cliente.objects.filter(ativo=True).order_by("nome")
-    materiais = MaterialCadastro.objects.filter(ativo=True).order_by("descricao")
-    servicos = ProdutoServico.objects.filter(ativo=True).order_by("nome")
     projetos = Projeto.objects.all().order_by("nome") if Projeto is not None else []
+
+    # Produtos (tipo produto ou ambos) — para a grade de materiais
+    produtos = ProdutoServico.objects.filter(
+        ativo=True, tipo__in=["produto", "ambos"]
+    ).order_by("nome")
+
+    # Serviços (tipo servico ou ambos) — para a grade de serviços
+    servicos = ProdutoServico.objects.filter(
+        ativo=True, tipo__in=["servico", "ambos"]
+    ).order_by("nome")
 
     orcamento_id = request.GET.get("orcamento_id")
     orcamento = None
@@ -137,7 +134,7 @@ def dashboard(request):
                 "obra", "obra__cliente", "obra__projeto"
             ).get(id=orcamento_id)
         except Orcamento.DoesNotExist:
-            orcamento = None
+            pass
 
     if not orcamento:
         orcamento = Orcamento.objects.select_related(
@@ -150,88 +147,26 @@ def dashboard(request):
 
     if orcamento:
         itens_material = [
-            _item_material_to_dict(item)
-            for item in orcamento.itens_material.select_related("material").all()
+            _item_material_to_dict(i)
+            for i in orcamento.itens_material.select_related("produto").all()
         ]
         itens_servico = [
-            _item_servico_to_dict(item)
-            for item in orcamento.itens_servico.select_related("servico").all()
+            _item_servico_to_dict(i)
+            for i in orcamento.itens_servico.select_related("servico").all()
         ]
 
     context = {
         "obras": obras,
         "clientes": clientes,
-        "materiais": materiais,
-        "servicos": servicos,
         "projetos": projetos,
+        "produtos": produtos,
+        "servicos": servicos,
         "orcamento": orcamento,
         "itens_material": itens_material,
         "itens_servico": itens_servico,
         "totais": totais,
     }
-
-    try:
-        return render(request, "orcamento/dashboard.html", context)
-    except TemplateDoesNotExist:
-        payload = {
-            "ok": True,
-            "orcamento_id": orcamento.id if orcamento else None,
-            "obra": orcamento.obra.nome if orcamento else None,
-            "cliente": (orcamento.obra.cliente.nome if orcamento and orcamento.obra and orcamento.obra.cliente else None),
-            "projeto": (orcamento.obra.projeto.nome if orcamento and orcamento.obra and orcamento.obra.projeto else None),
-            "itens_material": itens_material,
-            "itens_servico": itens_servico,
-            "totais": totais,
-        }
-        return JsonResponse(payload, encoder=DjangoJSONEncoder)
-
-
-@require_http_methods(["GET", "POST"])
-def listar_materiais(request):
-    termo = request.GET.get("q") or request.POST.get("q") or ""
-    queryset = MaterialCadastro.objects.filter(ativo=True)
-    if termo:
-        queryset = queryset.filter(
-            Q(descricao__icontains=termo)
-            | Q(codigo_cliente__icontains=termo)
-            | Q(codigo_bk__icontains=termo)
-        )
-    materiais = [_material_to_dict(m) for m in queryset.order_by("descricao")[:50]]
-    return JsonResponse({"ok": True, "resultados": materiais})
-
-
-@require_http_methods(["POST"])
-def salvar_material(request):
-    data = _request_data(request)
-    descricao = (data.get("descricao") or "").strip()
-    if not descricao:
-        return JsonResponse({"ok": False, "erro": "Descricao e obrigatoria."}, status=400)
-
-    material_id = data.get("id")
-    codigo_cliente = (data.get("codigo_cliente") or "").strip()
-    codigo_bk = (data.get("codigo_bk") or "").strip()
-    unidade = (data.get("unidade") or "un").strip() or "un"
-    valor_unitario = _to_decimal(data.get("valor_unitario"), default="0")
-    ativo = str(data.get("ativo", "true")).lower() in ("1", "true", "sim", "on")
-
-    try:
-        if material_id:
-            material = get_object_or_404(MaterialCadastro, id=material_id)
-            mensagem = "Material atualizado com sucesso."
-        else:
-            material = MaterialCadastro()
-            mensagem = "Material criado com sucesso."
-
-        material.codigo_cliente = codigo_cliente
-        material.codigo_bk = codigo_bk
-        material.descricao = descricao
-        material.unidade = unidade
-        material.valor_unitario = valor_unitario
-        material.ativo = ativo
-        material.save()
-        return JsonResponse({"ok": True, "mensagem": mensagem, "material": _material_to_dict(material)})
-    except Exception as exc:
-        return JsonResponse({"ok": False, "erro": f"Erro ao salvar material: {exc}"}, status=500)
+    return render(request, "orcamento/orcamento.html", context)
 
 
 @require_http_methods(["POST"])
@@ -247,11 +182,11 @@ def salvar_obra(request):
         try:
             projeto = Projeto.objects.get(id=projeto_id)
         except Projeto.DoesNotExist:
-            projeto = None
+            pass
 
     nome = (data.get("nome") or (projeto.nome if projeto else "") or "").strip()
     if not nome:
-        return JsonResponse({"ok": False, "erro": "Nome da obra e obrigatorio."}, status=400)
+        return JsonResponse({"ok": False, "erro": "Nome da obra é obrigatório."}, status=400)
 
     obra_id = data.get("id")
     if obra_id:
@@ -265,7 +200,7 @@ def salvar_obra(request):
         obra = Obra.objects.create(nome=nome, cliente=cliente, projeto=projeto)
         criada = True
 
-    nome_orcamento = (data.get("nome_orcamento") or "Orcamento").strip() or "Orcamento"
+    nome_orcamento = (data.get("nome_orcamento") or "Orçamento").strip() or "Orçamento"
     orcamento, _ = Orcamento.objects.get_or_create(obra=obra, defaults={"nome": nome_orcamento})
     if orcamento.nome != nome_orcamento:
         orcamento.nome = nome_orcamento
@@ -273,7 +208,7 @@ def salvar_obra(request):
 
     return JsonResponse({
         "ok": True,
-        "mensagem": "Obra criada com sucesso." if criada else "Obra atualizada com sucesso.",
+        "mensagem": "Obra criada." if criada else "Obra atualizada.",
         "obra": {
             "id": obra.id,
             "nome": obra.nome,
@@ -286,27 +221,54 @@ def salvar_obra(request):
     })
 
 
+@require_http_methods(["GET", "POST"])
+def autocomplete_produto(request):
+    """Autocomplete para produtos/materiais (tipo produto ou ambos)."""
+    termo = (request.GET.get("q") or request.POST.get("q") or "").strip()
+    qs = ProdutoServico.objects.filter(ativo=True, tipo__in=["produto", "ambos"])
+    if termo:
+        qs = qs.filter(Q(nome__icontains=termo) | Q(codigo__icontains=termo))
+    return JsonResponse({"ok": True, "resultados": [_produto_to_dict(p) for p in qs.order_by("nome")[:50]]})
+
+
+@require_http_methods(["GET", "POST"])
+def autocomplete_servico(request):
+    """Autocomplete para serviços (tipo servico ou ambos)."""
+    termo = (request.GET.get("q") or request.POST.get("q") or "").strip()
+    qs = ProdutoServico.objects.filter(ativo=True, tipo__in=["servico", "ambos"])
+    if termo:
+        qs = qs.filter(Q(nome__icontains=termo) | Q(codigo__icontains=termo))
+    return JsonResponse({"ok": True, "resultados": [_produto_to_dict(p) for p in qs.order_by("nome")[:50]]})
+
+
 @require_http_methods(["POST"])
 def salvar_item_material(request):
     data = _request_data(request)
     orcamento_id = data.get("orcamento_id")
-    material_id = data.get("material_id")
+    produto_id = data.get("produto_id")
 
     if not orcamento_id:
-        return JsonResponse({"ok": False, "erro": "orcamento_id e obrigatorio."}, status=400)
-    if not material_id:
-        return JsonResponse({"ok": False, "erro": "material_id e obrigatorio."}, status=400)
+        return JsonResponse({"ok": False, "erro": "orcamento_id é obrigatório."}, status=400)
+    if not produto_id:
+        return JsonResponse({"ok": False, "erro": "produto_id é obrigatório."}, status=400)
 
     orcamento = get_object_or_404(Orcamento, id=orcamento_id)
-    material = get_object_or_404(MaterialCadastro, id=material_id)
+    produto = get_object_or_404(ProdutoServico, id=produto_id)
     quantidade = _to_decimal(data.get("quantidade"), default="1")
-    valor_unitario = _to_decimal(data.get("valor_unitario"), default=str(material.valor_unitario or 0))
+    valor_unitario = _to_decimal(data.get("valor_unitario"), default=str(produto.preco_unitario or 0))
 
     item = ItemMaterial.objects.create(
-        orcamento=orcamento, material=material,
-        quantidade=quantidade, valor_unitario=valor_unitario,
+        orcamento=orcamento,
+        produto=produto,
+        quantidade=quantidade,
+        valor_unitario=valor_unitario,
     )
-    return JsonResponse({"ok": True, "mensagem": "Item adicionado.", "item": _item_material_to_dict(item), "totais": _totais_orcamento(orcamento)})
+    return JsonResponse({
+        "ok": True,
+        "mensagem": "Material adicionado.",
+        "item": _item_material_to_dict(item),
+        "totais": _totais_orcamento(orcamento),
+    })
 
 
 @require_http_methods(["POST"])
@@ -314,23 +276,11 @@ def excluir_item_material(request):
     data = _request_data(request)
     item_id = data.get("id") or data.get("item_id")
     if not item_id:
-        return JsonResponse({"ok": False, "erro": "id do item e obrigatorio."}, status=400)
+        return JsonResponse({"ok": False, "erro": "id do item é obrigatório."}, status=400)
     item = get_object_or_404(ItemMaterial, id=item_id)
     orcamento = item.orcamento
     item.delete()
-    return JsonResponse({"ok": True, "mensagem": "Item excluido.", "totais": _totais_orcamento(orcamento)})
-
-
-@require_GET
-def autocomplete_servico(request):
-    termo = (request.GET.get("q") or "").strip()
-    queryset = ProdutoServico.objects.filter(ativo=True)
-    if termo:
-        queryset = queryset.filter(
-            Q(nome__icontains=termo) | Q(codigo__icontains=termo) | Q(descricao__icontains=termo)
-        )
-    resultados = [_servico_to_dict(s) for s in queryset.order_by("nome")[:20]]
-    return JsonResponse({"ok": True, "resultados": resultados})
+    return JsonResponse({"ok": True, "mensagem": "Item excluído.", "totais": _totais_orcamento(orcamento)})
 
 
 @require_http_methods(["POST"])
@@ -340,9 +290,9 @@ def salvar_item_servico(request):
     servico_id = data.get("servico_id")
 
     if not orcamento_id:
-        return JsonResponse({"ok": False, "erro": "orcamento_id e obrigatorio."}, status=400)
+        return JsonResponse({"ok": False, "erro": "orcamento_id é obrigatório."}, status=400)
     if not servico_id:
-        return JsonResponse({"ok": False, "erro": "servico_id e obrigatorio."}, status=400)
+        return JsonResponse({"ok": False, "erro": "servico_id é obrigatório."}, status=400)
 
     orcamento = get_object_or_404(Orcamento, id=orcamento_id)
     servico = get_object_or_404(ProdutoServico, id=servico_id)
@@ -350,10 +300,17 @@ def salvar_item_servico(request):
     valor_unitario = _to_decimal(data.get("valor_unitario"), default=str(servico.preco_unitario or 0))
 
     item = ItemServico.objects.create(
-        orcamento=orcamento, servico=servico,
-        quantidade=quantidade, valor_unitario=valor_unitario,
+        orcamento=orcamento,
+        servico=servico,
+        quantidade=quantidade,
+        valor_unitario=valor_unitario,
     )
-    return JsonResponse({"ok": True, "mensagem": "Item adicionado.", "item": _item_servico_to_dict(item), "totais": _totais_orcamento(orcamento)})
+    return JsonResponse({
+        "ok": True,
+        "mensagem": "Serviço adicionado.",
+        "item": _item_servico_to_dict(item),
+        "totais": _totais_orcamento(orcamento),
+    })
 
 
 @require_http_methods(["POST"])
@@ -361,11 +318,11 @@ def excluir_item_servico(request):
     data = _request_data(request)
     item_id = data.get("id") or data.get("item_id")
     if not item_id:
-        return JsonResponse({"ok": False, "erro": "id do item e obrigatorio."}, status=400)
+        return JsonResponse({"ok": False, "erro": "id do item é obrigatório."}, status=400)
     item = get_object_or_404(ItemServico, id=item_id)
     orcamento = item.orcamento
     item.delete()
-    return JsonResponse({"ok": True, "mensagem": "Item excluido.", "totais": _totais_orcamento(orcamento)})
+    return JsonResponse({"ok": True, "mensagem": "Item excluído.", "totais": _totais_orcamento(orcamento)})
 
 
 @require_GET
@@ -380,37 +337,36 @@ def exportar_excel(request, orcamento_id):
     response.write("\ufeff")
 
     writer = csv.writer(response, delimiter=";")
-    writer.writerow(["Orcamento", orcamento.nome])
+    writer.writerow(["Orçamento", orcamento.nome])
     writer.writerow(["Obra", orcamento.obra.nome])
     writer.writerow(["Cliente", orcamento.obra.cliente.nome if orcamento.obra.cliente else ""])
     writer.writerow(["Projeto", orcamento.obra.projeto.nome if orcamento.obra.projeto else ""])
     writer.writerow([])
 
-    # MELHORIA 2: agrupar materiais repetidos somando qtd e valor total
     from collections import OrderedDict
+    # Materiais
     mapa_mat = OrderedDict()
-    for item in orcamento.itens_material.select_related("material").all():
-        key = item.material_id
+    for item in orcamento.itens_material.select_related("produto").all():
+        key = item.produto_id
         if key in mapa_mat:
             mapa_mat[key]["quantidade"] += item.quantidade
             mapa_mat[key]["valor_total"] += item.valor_total
         else:
             mapa_mat[key] = {
-                "codigo_bk": item.material.codigo_bk,
-                "codigo_cliente": item.material.codigo_cliente,
-                "descricao": item.material.descricao,
-                "unidade": item.material.unidade,
+                "codigo": item.produto.codigo,
+                "nome": item.produto.nome,
+                "unidade": item.produto.unidade,
                 "quantidade": item.quantidade,
                 "valor_unitario": item.valor_unitario,
                 "valor_total": item.valor_total,
             }
 
-    writer.writerow(["MATERIAIS"])
-    writer.writerow(["Cod. BK", "Cod. Cliente", "Descricao", "Unidade", "Quantidade", "Valor Unitario", "Valor Total"])
+    writer.writerow(["MATERIAIS/PRODUTOS"])
+    writer.writerow(["Código", "Descrição", "Unidade", "Quantidade", "Valor Unitário", "Valor Total"])
     for m in mapa_mat.values():
-        writer.writerow([m["codigo_bk"], m["codigo_cliente"], m["descricao"], m["unidade"], m["quantidade"], m["valor_unitario"], m["valor_total"]])
+        writer.writerow([m["codigo"], m["nome"], m["unidade"], m["quantidade"], m["valor_unitario"], m["valor_total"]])
 
-    # MELHORIA 2: agrupar servicos repetidos somando qtd e valor total
+    # Serviços
     mapa_svc = OrderedDict()
     for item in orcamento.itens_servico.select_related("servico").all():
         key = item.servico_id
@@ -419,6 +375,7 @@ def exportar_excel(request, orcamento_id):
             mapa_svc[key]["valor_total"] += item.valor_total
         else:
             mapa_svc[key] = {
+                "codigo": item.servico.codigo,
                 "nome": item.servico.nome,
                 "unidade": item.servico.unidade,
                 "quantidade": item.quantidade,
@@ -427,14 +384,14 @@ def exportar_excel(request, orcamento_id):
             }
 
     writer.writerow([])
-    writer.writerow(["SERVICOS"])
-    writer.writerow(["Nome", "Unidade", "Quantidade", "Valor Unitario", "Valor Total"])
+    writer.writerow(["SERVIÇOS"])
+    writer.writerow(["Código", "Nome", "Unidade", "Quantidade", "Valor Unitário", "Valor Total"])
     for s in mapa_svc.values():
-        writer.writerow([s["nome"], s["unidade"], s["quantidade"], s["valor_unitario"], s["valor_total"]])
+        writer.writerow([s["codigo"], s["nome"], s["unidade"], s["quantidade"], s["valor_unitario"], s["valor_total"]])
 
     totais = _totais_orcamento(orcamento)
     writer.writerow([])
     writer.writerow(["Total Materiais", totais["total_materiais"]])
-    writer.writerow(["Total Servicos", totais["total_servicos"]])
+    writer.writerow(["Total Serviços", totais["total_servicos"]])
     writer.writerow(["Total Geral", totais["total_geral"]])
     return response
