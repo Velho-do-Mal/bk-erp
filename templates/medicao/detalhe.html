@@ -1,0 +1,796 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}BM — {{ boletim.nome }}{% endblock %}
+{% block page_title %}Boletim de Medição{% endblock %}
+{% block page_sub %}{{ boletim.nome }}{% if boletim.cliente %} · {{ boletim.cliente.nome }}{% endif %}{% endblock %}
+
+{% block topbar_actions %}
+<a href="{% url 'medicao:dashboard' %}" class="btn btn-secondary btn-sm">← Voltar</a>
+{% if periodo_ativo %}
+<button class="btn btn-secondary btn-sm" onclick="abrirImpressaoPeriodo()">🖨 Imprimir Período</button>
+<button class="btn btn-primary btn-sm" onclick="abrirConsolidado()">📊 Consolidado</button>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Grade estilo Excel */
+  .excel-wrap { overflow-x: auto; border: 1px solid #334155; border-radius: 10px; background: #fff; }
+  .excel-table { width: 100%; border-collapse: collapse; min-width: 900px; font-size: 13px; }
+  .excel-table thead th {
+    background: #2563eb; color: #fff; padding: 9px 10px;
+    text-align: left; font-size: 12px; font-weight: 700;
+    border-right: 1px solid rgba(255,255,255,0.15);
+    white-space: nowrap; position: sticky; top: 0; z-index: 2;
+  }
+  .excel-table tbody td {
+    padding: 0; border-right: 1px solid #dde3ee; border-bottom: 1px solid #dde3ee;
+    background: #fff; color: #111827; vertical-align: middle;
+  }
+  .excel-table tbody tr:nth-child(even) td { background: #f7faff; }
+  .excel-table tbody tr:hover td { background: #eff6ff; }
+  .cell-input {
+    width: 100%; border: none; outline: none; background: transparent;
+    color: #111827; padding: 8px 10px; min-height: 36px; font-size: 13px;
+    font-family: inherit;
+  }
+  .cell-input:focus { background: #fefce8; box-shadow: inset 0 0 0 2px #f59e0b; }
+  .cell-select { width: 100%; border: none; outline: none; background: transparent; color: #111827; padding: 8px 10px; min-height: 36px; font-size: 13px; font-family: inherit; }
+  .cell-ro { padding: 8px 10px; color: #374151; font-size: 13px; }
+  .cell-num { text-align: right; padding: 8px 10px; color: #1d4ed8; font-weight: 600; font-size: 13px; }
+  .cell-pct { text-align: right; padding: 8px 10px; font-weight: 700; font-size: 13px; }
+  .pct-ok { color: #059669; }
+  .pct-par { color: #d97706; }
+  .pct-zero { color: #94a3b8; }
+  .total-row td { background: #1e3a5f !important; color: #fff !important; font-weight: 700; }
+  .total-row .cell-num { color: #93c5fd !important; }
+
+  /* Medição input destacado */
+  .cell-input-med {
+    width: 100%; border: none; outline: none; background: #f0fdf4;
+    color: #065f46; padding: 8px 10px; min-height: 36px; font-size: 13px;
+    font-weight: 700; font-family: inherit; text-align: right;
+  }
+  .cell-input-med:focus { background: #dcfce7; box-shadow: inset 0 0 0 2px #22c55e; }
+
+  /* Autocomplete */
+  .autocomplete-wrap { position: relative; }
+  .autocomplete-list {
+    position: absolute; top: 100%; left: 0; right: 0; z-index: 999;
+    background: #1e293b; border: 1px solid #334155; border-radius: 8px;
+    max-height: 220px; overflow-y: auto; box-shadow: 0 8px 24px rgba(0,0,0,.4);
+  }
+  .autocomplete-item {
+    padding: 8px 12px; cursor: pointer; font-size: 13px; color: #f1f5f9;
+    border-bottom: 1px solid #334155;
+  }
+  .autocomplete-item:hover { background: #2563eb; }
+  .autocomplete-item .ac-code { font-size: 11px; color: #94a3b8; margin-right: 6px; }
+
+  /* Períodos lista */
+  .periodo-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700;
+    cursor: pointer; border: 2px solid transparent; text-decoration: none;
+    transition: all 0.15s;
+  }
+  .periodo-pill.ativo { background: #2563eb; color: #fff; border-color: #2563eb; }
+  .periodo-pill.inativo { background: #253047; color: #94a3b8; border-color: #334155; }
+  .periodo-pill:hover { border-color: #3b82f6; color: #fff; }
+
+  /* KPI cards medição */
+  .kpi-med { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .kpi-med-card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 14px 16px; }
+  .kpi-med-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; }
+  .kpi-med-value { font-size: 22px; font-weight: 800; margin-top: 4px; color: #f1f5f9; }
+  .kpi-med-value.blue { color: #93c5fd; }
+  .kpi-med-value.green { color: #6ee7b7; }
+  .kpi-med-value.orange { color: #fcd34d; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tabs" data-group="main">
+  <button class="tab-btn active" data-tab="tab-projeto" data-group="main">📋 Cadastro do Projeto</button>
+  <button class="tab-btn" data-tab="tab-itens" data-group="main">📦 Itens do Contrato</button>
+  <button class="tab-btn" data-tab="tab-medicao" data-group="main">📐 Medição</button>
+  <button class="tab-btn" data-tab="tab-dashboard" data-group="main">📊 Dashboard</button>
+</div>
+
+<!-- ═══════════════ ABA 1 — CADASTRO DO PROJETO ═══════════════ -->
+<div class="tab-panel active" id="tab-projeto" data-group="main">
+  <div class="card" style="max-width:800px">
+    <div style="font-size:16px;font-weight:700;margin-bottom:20px;color:#93c5fd">Dados do Projeto</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="form-group">
+        <label class="form-label">Cliente</label>
+        <select class="form-control" id="proj_cliente_id">
+          <option value="">Selecione...</option>
+          {% for c in clientes %}
+          <option value="{{ c.id }}" {% if boletim.cliente_id == c.id %}selected{% endif %}>{{ c.nome }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Projeto</label>
+        <select class="form-control" id="proj_projeto_id" onchange="preencherNomePorProjeto()">
+          <option value="">Selecione...</option>
+          {% for p in projetos %}
+          <option value="{{ p.id }}" data-nome="{{ p.nome|escape }}" {% if boletim.projeto_id == p.id %}selected{% endif %}>{{ p.nome }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group" style="grid-column:1/-1">
+        <label class="form-label">Nome / Identificação do BM</label>
+        <input type="text" class="form-control" id="proj_nome" value="{{ boletim.nome }}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contrato</label>
+        <input type="text" class="form-control" id="proj_contrato" value="{{ boletim.contrato }}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Código de Obra</label>
+        <input type="text" class="form-control" id="proj_codigo_obra" value="{{ boletim.codigo_obra }}">
+      </div>
+    </div>
+
+    <!-- Logos -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px">
+      <div class="form-group">
+        <label class="form-label">Logo BK</label>
+        <input type="file" class="form-control" id="logo_bk_file" accept="image/*" onchange="carregarLogo(this,'bk')">
+        {% if logo_bk_b64 %}
+        <div style="margin-top:8px">
+          <img id="prev_logo_bk" src="data:{{ logo_bk_tipo }};base64,{{ logo_bk_b64 }}" style="max-height:60px;border-radius:6px">
+        </div>
+        {% else %}
+        <div style="margin-top:8px"><img id="prev_logo_bk" style="max-height:60px;border-radius:6px;display:none"></div>
+        {% endif %}
+      </div>
+      <div class="form-group">
+        <label class="form-label">Logo Cliente</label>
+        <input type="file" class="form-control" id="logo_cliente_file" accept="image/*" onchange="carregarLogo(this,'cliente')">
+        {% if logo_cliente_b64 %}
+        <div style="margin-top:8px">
+          <img id="prev_logo_cliente" src="data:{{ logo_cliente_tipo }};base64,{{ logo_cliente_b64 }}" style="max-height:60px;border-radius:6px">
+        </div>
+        {% else %}
+        <div style="margin-top:8px"><img id="prev_logo_cliente" style="max-height:60px;border-radius:6px;display:none"></div>
+        {% endif %}
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="salvarBoletim()" style="margin-top:8px">💾 Salvar</button>
+    <span id="msg_projeto" style="margin-left:12px;font-size:13px;color:#6ee7b7"></span>
+  </div>
+</div>
+
+<!-- ═══════════════ ABA 2 — ITENS DO CONTRATO ═══════════════ -->
+<div class="tab-panel" id="tab-itens" data-group="main">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+    <div style="font-size:13px;color:#94a3b8">
+      Total contrato: <strong id="total_contrato" style="color:#93c5fd">{{ total_contrato|floatformat:2 }}</strong>
+    </div>
+    <button class="btn btn-primary btn-sm" onclick="adicionarLinhaItem()">+ Adicionar Item</button>
+  </div>
+
+  <div class="excel-wrap">
+    <table class="excel-table" id="tabela_itens">
+      <thead>
+        <tr>
+          <th style="width:36px">#</th>
+          <th style="width:260px">Atividade / Serviço</th>
+          <th style="width:100px">Código</th>
+          <th style="width:80px">Qtde</th>
+          <th style="width:60px">Un.</th>
+          <th style="width:120px">Preço Unit.</th>
+          <th style="width:130px">Preço Total</th>
+          <th style="width:44px"></th>
+        </tr>
+      </thead>
+      <tbody id="tbody_itens">
+        {% for item in itens %}
+        <tr data-item-id="{{ item.id }}">
+          <td><div class="cell-ro" style="color:#94a3b8">{{ forloop.counter }}</div></td>
+          <td>
+            <div class="autocomplete-wrap">
+              <input class="cell-input ac-servico" type="text"
+                value="{{ item.descricao }}"
+                data-servico-id="{{ item.servico_id|default:'' }}"
+                placeholder="Buscar serviço..."
+                oninput="acServicoInput(this)"
+                onfocus="acServicoInput(this)">
+              <div class="autocomplete-list" style="display:none"></div>
+            </div>
+          </td>
+          <td><input class="cell-input cell-codigo" type="text" value="{{ item.codigo }}" placeholder="Cód."></td>
+          <td><input class="cell-input cell-qtd" type="number" value="{{ item.quantidade_total }}" min="0" step="0.001" style="text-align:right" oninput="recalcItem(this)"></td>
+          <td><input class="cell-input cell-un" type="text" value="{{ item.unidade }}" style="text-align:center"></td>
+          <td><input class="cell-input cell-pu" type="number" value="{{ item.preco_unitario }}" min="0" step="0.01" style="text-align:right" oninput="recalcItem(this)"></td>
+          <td><div class="cell-num cell-pt">{{ item.preco_total|floatformat:2 }}</div></td>
+          <td>
+            <div class="grid-action">
+              <button class="btn btn-danger btn-sm" onclick="excluirItem(this, {{ item.id }})" title="Excluir">✕</button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr class="total-row">
+          <td colspan="6" style="padding:8px 10px;color:#93c5fd;font-size:12px">TOTAL DO CONTRATO</td>
+          <td><div class="cell-num" id="tfoot_total" style="color:#93c5fd !important">{{ total_contrato|floatformat:2 }}</div></td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+    <button class="btn btn-primary btn-sm" onclick="salvarTodosItens()">💾 Salvar Itens</button>
+    <span id="msg_itens" style="font-size:13px;color:#6ee7b7"></span>
+  </div>
+</div>
+
+<!-- ═══════════════ ABA 3 — MEDIÇÃO ═══════════════ -->
+<div class="tab-panel" id="tab-medicao" data-group="main">
+
+  <!-- Seletor de períodos -->
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+    <span style="font-size:12px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px">Períodos:</span>
+    {% for p in periodos %}
+    <a href="?periodo_id={{ p.id }}" class="periodo-pill {% if periodo_ativo and periodo_ativo.id == p.id %}ativo{% else %}inativo{% endif %}">
+      {{ p.label }}
+      <span style="font-size:10px;opacity:.75">{{ p.data_inicio|date:"d/m" }}–{{ p.data_fim|date:"d/m/Y" }}</span>
+    </a>
+    {% endfor %}
+    <button class="btn btn-success btn-sm" onclick="abrirModalNovoPeriodo()">+ Novo BM</button>
+  </div>
+
+  {% if periodo_ativo %}
+  <!-- Cabeçalho do período ativo -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+    <div>
+      <span style="font-size:18px;font-weight:800;color:#93c5fd">{{ periodo_ativo.label }}</span>
+      <span style="font-size:13px;color:#94a3b8;margin-left:10px">
+        {{ periodo_ativo.data_inicio|date:"d/m/Y" }} → {{ periodo_ativo.data_fim|date:"d/m/Y" }}
+      </span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary btn-sm" onclick="salvarMedicao()">💾 Salvar Medição</button>
+      <button class="btn btn-secondary btn-sm" onclick="abrirImpressaoPeriodo()">🖨 Imprimir BM</button>
+      <button class="btn btn-secondary btn-sm" onclick="abrirConsolidado()">📊 Consolidado</button>
+    </div>
+  </div>
+
+  <!-- KPIs do período -->
+  <div class="kpi-med">
+    <div class="kpi-med-card">
+      <div class="kpi-med-label">Total Contrato</div>
+      <div class="kpi-med-value">R$ {{ total_contrato|floatformat:2 }}</div>
+    </div>
+    <div class="kpi-med-card">
+      <div class="kpi-med-label">Medido no Período</div>
+      <div class="kpi-med-value blue" id="kpi_periodo">R$ {{ total_periodo|floatformat:2 }}</div>
+    </div>
+    <div class="kpi-med-card">
+      <div class="kpi-med-label">Medido Acumulado</div>
+      <div class="kpi-med-value green" id="kpi_acum">R$ {{ total_acum|floatformat:2 }}</div>
+    </div>
+    <div class="kpi-med-card">
+      <div class="kpi-med-label">Saldo a Medir</div>
+      <div class="kpi-med-value orange" id="kpi_saldo">R$ {{ total_saldo|floatformat:2 }}</div>
+    </div>
+    <div class="kpi-med-card">
+      <div class="kpi-med-label">% Medido</div>
+      <div class="kpi-med-value" id="kpi_pct" style="color:#f59e0b">{{ pct_total }}%</div>
+    </div>
+  </div>
+
+  <!-- Grade de medição -->
+  <div class="excel-wrap">
+    <table class="excel-table" id="tabela_medicao">
+      <thead>
+        <tr>
+          <th style="width:80px">Cód.</th>
+          <th style="min-width:220px">Descrição</th>
+          <th style="width:110px">Val. Total Item</th>
+          <th style="width:55px">Un.</th>
+          <th style="width:100px; background:#16a34a">Qtde Medida ✎</th>
+          <th style="width:110px">Val. Unit.</th>
+          <th style="width:110px">Qtde Acum.</th>
+          <th style="width:120px">Val. Acumulado</th>
+          <th style="width:120px">Val. Período</th>
+          <th style="width:120px">Saldo a Medir</th>
+          <th style="width:90px">% Medido</th>
+        </tr>
+      </thead>
+      <tbody id="tbody_medicao">
+        {% for linha in linhas %}
+        <tr data-item-id="{{ linha.item.id }}">
+          <td><div class="cell-ro" style="font-size:11px">{{ linha.item.codigo }}</div></td>
+          <td><div class="cell-ro">{{ linha.item.descricao }}</div></td>
+          <td><div class="cell-num">R$ {{ linha.valor_total_item|floatformat:2 }}</div></td>
+          <td><div class="cell-ro" style="text-align:center">{{ linha.item.unidade }}</div></td>
+          <td>
+            <input class="cell-input-med med-qtd"
+              type="number" min="0" step="0.001"
+              value="{{ linha.qtd_medida }}"
+              data-pu="{{ linha.item.preco_unitario }}"
+              data-qtd-total="{{ linha.item.quantidade_total }}"
+              data-item-id="{{ linha.item.id }}"
+              oninput="recalcMedicao(this)">
+          </td>
+          <td><div class="cell-num">R$ {{ linha.item.preco_unitario|floatformat:2 }}</div></td>
+          <td><div class="cell-num med-qtd-acum">{{ linha.qtd_acum|floatformat:3 }}</div></td>
+          <td><div class="cell-num med-val-acum">R$ {{ linha.valor_acum|floatformat:2 }}</div></td>
+          <td><div class="cell-num med-val-periodo">R$ {{ linha.valor_medido_periodo|floatformat:2 }}</div></td>
+          <td><div class="cell-num med-saldo">R$ {{ linha.saldo|floatformat:2 }}</div></td>
+          <td>
+            <div class="cell-pct med-pct {% if linha.pct >= 100 %}pct-ok{% elif linha.pct > 0 %}pct-par{% else %}pct-zero{% endif %}">
+              {{ linha.pct }}%
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="11" style="text-align:center;padding:24px;color:#94a3b8">Nenhum item cadastrado no contrato.</td></tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr class="total-row">
+          <td colspan="2" style="padding:8px 10px;color:#93c5fd;font-size:12px">TOTAIS</td>
+          <td><div class="cell-num" style="color:#93c5fd !important">R$ {{ total_contrato|floatformat:2 }}</div></td>
+          <td></td><td></td><td></td><td></td>
+          <td><div class="cell-num tfoot-acum" style="color:#6ee7b7 !important">R$ {{ total_acum|floatformat:2 }}</div></td>
+          <td><div class="cell-num tfoot-periodo" style="color:#93c5fd !important">R$ {{ total_periodo|floatformat:2 }}</div></td>
+          <td><div class="cell-num tfoot-saldo" style="color:#fcd34d !important">R$ {{ total_saldo|floatformat:2 }}</div></td>
+          <td><div class="cell-pct tfoot-pct" style="color:#f59e0b !important">{{ pct_total }}%</div></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  <span id="msg_medicao" style="font-size:13px;color:#6ee7b7;margin-top:10px;display:block"></span>
+
+  {% else %}
+  <div style="text-align:center;padding:48px;color:#94a3b8">
+    <div style="font-size:48px;margin-bottom:12px">📐</div>
+    <div style="font-size:16px;font-weight:600">Nenhum período de medição criado</div>
+    <div style="font-size:13px;margin-top:6px">Clique em "+ Novo BM" para criar o primeiro período.</div>
+    <button class="btn btn-primary" style="margin-top:20px" onclick="abrirModalNovoPeriodo()">+ Criar BM-1</button>
+  </div>
+  {% endif %}
+</div>
+
+<!-- ═══════════════ ABA 4 — DASHBOARD ═══════════════ -->
+<div class="tab-panel" id="tab-dashboard" data-group="main">
+  <div class="kpi-grid" id="dash_kpis">
+    <div class="kpi-card">
+      <div class="kpi-label">Total Contrato</div>
+      <div class="kpi-value" id="dash_total_contrato">R$ {{ total_contrato|floatformat:2 }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Total Medido</div>
+      <div class="kpi-value" style="color:#6ee7b7" id="dash_total_acum">R$ {{ total_acum|floatformat:2 }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Saldo a Medir</div>
+      <div class="kpi-value" style="color:#fcd34d" id="dash_saldo">R$ {{ total_saldo|floatformat:2 }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Períodos (BMs)</div>
+      <div class="kpi-value" id="dash_num_bm">{{ periodos|length }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">% Executado</div>
+      <div class="kpi-value" style="color:#f59e0b" id="dash_pct">{{ pct_total }}%</div>
+    </div>
+  </div>
+
+  <!-- Barra de progresso geral -->
+  <div class="card" style="margin-bottom:20px">
+    <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+      <span style="font-size:13px;font-weight:600;color:#94a3b8">Progresso geral</span>
+      <span style="font-size:13px;font-weight:700;color:#f59e0b" id="dash_pct_bar">{{ pct_total }}%</span>
+    </div>
+    <div style="height:10px;background:#334155;border-radius:99px;overflow:hidden">
+      <div id="dash_bar" style="height:100%;background:linear-gradient(90deg,#3b82f6,#10b981);border-radius:99px;width:{{ pct_total }}%;transition:width 0.5s"></div>
+    </div>
+  </div>
+
+  <!-- Evolução por período -->
+  <div class="card" style="margin-bottom:20px">
+    <div style="font-size:14px;font-weight:700;color:#93c5fd;margin-bottom:14px">Evolução por período</div>
+    {% if periodos %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Período</th><th>Data Início</th><th>Data Fim</th><th>Valor Medido</th><th>% do Contrato</th>
+        </tr></thead>
+        <tbody>
+          {% for p in periodos %}
+          <tr>
+            <td><span class="badge badge-blue">{{ p.label }}</span></td>
+            <td>{{ p.data_inicio|date:"d/m/Y" }}</td>
+            <td>{{ p.data_fim|date:"d/m/Y" }}</td>
+            <td style="color:#93c5fd;font-weight:600">R$ {{ p.valor_total_periodo|floatformat:2 }}</td>
+            <td>
+              {% if total_contrato %}
+              {% widthratio p.valor_total_periodo total_contrato 100 %}%
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="color:#94a3b8;font-size:13px;padding:16px 0">Nenhum período registrado.</div>
+    {% endif %}
+  </div>
+
+  <!-- Status por item -->
+  <div class="card">
+    <div style="font-size:14px;font-weight:700;color:#93c5fd;margin-bottom:14px">Status por item</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Cód.</th><th>Descrição</th><th>Valor Total</th><th>Medido</th><th>Saldo</th><th>%</th>
+        </tr></thead>
+        <tbody>
+          {% for linha in linhas %}
+          <tr>
+            <td style="font-size:11px;color:#94a3b8">{{ linha.item.codigo }}</td>
+            <td>{{ linha.item.descricao }}</td>
+            <td style="color:#f1f5f9">R$ {{ linha.valor_total_item|floatformat:2 }}</td>
+            <td style="color:#6ee7b7;font-weight:600">R$ {{ linha.valor_acum|floatformat:2 }}</td>
+            <td style="color:#fcd34d">R$ {{ linha.saldo|floatformat:2 }}</td>
+            <td>
+              <div style="display:flex;align-items:center;gap:6px">
+                <div style="flex:1;height:6px;background:#334155;border-radius:99px;min-width:60px">
+                  <div style="height:100%;border-radius:99px;width:{{ linha.pct }}%;background:{% if linha.pct >= 100 %}#10b981{% elif linha.pct > 0 %}#3b82f6{% else %}#334155{% endif %}"></div>
+                </div>
+                <span style="font-size:12px;font-weight:700;color:{% if linha.pct >= 100 %}#6ee7b7{% elif linha.pct > 0 %}#93c5fd{% else %}#94a3b8{% endif %}">{{ linha.pct }}%</span>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" style="text-align:center;padding:24px;color:#94a3b8">Nenhum item.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Modal Novo Período ═══ -->
+<div id="modal_periodo" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center">
+  <div class="card" style="width:380px;max-width:95vw">
+    <div style="font-size:16px;font-weight:700;color:#93c5fd;margin-bottom:16px">Novo Período de Medição</div>
+    <div id="modal_bm_label" style="font-size:13px;color:#94a3b8;margin-bottom:14px"></div>
+    <div class="form-group">
+      <label class="form-label">Data Início</label>
+      <input type="date" class="form-control" id="novo_bm_inicio">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Data Fim</label>
+      <input type="date" class="form-control" id="novo_bm_fim">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn btn-primary" onclick="criarPeriodo()">Criar BM</button>
+      <button class="btn btn-secondary" onclick="fecharModal('modal_periodo')">Cancelar</button>
+    </div>
+    <span id="msg_periodo" style="font-size:13px;color:#6ee7b7;margin-top:8px;display:block"></span>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const BM_ID = {{ boletim.id }};
+const PERIODO_ATIVO_ID = {% if periodo_ativo %}{{ periodo_ativo.id }}{% else %}null{% endif %};
+const PROXIMO_BM = {{ boletim.proximo_numero_bm }};
+const CSRF = "{{ csrf_token }}";
+
+// ── Utilitários ──────────────────────────────────────────────
+function fmt(v) {
+  return Number(v).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function fmtPct(v) { return Number(v).toFixed(2) + '%'; }
+function fmtQtd(v) { return Number(v).toFixed(3); }
+
+function post(url, data) {
+  return fetch(url, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','X-CSRFToken':CSRF},
+    body: JSON.stringify(data),
+  }).then(r => r.json());
+}
+
+function showMsg(id, txt, cor='#6ee7b7') {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.color = cor;
+  el.textContent = txt;
+  setTimeout(() => { el.textContent = ''; }, 4000);
+}
+
+function fecharModal(id) {
+  document.getElementById(id).style.display = 'none';
+}
+
+// ── Aba Projeto ──────────────────────────────────────────────
+let logoBkB64 = '', logoBkTipo = '', logoBkNome = '';
+let logoCliB64 = '', logoCliTipo = '', logoCliNome = '';
+
+function carregarLogo(input, tipo) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const raw = e.target.result; // data:image/png;base64,...
+    const [header, b64] = raw.split(',');
+    const mimeMatch = header.match(/:(.*?);/);
+    const mime = mimeMatch ? mimeMatch[1] : 'image/png';
+    if (tipo === 'bk') {
+      logoBkB64 = b64; logoBkTipo = mime; logoBkNome = file.name;
+      const prev = document.getElementById('prev_logo_bk');
+      prev.src = raw; prev.style.display = 'block';
+    } else {
+      logoCliB64 = b64; logoCliTipo = mime; logoCliNome = file.name;
+      const prev = document.getElementById('prev_logo_cliente');
+      prev.src = raw; prev.style.display = 'block';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function preencherNomePorProjeto() {
+  const sel = document.getElementById('proj_projeto_id');
+  const opt = sel.options[sel.selectedIndex];
+  if (opt && opt.dataset.nome) {
+    document.getElementById('proj_nome').value = opt.dataset.nome;
+  }
+}
+
+function salvarBoletim() {
+  const payload = {
+    id: BM_ID,
+    nome: document.getElementById('proj_nome').value.trim(),
+    cliente_id: document.getElementById('proj_cliente_id').value || null,
+    projeto_id: document.getElementById('proj_projeto_id').value || null,
+    contrato: document.getElementById('proj_contrato').value.trim(),
+    codigo_obra: document.getElementById('proj_codigo_obra').value.trim(),
+    logo_bk_b64: logoBkB64, logo_bk_tipo: logoBkTipo, logo_bk_nome: logoBkNome,
+    logo_cliente_b64: logoCliB64, logo_cliente_tipo: logoCliTipo, logo_cliente_nome: logoCliNome,
+  };
+  post('/medicao/api/salvar/', payload).then(res => {
+    if (res.ok) showMsg('msg_projeto', '✔ ' + res.mensagem);
+    else showMsg('msg_projeto', '✘ ' + res.erro, '#fca5a5');
+  });
+}
+
+// ── Aba Itens ─────────────────────────────────────────────────
+let _acTimer = null;
+
+function adicionarLinhaItem() {
+  const tbody = document.getElementById('tbody_itens');
+  const idx = tbody.rows.length + 1;
+  const tr = document.createElement('tr');
+  tr.dataset.itemId = 'novo_' + Date.now();
+  tr.innerHTML = `
+    <td><div class="cell-ro" style="color:#94a3b8">${idx}</div></td>
+    <td>
+      <div class="autocomplete-wrap">
+        <input class="cell-input ac-servico" type="text" placeholder="Buscar serviço..." data-servico-id=""
+          oninput="acServicoInput(this)" onfocus="acServicoInput(this)">
+        <div class="autocomplete-list" style="display:none"></div>
+      </div>
+    </td>
+    <td><input class="cell-input cell-codigo" type="text" placeholder="Cód."></td>
+    <td><input class="cell-input cell-qtd" type="number" value="1" min="0" step="0.001" style="text-align:right" oninput="recalcItem(this)"></td>
+    <td><input class="cell-input cell-un" type="text" value="un" style="text-align:center"></td>
+    <td><input class="cell-input cell-pu" type="number" value="0" min="0" step="0.01" style="text-align:right" oninput="recalcItem(this)"></td>
+    <td><div class="cell-num cell-pt">0,00</div></td>
+    <td><div class="grid-action"><button class="btn btn-danger btn-sm" onclick="excluirItem(this, null)" title="Excluir">✕</button></div></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+function recalcItem(input) {
+  const tr = input.closest('tr');
+  const qtd = parseFloat(tr.querySelector('.cell-qtd').value) || 0;
+  const pu  = parseFloat(tr.querySelector('.cell-pu').value) || 0;
+  const pt  = (qtd * pu).toFixed(2);
+  tr.querySelector('.cell-pt').textContent = fmt(pt);
+  recalcTotalContrato();
+}
+
+function recalcTotalContrato() {
+  let total = 0;
+  document.querySelectorAll('#tbody_itens tr').forEach(tr => {
+    const qtd = parseFloat(tr.querySelector('.cell-qtd')?.value) || 0;
+    const pu  = parseFloat(tr.querySelector('.cell-pu')?.value) || 0;
+    total += qtd * pu;
+  });
+  document.getElementById('total_contrato').textContent = fmt(total);
+  document.getElementById('tfoot_total').textContent = fmt(total);
+}
+
+function excluirItem(btn, itemId) {
+  const tr = btn.closest('tr');
+  if (itemId) {
+    if (!confirm('Excluir este item?')) return;
+    post(`/medicao/${BM_ID}/api/itens/excluir/`, {id: itemId}).then(res => {
+      if (res.ok) { tr.remove(); recalcTotalContrato(); }
+      else alert(res.erro);
+    });
+  } else {
+    tr.remove(); recalcTotalContrato();
+  }
+}
+
+function salvarTodosItens() {
+  const trs = document.querySelectorAll('#tbody_itens tr');
+  const promessas = [];
+  trs.forEach((tr, idx) => {
+    const servicoInput = tr.querySelector('.ac-servico');
+    const payload = {
+      id: isNaN(parseInt(tr.dataset.itemId)) ? null : parseInt(tr.dataset.itemId),
+      servico_id: servicoInput?.dataset?.servicoId || null,
+      descricao: servicoInput?.value?.trim() || '',
+      codigo: tr.querySelector('.cell-codigo')?.value?.trim() || '',
+      quantidade_total: parseFloat(tr.querySelector('.cell-qtd')?.value) || 1,
+      unidade: tr.querySelector('.cell-un')?.value?.trim() || 'un',
+      preco_unitario: parseFloat(tr.querySelector('.cell-pu')?.value) || 0,
+      ordem: idx,
+    };
+    if (!payload.descricao) return;
+    promessas.push(
+      post(`/medicao/${BM_ID}/api/itens/salvar/`, payload).then(res => {
+        if (res.ok && res.item) tr.dataset.itemId = res.item.id;
+        return res;
+      })
+    );
+  });
+  Promise.all(promessas).then(results => {
+    const erros = results.filter(r => !r.ok);
+    if (erros.length) showMsg('msg_itens', '✘ Erro em ' + erros.length + ' item(s)', '#fca5a5');
+    else showMsg('msg_itens', '✔ Todos os itens salvos.');
+  });
+}
+
+// Autocomplete serviços
+function acServicoInput(input) {
+  clearTimeout(_acTimer);
+  _acTimer = setTimeout(() => buscarServicos(input), 250);
+}
+
+function buscarServicos(input) {
+  const termo = input.value.trim();
+  const list = input.nextElementSibling;
+  fetch(`/medicao/api/servicos/?q=${encodeURIComponent(termo)}`)
+    .then(r => r.json())
+    .then(res => {
+      if (!res.ok || !res.resultados.length) { list.style.display = 'none'; return; }
+      list.innerHTML = res.resultados.map(s =>
+        `<div class="autocomplete-item" data-id="${s.id}" data-nome="${s.nome}" data-codigo="${s.codigo}" data-un="${s.unidade}" data-pu="${s.preco_unitario}" onclick="selecionarServico(this)">
+          <span class="ac-code">[${s.codigo || '—'}]</span>${s.nome} <span style="color:#94a3b8;font-size:11px">${s.unidade} · R$ ${fmt(s.preco_unitario)}</span>
+        </div>`
+      ).join('');
+      list.style.display = 'block';
+    });
+}
+
+function selecionarServico(item) {
+  const tr = item.closest('tr');
+  const input = tr.querySelector('.ac-servico');
+  input.value = item.dataset.nome;
+  input.dataset.servicoId = item.dataset.id;
+  tr.querySelector('.cell-codigo').value = item.dataset.codigo || '';
+  tr.querySelector('.cell-un').value = item.dataset.un || 'un';
+  tr.querySelector('.cell-pu').value = item.dataset.pu || '0';
+  recalcItem(tr.querySelector('.cell-pu'));
+  item.closest('.autocomplete-list').style.display = 'none';
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.autocomplete-wrap')) {
+    document.querySelectorAll('.autocomplete-list').forEach(l => l.style.display = 'none');
+  }
+});
+
+// ── Aba Medição ───────────────────────────────────────────────
+function recalcMedicao(input) {
+  const tr = input.closest('tr');
+  const qtdMedida = parseFloat(input.value) || 0;
+  const pu = parseFloat(input.dataset.pu) || 0;
+  const qtdTotal = parseFloat(input.dataset.qtdTotal) || 0;
+
+  // Busca acumulado anterior (antes do período atual) a partir dos dados do DOM
+  // Simplificação: o acumulado exibido inclui o período atual, então recalculamos
+  const valPeriodo = qtdMedida * pu;
+
+  // Atualiza colunas da linha
+  tr.querySelector('.med-val-periodo').textContent = 'R$ ' + fmt(valPeriodo);
+
+  // Recalcula totais da tabela
+  recalcTotaisMedicao();
+}
+
+function recalcTotaisMedicao() {
+  let totalPeriodo = 0;
+  document.querySelectorAll('#tbody_medicao tr').forEach(tr => {
+    const v = parseFloat(tr.querySelector('.med-val-periodo')?.textContent?.replace('R$ ','').replace('.','').replace(',','.')) || 0;
+    totalPeriodo += v;
+  });
+  document.querySelector('.tfoot-periodo').textContent = 'R$ ' + fmt(totalPeriodo);
+  document.getElementById('kpi_periodo').textContent = 'R$ ' + fmt(totalPeriodo);
+}
+
+function salvarMedicao() {
+  if (!PERIODO_ATIVO_ID) return;
+  const linhas = [];
+  document.querySelectorAll('#tbody_medicao tr[data-item-id]').forEach(tr => {
+    linhas.push({
+      item_id: parseInt(tr.dataset.itemId),
+      quantidade_medida: parseFloat(tr.querySelector('.med-qtd')?.value) || 0,
+    });
+  });
+  post(`/medicao/${BM_ID}/api/medicao/${PERIODO_ATIVO_ID}/salvar/`, {linhas}).then(res => {
+    if (res.ok) {
+      showMsg('msg_medicao', '✔ ' + res.mensagem);
+      // Atualiza valores vindos do backend
+      res.linhas.forEach(l => {
+        const tr = document.querySelector(`#tbody_medicao tr[data-item-id="${l.item_id}"]`);
+        if (!tr) return;
+        tr.querySelector('.med-qtd-acum').textContent = fmtQtd(l.qtd_acum);
+        tr.querySelector('.med-val-acum').textContent = 'R$ ' + fmt(l.valor_acum);
+        tr.querySelector('.med-val-periodo').textContent = 'R$ ' + fmt(l.valor_periodo);
+        tr.querySelector('.med-saldo').textContent = 'R$ ' + fmt(l.saldo);
+        const pctEl = tr.querySelector('.med-pct');
+        pctEl.textContent = fmtPct(l.pct);
+        pctEl.className = 'cell-pct med-pct ' + (l.pct >= 100 ? 'pct-ok' : l.pct > 0 ? 'pct-par' : 'pct-zero');
+      });
+      if (res.total_periodo !== undefined) {
+        document.getElementById('kpi_periodo').textContent = 'R$ ' + fmt(res.total_periodo);
+        document.querySelector('.tfoot-periodo').textContent = 'R$ ' + fmt(res.total_periodo);
+      }
+    } else {
+      showMsg('msg_medicao', '✘ ' + (res.erro || 'Erro ao salvar'), '#fca5a5');
+    }
+  });
+}
+
+// ── Modal Novo Período ────────────────────────────────────────
+function abrirModalNovoPeriodo() {
+  const modal = document.getElementById('modal_periodo');
+  document.getElementById('modal_bm_label').textContent = `Será criado o BM-${PROXIMO_BM}`;
+  modal.style.display = 'flex';
+}
+
+function criarPeriodo() {
+  const inicio = document.getElementById('novo_bm_inicio').value;
+  const fim = document.getElementById('novo_bm_fim').value;
+  if (!inicio || !fim) { showMsg('msg_periodo', '✘ Informe as datas', '#fca5a5'); return; }
+  post(`/medicao/${BM_ID}/api/periodos/criar/`, {data_inicio: inicio, data_fim: fim}).then(res => {
+    if (res.ok) {
+      showMsg('msg_periodo', '✔ ' + res.mensagem);
+      setTimeout(() => { window.location.href = res.redirect; }, 800);
+    } else {
+      showMsg('msg_periodo', '✘ ' + (res.erro || 'Erro'), '#fca5a5');
+    }
+  });
+}
+
+// ── Impressão ─────────────────────────────────────────────────
+function abrirImpressaoPeriodo() {
+  if (!PERIODO_ATIVO_ID) return;
+  window.open(`/medicao/${BM_ID}/imprimir/${PERIODO_ATIVO_ID}/`, '_blank');
+}
+
+function abrirConsolidado() {
+  window.open(`/medicao/${BM_ID}/consolidado/`, '_blank');
+}
+</script>
+{% endblock %}

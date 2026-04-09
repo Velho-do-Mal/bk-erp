@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Boletins de Medição{% endblock %}
+{% block page_title %}Boletim de Medição{% endblock %}
+{% block page_sub %}Lista de boletins cadastrados{% endblock %}
+
+{% block topbar_actions %}
+<button class="btn btn-primary btn-sm" onclick="abrirModalNovo()">+ Novo BM</button>
+{% endblock %}
+
+{% block content %}
+
+<!-- KPIs rápidos -->
+<div class="kpi-grid" style="margin-bottom:20px">
+  <div class="kpi-card">
+    <div class="kpi-label">Boletins Cadastrados</div>
+    <div class="kpi-value">{{ boletins|length }}</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Clientes</div>
+    <div class="kpi-value">{{ clientes|length }}</div>
+  </div>
+</div>
+
+<!-- Lista de boletins -->
+{% if boletins %}
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>BM</th>
+          <th>Cliente</th>
+          <th>Projeto</th>
+          <th>Contrato</th>
+          <th>Cód. Obra</th>
+          <th>Total Contrato</th>
+          <th>Períodos</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for bm in boletins %}
+        <tr>
+          <td>
+            <a href="{% url 'medicao:detalhe' bm.id %}" style="color:#93c5fd;font-weight:700;text-decoration:none">
+              {{ bm.nome }}
+            </a>
+          </td>
+          <td>{% if bm.cliente %}<span class="badge badge-blue">{{ bm.cliente.nome }}</span>{% else %}<span style="color:#475569">—</span>{% endif %}</td>
+          <td style="color:#94a3b8;font-size:12px">{% if bm.projeto %}{{ bm.projeto.nome }}{% else %}—{% endif %}</td>
+          <td style="color:#94a3b8;font-size:12px">{{ bm.contrato|default:"—" }}</td>
+          <td style="color:#94a3b8;font-size:12px">{{ bm.codigo_obra|default:"—" }}</td>
+          <td style="color:#93c5fd;font-weight:600">R$ {{ bm.total_contrato|floatformat:2 }}</td>
+          <td>
+            {% with n=bm.periodos.count %}
+            {% if n %}
+            <span class="badge badge-green">{{ n }} BM{% if n > 1 %}s{% endif %}</span>
+            {% else %}
+            <span class="badge badge-gray">Sem período</span>
+            {% endif %}
+            {% endwith %}
+          </td>
+          <td>
+            <div style="display:flex;gap:6px">
+              <a href="{% url 'medicao:detalhe' bm.id %}" class="btn btn-secondary btn-sm">✏ Abrir</a>
+              <button class="btn btn-danger btn-sm" onclick="excluirBM({{ bm.id }}, '{{ bm.nome|escapejs }}')">✕</button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:48px">
+  <div style="font-size:48px;margin-bottom:12px">📋</div>
+  <div style="font-size:16px;font-weight:600;color:#f1f5f9">Nenhum boletim cadastrado</div>
+  <div style="font-size:13px;color:#94a3b8;margin-top:6px">Crie o primeiro Boletim de Medição para começar.</div>
+  <button class="btn btn-primary" style="margin-top:20px" onclick="abrirModalNovo()">+ Novo Boletim de Medição</button>
+</div>
+{% endif %}
+
+<!-- Modal Novo BM -->
+<div id="modal_novo" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.6);align-items:center;justify-content:center">
+  <div class="card" style="width:480px;max-width:95vw">
+    <div style="font-size:16px;font-weight:700;color:#93c5fd;margin-bottom:18px">Novo Boletim de Medição</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div class="form-group">
+        <label class="form-label">Cliente</label>
+        <select class="form-control" id="novo_cliente_id">
+          <option value="">Selecione...</option>
+          {% for c in clientes %}
+          <option value="{{ c.id }}">{{ c.nome }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Projeto</label>
+        <select class="form-control" id="novo_projeto_id" onchange="preencherNome()">
+          <option value="">Selecione...</option>
+          {% for p in projetos %}
+          <option value="{{ p.id }}" data-nome="{{ p.nome|escape }}">{{ p.nome }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group" style="grid-column:1/-1">
+        <label class="form-label">Nome / Identificação</label>
+        <input type="text" class="form-control" id="novo_nome" placeholder="Ex: SE Aracaju — Medição 2026">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contrato</label>
+        <input type="text" class="form-control" id="novo_contrato" placeholder="Número do contrato">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Código de Obra</label>
+        <input type="text" class="form-control" id="novo_codigo_obra" placeholder="Ex: 2024-001">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn btn-primary" onclick="criarBoletim()">Criar</button>
+      <button class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
+    </div>
+    <span id="msg_novo" style="font-size:13px;color:#6ee7b7;margin-top:8px;display:block"></span>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF = "{{ csrf_token }}";
+
+function post(url, data) {
+  return fetch(url, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json','X-CSRFToken':CSRF},
+    body: JSON.stringify(data),
+  }).then(r => r.json());
+}
+
+function abrirModalNovo() {
+  document.getElementById('modal_novo').style.display = 'flex';
+}
+function fecharModal() {
+  document.getElementById('modal_novo').style.display = 'none';
+}
+
+function preencherNome() {
+  const sel = document.getElementById('novo_projeto_id');
+  const opt = sel.options[sel.selectedIndex];
+  if (opt && opt.dataset.nome) {
+    document.getElementById('novo_nome').value = opt.dataset.nome;
+  }
+}
+
+function criarBoletim() {
+  const nome = document.getElementById('novo_nome').value.trim();
+  if (!nome) {
+    document.getElementById('msg_novo').textContent = '✘ Informe o nome.';
+    document.getElementById('msg_novo').style.color = '#fca5a5';
+    return;
+  }
+  post('/medicao/api/salvar/', {
+    nome,
+    cliente_id: document.getElementById('novo_cliente_id').value || null,
+    projeto_id: document.getElementById('novo_projeto_id').value || null,
+    contrato: document.getElementById('novo_contrato').value.trim(),
+    codigo_obra: document.getElementById('novo_codigo_obra').value.trim(),
+  }).then(res => {
+    if (res.ok) {
+      document.getElementById('msg_novo').style.color = '#6ee7b7';
+      document.getElementById('msg_novo').textContent = '✔ ' + res.mensagem;
+      setTimeout(() => { window.location.href = res.redirect; }, 600);
+    } else {
+      document.getElementById('msg_novo').style.color = '#fca5a5';
+      document.getElementById('msg_novo').textContent = '✘ ' + (res.erro || 'Erro');
+    }
+  });
+}
+
+function excluirBM(id, nome) {
+  if (!confirm(`Excluir o boletim "${nome}" e todas as medições? Essa ação não pode ser desfeita.`)) return;
+  post('/medicao/api/excluir/', {id}).then(res => {
+    if (res.ok) window.location.reload();
+    else alert(res.erro);
+  });
+}
+</script>
+{% endblock %}

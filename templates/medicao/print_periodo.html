@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ boletim.nome }} — {{ periodo.label }}</title>
+  <style>
+    @page { size: A4 landscape; margin: 15mm 12mm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 11px; color: #111; background: #fff; }
+
+    /* Cabeçalho */
+    .header { display: flex; align-items: stretch; border: 1px solid #222; margin-bottom: 0; }
+    .header-logo { width: 120px; min-height: 60px; border-right: 1px solid #222; display: flex; align-items: center; justify-content: center; padding: 6px; }
+    .header-logo img { max-width: 100%; max-height: 50px; object-fit: contain; }
+    .header-empresa { flex: 1; border-right: 1px solid #222; padding: 6px 10px; display: flex; flex-direction: column; justify-content: center; }
+    .header-empresa .empresa-nome { font-size: 14px; font-weight: 800; color: #003087; }
+    .header-empresa .empresa-sub { font-size: 10px; color: #555; }
+    .header-titulo { flex: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid #222; padding: 6px 10px; }
+    .header-titulo .titulo { font-size: 16px; font-weight: 800; text-transform: uppercase; }
+    .header-titulo .subtitulo { font-size: 12px; font-weight: 600; color: #003087; margin-top: 3px; }
+    .header-cliente { width: 130px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px; }
+    .header-cliente img { max-width: 100%; max-height: 50px; object-fit: contain; }
+    .header-cliente .cliente-nome { font-size: 11px; font-weight: 700; text-align: center; }
+
+    /* Linha de info */
+    .info-bar { display: flex; border: 1px solid #222; border-top: none; }
+    .info-cell { flex: 1; padding: 4px 8px; border-right: 1px solid #222; font-size: 10px; }
+    .info-cell:last-child { border-right: none; }
+    .info-cell .label { color: #555; font-size: 9px; text-transform: uppercase; }
+    .info-cell .value { font-weight: 700; font-size: 11px; }
+    .info-cell .value.blue { color: #003087; }
+
+    /* Tabela de medição */
+    .table-wrap { margin-top: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 10px; }
+    thead th {
+      background: #003087; color: #fff; padding: 5px 6px;
+      text-align: center; border: 1px solid #003087; font-size: 10px; white-space: nowrap;
+    }
+    tbody td { padding: 4px 6px; border: 1px solid #ccd; font-size: 10px; }
+    tbody tr:nth-child(even) td { background: #f4f7ff; }
+    .td-right { text-align: right; }
+    .td-center { text-align: center; }
+    .td-num { text-align: right; color: #003087; font-weight: 600; }
+    .td-pct { text-align: right; font-weight: 700; }
+    .td-pct.ok { color: #065f46; }
+    .td-pct.par { color: #92400e; }
+    .td-pct.zero { color: #6b7280; }
+    tfoot td { background: #1e3a5f; color: #fff; padding: 5px 6px; font-weight: 700; border: 1px solid #1e3a5f; font-size: 10px; }
+    tfoot .td-num { color: #93c5fd; text-align: right; }
+
+    /* Rodapé */
+    .footer { margin-top: 14px; display: flex; justify-content: space-between; font-size: 9px; color: #888; border-top: 1px solid #ccd; padding-top: 6px; }
+
+    @media print {
+      button { display: none !important; }
+      body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Cabeçalho -->
+<div class="header">
+  <div class="header-logo">
+    {% if logo_bk_b64 %}
+    <img src="data:{{ logo_bk_tipo }};base64,{{ logo_bk_b64 }}" alt="BK">
+    {% else %}
+    <div style="font-size:13px;font-weight:800;color:#003087">BK</div>
+    {% endif %}
+  </div>
+  <div class="header-empresa">
+    <div class="empresa-nome">Barabach &amp; Knopp</div>
+    <div class="empresa-sub">Engenharia e Tecnologia</div>
+  </div>
+  <div class="header-titulo">
+    <div class="titulo">Boletim de Medição</div>
+    <div class="subtitulo">{{ boletim.nome }}</div>
+  </div>
+  <div class="header-cliente">
+    {% if logo_cliente_b64 %}
+    <img src="data:{{ logo_cliente_tipo }};base64,{{ logo_cliente_b64 }}" alt="Cliente">
+    {% else %}
+    <div class="cliente-nome">{% if boletim.cliente %}{{ boletim.cliente.nome }}{% endif %}</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Barra de informações -->
+<div class="info-bar">
+  <div class="info-cell" style="flex:2">
+    <div class="label">Projeto / Contrato</div>
+    <div class="value">{% if boletim.projeto %}{{ boletim.projeto.nome }}{% endif %}{% if boletim.contrato %} · {{ boletim.contrato }}{% endif %}</div>
+  </div>
+  <div class="info-cell">
+    <div class="label">Código Obra</div>
+    <div class="value">{{ boletim.codigo_obra|default:"—" }}</div>
+  </div>
+  <div class="info-cell">
+    <div class="label">Período de</div>
+    <div class="value">{{ periodo.data_inicio|date:"d/m/Y" }} a {{ periodo.data_fim|date:"d/m/Y" }}</div>
+  </div>
+  <div class="info-cell">
+    <div class="label">Boletim</div>
+    <div class="value blue">{{ periodo.label }}</div>
+  </div>
+  <div class="info-cell">
+    <div class="label">Valor da Medição</div>
+    <div class="value blue">R$ {{ total_periodo|floatformat:2 }}</div>
+  </div>
+</div>
+
+<!-- Tabela -->
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th style="width:30px">Item</th>
+        <th>Descrição do Item</th>
+        <th style="width:95px">Valor Total Item</th>
+        <th style="width:35px">Unid.</th>
+        <th style="width:60px">Qtde Total</th>
+        <th style="width:65px">Qtde Med.</th>
+        <th style="width:90px">Valor Unit.</th>
+        <th style="width:70px">Qtde Med. Acum.</th>
+        <th style="width:90px">Medição Acumulada</th>
+        <th style="width:90px">Valor Medido Período</th>
+        <th style="width:90px">Saldo a Medir</th>
+        <th style="width:60px">% Medido</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for linha in linhas %}
+      <tr>
+        <td class="td-center" style="color:#6b7280">{{ forloop.counter }}</td>
+        <td>{{ linha.item.descricao }}</td>
+        <td class="td-num">R$ {{ linha.valor_total_item|floatformat:2 }}</td>
+        <td class="td-center">{{ linha.item.unidade }}</td>
+        <td class="td-right">{{ linha.item.quantidade_total }}</td>
+        <td class="td-right" style="background:#f0fff4;font-weight:700;color:#065f46">{{ linha.qtd_medida|floatformat:3 }}</td>
+        <td class="td-num">R$ {{ linha.item.preco_unitario|floatformat:2 }}</td>
+        <td class="td-right">{{ linha.qtd_acum|floatformat:3 }}</td>
+        <td class="td-num">R$ {{ linha.valor_acum|floatformat:2 }}</td>
+        <td class="td-num" style="color:#1d4ed8">R$ {{ linha.valor_medido_periodo|floatformat:2 }}</td>
+        <td class="td-num" style="color:#b45309">R$ {{ linha.saldo|floatformat:2 }}</td>
+        <td class="td-pct {% if linha.pct >= 100 %}ok{% elif linha.pct > 0 %}par{% else %}zero{% endif %}">{{ linha.pct }}%</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="2" style="color:#93c5fd">TOTAL GERAL</td>
+        <td class="td-num">R$ {{ total_contrato|floatformat:2 }}</td>
+        <td colspan="4"></td>
+        <td></td>
+        <td class="td-num">R$ {{ total_acum|floatformat:2 }}</td>
+        <td class="td-num" style="color:#bfdbfe">R$ {{ total_periodo|floatformat:2 }}</td>
+        <td class="td-num" style="color:#fde68a">R$ {{ total_contrato|floatformat:2 }}</td>
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<!-- Rodapé -->
+<div class="footer">
+  <span>Barabach &amp; Knopp Engenharia e Tecnologia · {{ boletim.nome }}</span>
+  <span>{{ periodo.label }} · {{ periodo.data_inicio|date:"d/m/Y" }} a {{ periodo.data_fim|date:"d/m/Y" }}</span>
+  <span>Emitido em {% now "d/m/Y H:i" %}</span>
+</div>
+
+<!-- Botão imprimir (some ao imprimir) -->
+<div style="text-align:center;margin-top:16px">
+  <button onclick="window.print()" style="padding:10px 24px;background:#003087;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">🖨 Imprimir</button>
+  <button onclick="window.close()" style="padding:10px 24px;background:#6b7280;color:#fff;border:none;border-radius:8px;font-size:14px;margin-left:8px;cursor:pointer">✕ Fechar</button>
+</div>
+
+</body>
+</html>

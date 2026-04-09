@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>{{ boletim.nome }} — Medição Consolidada</title>
+  <style>
+    @page { size: A4 landscape; margin: 12mm 10mm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, Helvetica, sans-serif; font-size: 10px; color: #111; background: #fff; }
+
+    /* Cabeçalho — igual ao BM de período */
+    .header { display: flex; align-items: stretch; border: 1px solid #222; margin-bottom: 0; }
+    .header-logo { width: 110px; min-height: 56px; border-right: 1px solid #222; display: flex; align-items: center; justify-content: center; padding: 5px; }
+    .header-logo img { max-width: 100%; max-height: 46px; object-fit: contain; }
+    .header-empresa { flex: 1; border-right: 1px solid #222; padding: 5px 8px; display: flex; flex-direction: column; justify-content: center; }
+    .header-empresa .empresa-nome { font-size: 13px; font-weight: 800; color: #003087; }
+    .header-empresa .empresa-sub { font-size: 9px; color: #555; }
+    .header-titulo { flex: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid #222; padding: 5px 8px; }
+    .header-titulo .titulo { font-size: 15px; font-weight: 800; text-transform: uppercase; }
+    .header-titulo .subtitulo { font-size: 11px; font-weight: 600; color: #003087; margin-top: 2px; font-style: italic; }
+    .header-cliente { width: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 5px; }
+    .header-cliente img { max-width: 100%; max-height: 46px; object-fit: contain; }
+    .header-cliente .cliente-nome { font-size: 10px; font-weight: 700; text-align: center; }
+
+    /* Barra info */
+    .info-bar { display: flex; border: 1px solid #222; border-top: none; }
+    .info-cell { flex: 1; padding: 3px 7px; border-right: 1px solid #222; font-size: 9px; }
+    .info-cell:last-child { border-right: none; }
+    .info-cell .label { color: #555; font-size: 8px; text-transform: uppercase; }
+    .info-cell .value { font-weight: 700; font-size: 10px; }
+    .info-cell .value.blue { color: #003087; }
+
+    /* Tabela consolidada */
+    .table-wrap { margin-top: 10px; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 9px; }
+    thead th {
+      background: #003087; color: #fff; padding: 4px 5px;
+      text-align: center; border: 1px solid #003087; font-size: 9px; white-space: nowrap;
+    }
+    thead th.bm-col { background: #1d4ed8; }
+    tbody td { padding: 3px 5px; border: 1px solid #ccd; font-size: 9px; }
+    tbody tr:nth-child(even) td { background: #f4f7ff; }
+    .td-right { text-align: right; }
+    .td-center { text-align: center; }
+    .td-num { text-align: right; color: #003087; font-weight: 600; }
+    .td-pct { text-align: right; font-weight: 700; }
+    .td-pct.ok { color: #065f46; }
+    .td-pct.par { color: #92400e; }
+    .td-pct.zero { color: #9ca3af; }
+    tfoot td { background: #1e3a5f; color: #fff; padding: 4px 5px; font-weight: 700; border: 1px solid #1e3a5f; font-size: 9px; }
+    tfoot .td-num { color: #93c5fd; text-align: right; }
+    tfoot .td-bm { color: #bfdbfe; text-align: right; }
+
+    .footer { margin-top: 12px; display: flex; justify-content: space-between; font-size: 8px; color: #888; border-top: 1px solid #ccd; padding-top: 5px; }
+
+    @media print {
+      button { display: none !important; }
+      body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Cabeçalho -->
+<div class="header">
+  <div class="header-logo">
+    {% if logo_bk_b64 %}
+    <img src="data:{{ logo_bk_tipo }};base64,{{ logo_bk_b64 }}" alt="BK">
+    {% else %}
+    <div style="font-size:12px;font-weight:800;color:#003087">BK</div>
+    {% endif %}
+  </div>
+  <div class="header-empresa">
+    <div class="empresa-nome">Barabach &amp; Knopp</div>
+    <div class="empresa-sub">Engenharia e Tecnologia</div>
+  </div>
+  <div class="header-titulo">
+    <div class="titulo">Boletim de Medição</div>
+    <div class="subtitulo">{{ boletim.nome }} — Medição Consolidada</div>
+  </div>
+  <div class="header-cliente">
+    {% if logo_cliente_b64 %}
+    <img src="data:{{ logo_cliente_tipo }};base64,{{ logo_cliente_b64 }}" alt="Cliente">
+    {% else %}
+    <div class="cliente-nome">{% if boletim.cliente %}{{ boletim.cliente.nome }}{% endif %}</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Barra de informações -->
+<div class="info-bar">
+  <div class="info-cell" style="flex:2">
+    <div class="label">Projeto / Contrato</div>
+    <div class="value">{% if boletim.projeto %}{{ boletim.projeto.nome }}{% endif %}{% if boletim.contrato %} · {{ boletim.contrato }}{% endif %}</div>
+  </div>
+  <div class="info-cell">
+    <div class="label">Código Obra</div>
+    <div class="value">{{ boletim.codigo_obra|default:"—" }}</div>
+  </div>
+  <div class="info-cell">
+    <div class="label">Períodos</div>
+    <div class="value blue">{{ periodos|length }} BM(s)</div>
+  </div>
+  <div class="info-cell">
+    <div class="label">Emissão</div>
+    <div class="value">{% now "d/m/Y" %}</div>
+  </div>
+</div>
+
+<!-- Tabela consolidada -->
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th style="width:25px">Item</th>
+        <th style="min-width:180px; text-align:left">Descrição do Item</th>
+        <th style="width:90px">Valor Total Item</th>
+        <th style="width:30px">Un</th>
+        <th style="width:55px">Qtde Total</th>
+        <!-- Colunas BM dinâmicas -->
+        {% for p in periodos %}
+        <th class="bm-col" style="width:55px">Qtde {{ p.label }}</th>
+        {% endfor %}
+        <!-- Totais -->
+        <th style="width:70px;background:#065f46">Val. Medido Acum.</th>
+        <th style="width:70px;background:#92400e">Saldo a Medir</th>
+        <th style="width:55px;background:#7c3aed">% Medido</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for linha in linhas %}
+      <tr>
+        <td class="td-center" style="color:#9ca3af">{{ forloop.counter }}</td>
+        <td>{{ linha.item.descricao }}</td>
+        <td class="td-num">R$ {{ linha.valor_total|floatformat:2 }}</td>
+        <td class="td-center">{{ linha.item.unidade }}</td>
+        <td class="td-right">{{ linha.item.quantidade_total }}</td>
+        {% for qtd in linha.qtds_por_periodo %}
+        <td class="td-right {% if qtd > 0 %}td-num{% else %}td-center{% endif %}">
+          {% if qtd > 0 %}{{ qtd|floatformat:3 }}{% else %}—{% endif %}
+        </td>
+        {% endfor %}
+        <td class="td-num" style="background:#f0fff4;color:#065f46">R$ {{ linha.valor_acum|floatformat:2 }}</td>
+        <td class="td-num" style="background:#fffbeb;color:#b45309">R$ {{ linha.saldo|floatformat:2 }}</td>
+        <td class="td-pct {% if linha.pct >= 100 %}ok{% elif linha.pct > 0 %}par{% else %}zero{% endif %}" style="background:#faf5ff">{{ linha.pct }}%</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="99" style="text-align:center;padding:20px;color:#6b7280">Nenhum item cadastrado.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="2" style="color:#93c5fd">TOTAL GERAL</td>
+        <td class="td-num">
+          R$ {% with total=0 %}
+          {% for l in linhas %}{% if forloop.first %}{{ l.valor_total|floatformat:2 }}{% endif %}{% endfor %}
+          {% endwith %}
+          {# Calculado no backend via context se necessário; exibimos via JS abaixo #}
+        </td>
+        <td colspan="2"></td>
+        {% for p in periodos %}
+        <td class="td-bm">—</td>
+        {% endfor %}
+        <td class="td-num" style="color:#6ee7b7" id="tfoot_acum">—</td>
+        <td class="td-num" style="color:#fde68a" id="tfoot_saldo">—</td>
+        <td style="color:#e9d5ff" id="tfoot_pct">—</td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<!-- Rodapé -->
+<div class="footer">
+  <span>Barabach &amp; Knopp Engenharia e Tecnologia · {{ boletim.nome }}</span>
+  <span>Medição Consolidada · {{ periodos|length }} períodos</span>
+  <span>Emitido em {% now "d/m/Y H:i" %}</span>
+</div>
+
+<!-- Botões -->
+<div style="text-align:center;margin-top:14px">
+  <button onclick="window.print()" style="padding:10px 24px;background:#003087;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">🖨 Imprimir</button>
+  <button onclick="window.close()" style="padding:10px 24px;background:#6b7280;color:#fff;border:none;border-radius:8px;font-size:13px;margin-left:8px;cursor:pointer">✕ Fechar</button>
+</div>
+
+<script>
+// Calcula totais do rodapé via JS
+let sumAcum = 0, sumSaldo = 0, sumTotal = 0;
+document.querySelectorAll('tbody tr').forEach(tr => {
+  const cells = tr.querySelectorAll('td');
+  const n = cells.length;
+  // valor_acum está na penúltima-2, saldo penúltima-1
+  const acumCell = cells[n-3];
+  const saldoCell = cells[n-2];
+  const totalCell = cells[2];
+  if (acumCell) sumAcum += parseFloat(acumCell.textContent.replace('R$','').replace(/\./g,'').replace(',','.').trim()) || 0;
+  if (saldoCell) sumSaldo += parseFloat(saldoCell.textContent.replace('R$','').replace(/\./g,'').replace(',','.').trim()) || 0;
+  if (totalCell) sumTotal += parseFloat(totalCell.textContent.replace('R$','').replace(/\./g,'').replace(',','.').trim()) || 0;
+});
+const fmt = v => v.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+document.getElementById('tfoot_acum').textContent = 'R$ ' + fmt(sumAcum);
+document.getElementById('tfoot_saldo').textContent = 'R$ ' + fmt(sumSaldo);
+const pct = sumTotal > 0 ? (sumAcum / sumTotal * 100) : 0;
+document.getElementById('tfoot_pct').textContent = pct.toFixed(2) + '%';
+// Corrige total na 3ª coluna do tfoot
+document.querySelector('tfoot td:nth-child(3)').textContent = 'R$ ' + fmt(sumTotal);
+</script>
+</body>
+</html>
