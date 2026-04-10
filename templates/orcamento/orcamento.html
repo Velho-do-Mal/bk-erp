@@ -6,138 +6,129 @@
   <title>Módulo de Orçamento</title>
   <style>
     :root {
-      --bg: #0a1020; --surface: #101b31; --card: rgba(17,27,46,.97);
-      --border: #243552; --text: #e5eefc; --muted: #7a93b8;
-      --blue: #2563eb; --blue2: #1d4ed8; --blue-light: #eff6ff;
-      --green: #10b981; --red: #ef4444; --yellow: #f59e0b;
-      --grid-bg: #fff; --grid-text: #111827; --grid-border: #e2e8f0;
-      --grid-hover: #f0f7ff; --grid-head: #1e40af;
+      --bg:#0a1020; --surface:#101b31; --card:rgba(17,27,46,.97);
+      --border:#243552; --text:#e5eefc; --muted:#7a93b8;
+      --blue:#2563eb; --blue2:#1d4ed8;
+      --green:#10b981; --red:#ef4444;
     }
-    *, *::before, *::after { box-sizing: border-box; }
-    body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif;
-           background: linear-gradient(160deg, var(--bg) 0%, var(--surface) 100%);
-           color: var(--text); min-height: 100vh; }
-    .wrap { max-width: 1520px; margin: 0 auto; padding: 24px 20px; }
+    *,*::before,*::after{box-sizing:border-box}
+    body{margin:0;font-family:'Segoe UI',Arial,sans-serif;
+         background:linear-gradient(160deg,var(--bg) 0%,var(--surface) 100%);
+         color:var(--text);min-height:100vh}
+    .wrap{max-width:1520px;margin:0 auto;padding:24px 20px}
 
-    /* ── Topbar ── */
-    .topbar { display: flex; justify-content: space-between; align-items: flex-start;
-              gap: 12px; flex-wrap: wrap; margin-bottom: 22px; }
-    .topbar h1 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -.3px; }
-    .topbar .sub { font-size: 13px; color: var(--muted); margin-top: 3px; }
+    /* topbar */
+    .topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:22px}
+    .topbar h1{margin:0;font-size:26px;font-weight:800}
+    .topbar .sub{font-size:13px;color:var(--muted);margin-top:3px}
 
-    /* ── Buttons ── */
-    .btn { display: inline-flex; align-items: center; gap: 6px; border: 0;
-           border-radius: 8px; padding: 9px 16px; cursor: pointer; color: #fff;
-           font: 600 13px/1 inherit; text-decoration: none; transition: opacity .15s; }
-    .btn:hover { opacity: .85; }
-    .btn-primary  { background: var(--blue); }
-    .btn-success  { background: var(--green); }
-    .btn-danger   { background: var(--red); }
-    .btn-ghost    { background: #1e3252; color: var(--muted); }
-    .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 6px; }
-    .btn:disabled { opacity: .45; cursor: not-allowed; }
+    /* buttons */
+    .btn{display:inline-flex;align-items:center;gap:6px;border:0;border-radius:8px;
+         padding:9px 16px;cursor:pointer;color:#fff;font:600 13px/1 inherit;
+         text-decoration:none;transition:opacity .15s}
+    .btn:hover{opacity:.85}
+    .btn-success{background:var(--green)} .btn-danger{background:var(--red)}
+    .btn-ghost{background:#1e3252;color:var(--muted)}
+    .btn-sm{padding:5px 10px;font-size:12px;border-radius:6px}
+    .btn:disabled{opacity:.4;cursor:not-allowed}
 
-    /* ── Cards ── */
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px;
-            padding: 18px 20px; }
-    .card + .card { margin-top: 16px; }
-    .card-title { font-size: 15px; font-weight: 700; margin: 0 0 14px; color: #93c5fd; }
+    /* card */
+    .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px}
+    .card+.card{margin-top:16px}
+    .card-title{font-size:15px;font-weight:700;margin:0 0 14px;color:#93c5fd}
 
-    /* ── KPI row ── */
-    .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
-               margin-bottom: 16px; }
-    @media (max-width: 900px) { .kpi-row { grid-template-columns: repeat(2, 1fr); } }
-    .kpi { background: var(--card); border: 1px solid var(--border); border-radius: 12px;
-           padding: 14px 16px; }
-    .kpi .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
-    .kpi .val { font-size: 28px; font-weight: 800; margin-top: 6px; }
+    /* kpi */
+    .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+    @media(max-width:900px){.kpi-row{grid-template-columns:repeat(2,1fr)}}
+    .kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+    .kpi .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+    .kpi .val{font-size:28px;font-weight:800;margin-top:6px}
 
-    /* ── Two columns layout ── */
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
-    @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+    /* two col */
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+    @media(max-width:900px){.two-col{grid-template-columns:1fr}}
 
-    /* ── Form fields ── */
-    .field { margin-bottom: 10px; }
-    .field label { display: block; font-size: 11px; font-weight: 600; color: var(--muted);
-                   text-transform: uppercase; letter-spacing: .05em; margin-bottom: 5px; }
-    .field input, .field select {
-      width: 100%; padding: 9px 12px; border-radius: 8px;
-      border: 1px solid var(--border); background: #0c1528; color: var(--text);
-      font: inherit; font-size: 13px; outline: none; transition: border-color .15s;
-    }
-    .field input:focus, .field select:focus { border-color: var(--blue); }
-    .field input[readonly] { opacity: .6; cursor: default; }
-    .fields-row { display: grid; gap: 10px; }
-    .fields-row.col2 { grid-template-columns: 1fr 1fr; }
-    .fields-row.col3 { grid-template-columns: 1fr 1fr 1fr; }
+    /* fields */
+    .field{margin-bottom:10px}
+    .field label{display:block;font-size:11px;font-weight:600;color:var(--muted);
+                 text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+    .field input,.field select{width:100%;padding:9px 12px;border-radius:8px;
+      border:1px solid var(--border);background:#0c1528;color:var(--text);
+      font:inherit;font-size:13px;outline:none;transition:border-color .15s}
+    .field input:focus,.field select:focus{border-color:var(--blue)}
+    .field input[readonly]{opacity:.6;cursor:default}
+    .fields-row{display:grid;gap:10px}
+    .fields-row.col2{grid-template-columns:1fr 1fr}
 
-    /* ── Totals ── */
-    .totals-row { display: flex; gap: 12px; flex-wrap: wrap; }
-    .total-box { flex: 1 1 180px; background: #0c1528; border: 1px solid var(--border);
-                 border-radius: 10px; padding: 12px 14px; }
-    .total-box .t { font-size: 11px; text-transform: uppercase; color: var(--muted); letter-spacing: .05em; }
-    .total-box .v { font-size: 22px; font-weight: 800; margin-top: 6px; }
+    /* totals */
+    .totals-row{display:flex;gap:12px;flex-wrap:wrap}
+    .total-box{flex:1 1 180px;background:#0c1528;border:1px solid var(--border);
+               border-radius:10px;padding:12px 14px}
+    .total-box .t{font-size:11px;text-transform:uppercase;color:var(--muted);letter-spacing:.05em}
+    .total-box .v{font-size:22px;font-weight:800;margin-top:6px}
 
-    /* ── Saved items table ── */
-    .tbl-wrap { overflow: auto; border: 1px solid var(--border); border-radius: 10px;
-                margin-bottom: 16px; }
-    .tbl { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 640px; }
-    .tbl thead th { background: #1a2c4a; color: #93c5fd; padding: 9px 12px;
-                    border-bottom: 1px solid var(--border); text-align: left;
-                    font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
-                    white-space: nowrap; position: sticky; top: 0; z-index: 1; }
-    .tbl tbody td { padding: 8px 12px; border-bottom: 1px solid #192340;
-                    color: #d1dff5; vertical-align: middle; }
-    .tbl tbody tr:last-child td { border-bottom: 0; }
-    .tbl tbody tr:hover td { background: #132035; }
-    .tbl .num { text-align: right; font-variant-numeric: tabular-nums; }
-    .tbl .green { color: #34d399; font-weight: 700; }
-    .tbl .empty-row td { text-align: center; color: var(--muted); padding: 24px; font-size: 13px; }
+    /* saved table */
+    .tbl-wrap{overflow:auto;border:1px solid var(--border);border-radius:10px;margin-bottom:16px}
+    .tbl{width:100%;border-collapse:collapse;font-size:13px;min-width:600px}
+    .tbl thead th{background:#1a2c4a;color:#93c5fd;padding:9px 12px;
+                  border-bottom:1px solid var(--border);text-align:left;
+                  font-size:11px;text-transform:uppercase;letter-spacing:.05em;
+                  white-space:nowrap;position:sticky;top:0;z-index:1}
+    .tbl tbody td{padding:8px 12px;border-bottom:1px solid #192340;color:#d1dff5;vertical-align:middle}
+    .tbl tbody tr:last-child td{border-bottom:0}
+    .tbl tbody tr:hover td{background:#132035}
+    .tbl .num{text-align:right;font-variant-numeric:tabular-nums}
+    .tbl .green{color:#34d399;font-weight:700}
+    .tbl .empty-row td{text-align:center;color:var(--muted);padding:24px;font-size:13px}
 
-    /* ── Autocomplete ── */
-    .ac-wrap { position: relative; }
-    .ac-input { width: 100%; padding: 10px 14px; border-radius: 8px;
-                border: 1px solid var(--border); background: #0c1528; color: var(--text);
-                font: 13px/1.4 inherit; outline: none; transition: border-color .15s; }
-    .ac-input:focus { border-color: var(--blue); }
-    .ac-dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 100;
-                   background: #0f1c30; border: 1px solid var(--border); border-radius: 10px;
-                   max-height: 260px; overflow-y: auto; box-shadow: 0 8px 30px rgba(0,0,0,.5);
-                   display: none; }
-    .ac-dropdown.open { display: block; }
-    .ac-item { padding: 9px 14px; cursor: pointer; border-bottom: 1px solid #1a2c4a;
-               transition: background .1s; }
-    .ac-item:last-child { border-bottom: 0; }
-    .ac-item:hover, .ac-item.focused { background: #1a3254; }
-    .ac-item .ac-nome { font-size: 13px; font-weight: 600; color: #e2eeff; }
-    .ac-item .ac-detalhe { font-size: 11px; color: var(--muted); margin-top: 2px; }
-    .ac-empty { padding: 18px; text-align: center; color: var(--muted); font-size: 13px; }
+    /* add panel */
+    .add-panel{background:#0c1528;border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+    .add-panel .ap-title{font-size:11px;font-weight:700;text-transform:uppercase;
+                         letter-spacing:.06em;color:var(--muted);margin-bottom:12px}
+    .add-row{display:grid;grid-template-columns:2.5fr 100px 90px 130px 140px auto;gap:8px;align-items:end}
+    @media(max-width:1100px){.add-row{grid-template-columns:1fr 1fr}}
+    .af-lbl{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:4px}
+    .af-input{width:100%;padding:8px 10px;border-radius:7px;border:1px solid var(--border);
+              background:#071020;color:var(--text);font:13px inherit;outline:none;transition:border-color .15s}
+    .af-input:focus{border-color:var(--blue)}
+    .af-input[readonly]{opacity:.55;cursor:default}
+    .val-preview{font-size:13px;font-weight:700;color:#34d399;white-space:nowrap;
+                 padding:2px 0;text-align:right}
 
-    /* ── Add form panel ── */
-    .add-panel { background: #0c1528; border: 1px solid var(--border);
-                 border-radius: 10px; padding: 14px 16px; }
-    .add-panel .ap-title { font-size: 12px; font-weight: 700; text-transform: uppercase;
-                           letter-spacing: .06em; color: var(--muted); margin-bottom: 10px; }
-    .add-fields { display: grid; grid-template-columns: 2fr 90px 90px 130px 130px auto;
-                  gap: 8px; align-items: end; }
-    @media (max-width: 1200px) { .add-fields { grid-template-columns: 1fr 1fr; } }
-    .add-fields .af-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; font-weight: 600; }
-    .add-fields input, .add-fields .ac-input {
-      padding: 8px 10px; border-radius: 7px; border: 1px solid var(--border);
-      background: #071020; color: var(--text); font: 13px inherit; outline: none; width: 100%;
-    }
-    .add-fields input:focus, .add-fields .ac-input:focus { border-color: var(--blue); }
-    .add-fields input[readonly] { opacity: .55; cursor: default; }
-    .selected-badge { display: inline-flex; align-items: center; gap: 6px;
-                      background: #1e3a5f; border: 1px solid #2a4f7a;
-                      border-radius: 6px; padding: 4px 10px; font-size: 12px;
-                      color: #93c5fd; max-width: 100%; overflow: hidden; }
-    .selected-badge .badge-x { cursor: pointer; color: var(--red); font-weight: 700;
-                                margin-left: 4px; }
-    .val-total-preview { font-size: 13px; font-weight: 700; color: #34d399;
-                         text-align: right; align-self: center; padding: 0 4px;
-                         white-space: nowrap; }
-    .divider { height: 1px; background: var(--border); margin: 14px 0; }
+    /* ══ Searchable Select ══════════════════════════════════════════════════ */
+    .ss-wrap{position:relative;user-select:none}
+    .ss-trigger{display:flex;align-items:center;justify-content:space-between;
+                width:100%;padding:8px 10px;border-radius:7px;
+                border:1px solid var(--border);background:#071020;
+                color:var(--text);font:13px inherit;cursor:pointer;
+                transition:border-color .15s;gap:6px}
+    .ss-trigger:focus,.ss-trigger.open{border-color:var(--blue);outline:none}
+    .ss-trigger .ss-val{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+                        text-align:left;color:#d1dff5}
+    .ss-trigger .ss-val.placeholder{color:var(--muted)}
+    .ss-trigger .ss-arrow{flex-shrink:0;font-size:10px;color:var(--muted);transition:transform .15s}
+    .ss-trigger.open .ss-arrow{transform:rotate(180deg)}
+
+    .ss-panel{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:200;
+              background:#0f1c30;border:1px solid var(--border);border-radius:10px;
+              box-shadow:0 10px 30px rgba(0,0,0,.6);display:none;overflow:hidden}
+    .ss-panel.open{display:block}
+
+    .ss-search-wrap{padding:8px 10px;border-bottom:1px solid var(--border)}
+    .ss-search{width:100%;padding:7px 10px;border-radius:6px;
+               border:1px solid var(--border);background:#071020;
+               color:var(--text);font:13px inherit;outline:none}
+    .ss-search:focus{border-color:var(--blue)}
+    .ss-search::placeholder{color:var(--muted)}
+
+    .ss-list{max-height:220px;overflow-y:auto}
+    .ss-opt{padding:8px 12px;cursor:pointer;border-bottom:1px solid #1a2c4a;transition:background .1s}
+    .ss-opt:last-child{border-bottom:0}
+    .ss-opt:hover,.ss-opt.focused{background:#1a3254}
+    .ss-opt .opt-nome{font-size:13px;font-weight:600;color:#e2eeff}
+    .ss-opt .opt-detalhe{font-size:11px;color:var(--muted);margin-top:2px}
+    .ss-opt.selected{background:#1e3a5f}
+    .ss-empty{padding:16px;text-align:center;color:var(--muted);font-size:13px}
   </style>
 </head>
 <body>
@@ -151,9 +142,7 @@
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       {% if orcamento %}
-      <a class="btn btn-ghost" href="{% url 'orcamento:exportar_excel' orcamento.id %}">
-        ↓ Exportar CSV
-      </a>
+      <a class="btn btn-ghost" href="{% url 'orcamento:exportar_excel' orcamento.id %}">↓ Exportar CSV</a>
       {% endif %}
       <a class="btn btn-ghost" href="javascript:history.back()">← Voltar</a>
     </div>
@@ -164,9 +153,7 @@
     <div class="kpi"><div class="lbl">Obras</div><div class="val">{{ obras|length }}</div></div>
     <div class="kpi"><div class="lbl">Produtos</div><div class="val">{{ produtos|length }}</div></div>
     <div class="kpi"><div class="lbl">Serviços</div><div class="val">{{ servicos|length }}</div></div>
-    <div class="kpi"><div class="lbl">Total geral</div>
-      <div class="val" id="kpi-total">R$ {{ totais.total_geral|floatformat:2 }}</div>
-    </div>
+    <div class="kpi"><div class="lbl">Total geral</div><div class="val" id="kpi-total">R$ {{ totais.total_geral|floatformat:2 }}</div></div>
   </div>
 
   <!-- Obra + Totais -->
@@ -197,56 +184,38 @@
       <div class="fields-row col2">
         <div class="field">
           <label>Nome da obra</label>
-          <input type="text" id="obra_nome" readonly
-            value="{% if orcamento and orcamento.obra %}{{ orcamento.obra.nome }}{% endif %}">
+          <input type="text" id="obra_nome" readonly value="{% if orcamento and orcamento.obra %}{{ orcamento.obra.nome }}{% endif %}">
         </div>
         <div class="field">
           <label>Nome do orçamento</label>
-          <input type="text" id="nome_orcamento"
-            value="{% if orcamento %}{{ orcamento.nome }}{% else %}Orçamento{% endif %}">
+          <input type="text" id="nome_orcamento" value="{% if orcamento %}{{ orcamento.nome }}{% else %}Orçamento{% endif %}">
         </div>
       </div>
-      <button type="button" class="btn btn-success" onclick="salvarObra()">
-        ✔ Salvar obra / orçamento
-      </button>
+      <button type="button" class="btn btn-success" onclick="salvarObra()">✔ Salvar obra / orçamento</button>
     </div>
 
     <div class="card">
       <div class="card-title">Totais do orçamento</div>
       <div class="totals-row">
-        <div class="total-box">
-          <div class="t">Materiais</div>
-          <div class="v" id="tot-mat">R$ {{ totais.total_materiais|floatformat:2 }}</div>
-        </div>
-        <div class="total-box">
-          <div class="t">Serviços</div>
-          <div class="v" id="tot-svc">R$ {{ totais.total_servicos|floatformat:2 }}</div>
-        </div>
-        <div class="total-box">
-          <div class="t">Total geral</div>
-          <div class="v" id="tot-geral">R$ {{ totais.total_geral|floatformat:2 }}</div>
-        </div>
+        <div class="total-box"><div class="t">Materiais</div><div class="v" id="tot-mat">R$ {{ totais.total_materiais|floatformat:2 }}</div></div>
+        <div class="total-box"><div class="t">Serviços</div><div class="v" id="tot-svc">R$ {{ totais.total_servicos|floatformat:2 }}</div></div>
+        <div class="total-box"><div class="t">Total geral</div><div class="v" id="tot-geral">R$ {{ totais.total_geral|floatformat:2 }}</div></div>
       </div>
     </div>
   </div>
 
   {% if orcamento %}
-  <!-- ═══════════════ MATERIAIS ═══════════════ -->
+
+  <!-- ══════════ MATERIAIS ══════════ -->
   <div class="card">
     <div class="card-title">📦 Materiais / Produtos</div>
-
-    <!-- Tabela de itens salvos -->
     <div class="tbl-wrap">
       <table class="tbl">
         <thead>
           <tr>
-            <th>Código</th>
-            <th>Descrição</th>
-            <th>Unidade</th>
-            <th class="num">Qtde</th>
-            <th class="num">V. Unit.</th>
-            <th class="num">V. Total</th>
-            <th style="width:50px"></th>
+            <th>Código</th><th>Descrição</th><th>Unidade</th>
+            <th class="num">Qtde</th><th class="num">V. Unit.</th>
+            <th class="num">V. Total</th><th style="width:50px"></th>
           </tr>
         </thead>
         <tbody id="mat-tbody">
@@ -258,85 +227,77 @@
             <td class="num">{{ item.quantidade }}</td>
             <td class="num">R$ {{ item.valor_unitario|floatformat:2 }}</td>
             <td class="num green">R$ {{ item.valor_total|floatformat:2 }}</td>
-            <td style="text-align:center">
-              <button class="btn btn-danger btn-sm" onclick="excluirMat({{ item.id }})">✕</button>
-            </td>
+            <td style="text-align:center"><button class="btn btn-danger btn-sm" onclick="excluirMat({{ item.id }})">✕</button></td>
           </tr>
           {% empty %}
-          <tr class="empty-row" id="mat-empty">
-            <td colspan="7">Nenhum material lançado. Adicione abaixo.</td>
-          </tr>
+          <tr class="empty-row" id="mat-empty"><td colspan="7">Nenhum material lançado. Adicione abaixo.</td></tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
 
-    <!-- Formulário de adição -->
     <div class="add-panel">
       <div class="ap-title">Adicionar material</div>
-      <div class="add-fields" id="mat-form">
-        <!-- Busca autocomplete -->
+      <div class="add-row">
+        <!-- Lista suspensa pesquisável -->
         <div>
-          <div class="af-label">Buscar produto</div>
-          <div class="ac-wrap" id="mat-ac-wrap">
-            <input class="ac-input" id="mat-search" type="text"
-              placeholder="Digite nome ou código..."
-              autocomplete="off"
-              oninput="acSearch('mat')"
-              onkeydown="acKeydown(event,'mat')">
-            <div class="ac-dropdown" id="mat-dropdown"></div>
+          <div class="af-lbl">Produto / Material</div>
+          <div class="ss-wrap" id="ss-mat">
+            <button type="button" class="ss-trigger" id="ss-mat-trigger" onclick="ssToggle('mat')">
+              <span class="ss-val placeholder" id="ss-mat-val">Selecione um produto...</span>
+              <span class="ss-arrow">▼</span>
+            </button>
+            <div class="ss-panel" id="ss-mat-panel">
+              <div class="ss-search-wrap">
+                <input class="ss-search" id="ss-mat-search" type="text"
+                  placeholder="🔍 Filtrar por nome ou código..."
+                  oninput="ssFilter('mat')"
+                  onkeydown="ssKeydown(event,'mat')">
+              </div>
+              <div class="ss-list" id="ss-mat-list"></div>
+            </div>
           </div>
-          <div id="mat-selected" style="margin-top:6px;display:none"></div>
         </div>
         <!-- Código -->
         <div>
-          <div class="af-label">Código</div>
-          <input type="text" id="mat-codigo" readonly placeholder="—">
+          <div class="af-lbl">Código</div>
+          <input class="af-input" type="text" id="mat-codigo" readonly placeholder="—">
         </div>
         <!-- Unidade -->
         <div>
-          <div class="af-label">Unidade</div>
-          <input type="text" id="mat-unidade" readonly placeholder="—">
+          <div class="af-lbl">Unidade</div>
+          <input class="af-input" type="text" id="mat-unidade" readonly placeholder="—">
         </div>
         <!-- Quantidade -->
         <div>
-          <div class="af-label">Quantidade</div>
-          <input type="number" id="mat-qtd" min="0.001" step="0.001" value="1"
-            oninput="calcPreview('mat')">
+          <div class="af-lbl">Quantidade</div>
+          <input class="af-input" type="number" id="mat-qtd" min="0.001" step="0.001" value="1" oninput="calcPreview('mat')">
         </div>
         <!-- Valor unitário -->
         <div>
-          <div class="af-label">V. Unit. (R$)</div>
-          <input type="number" id="mat-vunit" min="0" step="0.01" value="0"
-            oninput="calcPreview('mat')">
+          <div class="af-lbl">V. Unit. (R$)</div>
+          <input class="af-input" type="number" id="mat-vunit" min="0" step="0.01" value="0" oninput="calcPreview('mat')">
         </div>
-        <!-- Total + Botão -->
-        <div style="display:flex;flex-direction:column;gap:4px">
-          <div class="af-label">Total</div>
-          <span class="val-total-preview" id="mat-preview">R$ 0,00</span>
-          <button class="btn btn-success btn-sm" id="mat-btn-add" onclick="adicionarItem('mat')"
-            style="margin-top:4px" disabled>+ Adicionar</button>
+        <!-- Total + botão -->
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div class="af-lbl">Total</div>
+          <span class="val-preview" id="mat-preview">R$ 0,00</span>
+          <button class="btn btn-success btn-sm" id="mat-btn-add" onclick="adicionarItem('mat')" disabled>+ Adicionar</button>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ═══════════════ SERVIÇOS ═══════════════ -->
+  <!-- ══════════ SERVIÇOS ══════════ -->
   <div class="card">
     <div class="card-title">🔧 Serviços</div>
-
-    <!-- Tabela de itens salvos -->
     <div class="tbl-wrap">
       <table class="tbl">
         <thead>
           <tr>
-            <th>Código</th>
-            <th>Descrição</th>
-            <th>Unidade</th>
-            <th class="num">Qtde</th>
-            <th class="num">V. Unit.</th>
-            <th class="num">V. Total</th>
-            <th style="width:50px"></th>
+            <th>Código</th><th>Descrição</th><th>Unidade</th>
+            <th class="num">Qtde</th><th class="num">V. Unit.</th>
+            <th class="num">V. Total</th><th style="width:50px"></th>
           </tr>
         </thead>
         <tbody id="svc-tbody">
@@ -348,58 +309,56 @@
             <td class="num">{{ item.quantidade }}</td>
             <td class="num">R$ {{ item.valor_unitario|floatformat:2 }}</td>
             <td class="num green">R$ {{ item.valor_total|floatformat:2 }}</td>
-            <td style="text-align:center">
-              <button class="btn btn-danger btn-sm" onclick="excluirSvc({{ item.id }})">✕</button>
-            </td>
+            <td style="text-align:center"><button class="btn btn-danger btn-sm" onclick="excluirSvc({{ item.id }})">✕</button></td>
           </tr>
           {% empty %}
-          <tr class="empty-row" id="svc-empty">
-            <td colspan="7">Nenhum serviço lançado. Adicione abaixo.</td>
-          </tr>
+          <tr class="empty-row" id="svc-empty"><td colspan="7">Nenhum serviço lançado. Adicione abaixo.</td></tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
 
-    <!-- Formulário de adição -->
     <div class="add-panel">
       <div class="ap-title">Adicionar serviço</div>
-      <div class="add-fields" id="svc-form">
+      <div class="add-row">
         <div>
-          <div class="af-label">Buscar serviço</div>
-          <div class="ac-wrap" id="svc-ac-wrap">
-            <input class="ac-input" id="svc-search" type="text"
-              placeholder="Digite nome ou código..."
-              autocomplete="off"
-              oninput="acSearch('svc')"
-              onkeydown="acKeydown(event,'svc')">
-            <div class="ac-dropdown" id="svc-dropdown"></div>
+          <div class="af-lbl">Serviço</div>
+          <div class="ss-wrap" id="ss-svc">
+            <button type="button" class="ss-trigger" id="ss-svc-trigger" onclick="ssToggle('svc')">
+              <span class="ss-val placeholder" id="ss-svc-val">Selecione um serviço...</span>
+              <span class="ss-arrow">▼</span>
+            </button>
+            <div class="ss-panel" id="ss-svc-panel">
+              <div class="ss-search-wrap">
+                <input class="ss-search" id="ss-svc-search" type="text"
+                  placeholder="🔍 Filtrar por nome ou código..."
+                  oninput="ssFilter('svc')"
+                  onkeydown="ssKeydown(event,'svc')">
+              </div>
+              <div class="ss-list" id="ss-svc-list"></div>
+            </div>
           </div>
-          <div id="svc-selected" style="margin-top:6px;display:none"></div>
         </div>
         <div>
-          <div class="af-label">Código</div>
-          <input type="text" id="svc-codigo" readonly placeholder="—">
+          <div class="af-lbl">Código</div>
+          <input class="af-input" type="text" id="svc-codigo" readonly placeholder="—">
         </div>
         <div>
-          <div class="af-label">Unidade</div>
-          <input type="text" id="svc-unidade" readonly placeholder="—">
+          <div class="af-lbl">Unidade</div>
+          <input class="af-input" type="text" id="svc-unidade" readonly placeholder="—">
         </div>
         <div>
-          <div class="af-label">Quantidade</div>
-          <input type="number" id="svc-qtd" min="0.001" step="0.001" value="1"
-            oninput="calcPreview('svc')">
+          <div class="af-lbl">Quantidade</div>
+          <input class="af-input" type="number" id="svc-qtd" min="0.001" step="0.001" value="1" oninput="calcPreview('svc')">
         </div>
         <div>
-          <div class="af-label">V. Unit. (R$)</div>
-          <input type="number" id="svc-vunit" min="0" step="0.01" value="0"
-            oninput="calcPreview('svc')">
+          <div class="af-lbl">V. Unit. (R$)</div>
+          <input class="af-input" type="number" id="svc-vunit" min="0" step="0.01" value="0" oninput="calcPreview('svc')">
         </div>
-        <div style="display:flex;flex-direction:column;gap:4px">
-          <div class="af-label">Total</div>
-          <span class="val-total-preview" id="svc-preview">R$ 0,00</span>
-          <button class="btn btn-success btn-sm" id="svc-btn-add" onclick="adicionarItem('svc')"
-            style="margin-top:4px" disabled>+ Adicionar</button>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div class="af-lbl">Total</div>
+          <span class="val-preview" id="svc-preview">R$ 0,00</span>
+          <button class="btn btn-success btn-sm" id="svc-btn-add" onclick="adicionarItem('svc')" disabled>+ Adicionar</button>
         </div>
       </div>
     </div>
@@ -417,24 +376,22 @@ const ORCAMENTO_ID = {% if orcamento %}{{ orcamento.id }}{% else %}null{% endif 
 const OBRA_ID      = {% if orcamento and orcamento.obra %}{{ orcamento.obra.id }}{% else %}null{% endif %};
 const CSRF         = '{{ csrf_token }}';
 
-// ── Dados de produto/serviço vindos do módulo Serviços/Produtos ──────────────
-const produtosData = [
-  {% for p in produtos %}{id:{{ p.id }},nome:"{{ p.nome|escapejs }}",codigo:"{{ p.codigo|default:''|escapejs }}",unidade:"{{ p.unidade|default:'un'|escapejs }}",preco:{{ p.preco_unitario|default:0 }}}{% if not forloop.last %},{% endif %}{% endfor %}
-];
-const servicosData = [
-  {% for s in servicos %}{id:{{ s.id }},nome:"{{ s.nome|escapejs }}",codigo:"{{ s.codigo|default:''|escapejs }}",unidade:"{{ s.unidade|default:'un'|escapejs }}",preco:{{ s.preco_unitario|default:0 }}}{% if not forloop.last %},{% endif %}{% endfor %}
-];
+// Dados do módulo Serviços/Produtos
+const DADOS = {
+  mat: [{% for p in produtos %}{id:{{ p.id }},nome:"{{ p.nome|escapejs }}",codigo:"{{ p.codigo|default:''|escapejs }}",unidade:"{{ p.unidade|default:'un'|escapejs }}",preco:{{ p.preco_unitario|default:0 }}}{% if not forloop.last %},{% endif %}{% endfor %}],
+  svc: [{% for s in servicos %}{id:{{ s.id }},nome:"{{ s.nome|escapejs }}",codigo:"{{ s.codigo|default:''|escapejs }}",unidade:"{{ s.unidade|default:'un'|escapejs }}",preco:{{ s.preco_unitario|default:0 }}}{% if not forloop.last %},{% endif %}{% endfor %}]
+};
 
-// Estado do autocomplete
-const ac = {
-  mat: { data: produtosData, selectedId: null, focused: -1 },
-  svc: { data: servicosData, selectedId: null, focused: -1 },
+// Estado por tipo
+const SS = {
+  mat: { selectedId: null, focused: -1, open: false },
+  svc: { selectedId: null, focused: -1, open: false }
 };
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function h(v){ return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function brl(v){ return 'R$ ' + Number(v||0).toFixed(2).replace('.',','); }
-function post(url, body){ return fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify(body)}).then(r=>r.json()); }
+function post(url,body){ return fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify(body)}).then(r=>r.json()); }
 
 // ── Obra ─────────────────────────────────────────────────────────────────────
 function atualizarNomeObra(){
@@ -444,12 +401,12 @@ function atualizarNomeObra(){
 function salvarObra(){
   post("{% url 'orcamento:salvar_obra' %}",{
     id: OBRA_ID,
-    cliente_id: document.getElementById('cliente_id').value || null,
-    projeto_id: document.getElementById('projeto_id').value || null,
+    cliente_id: document.getElementById('cliente_id').value||null,
+    projeto_id: document.getElementById('projeto_id').value||null,
     nome: document.getElementById('obra_nome').value,
     nome_orcamento: document.getElementById('nome_orcamento').value
   }).then(d=>{
-    if(d.ok) window.location.href = "{% url 'orcamento:dashboard' %}?orcamento_id=" + d.orcamento.id;
+    if(d.ok) window.location.href="{% url 'orcamento:dashboard' %}?orcamento_id="+d.orcamento.id;
     else alert(d.erro||'Erro ao salvar.');
   });
 }
@@ -463,155 +420,160 @@ function atualizarTotais(t){
   document.getElementById('kpi-total').textContent = brl(t.total_geral);
 }
 
-// ── Autocomplete ─────────────────────────────────────────────────────────────
-function acSearch(tipo){
-  const state   = ac[tipo];
-  const input   = document.getElementById(tipo+'-search');
-  const dd      = document.getElementById(tipo+'-dropdown');
-  const q       = input.value.trim().toLowerCase();
+// ══ Searchable Select ════════════════════════════════════════════════════════
 
-  state.focused = -1;
-
-  // Se já tem selecionado, limpa
-  if(state.selectedId && input.value !== input.dataset.selectedNome){
-    acClear(tipo);
-  }
-
+function ssRenderList(tipo, term){
+  const q   = (term||'').trim().toLowerCase();
+  const all = DADOS[tipo];
   const matches = q
-    ? state.data.filter(i => i.nome.toLowerCase().includes(q) || (i.codigo||'').toLowerCase().includes(q))
-    : state.data.slice(0, 50);
+    ? all.filter(i => i.nome.toLowerCase().includes(q) || (i.codigo||'').toLowerCase().includes(q))
+    : all;
 
+  const list = document.getElementById('ss-'+tipo+'-list');
   if(!matches.length){
-    dd.innerHTML = '<div class="ac-empty">Nenhum resultado para "'+h(q)+'".</div>';
-  } else {
-    dd.innerHTML = matches.slice(0,60).map((item,idx) =>
-      `<div class="ac-item" data-id="${item.id}" data-idx="${idx}"
-            onmousedown="acSelect('${tipo}',${item.id})">
-         <div class="ac-nome">${h(item.nome)}</div>
-         <div class="ac-detalhe">Cód: ${h(item.codigo||'—')} &nbsp;|&nbsp; ${h(item.unidade||'un')} &nbsp;|&nbsp; ${brl(item.preco)}</div>
-       </div>`
-    ).join('');
+    list.innerHTML = `<div class="ss-empty">Nenhum resultado${q?' para "'+h(q)+'"':''}.</div>`;
+    return;
   }
-  dd.classList.add('open');
+  const sel = SS[tipo].selectedId;
+  list.innerHTML = matches.slice(0,80).map((item,idx) =>
+    `<div class="ss-opt${item.id===sel?' selected':''}" data-id="${item.id}" data-idx="${idx}"
+          onmousedown="ssSelect('${tipo}',${item.id})">
+       <div class="opt-nome">${h(item.nome)}</div>
+       <div class="opt-detalhe">Cód: ${h(item.codigo||'—')} &nbsp;·&nbsp; ${h(item.unidade||'un')} &nbsp;·&nbsp; ${brl(item.preco)}</div>
+     </div>`
+  ).join('');
+  SS[tipo].focused = -1;
 }
 
-function acSelect(tipo, id){
-  const state = ac[tipo];
-  const item  = state.data.find(i => i.id === id);
-  if(!item) return;
+function ssToggle(tipo){
+  const isOpen = SS[tipo].open;
+  // Fecha todos
+  ['mat','svc'].forEach(t => ssClose(t));
+  if(!isOpen) ssOpen(tipo);
+}
 
-  state.selectedId = id;
+function ssOpen(tipo){
+  SS[tipo].open = true;
+  document.getElementById('ss-'+tipo+'-panel').classList.add('open');
+  document.getElementById('ss-'+tipo+'-trigger').classList.add('open');
+  // Renderiza lista e foca campo de busca
+  document.getElementById('ss-'+tipo+'-search').value = '';
+  ssRenderList(tipo, '');
+  setTimeout(()=>{ document.getElementById('ss-'+tipo+'-search').focus(); }, 30);
+}
+
+function ssClose(tipo){
+  SS[tipo].open = false;
+  SS[tipo].focused = -1;
+  document.getElementById('ss-'+tipo+'-panel').classList.remove('open');
+  document.getElementById('ss-'+tipo+'-trigger').classList.remove('open');
+}
+
+function ssFilter(tipo){
+  const term = document.getElementById('ss-'+tipo+'-search').value;
+  ssRenderList(tipo, term);
+}
+
+function ssSelect(tipo, id){
+  const item = DADOS[tipo].find(i => i.id===id);
+  if(!item) return;
+  SS[tipo].selectedId = id;
+
+  // Atualiza trigger
+  const valEl = document.getElementById('ss-'+tipo+'-val');
+  valEl.textContent = item.nome;
+  valEl.classList.remove('placeholder');
 
   // Preenche campos
-  const inp = document.getElementById(tipo+'-search');
-  inp.value = item.nome;
-  inp.dataset.selectedNome = item.nome;
-  document.getElementById(tipo+'-codigo').value  = item.codigo || '';
-  document.getElementById(tipo+'-unidade').value = item.unidade || 'un';
-  document.getElementById(tipo+'-vunit').value   = item.preco || 0;
+  document.getElementById(tipo+'-codigo').value  = item.codigo||'';
+  document.getElementById(tipo+'-unidade').value = item.unidade||'un';
+  document.getElementById(tipo+'-vunit').value   = item.preco||0;
   calcPreview(tipo);
-
-  // Mostra badge de seleção
-  const badge = document.getElementById(tipo+'-selected');
-  badge.style.display = 'block';
-  badge.innerHTML = `<span class="selected-badge">
-    <strong>${h(item.nome)}</strong>
-    <span style="color:var(--muted)">| ${h(item.codigo||'s/cód')} | ${h(item.unidade||'un')}</span>
-    <span class="badge-x" onclick="acClear('${tipo}')">✕</span>
-  </span>`;
 
   // Habilita botão
   document.getElementById(tipo+'-btn-add').disabled = false;
 
-  // Fecha dropdown
-  document.getElementById(tipo+'-dropdown').classList.remove('open');
+  ssClose(tipo);
 }
 
-function acClear(tipo){
-  ac[tipo].selectedId = null;
-  ac[tipo].focused    = -1;
-  const inp = document.getElementById(tipo+'-search');
-  inp.value = '';
-  delete inp.dataset.selectedNome;
+function ssClear(tipo){
+  SS[tipo].selectedId = null;
+  const valEl = document.getElementById('ss-'+tipo+'-val');
+  valEl.textContent = tipo==='mat' ? 'Selecione um produto...' : 'Selecione um serviço...';
+  valEl.classList.add('placeholder');
   document.getElementById(tipo+'-codigo').value  = '';
   document.getElementById(tipo+'-unidade').value = '';
   document.getElementById(tipo+'-vunit').value   = 0;
-  document.getElementById(tipo+'-selected').style.display = 'none';
   document.getElementById(tipo+'-btn-add').disabled = true;
   calcPreview(tipo);
-  document.getElementById(tipo+'-dropdown').classList.remove('open');
 }
 
-function acKeydown(e, tipo){
-  const dd    = document.getElementById(tipo+'-dropdown');
-  const items = dd.querySelectorAll('.ac-item');
-  const state = ac[tipo];
-  if(e.key === 'ArrowDown'){
+function ssKeydown(e, tipo){
+  const list = document.getElementById('ss-'+tipo+'-list');
+  const opts = list.querySelectorAll('.ss-opt');
+  const st   = SS[tipo];
+  if(e.key==='ArrowDown'){
     e.preventDefault();
-    state.focused = Math.min(state.focused + 1, items.length - 1);
-    items.forEach((el,i) => el.classList.toggle('focused', i === state.focused));
-  } else if(e.key === 'ArrowUp'){
+    st.focused = Math.min(st.focused+1, opts.length-1);
+    opts.forEach((el,i)=>el.classList.toggle('focused',i===st.focused));
+    if(opts[st.focused]) opts[st.focused].scrollIntoView({block:'nearest'});
+  } else if(e.key==='ArrowUp'){
     e.preventDefault();
-    state.focused = Math.max(state.focused - 1, 0);
-    items.forEach((el,i) => el.classList.toggle('focused', i === state.focused));
-  } else if(e.key === 'Enter'){
-    if(state.focused >= 0 && items[state.focused]){
-      acSelect(tipo, parseInt(items[state.focused].dataset.id));
-    }
-  } else if(e.key === 'Escape'){
-    dd.classList.remove('open');
+    st.focused = Math.max(st.focused-1, 0);
+    opts.forEach((el,i)=>el.classList.toggle('focused',i===st.focused));
+    if(opts[st.focused]) opts[st.focused].scrollIntoView({block:'nearest'});
+  } else if(e.key==='Enter'){
+    if(st.focused>=0 && opts[st.focused])
+      ssSelect(tipo, parseInt(opts[st.focused].dataset.id));
+  } else if(e.key==='Escape'){
+    ssClose(tipo);
   }
 }
 
-// Fecha dropdown ao clicar fora
-document.addEventListener('click', e => {
+// Fecha ao clicar fora
+document.addEventListener('mousedown', e => {
   ['mat','svc'].forEach(t => {
-    const wrap = document.getElementById(t+'-ac-wrap');
-    if(wrap && !wrap.contains(e.target))
-      document.getElementById(t+'-dropdown').classList.remove('open');
+    const wrap = document.getElementById('ss-'+t);
+    if(wrap && !wrap.contains(e.target)) ssClose(t);
   });
 });
 
 // ── Preview de total ──────────────────────────────────────────────────────────
 function calcPreview(tipo){
-  const qtd   = parseFloat(document.getElementById(tipo+'-qtd').value)   || 0;
-  const vunit = parseFloat(document.getElementById(tipo+'-vunit').value) || 0;
-  document.getElementById(tipo+'-preview').textContent = brl(qtd * vunit);
+  const qtd   = parseFloat(document.getElementById(tipo+'-qtd').value)||0;
+  const vunit = parseFloat(document.getElementById(tipo+'-vunit').value)||0;
+  document.getElementById(tipo+'-preview').textContent = brl(qtd*vunit);
 }
 
 // ── Adicionar item ────────────────────────────────────────────────────────────
 function adicionarItem(tipo){
-  const state = ac[tipo];
   if(!ORCAMENTO_ID) return alert('Salve a obra/orçamento primeiro.');
-  if(!state.selectedId) return alert('Selecione um item na busca.');
+  const id = SS[tipo].selectedId;
+  if(!id) return alert('Selecione um item na lista.');
 
-  const qtd   = parseFloat(document.getElementById(tipo+'-qtd').value)   || 1;
-  const vunit = parseFloat(document.getElementById(tipo+'-vunit').value) || 0;
-
-  const isMat = tipo === 'mat';
-  const url   = isMat ? "{% url 'orcamento:salvar_item_material' %}"
-                      : "{% url 'orcamento:salvar_item_servico' %}";
+  const qtd   = parseFloat(document.getElementById(tipo+'-qtd').value)||1;
+  const vunit = parseFloat(document.getElementById(tipo+'-vunit').value)||0;
+  const isMat = tipo==='mat';
+  const url   = isMat ? "{% url 'orcamento:salvar_item_material' %}" : "{% url 'orcamento:salvar_item_servico' %}";
   const body  = isMat
-    ? {orcamento_id: ORCAMENTO_ID, produto_id: state.selectedId, quantidade: qtd, valor_unitario: vunit}
-    : {orcamento_id: ORCAMENTO_ID, servico_id: state.selectedId, quantidade: qtd, valor_unitario: vunit};
+    ? {orcamento_id:ORCAMENTO_ID, produto_id:id, quantidade:qtd, valor_unitario:vunit}
+    : {orcamento_id:ORCAMENTO_ID, servico_id:id, quantidade:qtd, valor_unitario:vunit};
 
   const btn = document.getElementById(tipo+'-btn-add');
-  btn.disabled = true; btn.textContent = '…';
+  btn.disabled=true; btn.textContent='…';
 
-  post(url, body).then(d => {
-    btn.disabled = false; btn.textContent = '+ Adicionar';
+  post(url, body).then(d=>{
+    btn.disabled=false; btn.textContent='+ Adicionar';
     if(!d.ok){ alert(d.erro||'Erro ao adicionar.'); return; }
 
-    // Adiciona linha na tabela
     const tbody = document.getElementById(tipo+'-tbody');
     const emptyRow = document.getElementById(tipo+'-empty');
     if(emptyRow) emptyRow.remove();
 
-    const item   = d.item;
-    const prefix = isMat ? 'mat' : 'svc';
-    const nome   = isMat ? item.produto : item.servico;
-    const tr     = document.createElement('tr');
-    tr.id        = prefix + '-' + item.id;
+    const item = d.item;
+    const nome = isMat ? item.produto : item.servico;
+    const tr   = document.createElement('tr');
+    tr.id      = tipo+'-'+item.id;
     tr.innerHTML = `
       <td>${h(item.codigo||'')}</td>
       <td>${h(nome||'')}</td>
@@ -625,41 +587,36 @@ function adicionarItem(tipo){
     tbody.appendChild(tr);
 
     atualizarTotais(d.totais);
-    acClear(tipo);
-    document.getElementById(tipo+'-qtd').value = 1;
+    ssClear(tipo);
+    document.getElementById(tipo+'-qtd').value=1;
   });
 }
 
-// ── Excluir material ──────────────────────────────────────────────────────────
+// ── Excluir ───────────────────────────────────────────────────────────────────
 function excluirMat(id){
   if(!confirm('Excluir este material do orçamento?')) return;
-  post("{% url 'orcamento:excluir_item_material' %}", {id}).then(d => {
+  post("{% url 'orcamento:excluir_item_material' %}",{id}).then(d=>{
     if(!d.ok){ alert(d.erro||'Erro.'); return; }
-    const row = document.getElementById('mat-'+id);
-    if(row) row.remove();
-    const tbody = document.getElementById('mat-tbody');
+    document.getElementById('mat-'+id)?.remove();
+    const tbody=document.getElementById('mat-tbody');
     if(!tbody.querySelector('tr:not(.empty-row)'))
-      tbody.innerHTML = '<tr class="empty-row" id="mat-empty"><td colspan="7">Nenhum material lançado. Adicione abaixo.</td></tr>';
+      tbody.innerHTML='<tr class="empty-row" id="mat-empty"><td colspan="7">Nenhum material lançado. Adicione abaixo.</td></tr>';
     atualizarTotais(d.totais);
   });
 }
-
-// ── Excluir serviço ───────────────────────────────────────────────────────────
 function excluirSvc(id){
   if(!confirm('Excluir este serviço do orçamento?')) return;
-  post("{% url 'orcamento:excluir_item_servico' %}", {id}).then(d => {
+  post("{% url 'orcamento:excluir_item_servico' %}",{id}).then(d=>{
     if(!d.ok){ alert(d.erro||'Erro.'); return; }
-    const row = document.getElementById('svc-'+id);
-    if(row) row.remove();
-    const tbody = document.getElementById('svc-tbody');
+    document.getElementById('svc-'+id)?.remove();
+    const tbody=document.getElementById('svc-tbody');
     if(!tbody.querySelector('tr:not(.empty-row)'))
-      tbody.innerHTML = '<tr class="empty-row" id="svc-empty"><td colspan="7">Nenhum serviço lançado. Adicione abaixo.</td></tr>';
+      tbody.innerHTML='<tr class="empty-row" id="svc-empty"><td colspan="7">Nenhum serviço lançado. Adicione abaixo.</td></tr>';
     atualizarTotais(d.totais);
   });
 }
 
-// Init
-document.addEventListener('DOMContentLoaded', () => { atualizarNomeObra(); });
+document.addEventListener('DOMContentLoaded', ()=>{ atualizarNomeObra(); });
 </script>
 </body>
 </html>
