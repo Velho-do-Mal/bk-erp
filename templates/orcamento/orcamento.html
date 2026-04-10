@@ -5,530 +5,661 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Módulo de Orçamento</title>
   <style>
-    :root{--text:#e5eefc;--muted:#9fb2d4;--line:#243552;--primary:#2563eb;--primary-2:#1d4ed8;--ok:#10b981;--danger:#ef4444;--grid-head:#2563eb;--grid-bg:#ffffff;--grid-text:#111827;--grid-line:#dbe3ef;--grid-hover:#f8fbff;--card-bg:rgba(17,27,46,.95);}
-    *{box-sizing:border-box} body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(180deg,#0a1020 0%, #101b31 100%);color:var(--text)}
-    .wrap{max-width:1600px;margin:0 auto;padding:22px}.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
-    h1{margin:0;font-size:28px}.muted{color:var(--muted)} .grid{display:grid;gap:16px}.grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-    @media (max-width:1100px){.grid-4,.grid-2{grid-template-columns:1fr}}
-    .card{background:var(--card-bg);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.18)}
-    .kpi .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}.kpi .value{font-size:32px;font-weight:800;margin-top:8px}
-    .row{display:flex;gap:10px;flex-wrap:wrap} label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
-    input,select,button{font:inherit}
-    input[type="text"],input[type="number"],select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#0c1528;color:var(--text);outline:none}
-    .btn{border:0;border-radius:10px;padding:10px 14px;cursor:pointer;color:#fff;background:var(--primary);font-weight:700;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
-    .btn:hover{background:var(--primary-2)} .btn-secondary{background:#334155}.btn-danger{background:var(--danger)}.btn-success{background:var(--ok)}
-    .section-title{font-size:18px;font-weight:800;margin:0 0 14px 0}
-    .pill{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;background:#0c1528;border:1px solid var(--line);font-size:13px;color:var(--muted)}
-    .empty{padding:32px 18px;text-align:center;color:var(--muted)}
-    .totals{display:flex;gap:10px;flex-wrap:wrap}.total-box{flex:1 1 220px;background:#0c1528;border:1px solid var(--line);border-radius:12px;padding:14px}.total-box .t{font-size:12px;color:var(--muted);text-transform:uppercase}.total-box .v{font-size:26px;font-weight:800;margin-top:8px}
-    .table-wrap,.excel-grid-wrap{overflow:auto;border:1px solid var(--grid-line);border-radius:14px;background:var(--grid-bg)} table{width:100%;border-collapse:collapse;min-width:800px}
-    th,td{padding:10px 12px;border-bottom:1px solid var(--grid-line);text-align:left;font-size:14px} th{background:#13213b;color:#cfe0ff;position:sticky;top:0}
-    .saved-table{width:100%;border-collapse:collapse;min-width:600px;font-size:13px}
-    .saved-table th{background:#1e3a5f;color:#93c5fd;padding:8px 10px;border-bottom:1px solid var(--grid-line);text-align:left}
-    .saved-table td{padding:8px 10px;border-bottom:1px solid var(--grid-line);color:#e2e8f0;background:#0f1c30}
-    .saved-table tr:hover td{background:#162035}
-    .excel-grid{width:100%;min-width:1100px;border-collapse:separate;border-spacing:0;background:var(--grid-bg)}
-    .excel-grid thead th{position:sticky;top:0;z-index:2;background:var(--grid-head);color:#fff;font-size:13px;font-weight:700;border-bottom:1px solid var(--grid-line);border-right:1px solid var(--grid-line);padding:10px 10px;white-space:nowrap}
-    .excel-grid tbody td{border-right:1px solid var(--grid-line);border-bottom:1px solid var(--grid-line);padding:0;background:var(--grid-bg);vertical-align:middle;color:var(--grid-text)}
-    .excel-grid tbody tr:nth-child(even) td{background:#fafcff}.excel-grid tbody tr:hover td{background:var(--grid-hover)}
-    .grid-input,.grid-select{width:100%;min-width:0;border:0;outline:0;background:transparent;color:var(--grid-text);padding:8px 10px;min-height:36px;border-radius:0}
-    .grid-input::placeholder{color:#94a3b8}.grid-select{appearance:auto}
-    .grid-action{display:flex;align-items:center;justify-content:center;min-height:36px;padding:6px}.grid-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
-    .grid-helper{font-size:12px;color:var(--muted)}.toolbar-left{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.mini-pill{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;background:#eff6ff;color:#1d4ed8;font-size:12px;font-weight:700;border:1px solid #bfdbfe}
+    :root {
+      --bg: #0a1020; --surface: #101b31; --card: rgba(17,27,46,.97);
+      --border: #243552; --text: #e5eefc; --muted: #7a93b8;
+      --blue: #2563eb; --blue2: #1d4ed8; --blue-light: #eff6ff;
+      --green: #10b981; --red: #ef4444; --yellow: #f59e0b;
+      --grid-bg: #fff; --grid-text: #111827; --grid-border: #e2e8f0;
+      --grid-hover: #f0f7ff; --grid-head: #1e40af;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; font-family: 'Segoe UI', Arial, sans-serif;
+           background: linear-gradient(160deg, var(--bg) 0%, var(--surface) 100%);
+           color: var(--text); min-height: 100vh; }
+    .wrap { max-width: 1520px; margin: 0 auto; padding: 24px 20px; }
+
+    /* ── Topbar ── */
+    .topbar { display: flex; justify-content: space-between; align-items: flex-start;
+              gap: 12px; flex-wrap: wrap; margin-bottom: 22px; }
+    .topbar h1 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -.3px; }
+    .topbar .sub { font-size: 13px; color: var(--muted); margin-top: 3px; }
+
+    /* ── Buttons ── */
+    .btn { display: inline-flex; align-items: center; gap: 6px; border: 0;
+           border-radius: 8px; padding: 9px 16px; cursor: pointer; color: #fff;
+           font: 600 13px/1 inherit; text-decoration: none; transition: opacity .15s; }
+    .btn:hover { opacity: .85; }
+    .btn-primary  { background: var(--blue); }
+    .btn-success  { background: var(--green); }
+    .btn-danger   { background: var(--red); }
+    .btn-ghost    { background: #1e3252; color: var(--muted); }
+    .btn-sm { padding: 5px 10px; font-size: 12px; border-radius: 6px; }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+
+    /* ── Cards ── */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+            padding: 18px 20px; }
+    .card + .card { margin-top: 16px; }
+    .card-title { font-size: 15px; font-weight: 700; margin: 0 0 14px; color: #93c5fd; }
+
+    /* ── KPI row ── */
+    .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+               margin-bottom: 16px; }
+    @media (max-width: 900px) { .kpi-row { grid-template-columns: repeat(2, 1fr); } }
+    .kpi { background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+           padding: 14px 16px; }
+    .kpi .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+    .kpi .val { font-size: 28px; font-weight: 800; margin-top: 6px; }
+
+    /* ── Two columns layout ── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+
+    /* ── Form fields ── */
+    .field { margin-bottom: 10px; }
+    .field label { display: block; font-size: 11px; font-weight: 600; color: var(--muted);
+                   text-transform: uppercase; letter-spacing: .05em; margin-bottom: 5px; }
+    .field input, .field select {
+      width: 100%; padding: 9px 12px; border-radius: 8px;
+      border: 1px solid var(--border); background: #0c1528; color: var(--text);
+      font: inherit; font-size: 13px; outline: none; transition: border-color .15s;
+    }
+    .field input:focus, .field select:focus { border-color: var(--blue); }
+    .field input[readonly] { opacity: .6; cursor: default; }
+    .fields-row { display: grid; gap: 10px; }
+    .fields-row.col2 { grid-template-columns: 1fr 1fr; }
+    .fields-row.col3 { grid-template-columns: 1fr 1fr 1fr; }
+
+    /* ── Totals ── */
+    .totals-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .total-box { flex: 1 1 180px; background: #0c1528; border: 1px solid var(--border);
+                 border-radius: 10px; padding: 12px 14px; }
+    .total-box .t { font-size: 11px; text-transform: uppercase; color: var(--muted); letter-spacing: .05em; }
+    .total-box .v { font-size: 22px; font-weight: 800; margin-top: 6px; }
+
+    /* ── Saved items table ── */
+    .tbl-wrap { overflow: auto; border: 1px solid var(--border); border-radius: 10px;
+                margin-bottom: 16px; }
+    .tbl { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 640px; }
+    .tbl thead th { background: #1a2c4a; color: #93c5fd; padding: 9px 12px;
+                    border-bottom: 1px solid var(--border); text-align: left;
+                    font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
+                    white-space: nowrap; position: sticky; top: 0; z-index: 1; }
+    .tbl tbody td { padding: 8px 12px; border-bottom: 1px solid #192340;
+                    color: #d1dff5; vertical-align: middle; }
+    .tbl tbody tr:last-child td { border-bottom: 0; }
+    .tbl tbody tr:hover td { background: #132035; }
+    .tbl .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .tbl .green { color: #34d399; font-weight: 700; }
+    .tbl .empty-row td { text-align: center; color: var(--muted); padding: 24px; font-size: 13px; }
+
+    /* ── Autocomplete ── */
+    .ac-wrap { position: relative; }
+    .ac-input { width: 100%; padding: 10px 14px; border-radius: 8px;
+                border: 1px solid var(--border); background: #0c1528; color: var(--text);
+                font: 13px/1.4 inherit; outline: none; transition: border-color .15s; }
+    .ac-input:focus { border-color: var(--blue); }
+    .ac-dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 100;
+                   background: #0f1c30; border: 1px solid var(--border); border-radius: 10px;
+                   max-height: 260px; overflow-y: auto; box-shadow: 0 8px 30px rgba(0,0,0,.5);
+                   display: none; }
+    .ac-dropdown.open { display: block; }
+    .ac-item { padding: 9px 14px; cursor: pointer; border-bottom: 1px solid #1a2c4a;
+               transition: background .1s; }
+    .ac-item:last-child { border-bottom: 0; }
+    .ac-item:hover, .ac-item.focused { background: #1a3254; }
+    .ac-item .ac-nome { font-size: 13px; font-weight: 600; color: #e2eeff; }
+    .ac-item .ac-detalhe { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .ac-empty { padding: 18px; text-align: center; color: var(--muted); font-size: 13px; }
+
+    /* ── Add form panel ── */
+    .add-panel { background: #0c1528; border: 1px solid var(--border);
+                 border-radius: 10px; padding: 14px 16px; }
+    .add-panel .ap-title { font-size: 12px; font-weight: 700; text-transform: uppercase;
+                           letter-spacing: .06em; color: var(--muted); margin-bottom: 10px; }
+    .add-fields { display: grid; grid-template-columns: 2fr 90px 90px 130px 130px auto;
+                  gap: 8px; align-items: end; }
+    @media (max-width: 1200px) { .add-fields { grid-template-columns: 1fr 1fr; } }
+    .add-fields .af-label { font-size: 11px; color: var(--muted); margin-bottom: 4px; font-weight: 600; }
+    .add-fields input, .add-fields .ac-input {
+      padding: 8px 10px; border-radius: 7px; border: 1px solid var(--border);
+      background: #071020; color: var(--text); font: 13px inherit; outline: none; width: 100%;
+    }
+    .add-fields input:focus, .add-fields .ac-input:focus { border-color: var(--blue); }
+    .add-fields input[readonly] { opacity: .55; cursor: default; }
+    .selected-badge { display: inline-flex; align-items: center; gap: 6px;
+                      background: #1e3a5f; border: 1px solid #2a4f7a;
+                      border-radius: 6px; padding: 4px 10px; font-size: 12px;
+                      color: #93c5fd; max-width: 100%; overflow: hidden; }
+    .selected-badge .badge-x { cursor: pointer; color: var(--red); font-weight: 700;
+                                margin-left: 4px; }
+    .val-total-preview { font-size: 13px; font-weight: 700; color: #34d399;
+                         text-align: right; align-self: center; padding: 0 4px;
+                         white-space: nowrap; }
+    .divider { height: 1px; background: var(--border); margin: 14px 0; }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <div>
-        <h1>Módulo de Orçamento</h1>
-        <div class="muted">Tela principal do orçamento com obra, materiais, serviços e exportação.</div>
-      </div>
-      <div class="row">
-        {% if orcamento %}<a class="btn btn-secondary" href="{% url 'orcamento:exportar_excel' orcamento.id %}">Exportar CSV</a>{% endif %}
-        <a class="btn btn-secondary" href="javascript:history.back()">Voltar</a>
-      </div>
+<div class="wrap">
+
+  <!-- Topbar -->
+  <div class="topbar">
+    <div>
+      <h1>🗂 Orçamento</h1>
+      <div class="sub">Cadastro de obras, materiais e serviços por orçamento</div>
     </div>
-
-    <!-- KPIs -->
-    <div class="grid grid-4">
-      <div class="card kpi"><div class="label">Obras</div><div class="value">{{ obras|length }}</div></div>
-      <div class="card kpi"><div class="label">Clientes</div><div class="value">{{ clientes|length }}</div></div>
-      <div class="card kpi"><div class="label">Produtos</div><div class="value">{{ produtos|length }}</div></div>
-      <div class="card kpi"><div class="label">Serviços</div><div class="value">{{ servicos|length }}</div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      {% if orcamento %}
+      <a class="btn btn-ghost" href="{% url 'orcamento:exportar_excel' orcamento.id %}">
+        ↓ Exportar CSV
+      </a>
+      {% endif %}
+      <a class="btn btn-ghost" href="javascript:history.back()">← Voltar</a>
     </div>
-
-    <div style="height:16px"></div>
-
-    <!-- Obra + Totais -->
-    <div class="grid grid-2">
-      <div class="card">
-        <div class="section-title">Obra / Orçamento</div>
-        <div class="grid grid-2">
-          <div>
-            <label>Cliente</label>
-            <select id="cliente_id">
-              <option value="">Selecione</option>
-              {% for cliente in clientes %}
-              <option value="{{ cliente.id }}" {% if orcamento and orcamento.obra and orcamento.obra.cliente_id == cliente.id %}selected{% endif %}>{{ cliente.nome }}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div>
-            <label>Projeto / Nome da obra</label>
-            <select id="projeto_id" onchange="atualizarNomeObraPorProjeto()">
-              <option value="">Selecione</option>
-              {% for projeto in projetos %}
-              <option value="{{ projeto.id }}" data-nome="{{ projeto.nome|escape }}" {% if orcamento and orcamento.obra and orcamento.obra.nome == projeto.nome %}selected{% endif %}>{{ projeto.nome }}</option>
-              {% endfor %}
-            </select>
-          </div>
-        </div>
-        <div style="height:10px"></div>
-        <div class="grid grid-2">
-          <div>
-            <label>Nome da obra</label>
-            <input type="text" id="obra_nome" value="{% if orcamento and orcamento.obra %}{{ orcamento.obra.nome }}{% endif %}" readonly>
-          </div>
-          <div>
-            <label>Nome do orçamento</label>
-            <input type="text" id="nome_orcamento" value="{% if orcamento %}{{ orcamento.nome }}{% else %}Orçamento{% endif %}">
-          </div>
-        </div>
-        <div style="height:14px"></div>
-        <button type="button" class="btn btn-success" onclick="salvarObra()">Salvar obra / orçamento</button>
-      </div>
-
-      <div class="card">
-        <div class="section-title">Totais</div>
-        <div class="totals">
-          <div class="total-box"><div class="t">Materiais</div><div class="v" id="total-mat">R$ {{ totais.total_materiais|floatformat:2 }}</div></div>
-          <div class="total-box"><div class="t">Serviços</div><div class="v" id="total-svc">R$ {{ totais.total_servicos|floatformat:2 }}</div></div>
-          <div class="total-box"><div class="t">Total geral</div><div class="v" id="total-geral">R$ {{ totais.total_geral|floatformat:2 }}</div></div>
-        </div>
-      </div>
-    </div>
-
-    <div style="height:16px"></div>
-
-    <!-- ===== MATERIAIS ===== -->
-    {% if orcamento %}
-    <div class="card">
-      <div class="section-title">Materiais no orçamento</div>
-      <div style="overflow:auto;border:1px solid var(--grid-line);border-radius:10px;margin-bottom:18px">
-        <table class="saved-table">
-          <thead>
-            <tr>
-              <th>Código</th><th>Material / Produto</th><th>Unidade</th>
-              <th style="text-align:right">Qtde</th><th style="text-align:right">V. Unit.</th>
-              <th style="text-align:right">V. Total</th><th style="width:80px;text-align:center">Ação</th>
-            </tr>
-          </thead>
-          <tbody id="tbody-materiais-salvos">
-            {% for item in itens_material %}
-            <tr id="mat-row-{{ item.id }}">
-              <td>{{ item.codigo }}</td>
-              <td>{{ item.produto }}</td>
-              <td>{{ item.unidade }}</td>
-              <td style="text-align:right">{{ item.quantidade }}</td>
-              <td style="text-align:right">R$ {{ item.valor_unitario|floatformat:2 }}</td>
-              <td style="text-align:right;color:#34d399;font-weight:700">R$ {{ item.valor_total|floatformat:2 }}</td>
-              <td style="text-align:center">
-                <button type="button" class="btn btn-danger" style="padding:4px 10px;font-size:12px"
-                  onclick="excluirItemMaterial({{ item.id }})">✕</button>
-              </td>
-            </tr>
-            {% empty %}
-            <tr id="mat-empty-row"><td colspan="7" class="empty">Nenhum material lançado ainda.</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-
-      <div class="grid-toolbar">
-        <div class="toolbar-left">
-          <div class="grid-helper">Adicionar materiais / produtos do cadastro.</div>
-          <span class="mini-pill">Busca por nome ou código</span>
-        </div>
-        <button type="button" class="btn btn-success" onclick="adicionarLinhaMaterial()">+ Linha</button>
-      </div>
-      <div class="excel-grid-wrap">
-        <table class="excel-grid">
-          <thead>
-            <tr>
-              <th style="width:380px">Material</th>
-              <th style="width:110px">Código</th>
-              <th style="width:110px">Unidade</th>
-              <th style="width:150px">Quantidade</th>
-              <th style="width:160px">Valor unitário</th>
-              <th style="width:140px">Ação</th>
-            </tr>
-          </thead>
-          <tbody id="grade_materiais_orcamento"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div style="height:16px"></div>
-
-    <!-- ===== SERVIÇOS ===== -->
-    <div class="card">
-      <div class="section-title">Serviços no orçamento</div>
-      <div style="overflow:auto;border:1px solid var(--grid-line);border-radius:10px;margin-bottom:18px">
-        <table class="saved-table">
-          <thead>
-            <tr>
-              <th>Código</th><th>Serviço</th><th>Unidade</th>
-              <th style="text-align:right">Qtde</th><th style="text-align:right">V. Unit.</th>
-              <th style="text-align:right">V. Total</th><th style="width:80px;text-align:center">Ação</th>
-            </tr>
-          </thead>
-          <tbody id="tbody-servicos-salvos">
-            {% for item in itens_servico %}
-            <tr id="svc-row-{{ item.id }}">
-              <td>{{ item.codigo }}</td>
-              <td>{{ item.servico }}</td>
-              <td>{{ item.unidade }}</td>
-              <td style="text-align:right">{{ item.quantidade }}</td>
-              <td style="text-align:right">R$ {{ item.valor_unitario|floatformat:2 }}</td>
-              <td style="text-align:right;color:#34d399;font-weight:700">R$ {{ item.valor_total|floatformat:2 }}</td>
-              <td style="text-align:center">
-                <button type="button" class="btn btn-danger" style="padding:4px 10px;font-size:12px"
-                  onclick="excluirItemServico({{ item.id }})">✕</button>
-              </td>
-            </tr>
-            {% empty %}
-            <tr id="svc-empty-row"><td colspan="7" class="empty">Nenhum serviço lançado ainda.</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-
-      <div class="grid-toolbar">
-        <div class="toolbar-left">
-          <div class="grid-helper">Adicionar serviços do cadastro.</div>
-          <span class="mini-pill">Busca por nome ou código</span>
-        </div>
-        <button type="button" class="btn btn-success" onclick="adicionarLinhaServico()">+ Linha</button>
-      </div>
-      <div class="excel-grid-wrap">
-        <table class="excel-grid">
-          <thead>
-            <tr>
-              <th style="width:380px">Serviço</th>
-              <th style="width:110px">Código</th>
-              <th style="width:110px">Unidade</th>
-              <th style="width:150px">Quantidade</th>
-              <th style="width:160px">Valor unitário</th>
-              <th style="width:140px">Ação</th>
-            </tr>
-          </thead>
-          <tbody id="grade_servicos_orcamento"></tbody>
-        </table>
-      </div>
-    </div>
-    {% else %}
-    <div class="card"><div class="empty">Selecione ou crie uma obra/orçamento para lançar materiais e serviços.</div></div>
-    {% endif %}
   </div>
 
-  <script>
-    const ORCAMENTO_ID = {% if orcamento %}{{ orcamento.id }}{% else %}null{% endif %};
-    const OBRA_ID = {% if orcamento and orcamento.obra %}{{ orcamento.obra.id }}{% else %}null{% endif %};
-    const csrfToken = '{{ csrf_token }}';
+  <!-- KPIs -->
+  <div class="kpi-row">
+    <div class="kpi"><div class="lbl">Obras</div><div class="val">{{ obras|length }}</div></div>
+    <div class="kpi"><div class="lbl">Produtos</div><div class="val">{{ produtos|length }}</div></div>
+    <div class="kpi"><div class="lbl">Serviços</div><div class="val">{{ servicos|length }}</div></div>
+    <div class="kpi"><div class="lbl">Total geral</div>
+      <div class="val" id="kpi-total">R$ {{ totais.total_geral|floatformat:2 }}</div>
+    </div>
+  </div>
 
-    // Produtos/materiais (tipo produto ou ambos) — do módulo Serviços/Produtos
-    const produtosData = [
-      {% for p in produtos %}{id:{{ p.id }},nome:"{{ p.nome|escapejs }}",codigo:"{{ p.codigo|default:''|escapejs }}",unidade:"{{ p.unidade|default:'un'|escapejs }}",preco_unitario:{{ p.preco_unitario|default:0 }}}{% if not forloop.last %},{% endif %}{% endfor %}
-    ];
+  <!-- Obra + Totais -->
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">Obra / Orçamento</div>
+      <div class="fields-row col2">
+        <div class="field">
+          <label>Cliente</label>
+          <select id="cliente_id">
+            <option value="">Selecione</option>
+            {% for c in clientes %}
+            <option value="{{ c.id }}" {% if orcamento and orcamento.obra and orcamento.obra.cliente_id == c.id %}selected{% endif %}>{{ c.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label>Projeto</label>
+          <select id="projeto_id" onchange="atualizarNomeObra()">
+            <option value="">Selecione</option>
+            {% for p in projetos %}
+            <option value="{{ p.id }}" data-nome="{{ p.nome|escape }}"
+              {% if orcamento and orcamento.obra and orcamento.obra.nome == p.nome %}selected{% endif %}>{{ p.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="fields-row col2">
+        <div class="field">
+          <label>Nome da obra</label>
+          <input type="text" id="obra_nome" readonly
+            value="{% if orcamento and orcamento.obra %}{{ orcamento.obra.nome }}{% endif %}">
+        </div>
+        <div class="field">
+          <label>Nome do orçamento</label>
+          <input type="text" id="nome_orcamento"
+            value="{% if orcamento %}{{ orcamento.nome }}{% else %}Orçamento{% endif %}">
+        </div>
+      </div>
+      <button type="button" class="btn btn-success" onclick="salvarObra()">
+        ✔ Salvar obra / orçamento
+      </button>
+    </div>
 
-    // Serviços (tipo servico ou ambos) — do módulo Serviços/Produtos
-    const servicosData = [
-      {% for s in servicos %}{id:{{ s.id }},nome:"{{ s.nome|escapejs }}",codigo:"{{ s.codigo|default:''|escapejs }}",unidade:"{{ s.unidade|default:'un'|escapejs }}",preco_unitario:{{ s.preco_unitario|default:0 }}}{% if not forloop.last %},{% endif %}{% endfor %}
-    ];
+    <div class="card">
+      <div class="card-title">Totais do orçamento</div>
+      <div class="totals-row">
+        <div class="total-box">
+          <div class="t">Materiais</div>
+          <div class="v" id="tot-mat">R$ {{ totais.total_materiais|floatformat:2 }}</div>
+        </div>
+        <div class="total-box">
+          <div class="t">Serviços</div>
+          <div class="v" id="tot-svc">R$ {{ totais.total_servicos|floatformat:2 }}</div>
+        </div>
+        <div class="total-box">
+          <div class="t">Total geral</div>
+          <div class="v" id="tot-geral">R$ {{ totais.total_geral|floatformat:2 }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    let linhasMateriais = [];
-    let linhasServicos = [];
+  {% if orcamento %}
+  <!-- ═══════════════ MATERIAIS ═══════════════ -->
+  <div class="card">
+    <div class="card-title">📦 Materiais / Produtos</div>
 
-    function payloadHeaders(){ return {'Content-Type':'application/json','X-CSRFToken': csrfToken}; }
-
-    function escapeHtml(v){
-      return String(v ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'", '&#39;');
-    }
-
-    function atualizarNomeObraPorProjeto(){
-      const sel = document.getElementById('projeto_id');
-      const nome = sel.options[sel.selectedIndex]?.dataset?.nome || '';
-      document.getElementById('obra_nome').value = nome;
-    }
-
-    function salvarObra(){
-      fetch("{% url 'orcamento:salvar_obra' %}", {
-        method:'POST',
-        headers: payloadHeaders(),
-        body: JSON.stringify({
-          id: OBRA_ID,
-          cliente_id: document.getElementById('cliente_id').value || null,
-          projeto_id: document.getElementById('projeto_id').value || null,
-          nome: document.getElementById('obra_nome').value,
-          nome_orcamento: document.getElementById('nome_orcamento').value
-        })
-      }).then(r=>r.json()).then(data=>{
-        alert(data.mensagem || data.erro || 'Processado.');
-        if (data.ok) window.location.href = "{% url 'orcamento:dashboard' %}?orcamento_id=" + data.orcamento.id;
-      });
-    }
-
-    // ─── Totais ───────────────────────────────────────────────────────────────
-    function atualizarTotais(totais){
-      if (!totais) return;
-      const fmt = v => 'R$ ' + Number(v).toFixed(2).replace('.', ',');
-      const el = id => document.getElementById(id);
-      if (el('total-mat'))   el('total-mat').textContent   = fmt(totais.total_materiais);
-      if (el('total-svc'))   el('total-svc').textContent   = fmt(totais.total_servicos);
-      if (el('total-geral')) el('total-geral').textContent = fmt(totais.total_geral);
-    }
-
-    // ─── Materiais — itens já salvos ─────────────────────────────────────────
-    function excluirItemMaterial(itemId){
-      if (!confirm('Excluir este material do orçamento?')) return;
-      fetch("{% url 'orcamento:excluir_item_material' %}", {
-        method:'POST', headers: payloadHeaders(),
-        body: JSON.stringify({id: itemId})
-      }).then(r=>r.json()).then(data=>{
-        if (data.ok){
-          const row = document.getElementById('mat-row-' + itemId);
-          if (row) row.remove();
-          atualizarTotais(data.totais);
-          // Mostra linha "vazia" se não restar itens
-          const tbody = document.getElementById('tbody-materiais-salvos');
-          if (tbody && tbody.querySelectorAll('tr').length === 0)
-            tbody.innerHTML = '<tr id="mat-empty-row"><td colspan="7" class="empty">Nenhum material lançado ainda.</td></tr>';
-        } else { alert(data.erro || 'Erro ao excluir.'); }
-      });
-    }
-
-    // ─── Materiais — adicionar linhas ─────────────────────────────────────────
-    function getProdutosFiltrados(term){
-      const q = String(term || '').trim().toLowerCase();
-      if (!q) return produtosData;
-      return produtosData.filter(p =>
-        String(p.nome||'').toLowerCase().includes(q) ||
-        String(p.codigo||'').toLowerCase().includes(q)
-      );
-    }
-
-    function adicionarLinhaMaterial(){
-      linhasMateriais.push({termo:'', produto_id:'', codigo:'', unidade:'', quantidade:1, valor_unitario:0});
-      renderGradeMateriais();
-    }
-    function removerLinhaMaterial(idx){ linhasMateriais.splice(idx,1); renderGradeMateriais(); }
-
-    function selecionarProdutoLinha(idx, produtoId){
-      const produto = produtosData.find(p => String(p.id) === String(produtoId));
-      linhasMateriais[idx].produto_id   = produto ? produto.id : '';
-      linhasMateriais[idx].termo        = produto ? produto.nome : linhasMateriais[idx].termo;
-      linhasMateriais[idx].codigo       = produto ? (produto.codigo || '') : '';
-      linhasMateriais[idx].unidade      = produto ? (produto.unidade || '') : '';
-      linhasMateriais[idx].valor_unitario = produto ? Number(produto.preco_unitario || 0) : 0;
-      renderGradeMateriais();
-    }
-
-    function renderGradeMateriais(){
-      const tbody = document.getElementById('grade_materiais_orcamento');
-      if (!tbody) return;
-      tbody.innerHTML = '';
-      linhasMateriais.forEach((linha, idx) => {
-        const options = getProdutosFiltrados(linha.termo).slice(0, 80);
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>
-            <input class="grid-input" type="text" value="${escapeHtml(linha.termo || '')}"
-              placeholder="Buscar por nome ou código"
-              oninput="linhasMateriais[${idx}].termo=this.value; renderGradeMateriais()">
-            <select class="grid-select" onchange="selecionarProdutoLinha(${idx}, this.value)">
-              <option value="">Selecione o produto</option>
-              ${options.map(p => `<option value="${p.id}" ${String(linha.produto_id)===String(p.id)?'selected':''}>${escapeHtml(p.nome)} — ${escapeHtml(p.codigo||'s/código')}</option>`).join('')}
-            </select>
-          </td>
-          <td><input class="grid-input" type="text" value="${escapeHtml(linha.codigo||'')}" readonly></td>
-          <td><input class="grid-input" type="text" value="${escapeHtml(linha.unidade||'')}" readonly></td>
-          <td><input class="grid-input" type="number" min="0" step="0.001" value="${linha.quantidade??1}"
-              onchange="linhasMateriais[${idx}].quantidade=this.value"></td>
-          <td><input class="grid-input" type="number" min="0" step="0.01" value="${linha.valor_unitario??0}"
-              onchange="linhasMateriais[${idx}].valor_unitario=this.value"></td>
-          <td><div class="grid-action row">
-            <button type="button" class="btn btn-success" onclick="salvarLinhaMaterial(${idx})">Salvar</button>
-            <button type="button" class="btn btn-danger" onclick="removerLinhaMaterial(${idx})">✕</button>
-          </div></td>`;
-        tbody.appendChild(tr);
-      });
-      if (!linhasMateriais.length)
-        tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhuma linha. Clique em "+ Linha" para adicionar.</td></tr>';
-    }
-
-    function salvarLinhaMaterial(idx){
-      const linha = linhasMateriais[idx];
-      if (!ORCAMENTO_ID) return alert('Crie o orçamento primeiro.');
-      if (!linha || !linha.produto_id) return alert('Selecione um produto/material.');
-      fetch("{% url 'orcamento:salvar_item_material' %}", {
-        method:'POST', headers: payloadHeaders(),
-        body: JSON.stringify({
-          orcamento_id: ORCAMENTO_ID,
-          produto_id: linha.produto_id,
-          quantidade: linha.quantidade,
-          valor_unitario: linha.valor_unitario
-        })
-      }).then(r=>r.json()).then(data=>{
-        if (data.ok){
-          linhasMateriais.splice(idx, 1);
-          renderGradeMateriais();
-          atualizarTotais(data.totais);
-          // Adiciona a nova linha na tabela de salvos
-          const tbody = document.getElementById('tbody-materiais-salvos');
-          const emptyRow = document.getElementById('mat-empty-row');
-          if (emptyRow) emptyRow.remove();
-          const item = data.item;
-          const tr = document.createElement('tr');
-          tr.id = 'mat-row-' + item.id;
-          tr.innerHTML = `
-            <td>${escapeHtml(item.codigo||'')}</td>
-            <td>${escapeHtml(item.produto||'')}</td>
-            <td>${escapeHtml(item.unidade||'')}</td>
-            <td style="text-align:right">${Number(item.quantidade).toFixed(3)}</td>
-            <td style="text-align:right">R$ ${Number(item.valor_unitario).toFixed(2)}</td>
-            <td style="text-align:right;color:#34d399;font-weight:700">R$ ${Number(item.valor_total).toFixed(2)}</td>
+    <!-- Tabela de itens salvos -->
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Descrição</th>
+            <th>Unidade</th>
+            <th class="num">Qtde</th>
+            <th class="num">V. Unit.</th>
+            <th class="num">V. Total</th>
+            <th style="width:50px"></th>
+          </tr>
+        </thead>
+        <tbody id="mat-tbody">
+          {% for item in itens_material %}
+          <tr id="mat-{{ item.id }}">
+            <td>{{ item.codigo }}</td>
+            <td>{{ item.produto }}</td>
+            <td>{{ item.unidade }}</td>
+            <td class="num">{{ item.quantidade }}</td>
+            <td class="num">R$ {{ item.valor_unitario|floatformat:2 }}</td>
+            <td class="num green">R$ {{ item.valor_total|floatformat:2 }}</td>
             <td style="text-align:center">
-              <button type="button" class="btn btn-danger" style="padding:4px 10px;font-size:12px"
-                onclick="excluirItemMaterial(${item.id})">✕</button>
-            </td>`;
-          tbody.appendChild(tr);
-        } else { alert(data.erro || 'Erro ao salvar.'); }
-      });
-    }
+              <button class="btn btn-danger btn-sm" onclick="excluirMat({{ item.id }})">✕</button>
+            </td>
+          </tr>
+          {% empty %}
+          <tr class="empty-row" id="mat-empty">
+            <td colspan="7">Nenhum material lançado. Adicione abaixo.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
 
-    // ─── Serviços — itens já salvos ───────────────────────────────────────────
-    function excluirItemServico(itemId){
-      if (!confirm('Excluir este serviço do orçamento?')) return;
-      fetch("{% url 'orcamento:excluir_item_servico' %}", {
-        method:'POST', headers: payloadHeaders(),
-        body: JSON.stringify({id: itemId})
-      }).then(r=>r.json()).then(data=>{
-        if (data.ok){
-          const row = document.getElementById('svc-row-' + itemId);
-          if (row) row.remove();
-          atualizarTotais(data.totais);
-          const tbody = document.getElementById('tbody-servicos-salvos');
-          if (tbody && tbody.querySelectorAll('tr').length === 0)
-            tbody.innerHTML = '<tr id="svc-empty-row"><td colspan="7" class="empty">Nenhum serviço lançado ainda.</td></tr>';
-        } else { alert(data.erro || 'Erro ao excluir.'); }
-      });
-    }
+    <!-- Formulário de adição -->
+    <div class="add-panel">
+      <div class="ap-title">Adicionar material</div>
+      <div class="add-fields" id="mat-form">
+        <!-- Busca autocomplete -->
+        <div>
+          <div class="af-label">Buscar produto</div>
+          <div class="ac-wrap" id="mat-ac-wrap">
+            <input class="ac-input" id="mat-search" type="text"
+              placeholder="Digite nome ou código..."
+              autocomplete="off"
+              oninput="acSearch('mat')"
+              onkeydown="acKeydown(event,'mat')">
+            <div class="ac-dropdown" id="mat-dropdown"></div>
+          </div>
+          <div id="mat-selected" style="margin-top:6px;display:none"></div>
+        </div>
+        <!-- Código -->
+        <div>
+          <div class="af-label">Código</div>
+          <input type="text" id="mat-codigo" readonly placeholder="—">
+        </div>
+        <!-- Unidade -->
+        <div>
+          <div class="af-label">Unidade</div>
+          <input type="text" id="mat-unidade" readonly placeholder="—">
+        </div>
+        <!-- Quantidade -->
+        <div>
+          <div class="af-label">Quantidade</div>
+          <input type="number" id="mat-qtd" min="0.001" step="0.001" value="1"
+            oninput="calcPreview('mat')">
+        </div>
+        <!-- Valor unitário -->
+        <div>
+          <div class="af-label">V. Unit. (R$)</div>
+          <input type="number" id="mat-vunit" min="0" step="0.01" value="0"
+            oninput="calcPreview('mat')">
+        </div>
+        <!-- Total + Botão -->
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div class="af-label">Total</div>
+          <span class="val-total-preview" id="mat-preview">R$ 0,00</span>
+          <button class="btn btn-success btn-sm" id="mat-btn-add" onclick="adicionarItem('mat')"
+            style="margin-top:4px" disabled>+ Adicionar</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    // ─── Serviços — adicionar linhas ──────────────────────────────────────────
-    function getServicosFiltrados(term){
-      const q = String(term || '').trim().toLowerCase();
-      if (!q) return servicosData;
-      return servicosData.filter(s =>
-        String(s.nome||'').toLowerCase().includes(q) ||
-        String(s.codigo||'').toLowerCase().includes(q)
-      );
-    }
+  <!-- ═══════════════ SERVIÇOS ═══════════════ -->
+  <div class="card">
+    <div class="card-title">🔧 Serviços</div>
 
-    function adicionarLinhaServico(){
-      linhasServicos.push({termo:'', servico_id:'', codigo:'', unidade:'', quantidade:1, valor_unitario:0});
-      renderGradeServicos();
-    }
-    function removerLinhaServico(idx){ linhasServicos.splice(idx,1); renderGradeServicos(); }
-
-    function selecionarServicoLinha(idx, servicoId){
-      const servico = servicosData.find(s => String(s.id) === String(servicoId));
-      linhasServicos[idx].servico_id    = servico ? servico.id : '';
-      linhasServicos[idx].termo         = servico ? servico.nome : linhasServicos[idx].termo;
-      linhasServicos[idx].codigo        = servico ? (servico.codigo || '') : '';
-      linhasServicos[idx].unidade       = servico ? (servico.unidade || '') : '';
-      linhasServicos[idx].valor_unitario = servico ? Number(servico.preco_unitario || 0) : 0;
-      renderGradeServicos();
-    }
-
-    function renderGradeServicos(){
-      const tbody = document.getElementById('grade_servicos_orcamento');
-      if (!tbody) return;
-      tbody.innerHTML = '';
-      linhasServicos.forEach((linha, idx) => {
-        const options = getServicosFiltrados(linha.termo).slice(0, 80);
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>
-            <input class="grid-input" type="text" value="${escapeHtml(linha.termo || '')}"
-              placeholder="Buscar por nome ou código"
-              oninput="linhasServicos[${idx}].termo=this.value; renderGradeServicos()">
-            <select class="grid-select" onchange="selecionarServicoLinha(${idx}, this.value)">
-              <option value="">Selecione o serviço</option>
-              ${options.map(s => `<option value="${s.id}" ${String(linha.servico_id)===String(s.id)?'selected':''}>${escapeHtml(s.nome)} — ${escapeHtml(s.codigo||'s/código')}</option>`).join('')}
-            </select>
-          </td>
-          <td><input class="grid-input" type="text" value="${escapeHtml(linha.codigo||'')}" readonly></td>
-          <td><input class="grid-input" type="text" value="${escapeHtml(linha.unidade||'')}" readonly></td>
-          <td><input class="grid-input" type="number" min="0" step="0.001" value="${linha.quantidade??1}"
-              onchange="linhasServicos[${idx}].quantidade=this.value"></td>
-          <td><input class="grid-input" type="number" min="0" step="0.01" value="${linha.valor_unitario??0}"
-              onchange="linhasServicos[${idx}].valor_unitario=this.value"></td>
-          <td><div class="grid-action row">
-            <button type="button" class="btn btn-success" onclick="salvarLinhaServico(${idx})">Salvar</button>
-            <button type="button" class="btn btn-danger" onclick="removerLinhaServico(${idx})">✕</button>
-          </div></td>`;
-        tbody.appendChild(tr);
-      });
-      if (!linhasServicos.length)
-        tbody.innerHTML = '<tr><td colspan="6" class="empty">Nenhuma linha. Clique em "+ Linha" para adicionar.</td></tr>';
-    }
-
-    function salvarLinhaServico(idx){
-      const linha = linhasServicos[idx];
-      if (!ORCAMENTO_ID) return alert('Crie o orçamento primeiro.');
-      if (!linha || !linha.servico_id) return alert('Selecione um serviço.');
-      fetch("{% url 'orcamento:salvar_item_servico' %}", {
-        method:'POST', headers: payloadHeaders(),
-        body: JSON.stringify({
-          orcamento_id: ORCAMENTO_ID,
-          servico_id: linha.servico_id,
-          quantidade: linha.quantidade,
-          valor_unitario: linha.valor_unitario
-        })
-      }).then(r=>r.json()).then(data=>{
-        if (data.ok){
-          linhasServicos.splice(idx, 1);
-          renderGradeServicos();
-          atualizarTotais(data.totais);
-          const tbody = document.getElementById('tbody-servicos-salvos');
-          const emptyRow = document.getElementById('svc-empty-row');
-          if (emptyRow) emptyRow.remove();
-          const item = data.item;
-          const tr = document.createElement('tr');
-          tr.id = 'svc-row-' + item.id;
-          tr.innerHTML = `
-            <td>${escapeHtml(item.codigo||'')}</td>
-            <td>${escapeHtml(item.servico||'')}</td>
-            <td>${escapeHtml(item.unidade||'')}</td>
-            <td style="text-align:right">${Number(item.quantidade).toFixed(3)}</td>
-            <td style="text-align:right">R$ ${Number(item.valor_unitario).toFixed(2)}</td>
-            <td style="text-align:right;color:#34d399;font-weight:700">R$ ${Number(item.valor_total).toFixed(2)}</td>
+    <!-- Tabela de itens salvos -->
+    <div class="tbl-wrap">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Descrição</th>
+            <th>Unidade</th>
+            <th class="num">Qtde</th>
+            <th class="num">V. Unit.</th>
+            <th class="num">V. Total</th>
+            <th style="width:50px"></th>
+          </tr>
+        </thead>
+        <tbody id="svc-tbody">
+          {% for item in itens_servico %}
+          <tr id="svc-{{ item.id }}">
+            <td>{{ item.codigo }}</td>
+            <td>{{ item.servico }}</td>
+            <td>{{ item.unidade }}</td>
+            <td class="num">{{ item.quantidade }}</td>
+            <td class="num">R$ {{ item.valor_unitario|floatformat:2 }}</td>
+            <td class="num green">R$ {{ item.valor_total|floatformat:2 }}</td>
             <td style="text-align:center">
-              <button type="button" class="btn btn-danger" style="padding:4px 10px;font-size:12px"
-                onclick="excluirItemServico(${item.id})">✕</button>
-            </td>`;
-          tbody.appendChild(tr);
-        } else { alert(data.erro || 'Erro ao salvar.'); }
-      });
-    }
+              <button class="btn btn-danger btn-sm" onclick="excluirSvc({{ item.id }})">✕</button>
+            </td>
+          </tr>
+          {% empty %}
+          <tr class="empty-row" id="svc-empty">
+            <td colspan="7">Nenhum serviço lançado. Adicione abaixo.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
 
-    document.addEventListener('DOMContentLoaded', function(){
-      atualizarNomeObraPorProjeto();
-      // Inicia as grades vazias (sem linha pré-adicionada)
-      renderGradeMateriais();
-      renderGradeServicos();
-    });
-  </script>
+    <!-- Formulário de adição -->
+    <div class="add-panel">
+      <div class="ap-title">Adicionar serviço</div>
+      <div class="add-fields" id="svc-form">
+        <div>
+          <div class="af-label">Buscar serviço</div>
+          <div class="ac-wrap" id="svc-ac-wrap">
+            <input class="ac-input" id="svc-search" type="text"
+              placeholder="Digite nome ou código..."
+              autocomplete="off"
+              oninput="acSearch('svc')"
+              onkeydown="acKeydown(event,'svc')">
+            <div class="ac-dropdown" id="svc-dropdown"></div>
+          </div>
+          <div id="svc-selected" style="margin-top:6px;display:none"></div>
+        </div>
+        <div>
+          <div class="af-label">Código</div>
+          <input type="text" id="svc-codigo" readonly placeholder="—">
+        </div>
+        <div>
+          <div class="af-label">Unidade</div>
+          <input type="text" id="svc-unidade" readonly placeholder="—">
+        </div>
+        <div>
+          <div class="af-label">Quantidade</div>
+          <input type="number" id="svc-qtd" min="0.001" step="0.001" value="1"
+            oninput="calcPreview('svc')">
+        </div>
+        <div>
+          <div class="af-label">V. Unit. (R$)</div>
+          <input type="number" id="svc-vunit" min="0" step="0.01" value="0"
+            oninput="calcPreview('svc')">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div class="af-label">Total</div>
+          <span class="val-total-preview" id="svc-preview">R$ 0,00</span>
+          <button class="btn btn-success btn-sm" id="svc-btn-add" onclick="adicionarItem('svc')"
+            style="margin-top:4px" disabled>+ Adicionar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% else %}
+  <div class="card" style="text-align:center;padding:40px;color:var(--muted)">
+    Preencha e salve a obra/orçamento acima para lançar materiais e serviços.
+  </div>
+  {% endif %}
+</div>
+
+<script>
+const ORCAMENTO_ID = {% if orcamento %}{{ orcamento.id }}{% else %}null{% endif %};
+const OBRA_ID      = {% if orcamento and orcamento.obra %}{{ orcamento.obra.id }}{% else %}null{% endif %};
+const CSRF         = '{{ csrf_token }}';
+
+// ── Dados de produto/serviço vindos do módulo Serviços/Produtos ──────────────
+const produtosData = [
+  {% for p in produtos %}{id:{{ p.id }},nome:"{{ p.nome|escapejs }}",codigo:"{{ p.codigo|default:''|escapejs }}",unidade:"{{ p.unidade|default:'un'|escapejs }}",preco:{{ p.preco_unitario|default:0 }}}{% if not forloop.last %},{% endif %}{% endfor %}
+];
+const servicosData = [
+  {% for s in servicos %}{id:{{ s.id }},nome:"{{ s.nome|escapejs }}",codigo:"{{ s.codigo|default:''|escapejs }}",unidade:"{{ s.unidade|default:'un'|escapejs }}",preco:{{ s.preco_unitario|default:0 }}}{% if not forloop.last %},{% endif %}{% endfor %}
+];
+
+// Estado do autocomplete
+const ac = {
+  mat: { data: produtosData, selectedId: null, focused: -1 },
+  svc: { data: servicosData, selectedId: null, focused: -1 },
+};
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function h(v){ return String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function brl(v){ return 'R$ ' + Number(v||0).toFixed(2).replace('.',','); }
+function post(url, body){ return fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify(body)}).then(r=>r.json()); }
+
+// ── Obra ─────────────────────────────────────────────────────────────────────
+function atualizarNomeObra(){
+  const sel = document.getElementById('projeto_id');
+  document.getElementById('obra_nome').value = sel.options[sel.selectedIndex]?.dataset?.nome || '';
+}
+function salvarObra(){
+  post("{% url 'orcamento:salvar_obra' %}",{
+    id: OBRA_ID,
+    cliente_id: document.getElementById('cliente_id').value || null,
+    projeto_id: document.getElementById('projeto_id').value || null,
+    nome: document.getElementById('obra_nome').value,
+    nome_orcamento: document.getElementById('nome_orcamento').value
+  }).then(d=>{
+    if(d.ok) window.location.href = "{% url 'orcamento:dashboard' %}?orcamento_id=" + d.orcamento.id;
+    else alert(d.erro||'Erro ao salvar.');
+  });
+}
+
+// ── Totais ───────────────────────────────────────────────────────────────────
+function atualizarTotais(t){
+  if(!t) return;
+  document.getElementById('tot-mat').textContent   = brl(t.total_materiais);
+  document.getElementById('tot-svc').textContent   = brl(t.total_servicos);
+  document.getElementById('tot-geral').textContent = brl(t.total_geral);
+  document.getElementById('kpi-total').textContent = brl(t.total_geral);
+}
+
+// ── Autocomplete ─────────────────────────────────────────────────────────────
+function acSearch(tipo){
+  const state   = ac[tipo];
+  const input   = document.getElementById(tipo+'-search');
+  const dd      = document.getElementById(tipo+'-dropdown');
+  const q       = input.value.trim().toLowerCase();
+
+  state.focused = -1;
+
+  // Se já tem selecionado, limpa
+  if(state.selectedId && input.value !== input.dataset.selectedNome){
+    acClear(tipo);
+  }
+
+  const matches = q
+    ? state.data.filter(i => i.nome.toLowerCase().includes(q) || (i.codigo||'').toLowerCase().includes(q))
+    : state.data.slice(0, 50);
+
+  if(!matches.length){
+    dd.innerHTML = '<div class="ac-empty">Nenhum resultado para "'+h(q)+'".</div>';
+  } else {
+    dd.innerHTML = matches.slice(0,60).map((item,idx) =>
+      `<div class="ac-item" data-id="${item.id}" data-idx="${idx}"
+            onmousedown="acSelect('${tipo}',${item.id})">
+         <div class="ac-nome">${h(item.nome)}</div>
+         <div class="ac-detalhe">Cód: ${h(item.codigo||'—')} &nbsp;|&nbsp; ${h(item.unidade||'un')} &nbsp;|&nbsp; ${brl(item.preco)}</div>
+       </div>`
+    ).join('');
+  }
+  dd.classList.add('open');
+}
+
+function acSelect(tipo, id){
+  const state = ac[tipo];
+  const item  = state.data.find(i => i.id === id);
+  if(!item) return;
+
+  state.selectedId = id;
+
+  // Preenche campos
+  const inp = document.getElementById(tipo+'-search');
+  inp.value = item.nome;
+  inp.dataset.selectedNome = item.nome;
+  document.getElementById(tipo+'-codigo').value  = item.codigo || '';
+  document.getElementById(tipo+'-unidade').value = item.unidade || 'un';
+  document.getElementById(tipo+'-vunit').value   = item.preco || 0;
+  calcPreview(tipo);
+
+  // Mostra badge de seleção
+  const badge = document.getElementById(tipo+'-selected');
+  badge.style.display = 'block';
+  badge.innerHTML = `<span class="selected-badge">
+    <strong>${h(item.nome)}</strong>
+    <span style="color:var(--muted)">| ${h(item.codigo||'s/cód')} | ${h(item.unidade||'un')}</span>
+    <span class="badge-x" onclick="acClear('${tipo}')">✕</span>
+  </span>`;
+
+  // Habilita botão
+  document.getElementById(tipo+'-btn-add').disabled = false;
+
+  // Fecha dropdown
+  document.getElementById(tipo+'-dropdown').classList.remove('open');
+}
+
+function acClear(tipo){
+  ac[tipo].selectedId = null;
+  ac[tipo].focused    = -1;
+  const inp = document.getElementById(tipo+'-search');
+  inp.value = '';
+  delete inp.dataset.selectedNome;
+  document.getElementById(tipo+'-codigo').value  = '';
+  document.getElementById(tipo+'-unidade').value = '';
+  document.getElementById(tipo+'-vunit').value   = 0;
+  document.getElementById(tipo+'-selected').style.display = 'none';
+  document.getElementById(tipo+'-btn-add').disabled = true;
+  calcPreview(tipo);
+  document.getElementById(tipo+'-dropdown').classList.remove('open');
+}
+
+function acKeydown(e, tipo){
+  const dd    = document.getElementById(tipo+'-dropdown');
+  const items = dd.querySelectorAll('.ac-item');
+  const state = ac[tipo];
+  if(e.key === 'ArrowDown'){
+    e.preventDefault();
+    state.focused = Math.min(state.focused + 1, items.length - 1);
+    items.forEach((el,i) => el.classList.toggle('focused', i === state.focused));
+  } else if(e.key === 'ArrowUp'){
+    e.preventDefault();
+    state.focused = Math.max(state.focused - 1, 0);
+    items.forEach((el,i) => el.classList.toggle('focused', i === state.focused));
+  } else if(e.key === 'Enter'){
+    if(state.focused >= 0 && items[state.focused]){
+      acSelect(tipo, parseInt(items[state.focused].dataset.id));
+    }
+  } else if(e.key === 'Escape'){
+    dd.classList.remove('open');
+  }
+}
+
+// Fecha dropdown ao clicar fora
+document.addEventListener('click', e => {
+  ['mat','svc'].forEach(t => {
+    const wrap = document.getElementById(t+'-ac-wrap');
+    if(wrap && !wrap.contains(e.target))
+      document.getElementById(t+'-dropdown').classList.remove('open');
+  });
+});
+
+// ── Preview de total ──────────────────────────────────────────────────────────
+function calcPreview(tipo){
+  const qtd   = parseFloat(document.getElementById(tipo+'-qtd').value)   || 0;
+  const vunit = parseFloat(document.getElementById(tipo+'-vunit').value) || 0;
+  document.getElementById(tipo+'-preview').textContent = brl(qtd * vunit);
+}
+
+// ── Adicionar item ────────────────────────────────────────────────────────────
+function adicionarItem(tipo){
+  const state = ac[tipo];
+  if(!ORCAMENTO_ID) return alert('Salve a obra/orçamento primeiro.');
+  if(!state.selectedId) return alert('Selecione um item na busca.');
+
+  const qtd   = parseFloat(document.getElementById(tipo+'-qtd').value)   || 1;
+  const vunit = parseFloat(document.getElementById(tipo+'-vunit').value) || 0;
+
+  const isMat = tipo === 'mat';
+  const url   = isMat ? "{% url 'orcamento:salvar_item_material' %}"
+                      : "{% url 'orcamento:salvar_item_servico' %}";
+  const body  = isMat
+    ? {orcamento_id: ORCAMENTO_ID, produto_id: state.selectedId, quantidade: qtd, valor_unitario: vunit}
+    : {orcamento_id: ORCAMENTO_ID, servico_id: state.selectedId, quantidade: qtd, valor_unitario: vunit};
+
+  const btn = document.getElementById(tipo+'-btn-add');
+  btn.disabled = true; btn.textContent = '…';
+
+  post(url, body).then(d => {
+    btn.disabled = false; btn.textContent = '+ Adicionar';
+    if(!d.ok){ alert(d.erro||'Erro ao adicionar.'); return; }
+
+    // Adiciona linha na tabela
+    const tbody = document.getElementById(tipo+'-tbody');
+    const emptyRow = document.getElementById(tipo+'-empty');
+    if(emptyRow) emptyRow.remove();
+
+    const item   = d.item;
+    const prefix = isMat ? 'mat' : 'svc';
+    const nome   = isMat ? item.produto : item.servico;
+    const tr     = document.createElement('tr');
+    tr.id        = prefix + '-' + item.id;
+    tr.innerHTML = `
+      <td>${h(item.codigo||'')}</td>
+      <td>${h(nome||'')}</td>
+      <td>${h(item.unidade||'')}</td>
+      <td class="num">${Number(item.quantidade).toFixed(3)}</td>
+      <td class="num">R$ ${Number(item.valor_unitario).toFixed(2)}</td>
+      <td class="num green">R$ ${Number(item.valor_total).toFixed(2)}</td>
+      <td style="text-align:center">
+        <button class="btn btn-danger btn-sm" onclick="${isMat?'excluirMat':'excluirSvc'}(${item.id})">✕</button>
+      </td>`;
+    tbody.appendChild(tr);
+
+    atualizarTotais(d.totais);
+    acClear(tipo);
+    document.getElementById(tipo+'-qtd').value = 1;
+  });
+}
+
+// ── Excluir material ──────────────────────────────────────────────────────────
+function excluirMat(id){
+  if(!confirm('Excluir este material do orçamento?')) return;
+  post("{% url 'orcamento:excluir_item_material' %}", {id}).then(d => {
+    if(!d.ok){ alert(d.erro||'Erro.'); return; }
+    const row = document.getElementById('mat-'+id);
+    if(row) row.remove();
+    const tbody = document.getElementById('mat-tbody');
+    if(!tbody.querySelector('tr:not(.empty-row)'))
+      tbody.innerHTML = '<tr class="empty-row" id="mat-empty"><td colspan="7">Nenhum material lançado. Adicione abaixo.</td></tr>';
+    atualizarTotais(d.totais);
+  });
+}
+
+// ── Excluir serviço ───────────────────────────────────────────────────────────
+function excluirSvc(id){
+  if(!confirm('Excluir este serviço do orçamento?')) return;
+  post("{% url 'orcamento:excluir_item_servico' %}", {id}).then(d => {
+    if(!d.ok){ alert(d.erro||'Erro.'); return; }
+    const row = document.getElementById('svc-'+id);
+    if(row) row.remove();
+    const tbody = document.getElementById('svc-tbody');
+    if(!tbody.querySelector('tr:not(.empty-row)'))
+      tbody.innerHTML = '<tr class="empty-row" id="svc-empty"><td colspan="7">Nenhum serviço lançado. Adicione abaixo.</td></tr>';
+    atualizarTotais(d.totais);
+  });
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', () => { atualizarNomeObra(); });
+</script>
 </body>
 </html>
