@@ -371,15 +371,17 @@
   {% endif %}
 </div>
 
+{{ produtos_list|json_script:"dados-mat" }}
+{{ servicos_list|json_script:"dados-svc" }}
 <script>
 const ORCAMENTO_ID = {% if orcamento %}{{ orcamento.id }}{% else %}null{% endif %};
 const OBRA_ID      = {% if orcamento and orcamento.obra %}{{ orcamento.obra.id }}{% else %}null{% endif %};
 const CSRF         = '{{ csrf_token }}';
 
-// Dados do módulo Serviços/Produtos
+// Dados do módulo Serviços/Produtos — carregados de forma segura via JSON
 const DADOS = {
-  mat: [{% for p in produtos %}{id:{{ p.id }},nome:"{{ p.nome|escapejs }}",codigo:"{{ p.codigo|default:''|escapejs }}",unidade:"{{ p.unidade|default:'un'|escapejs }}",preco:{{ p.preco_unitario|default:0 }}}{% if not forloop.last %},{% endif %}{% endfor %}],
-  svc: [{% for s in servicos %}{id:{{ s.id }},nome:"{{ s.nome|escapejs }}",codigo:"{{ s.codigo|default:''|escapejs }}",unidade:"{{ s.unidade|default:'un'|escapejs }}",preco:{{ s.preco_unitario|default:0 }}}{% if not forloop.last %},{% endif %}{% endfor %}]
+  mat: JSON.parse(document.getElementById('dados-mat').textContent),
+  svc: JSON.parse(document.getElementById('dados-svc').textContent)
 };
 
 // Estado por tipo

@@ -117,14 +117,32 @@ def dashboard(request):
     projetos = Projeto.objects.all().order_by("nome") if Projeto is not None else []
 
     # Produtos (tipo produto ou ambos) — para a grade de materiais
-    produtos = ProdutoServico.objects.filter(
-        ativo=True, tipo__in=["produto", "ambos"]
+    produtos_qs = ProdutoServico.objects.filter(
+        tipo__in=["produto", "ambos"]
     ).order_by("nome")
 
     # Serviços (tipo servico ou ambos) — para a grade de serviços
-    servicos = ProdutoServico.objects.filter(
-        ativo=True, tipo__in=["servico", "ambos"]
+    servicos_qs = ProdutoServico.objects.filter(
+        tipo__in=["servico", "ambos"]
     ).order_by("nome")
+
+    # Constrói listas Python puras para serialização segura via json_script no template
+    def _qs_to_list(qs):
+        return [
+            {
+                "id":      obj.id,
+                "nome":    obj.nome or "",
+                "codigo":  obj.codigo or "",
+                "unidade": obj.unidade or "un",
+                "preco":   float(obj.preco_unitario or 0),
+            }
+            for obj in qs
+        ]
+
+    produtos = produtos_qs
+    servicos = servicos_qs
+    produtos_list = _qs_to_list(produtos_qs)
+    servicos_list = _qs_to_list(servicos_qs)
 
     orcamento_id = request.GET.get("orcamento_id")
     orcamento = None
@@ -161,6 +179,8 @@ def dashboard(request):
         "projetos": projetos,
         "produtos": produtos,
         "servicos": servicos,
+        "produtos_list": produtos_list,
+        "servicos_list": servicos_list,
         "orcamento": orcamento,
         "itens_material": itens_material,
         "itens_servico": itens_servico,
