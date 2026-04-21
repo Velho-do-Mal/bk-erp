@@ -148,3 +148,32 @@ class StatusEventoDocumento(models.Model):
 
     def __str__(self):
         return f"{self.documento_id} | {self.status} | {self.data_evento}"
+
+
+class AnexoDocumento(models.Model):
+    """Arquivo anexo a um DocumentoControle."""
+
+    documento = models.ForeignKey(
+        'DocumentoControle',
+        on_delete=models.CASCADE,
+        related_name='anexos',
+    )
+    nome_original = models.CharField(max_length=300)
+    arquivo = models.FileField(upload_to='anexos_controle/')
+    tamanho = models.PositiveIntegerField(default=0, help_text='Tamanho em bytes')
+    enviado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='anexos_enviados',
+    )
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Anexo'
+        verbose_name_plural = 'Anexos'
+        ordering = ['criado_em']
+
+    def __str__(self):
+        return f"{self.nome_original} → Doc#{self.documento_id}"

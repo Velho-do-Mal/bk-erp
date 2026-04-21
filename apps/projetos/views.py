@@ -3,7 +3,7 @@ import json
 from datetime import date
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse, Http404
+from django.http import JsonResponse, Http404, FileResponse
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from .models import Projeto, ProjetoAcesso
@@ -448,3 +448,95 @@ def controle_docs(request, pk):
         })
 
     return JsonResponse({'meta': meta, 'docs': docs})
+
+
+# ─── Anexos por documento ────────────────────────────────────────────────────
+
+@login_required
+def api_anexos(request, pk, doc_id):
+    """GET: lista anexos do documento. POST (multipart): faz upload de um arquivo."""
+    from .models import DocumentoControle, AnexoDocumento
+
+    projeto = get_object_or_404(Projeto, pk=pk)
+    check_acesso(request.user, projeto)
+    doc = get_object_or_404(DocumentoControle, id=doc_id, projeto=projeto)
+
+    if request.method == 'POST':
+        if not request.user.is_admin_erp:
+            return JsonResponse({'erro': 'Sem permissão'}, status=403)
+        f = request.FILES.get('arquivo')
+        if not f:
+            return JsonResponse({'erro': 'Nenhum arquivo enviado.'}, status=400)
+        anexo = AnexoDocumento.objects.create(
+            documento=doc,
+            nome_original=f.name,
+            arquivo=f,
+            tamanho=f.size,
+            enviado_por=request.user,
+        )
+        return JsonResponse({
+            'ok': True,
+            'anexo': {
+                'id': anexo.id,
+                'nome': anexo.nome_original,
+                'tamanho': anexo.tamanho,
+                'criado_em': anexo.criado_em.strftime('%d/%m/%Y %H:%M'),
+                'enviado_por': str(anexo.enviado_por) if anexo.enviado_por else '',
+                'download_url': f'/projetos/{pk}/controle-docs/anexos/{anexo.id}/download/',
+                'excluir_url': f'/projetos/{pk}/controle-docs/anexos/{anexo.id}/excluir/',
+            },
+        })
+
+    # GET — retorna lista
+    anexos = AnexoDocumento.objects.filter(documento=doc)
+    return JsonResponse({
+        'ok': True,
+        'anexos': [
+            {
+                'id': a.id,
+                'nome': a.nome_original,
+                'tamanho': a.tamanho,
+                'criado_em': a.criado_em.strftime('%d/%m/%Y %H:%M'),
+                'enviado_por': str(a.enviado_por) if a.enviado_por else '',
+                'download_url': f'/projetos/{pk}/controle-docs/anexos/{a.id}/download/',
+                'excluir_url': f'/projetos/{pk}/controle-docs/anexos/{a.id}/excluir/',
+            }
+            for a in anexos
+        ],
+    })
+
+
+@login_required
+@require_POST
+def excluir_anexo(request, pk, anexo_id):
+    """Remove um anexo."""
+    from .models import AnexoDocumento
+
+    if not request.user.is_admin_erp:
+        return JsonResponse({'erro': 'Sem permissão'}, status=403)
+
+    projeto = get_object_or_404(Projeto, pk=pk)
+    check_acesso(request.user, projeto)
+    anexo = get_object_or_404(AnexoDocumento, id=anexo_id, documento__projeto=projeto)
+    # Remove arquivo físico e registro
+    try:
+        anexo.arquivo.delete(save=False)
+    except Exception:
+        pass
+    anexo.delete()
+    return JsonResponse({'ok': True})
+
+
+@login_required
+def download_anexo(request, pk, anexo_id):
+    """Faz download de um anexo."""
+    from .models import AnexoDocumento
+
+    projeto = get_object_or_404(Projeto, pk=pk)
+    check_acesso(request.user, projeto)
+    anexo = get_object_or_404(AnexoDocumento, id=anexo_id, documento__projeto=projeto)
+    try:
+        response = FileResponse(anexo.arquivo.open('rb'), as_attachment=True, filename=anexo.nome_original)
+        return response
+    except Exception:
+        raise Http404('Arquivo não encontrado.')

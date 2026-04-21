@@ -114,12 +114,23 @@
     display:flex;
     align-items:center;
     justify-content:center;
+    gap:4px;
     min-height:36px;
   }
   .excel-grid .grid-delete .btn{
     min-width:30px;
     padding:4px 8px;
   }
+  /* Modal de Anexos */
+  #modal-anexos{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;}
+  #modal-anexos.open{display:flex;}
+  .modal-anexos-box{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:24px;width:560px;max-width:95vw;max-height:80vh;overflow-y:auto;color:#e2e8f0;}
+  .modal-anexos-box h3{margin:0 0 16px;font-size:16px;color:#93c5fd;}
+  .anexo-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:#0f172a;margin-bottom:6px;}
+  .anexo-nome{flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .anexo-info{font-size:11px;color:#94a3b8;white-space:nowrap;}
+  .drop-zone{border:2px dashed #334155;border-radius:8px;padding:20px;text-align:center;cursor:pointer;color:#94a3b8;font-size:13px;margin-top:12px;transition:border-color .2s;}
+  .drop-zone.drag-over{border-color:#3b82f6;color:#93c5fd;}
   .eap-org-shell{
     border:1px solid var(--bk-border);
     border-radius:12px;
@@ -510,7 +521,7 @@
             <th style="width:50px">% Conc.</th>
             <th style="width:120px">Status</th>
             <th style="width:220px">Alterações</th>
-            {% if is_admin %}<th style="width:48px">Ação</th>{% endif %}
+            <th style="width:{% if is_admin %}80px{% else %}48px{% endif %}">Ação</th>
           </tr>
         </thead>
         <tbody id="ctrl-docs-tbody"></tbody>
@@ -1451,7 +1462,7 @@ function renderCtrlDocs() {
   const tb = document.getElementById('ctrl-docs-tbody');
   if (!tb) return;
   if (!ctrlDocs.length) {
-    tb.innerHTML=`<tr><td colspan="${IS_ADMIN?10:9}" style="text-align:center;color:#64748b;padding:24px">Nenhum documento. Clique em "+ Documento" para adicionar.</td></tr>`;
+    tb.innerHTML=`<tr><td colspan="11" style="text-align:center;color:#64748b;padding:24px">Nenhum documento. Clique em "+ Documento" para adicionar.</td></tr>`;
     return;
   }
   tb.innerHTML = ctrlDocs.map((d,i) => {
@@ -1472,7 +1483,10 @@ function renderCtrlDocs() {
         </select>
       </td>
       <td><textarea class="grid-textarea" oninput="ctrlDocs[${i}].observacao=this.value">${escHtml(d.observacao||'')}</textarea></td>
-      ${IS_ADMIN?`<td class="grid-delete"><button class="btn btn-danger btn-sm" onclick="removerDoc(${i})" title="Excluir">✕</button></td>`:''}
+      <td class="grid-delete">
+        <button class="btn btn-sm" style="background:#1d4ed8;color:#fff" onclick="abrirModalAnexos(${d.id||''})" title="Anexar documento" ${!d.id?'disabled title="Salve primeiro para anexar"':''}>📎</button>
+        ${IS_ADMIN?`<button class="btn btn-danger btn-sm" onclick="removerDoc(${i})" title="Excluir">✕</button>`:''}
+      </td>
     </tr>`;
   }).join('');
 }
@@ -2940,10 +2954,144 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+// ── Modal Anexos ────────────────────────────────────────────────────────────
+let _anexoDocId = null;
+const PROJ_PK = {{ projeto.pk }};
+
+function abrirModalAnexos(docId) {
+  if (!docId) { alert('Salve o documento antes de anexar arquivos.'); return; }
+  _anexoDocId = docId;
+  const modal = document.getElementById('modal-anexos');
+  modal.classList.add('open');
+  carregarAnexos(docId);
+}
+
+function fecharModalAnexos() {
+  document.getElementById('modal-anexos').classList.remove('open');
+  _anexoDocId = null;
+}
+
+function _fmtBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+  return (b/(1024*1024)).toFixed(1) + ' MB';
+}
+
+function carregarAnexos(docId) {
+  const lista = document.getElementById('anexos-lista');
+  lista.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:16px">Carregando...</div>';
+  fetch(`/projetos/${PROJ_PK}/controle-docs/${docId}/anexos/`, {
+    headers: {'X-CSRFToken': CSRF_TOKEN},
+  })
+  .then(r => r.json())
+  .then(res => {
+    if (!res.ok || !res.anexos.length) {
+      lista.innerHTML = '<div style="color:#64748b;font-size:13px;text-align:center;padding:16px">Nenhum anexo ainda.</div>';
+      return;
+    }
+    lista.innerHTML = res.anexos.map(a => `
+      <div class="anexo-item">
+        <span style="font-size:18px">${_iconAnexo(a.nome)}</span>
+        <span class="anexo-nome" title="${escHtml(a.nome)}">${escHtml(a.nome)}</span>
+        <span class="anexo-info">${_fmtBytes(a.tamanho)} · ${a.criado_em}</span>
+        <a href="${a.download_url}" target="_blank" class="btn btn-sm" style="background:#1d4ed8;color:#fff;text-decoration:none" title="Baixar">⬇</a>
+        {% if is_admin %}
+        <button class="btn btn-danger btn-sm" onclick="excluirAnexo('${a.excluir_url}',this)" title="Excluir">✕</button>
+        {% endif %}
+      </div>
+    `).join('');
+  })
+  .catch(() => {
+    lista.innerHTML = '<div style="color:#f87171;font-size:13px;text-align:center;padding:16px">Erro ao carregar anexos.</div>';
+  });
+}
+
+function _iconAnexo(nome) {
+  const ext = (nome.split('.').pop() || '').toLowerCase();
+  const icons = {pdf:'📄',doc:'📝',docx:'📝',xls:'📊',xlsx:'📊',dwg:'📐',dxf:'📐',rvt:'🏗',png:'🖼',jpg:'🖼',jpeg:'🖼',zip:'📦',rar:'📦'};
+  return icons[ext] || '📎';
+}
+
+function uploadAnexo(file) {
+  if (!file || !_anexoDocId) return;
+  const fd = new FormData();
+  fd.append('arquivo', file);
+  const msg = document.getElementById('anexo-upload-msg');
+  msg.style.color = '#93c5fd';
+  msg.textContent = '⏳ Enviando ' + file.name + '...';
+  fetch(`/projetos/${PROJ_PK}/controle-docs/${_anexoDocId}/anexos/`, {
+    method: 'POST',
+    headers: {'X-CSRFToken': CSRF_TOKEN},
+    body: fd,
+  })
+  .then(r => r.json())
+  .then(res => {
+    if (res.ok) {
+      msg.style.color = '#6ee7b7';
+      msg.textContent = '✔ ' + file.name + ' anexado com sucesso!';
+      carregarAnexos(_anexoDocId);
+      document.getElementById('anexo-file-input').value = '';
+    } else {
+      msg.style.color = '#fca5a5';
+      msg.textContent = '✘ ' + (res.erro || 'Erro ao enviar');
+    }
+  })
+  .catch(() => {
+    msg.style.color = '#fca5a5';
+    msg.textContent = '✘ Falha na conexão';
+  });
+}
+
+function onDropAnexo(e) {
+  e.preventDefault();
+  document.getElementById('anexos-dropzone').classList.remove('drag-over');
+  const file = e.dataTransfer?.files?.[0];
+  if (file) uploadAnexo(file);
+}
+
+function excluirAnexo(url, btn) {
+  if (!confirm('Excluir este anexo?')) return;
+  fetch(url, {method:'POST', headers:{'X-CSRFToken': CSRF_TOKEN}})
+  .then(r => r.json())
+  .then(res => {
+    if (res.ok) { btn.closest('.anexo-item').remove(); }
+    else alert(res.erro || 'Erro ao excluir');
+  });
+}
+
+// Fechar modal clicando fora
+document.getElementById('modal-anexos').addEventListener('click', function(e) {
+  if (e.target === this) fecharModalAnexos();
+});
+
 // Auto-save a cada 5 min se admin
 {% if is_admin %}
 setInterval(salvarProjeto, 5 * 60 * 1000);
 {% endif %}
 </script>
+
+<!-- ═══════════ MODAL ANEXOS ═══════════ -->
+<div id="modal-anexos">
+  <div class="modal-anexos-box">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h3>📎 Anexos do Documento</h3>
+      <button class="btn btn-secondary btn-sm" onclick="fecharModalAnexos()">✕ Fechar</button>
+    </div>
+    <div id="anexos-lista">
+      <div style="color:#94a3b8;font-size:13px;text-align:center;padding:20px">Carregando...</div>
+    </div>
+    {% if is_admin %}
+    <div class="drop-zone" id="anexos-dropzone"
+         onclick="document.getElementById('anexo-file-input').click()"
+         ondragover="event.preventDefault();this.classList.add('drag-over')"
+         ondragleave="this.classList.remove('drag-over')"
+         ondrop="onDropAnexo(event)">
+      📂 Clique ou arraste um arquivo aqui para anexar
+    </div>
+    <input type="file" id="anexo-file-input" style="display:none" onchange="uploadAnexo(this.files[0])">
+    <div id="anexo-upload-msg" style="font-size:12px;color:#6ee7b7;margin-top:8px;min-height:18px"></div>
+    {% endif %}
+  </div>
+</div>
 
 {% endblock %}
