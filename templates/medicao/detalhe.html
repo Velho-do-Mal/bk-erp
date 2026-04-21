@@ -206,9 +206,9 @@
             </div>
           </td>
           <td><input class="cell-input cell-codigo" type="text" value="{{ item.codigo }}" placeholder="Cód."></td>
-          <td><input class="cell-input cell-qtd" type="number" value="{{ item.quantidade_total }}" min="0" step="0.001" style="text-align:right" oninput="recalcItem(this)"></td>
+          <td><input class="cell-input cell-qtd" type="number" value="{{ item.quantidade_total|stringformat:'.3f' }}" min="0" step="0.001" style="text-align:right" oninput="recalcItem(this)"></td>
           <td><input class="cell-input cell-un" type="text" value="{{ item.unidade }}" style="text-align:center"></td>
-          <td><input class="cell-input cell-pu" type="number" value="{{ item.preco_unitario }}" min="0" step="0.01" style="text-align:right" oninput="recalcItem(this)"></td>
+          <td><input class="cell-input cell-pu" type="number" value="{{ item.preco_unitario|stringformat:'.2f' }}" min="0" step="0.01" style="text-align:right" oninput="recalcItem(this)"></td>
           <td><div class="cell-num cell-pt">{{ item.preco_total|floatformat:2 }}</div></td>
           <td>
             <div class="grid-action">
@@ -316,9 +316,9 @@
           <td>
             <input class="cell-input-med med-qtd"
               type="number" min="0" step="0.001"
-              value="{{ linha.qtd_medida }}"
-              data-pu="{{ linha.item.preco_unitario }}"
-              data-qtd-total="{{ linha.item.quantidade_total }}"
+              value="{{ linha.qtd_medida|stringformat:'.3f' }}"
+              data-pu="{{ linha.item.preco_unitario|stringformat:'.2f' }}"
+              data-qtd-total="{{ linha.item.quantidade_total|stringformat:'.3f' }}"
               data-item-id="{{ linha.item.id }}"
               oninput="recalcMedicao(this)">
           </td>
@@ -721,7 +721,7 @@ function recalcMedicao(input) {
 function recalcTotaisMedicao() {
   let totalPeriodo = 0;
   document.querySelectorAll('#tbody_medicao tr').forEach(tr => {
-    const v = parseFloat(tr.querySelector('.med-val-periodo')?.textContent?.replace('R$ ','').replace('.','').replace(',','.')) || 0;
+    const v = parseFloat(tr.querySelector('.med-val-periodo')?.textContent?.replace('R$ ','').replace(/\./g,'').replace(',','.')) || 0;
     totalPeriodo += v;
   });
   document.querySelector('.tfoot-periodo').textContent = 'R$ ' + fmt(totalPeriodo);
