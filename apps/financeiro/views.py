@@ -6,7 +6,7 @@ from dateutil.relativedelta import relativedelta
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponse
-from django.db.models import Sum
+from django.db.models import Sum, Q          # ← Q adicionado aqui (era só Sum)
 from .models import Conta, Categoria, Transacao, Orcamento
 from apps.cadastros.models import Cliente, Fornecedor, CentrosDeCusto
 
@@ -56,15 +56,15 @@ def dashboard_financeiro(request):
 
     hoje = date.today()
 
-    # ── Filtros de período ──────────────────────────────────
     ini_str = request.GET.get('data_ini', '')
     fim_str = request.GET.get('data_fim', '')
-    modo    = request.GET.get('modo', 'todos')   # realizado | previsto | todos
+    modo = request.GET.get('modo', 'todos')
 
     try:
         d_ini = date.fromisoformat(ini_str) if ini_str else date(hoje.year, 1, 1)
     except ValueError:
         d_ini = date(hoje.year, 1, 1)
+
     try:
         d_fim = date.fromisoformat(fim_str) if fim_str else hoje
     except ValueError:
@@ -78,22 +78,19 @@ def dashboard_financeiro(request):
             qs = qs.filter(status='pendente')
         return qs
 
-    # ── KPIs globais (sem filtro de período p/ saldo total) ─
     total_entrada = Transacao.objects.filter(tipo='entrada', status='realizado').aggregate(s=Sum('valor'))['s'] or Decimal('0')
-    total_saida   = Transacao.objects.filter(tipo='saida',   status='realizado').aggregate(s=Sum('valor'))['s'] or Decimal('0')
+    total_saida = Transacao.objects.filter(tipo='saida', status='realizado').aggregate(s=Sum('valor'))['s'] or Decimal('0')
     saldo = total_entrada - total_saida
     pendentes_receber = Transacao.objects.filter(tipo='entrada', status='pendente').aggregate(s=Sum('valor'))['s'] or Decimal('0')
-    pendentes_pagar   = Transacao.objects.filter(tipo='saida',   status='pendente').aggregate(s=Sum('valor'))['s'] or Decimal('0')
+    pendentes_pagar = Transacao.objects.filter(tipo='saida', status='pendente').aggregate(s=Sum('valor'))['s'] or Decimal('0')
 
-    # KPIs do período filtrado
-    ent_periodo  = _qs_base().filter(tipo='entrada').aggregate(s=Sum('valor'))['s'] or Decimal('0')
+    ent_periodo = _qs_base().filter(tipo='entrada').aggregate(s=Sum('valor'))['s'] or Decimal('0')
     said_periodo = _qs_base().filter(tipo='saida').aggregate(s=Sum('valor'))['s'] or Decimal('0')
 
     ultimas = list(Transacao.objects.select_related('categoria', 'conta').order_by('-criado_em')[:10].values(
         'id', 'descricao', 'tipo', 'valor', 'status', 'data_competencia', 'categoria__nome', 'conta__nome'
     ))
 
-    # ── Fluxo de Caixa mensal ──────────────────────────────
     meses_raw = (
         _qs_base()
         .annotate(mes=TruncMonth('data_competencia'))
@@ -101,6 +98,7 @@ def dashboard_financeiro(request):
         .annotate(total=Sum('valor'))
         .order_by('mes')
     )
+
     meses_data = {}
     for m in meses_raw:
         key = m['mes'].strftime('%Y-%m') if m['mes'] else ''
@@ -108,14 +106,12 @@ def dashboard_financeiro(request):
             meses_data[key] = {'entrada': 0, 'saida': 0}
         meses_data[key][m['tipo']] = float(m['total'] or 0)
 
-    # Acumulado
     keys_sorted = sorted(meses_data.keys())
     acum = 0.0
     for k in keys_sorted:
         acum += meses_data[k].get('entrada', 0) - meses_data[k].get('saida', 0)
         meses_data[k]['acumulado'] = round(acum, 2)
 
-    # ── Pizza: categorias de SAÍDA ─────────────────────────
     cat_saida = (
         _qs_base()
         .filter(tipo='saida')
@@ -123,28 +119,31 @@ def dashboard_financeiro(request):
         .annotate(total=Sum('valor'))
         .order_by('-total')
     )
+
     cat_saida_data = [
         {'nome': r['categoria__nome'] or 'Sem categoria', 'total': float(r['total'] or 0)}
         for r in cat_saida
     ]
 
-    # ── Centros de Custo ───────────────────────────────────
     cc_entradas = (
         _qs_base()
         .filter(tipo='entrada')
         .values('centro_custo__nome')
         .annotate(total=Sum('valor'))
     )
+
     cc_saidas = (
         _qs_base()
         .filter(tipo='saida')
         .values('centro_custo__nome')
         .annotate(total=Sum('valor'))
     )
+
     cc_map = {}
     for r in cc_entradas:
         k = r['centro_custo__nome'] or 'Sem CC'
         cc_map.setdefault(k, {'entrada': 0, 'saida': 0})['entrada'] = float(r['total'] or 0)
+
     for r in cc_saidas:
         k = r['centro_custo__nome'] or 'Sem CC'
         cc_map.setdefault(k, {'entrada': 0, 'saida': 0})['saida'] = float(r['total'] or 0)
@@ -155,32 +154,33 @@ def dashboard_financeiro(request):
         pct = round(saldo_cc / vals['entrada'] * 100, 1) if vals['entrada'] > 0 else 0
         cc_data.append({'nome': nome, 'entrada': vals['entrada'], 'saida': vals['saida'],
                         'saldo': round(saldo_cc, 2), 'pct': pct})
+
     cc_data.sort(key=lambda x: x['saldo'], reverse=True)
 
     ctx = {
-        'total_entrada':    total_entrada,
-        'total_saida':      total_saida,
-        'saldo':            saldo,
+        'total_entrada': total_entrada,
+        'total_saida': total_saida,
+        'saldo': saldo,
         'pendentes_receber': pendentes_receber,
-        'pendentes_pagar':   pendentes_pagar,
-        'ent_periodo':      ent_periodo,
-        'said_periodo':     said_periodo,
-        'saldo_periodo':    ent_periodo - said_periodo,
-        'ultimas_json':     json.dumps(ultimas, default=str),
-        'meses_json':       json.dumps(meses_data),
-        'cat_saida_json':   json.dumps(cat_saida_data),
-        'cc_json':          json.dumps(cc_data),
-        'data_ini':         d_ini.isoformat(),
-        'data_fim':         d_fim.isoformat(),
-        'modo':             modo,
+        'pendentes_pagar': pendentes_pagar,
+        'ent_periodo': ent_periodo,
+        'said_periodo': said_periodo,
+        'saldo_periodo': ent_periodo - said_periodo,
+        'ultimas_json': json.dumps(ultimas, default=str),
+        'meses_json': json.dumps(meses_data),
+        'cat_saida_json': json.dumps(cat_saida_data),
+        'cc_json': json.dumps(cc_data),
+        'data_ini': d_ini.isoformat(),
+        'data_fim': d_fim.isoformat(),
+        'modo': modo,
     }
+
     return render(request, 'financeiro/dashboard.html', ctx)
 
 
 @login_required
 def transacoes(request):
     if request.method == 'POST' and request.FILES.get('anexo'):
-        # Upload com form multipart (criação com anexo)
         f = request.FILES['anexo']
         rid = request.POST.get('id') or None
         obj = Transacao.objects.get(id=int(rid)) if rid else Transacao()
@@ -256,19 +256,19 @@ def transacoes(request):
             obj.save()
             return JsonResponse({'ok': True, 'status': obj.status})
 
-    # Filtros
-    tipo_f   = request.GET.get('tipo', '')
+    tipo_f = request.GET.get('tipo', '')
     status_f = request.GET.get('status', '')
-    mes_f    = request.GET.get('mes', '')
-    ini_f    = request.GET.get('data_ini', '')
-    fim_f    = request.GET.get('data_fim', '')
+    mes_f = request.GET.get('mes', '')
+    ini_f = request.GET.get('data_ini', '')
+    fim_f = request.GET.get('data_fim', '')
 
     qs = Transacao.objects.select_related('conta', 'categoria', 'cliente', 'fornecedor', 'centro_custo')
+
     if tipo_f:
         qs = qs.filter(tipo=tipo_f)
     if status_f:
         qs = qs.filter(status=status_f)
-    # Período: data_ini/data_fim têm prioridade sobre mes
+
     if ini_f or fim_f:
         try:
             if ini_f:
@@ -301,35 +301,37 @@ def transacoes(request):
     centros = list(CentrosDeCusto.objects.filter(ativo=True).values('id', 'nome'))
 
     ctx = {
-        'transacoes_json':  json.dumps(transacoes_list, default=str),
-        'contas_json':       json.dumps(contas),
-        'categorias_json':   json.dumps(categorias),
-        'clientes_json':     json.dumps(clientes),
+        'transacoes_json': json.dumps(transacoes_list, default=str),
+        'contas_json': json.dumps(contas),
+        'categorias_json': json.dumps(categorias),
+        'clientes_json': json.dumps(clientes),
         'fornecedores_json': json.dumps(fornecedores_list),
-        'centros_json':      json.dumps(centros),
-        'tipo_f':   tipo_f,
+        'centros_json': json.dumps(centros),
+        'tipo_f': tipo_f,
         'status_f': status_f,
-        'mes_f':    mes_f,
-        'ini_f':    ini_f,
-        'fim_f':    fim_f,
+        'mes_f': mes_f,
+        'ini_f': ini_f,
+        'fim_f': fim_f,
     }
+
     return render(request, 'financeiro/transacoes.html', ctx)
-
-
 
 
 def _gerar_recorrencia(origem: Transacao):
     """Gera cópias futuras para transações recorrentes (12 repetições)."""
     rec = origem.recorrencia
+
     if not rec or rec not in RECORRENCIA_DELTAS:
         return
+
     delta_fn = RECORRENCIA_DELTAS[rec]
     grupo = str(uuid.uuid4())[:8]
     origem.recorrencia_grupo = grupo
     origem.save(update_fields=['recorrencia_grupo'])
 
     proxima = _to_date(str(origem.data_competencia))
-    for _ in range(11):  # 11 cópias + original = 12 ocorrências
+
+    for _ in range(11):
         proxima = delta_fn(proxima)
         Transacao.objects.create(
             descricao=origem.descricao,
@@ -355,6 +357,7 @@ def contas(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         action = data.get('action')
+
         if action == 'save':
             rid = data.get('id')
             obj = Conta.objects.get(id=rid) if rid else Conta()
@@ -365,15 +368,19 @@ def contas(request):
             obj.observacoes = data.get('observacoes', '').strip()
             obj.save()
             return JsonResponse({'ok': True, 'id': obj.id})
+
         elif action == 'delete':
             Conta.objects.filter(id=data.get('id')).delete()
             return JsonResponse({'ok': True})
+
     qs = list(Conta.objects.values('id', 'nome', 'banco', 'saldo_inicial', 'ativa', 'observacoes'))
+
     for c in qs:
         entrada = Transacao.objects.filter(conta_id=c['id'], tipo='entrada', status='realizado').aggregate(s=Sum('valor'))['s'] or Decimal('0')
         saida = Transacao.objects.filter(conta_id=c['id'], tipo='saida', status='realizado').aggregate(s=Sum('valor'))['s'] or Decimal('0')
         c['saldo_atual'] = float(Decimal(str(c['saldo_inicial'])) + entrada - saida)
         c['saldo_inicial'] = float(c['saldo_inicial'])
+
     return render(request, 'financeiro/contas.html', {'contas_json': json.dumps(qs)})
 
 
@@ -382,6 +389,7 @@ def categorias(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         action = data.get('action')
+
         if action == 'save':
             rid = data.get('id')
             obj = Categoria.objects.get(id=rid) if rid else Categoria()
@@ -392,26 +400,29 @@ def categorias(request):
             obj.observacoes = data.get('observacoes', '').strip()
             obj.save()
             return JsonResponse({'ok': True, 'id': obj.id})
+
         elif action == 'delete':
             Categoria.objects.filter(id=data.get('id')).delete()
             return JsonResponse({'ok': True})
+
     qs = list(Categoria.objects.values('id', 'nome', 'tipo', 'pai_id', 'observacoes'))
+
     return render(request, 'financeiro/categorias.html', {'categorias_json': json.dumps(qs)})
 
 
 @login_required
 def orcamento(request):
     from django.db.models.functions import ExtractMonth
-    
+
     hoje = date.today()
     ano_selecionado = int(request.GET.get('ano', hoje.year))
-    
-    # Categorias organizadas por tipo (todas as ativas)
+
+    # Q já importado no topo do arquivo — sem mais NameError
     categorias_entrada = Categoria.objects.filter(Q(tipo='entrada') | Q(tipo='ambos')).order_by('nome')
     categorias_saida = Categoria.objects.filter(Q(tipo='saida') | Q(tipo='ambos')).order_by('nome')
-    
-    # Dados de Orçamento (Previsto)
+
     orcamentos_raw = Orcamento.objects.filter(ano=ano_selecionado).values('categoria_id', 'mes', 'valor')
+
     orc_map = {}
     for o in orcamentos_raw:
         cat_id = o['categoria_id']
@@ -419,14 +430,14 @@ def orcamento(request):
         if cat_id not in orc_map:
             orc_map[cat_id] = {}
         orc_map[cat_id][mes] = float(o['valor'])
-        
-    # Dados Reais (Transações Realizadas)
+
     reais_raw = (
         Transacao.objects.filter(data_competencia__year=ano_selecionado, status='realizado')
         .annotate(mes_num=ExtractMonth('data_competencia'))
         .values('categoria_id', 'mes_num')
         .annotate(total=Sum('valor'))
     )
+
     reais_map = {}
     for r in reais_raw:
         cat_id = r['categoria_id']
@@ -434,53 +445,46 @@ def orcamento(request):
         if cat_id not in reais_map:
             reais_map[cat_id] = {}
         reais_map[cat_id][mes] = float(r['total'])
-        
-    # Estrutura para o template (Garante que TODAS as categorias apareçam)
+
     def build_grid(categorias, data_map):
         grid = []
         for cat in categorias:
-            # Pega os valores do mapa ou 0.0 se não existir
-            meses_valores = []
-            for m in range(1, 13):
-                val = data_map.get(cat.id, {}).get(m, 0.0)
-                meses_valores.append(float(val))
-                
-            row = {
+            meses_valores = [float(data_map.get(cat.id, {}).get(m, 0.0)) for m in range(1, 13)]
+            grid.append({
                 'id': cat.id,
                 'nome': cat.nome,
                 'meses': meses_valores,
-                'total': sum(meses_valores)
-            }
-            grid.append(row)
+                'total': sum(meses_valores),
+            })
         return grid
-        
+
     grid_previsto_entrada = build_grid(categorias_entrada, orc_map)
     grid_previsto_saida = build_grid(categorias_saida, orc_map)
     grid_real_entrada = build_grid(categorias_entrada, reais_map)
     grid_real_saida = build_grid(categorias_saida, reais_map)
-    
-    # Totais mensais para dashboards
+
     totais_previsto = {
         'entrada': [sum(row['meses'][m] for row in grid_previsto_entrada) for m in range(12)],
         'saida': [sum(row['meses'][m] for row in grid_previsto_saida) for m in range(12)],
     }
+
     totais_real = {
         'entrada': [sum(row['meses'][m] for row in grid_real_entrada) for m in range(12)],
         'saida': [sum(row['meses'][m] for row in grid_real_saida) for m in range(12)],
     }
-    
-    # Fluxo de Caixa (Mensal e Acumulado)
+
     fluxo_previsto = []
     fluxo_real = []
     acum_p = 0
     acum_r = 0
+
     for m in range(12):
         saldo_p = totais_previsto['entrada'][m] - totais_previsto['saida'][m]
         saldo_r = totais_real['entrada'][m] - totais_real['saida'][m]
         acum_p += saldo_p
         acum_r += saldo_r
-        fluxo_previsto.append({'mes': m+1, 'saldo': saldo_p, 'acumulado': acum_p})
-        fluxo_real.append({'mes': m+1, 'saldo': saldo_r, 'acumulado': acum_r})
+        fluxo_previsto.append({'mes': m + 1, 'saldo': saldo_p, 'acumulado': acum_p})
+        fluxo_real.append({'mes': m + 1, 'saldo': saldo_r, 'acumulado': acum_r})
 
     ctx = {
         'ano': ano_selecionado,
@@ -494,6 +498,7 @@ def orcamento(request):
         'fluxo_previsto_json': json.dumps(fluxo_previsto),
         'fluxo_real_json': json.dumps(fluxo_real),
     }
+
     return render(request, 'financeiro/orcamento.html', ctx)
 
 
@@ -506,12 +511,15 @@ def salvar_orcamento(request):
             ano = int(data.get('ano'))
             mes = int(data.get('mes'))
             valor = Decimal(str(data.get('valor', 0)))
-            
+
             orc, created = Orcamento.objects.update_or_create(
                 categoria_id=cat_id, ano=ano, mes=mes,
                 defaults={'valor': valor}
             )
+
             return JsonResponse({'ok': True, 'id': orc.id})
+
         except Exception as e:
             return JsonResponse({'ok': False, 'error': str(e)}, status=400)
+
     return JsonResponse({'ok': False}, status=405)

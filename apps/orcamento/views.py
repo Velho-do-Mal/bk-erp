@@ -4,6 +4,7 @@ import csv
 import json
 from decimal import Decimal, InvalidOperation
 
+from django.contrib.auth.decorators import login_required   # ← adicionado
 from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Q
 from django.http import HttpResponse, JsonResponse
@@ -96,10 +97,14 @@ def _item_servico_to_dict(item: ItemServico) -> dict:
 def _totais_orcamento(orcamento: Orcamento | None) -> dict:
     if not orcamento:
         return {"total_materiais": 0.0, "total_servicos": 0.0, "total_geral": 0.0}
-    total_materiais = sum(i.valor_total or Decimal("0")
-                          for i in orcamento.itens_material.select_related("produto").all())
-    total_servicos = sum(i.valor_total or Decimal("0")
-                         for i in orcamento.itens_servico.select_related("servico").all())
+    total_materiais = sum(
+        i.valor_total or Decimal("0")
+        for i in orcamento.itens_material.select_related("produto").all()
+    )
+    total_servicos = sum(
+        i.valor_total or Decimal("0")
+        for i in orcamento.itens_servico.select_related("servico").all()
+    )
     total_geral = total_materiais + total_servicos
     return {
         "total_materiais": float(total_materiais),
@@ -110,31 +115,24 @@ def _totais_orcamento(orcamento: Orcamento | None) -> dict:
 
 # ─── views ──────────────────────────────────────────────────────────────────
 
+@login_required
 @require_GET
 def dashboard(request):
     obras = Obra.objects.select_related("cliente", "projeto").all()
     clientes = Cliente.objects.filter(ativo=True).order_by("nome")
     projetos = Projeto.objects.all().order_by("nome") if Projeto is not None else []
 
-    # Produtos (tipo produto ou ambos) — para a grade de materiais
-    produtos_qs = ProdutoServico.objects.filter(
-        tipo__in=["produto", "ambos"]
-    ).order_by("nome")
+    produtos_qs = ProdutoServico.objects.filter(tipo__in=["produto", "ambos"]).order_by("nome")
+    servicos_qs = ProdutoServico.objects.filter(tipo__in=["servico", "ambos"]).order_by("nome")
 
-    # Serviços (tipo servico ou ambos) — para a grade de serviços
-    servicos_qs = ProdutoServico.objects.filter(
-        tipo__in=["servico", "ambos"]
-    ).order_by("nome")
-
-    # Constrói listas Python puras para serialização segura via json_script no template
     def _qs_to_list(qs):
         return [
             {
-                "id":      obj.id,
-                "nome":    obj.nome or "",
-                "codigo":  obj.codigo or "",
+                "id": obj.id,
+                "nome": obj.nome or "",
+                "codigo": obj.codigo or "",
                 "unidade": obj.unidade or "un",
-                "preco":   float(obj.preco_unitario or 0),
+                "preco": float(obj.preco_unitario or 0),
             }
             for obj in qs
         ]
@@ -146,6 +144,7 @@ def dashboard(request):
 
     orcamento_id = request.GET.get("orcamento_id")
     orcamento = None
+
     if orcamento_id:
         try:
             orcamento = Orcamento.objects.select_related(
@@ -186,13 +185,14 @@ def dashboard(request):
         "itens_servico": itens_servico,
         "totais": totais,
     }
+
     return render(request, "orcamento/orcamento.html", context)
 
 
+@login_required
 @require_http_methods(["POST"])
 def salvar_obra(request):
     data = _request_data(request)
-
     cliente_id = data.get("cliente_id")
     cliente = get_object_or_404(Cliente, id=cliente_id) if cliente_id else None
 
@@ -205,10 +205,12 @@ def salvar_obra(request):
             pass
 
     nome = (data.get("nome") or (projeto.nome if projeto else "") or "").strip()
+
     if not nome:
         return JsonResponse({"ok": False, "erro": "Nome da obra é obrigatório."}, status=400)
 
     obra_id = data.get("id")
+
     if obra_id:
         obra = get_object_or_404(Obra, id=obra_id)
         obra.nome = nome
@@ -221,8 +223,13 @@ def salvar_obra(request):
         criada = True
 
     nome_orcamento = (data.get("nome_orcamento") or "Orçamento").strip() or "Orçamento"
-    orcamento, _ = Orcamento.objects.get_or_create(obra=obra, defaults={"nome": nome_orcamento})
-    if orcamento.nome != nome_orcamento:
+
+    # ← CORRIGIDO: get_or_create pode lançar MultipleObjectsReturned se houver
+    #   mais de um orçamento para a mesma obra. Usa filter().first() no lugar.
+    orcamento = Orcamento.objects.filter(obra=obra).order_by("-criado_em").first()
+    if not orcamento:
+        orcamento = Orcamento.objects.create(obra=obra, nome=nome_orcamento)
+    elif orcamento.nome != nome_orcamento:
         orcamento.nome = nome_orcamento
         orcamento.save(update_fields=["nome"])
 
@@ -241,26 +248,33 @@ def salvar_obra(request):
     })
 
 
+@login_required
 @require_http_methods(["GET", "POST"])
 def autocomplete_produto(request):
     """Autocomplete para produtos/materiais (tipo produto ou ambos)."""
     termo = (request.GET.get("q") or request.POST.get("q") or "").strip()
     qs = ProdutoServico.objects.filter(ativo=True, tipo__in=["produto", "ambos"])
+
     if termo:
         qs = qs.filter(Q(nome__icontains=termo) | Q(codigo__icontains=termo))
+
     return JsonResponse({"ok": True, "resultados": [_produto_to_dict(p) for p in qs.order_by("nome")[:50]]})
 
 
+@login_required
 @require_http_methods(["GET", "POST"])
 def autocomplete_servico(request):
     """Autocomplete para serviços (tipo servico ou ambos)."""
     termo = (request.GET.get("q") or request.POST.get("q") or "").strip()
     qs = ProdutoServico.objects.filter(ativo=True, tipo__in=["servico", "ambos"])
+
     if termo:
         qs = qs.filter(Q(nome__icontains=termo) | Q(codigo__icontains=termo))
+
     return JsonResponse({"ok": True, "resultados": [_produto_to_dict(p) for p in qs.order_by("nome")[:50]]})
 
 
+@login_required
 @require_http_methods(["POST"])
 def salvar_item_material(request):
     data = _request_data(request)
@@ -274,6 +288,7 @@ def salvar_item_material(request):
 
     orcamento = get_object_or_404(Orcamento, id=orcamento_id)
     produto = get_object_or_404(ProdutoServico, id=produto_id)
+
     quantidade = _to_decimal(data.get("quantidade"), default="1")
     valor_unitario = _to_decimal(data.get("valor_unitario"), default=str(produto.preco_unitario or 0))
 
@@ -283,6 +298,7 @@ def salvar_item_material(request):
         quantidade=quantidade,
         valor_unitario=valor_unitario,
     )
+
     return JsonResponse({
         "ok": True,
         "mensagem": "Material adicionado.",
@@ -291,18 +307,23 @@ def salvar_item_material(request):
     })
 
 
+@login_required
 @require_http_methods(["POST"])
 def excluir_item_material(request):
     data = _request_data(request)
     item_id = data.get("id") or data.get("item_id")
+
     if not item_id:
         return JsonResponse({"ok": False, "erro": "id do item é obrigatório."}, status=400)
+
     item = get_object_or_404(ItemMaterial, id=item_id)
     orcamento = item.orcamento
     item.delete()
+
     return JsonResponse({"ok": True, "mensagem": "Item excluído.", "totais": _totais_orcamento(orcamento)})
 
 
+@login_required
 @require_http_methods(["POST"])
 def salvar_item_servico(request):
     data = _request_data(request)
@@ -316,6 +337,7 @@ def salvar_item_servico(request):
 
     orcamento = get_object_or_404(Orcamento, id=orcamento_id)
     servico = get_object_or_404(ProdutoServico, id=servico_id)
+
     quantidade = _to_decimal(data.get("quantidade"), default="1")
     valor_unitario = _to_decimal(data.get("valor_unitario"), default=str(servico.preco_unitario or 0))
 
@@ -325,6 +347,7 @@ def salvar_item_servico(request):
         quantidade=quantidade,
         valor_unitario=valor_unitario,
     )
+
     return JsonResponse({
         "ok": True,
         "mensagem": "Serviço adicionado.",
@@ -333,23 +356,28 @@ def salvar_item_servico(request):
     })
 
 
+@login_required
 @require_http_methods(["POST"])
 def excluir_item_servico(request):
     data = _request_data(request)
     item_id = data.get("id") or data.get("item_id")
+
     if not item_id:
         return JsonResponse({"ok": False, "erro": "id do item é obrigatório."}, status=400)
+
     item = get_object_or_404(ItemServico, id=item_id)
     orcamento = item.orcamento
     item.delete()
+
     return JsonResponse({"ok": True, "mensagem": "Item excluído.", "totais": _totais_orcamento(orcamento)})
 
 
+@login_required
 @require_GET
 def exportar_excel(request, orcamento_id):
     orcamento = get_object_or_404(
         Orcamento.objects.select_related("obra", "obra__cliente", "obra__projeto"),
-        id=orcamento_id
+        id=orcamento_id,
     )
 
     response = HttpResponse(content_type="text/csv; charset=utf-8")
@@ -357,6 +385,7 @@ def exportar_excel(request, orcamento_id):
     response.write("\ufeff")
 
     writer = csv.writer(response, delimiter=";")
+
     writer.writerow(["Orçamento", orcamento.nome])
     writer.writerow(["Obra", orcamento.obra.nome])
     writer.writerow(["Cliente", orcamento.obra.cliente.nome if orcamento.obra.cliente else ""])
@@ -364,7 +393,7 @@ def exportar_excel(request, orcamento_id):
     writer.writerow([])
 
     from collections import OrderedDict
-    # Materiais
+
     mapa_mat = OrderedDict()
     for item in orcamento.itens_material.select_related("produto").all():
         key = item.produto_id
@@ -386,7 +415,6 @@ def exportar_excel(request, orcamento_id):
     for m in mapa_mat.values():
         writer.writerow([m["codigo"], m["nome"], m["unidade"], m["quantidade"], m["valor_unitario"], m["valor_total"]])
 
-    # Serviços
     mapa_svc = OrderedDict()
     for item in orcamento.itens_servico.select_related("servico").all():
         key = item.servico_id
@@ -414,4 +442,5 @@ def exportar_excel(request, orcamento_id):
     writer.writerow(["Total Materiais", totais["total_materiais"]])
     writer.writerow(["Total Serviços", totais["total_servicos"]])
     writer.writerow(["Total Geral", totais["total_geral"]])
+
     return response
