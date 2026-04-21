@@ -72,10 +72,10 @@
                 <td>{{ row.nome }}</td>
                 {% for val in row.meses %}
                 <td><input type="number" step="0.01" min="0"
-                    value="{{ val|floatformat:2 }}"
+                    value="{{ val|stringformat:'.2f' }}"
                     onchange="salvarOrcamento(this, {{ row.id }}, {{ forloop.counter }}, this.value)"></td>
                 {% endfor %}
-                <td class="total-col row-total">{{ row.total|floatformat:2 }}</td>
+                <td class="total-col row-total">{{ row.total|stringformat:'.2f' }}</td>
             </tr>
             {% endfor %}
             </tbody>
@@ -97,10 +97,10 @@
                 <td>{{ row.nome }}</td>
                 {% for val in row.meses %}
                 <td><input type="number" step="0.01" min="0"
-                    value="{{ val|floatformat:2 }}"
+                    value="{{ val|stringformat:'.2f' }}"
                     onchange="salvarOrcamento(this, {{ row.id }}, {{ forloop.counter }}, this.value)"></td>
                 {% endfor %}
-                <td class="total-col row-total">{{ row.total|floatformat:2 }}</td>
+                <td class="total-col row-total">{{ row.total|stringformat:'.2f' }}</td>
             </tr>
             {% endfor %}
             </tbody>
@@ -245,7 +245,9 @@
 
     /* ── tabela variação ───────────────────────────────── */
 
-    function recalcVariacao() {
+    /* atualizaGrafico: false no carregamento inicial (usa dados do servidor),
+       true após edição do usuário (usa valores dos inputs) */
+    function recalcVariacao(atualizaGrafico) {
         var prevEnt = lerPrevisto('tbl-prev-entrada');
         var prevSai = lerPrevisto('tbl-prev-saida');
         var realEnt = lerReal('tbl-real-entrada');
@@ -271,15 +273,18 @@
         buildRows(prevEnt, realEnt, 'tbody-var-entrada');
         buildRows(prevSai, realSai, 'tbody-var-saida');
 
-        /* atualiza gráfico Previsto vs Realizado com novos totais */
-        var novoPrevEnt = somarMeses(prevEnt);
-        var novoPrevSai = somarMeses(prevSai);
-        var saldoPrev   = MESES.map(function(_, i){ return novoPrevEnt[i] - novoPrevSai[i]; });
-        var saldoReal   = MESES.map(function(_, i){ return totaisReal.entrada[i] - totaisReal.saida[i]; });
-        Plotly.react('chart-prev-real', [
-            {x:MESES, y:saldoPrev, name:'Saldo Previsto',  type:'bar', marker:{color:'#94a3b8'}},
-            {x:MESES, y:saldoReal, name:'Saldo Realizado', type:'bar', marker:{color:'#3b82f6'}},
-        ]);
+        /* atualiza gráfico apenas quando o usuário edita (não no carregamento inicial)
+           pois no carregamento os dados do servidor são mais confiáveis */
+        if (atualizaGrafico) {
+            var novoPrevEnt = somarMeses(prevEnt);
+            var novoPrevSai = somarMeses(prevSai);
+            var saldoPrev   = MESES.map(function(_, i){ return novoPrevEnt[i] - novoPrevSai[i]; });
+            var saldoReal   = MESES.map(function(_, i){ return totaisReal.entrada[i] - totaisReal.saida[i]; });
+            Plotly.react('chart-prev-real', [
+                {x:MESES, y:saldoPrev, name:'Saldo Previsto',  type:'bar', marker:{color:'#94a3b8'}},
+                {x:MESES, y:saldoReal, name:'Saldo Realizado', type:'bar', marker:{color:'#3b82f6'}},
+            ]);
+        }
     }
 
     /* ── gráficos iniciais ─────────────────────────────── */
@@ -343,8 +348,8 @@
                 clearTimeout(_badgeTimer);
                 _badgeTimer = setTimeout(function(){ badge.style.display = 'none'; }, 2500);
 
-                /* 4. recalcula variação + gráfico */
-                recalcVariacao();
+                /* 4. recalcula variação + gráfico (true = atualiza gráfico) */
+                recalcVariacao(true);
 
             } else {
                 alert('Erro ao salvar: ' + (result.error || 'desconhecido'));
@@ -355,7 +360,7 @@
         }
     }
 
-    /* inicializa variação ao carregar a página */
-    recalcVariacao();
+    /* inicializa variação ao carregar (false = mantém gráfico com dados do servidor) */
+    recalcVariacao(false);
 </script>
 {% endblock %}
