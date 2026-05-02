@@ -257,10 +257,13 @@
         {{ periodo_ativo.data_inicio|date:"d/m/Y" }} → {{ periodo_ativo.data_fim|date:"d/m/Y" }}
       </span>
     </div>
-    <div style="display:flex;gap:8px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="btn btn-primary btn-sm" onclick="salvarMedicao()">💾 Salvar Medição</button>
       <button class="btn btn-secondary btn-sm" onclick="abrirImpressaoPeriodo()">🖨 Imprimir BM</button>
       <button class="btn btn-secondary btn-sm" onclick="abrirConsolidado()">📊 Consolidado</button>
+      {% if periodos|length > 0 %}
+      <button class="btn btn-danger btn-sm" onclick="confirmarExcluirPeriodo()" title="Exclui este período e retorna ao anterior">🗑️ Excluir Período</button>
+      {% endif %}
     </div>
   </div>
 
@@ -463,8 +466,24 @@
   </div>
 </div>
 
+<!-- ═══ Modal Excluir Período ═══ -->
+<div id="modal_excluir_periodo" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.6);align-items:center;justify-content:center">
+  <div class="card" style="width:420px;max-width:95vw">
+    <div style="font-size:16px;font-weight:700;color:#fca5a5;margin-bottom:12px">⚠️ Excluir Período</div>
+    <div id="modal_excluir_texto" style="font-size:14px;color:#e2e8f0;margin-bottom:18px;line-height:1.6"></div>
+    <div style="background:#1e293b;border:1px solid #ef4444;border-radius:8px;padding:12px 14px;margin-bottom:18px;font-size:13px;color:#fca5a5">
+      ⚠️ Esta ação é irreversível. Todas as medições do período serão excluídas permanentemente.
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-danger" onclick="executarExcluirPeriodo()">🗑️ Confirmar Exclusão</button>
+      <button class="btn btn-secondary" onclick="fecharModal('modal_excluir_periodo')">Cancelar</button>
+    </div>
+    <span id="msg_excluir_periodo" style="font-size:13px;color:#fca5a5;margin-top:8px;display:block"></span>
+  </div>
+</div>
+
 <!-- ═══ Modal Novo Período ═══ -->
-<div id="modal_periodo" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center">
+<div id="modal_periodo" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.6);align-items:center;justify-content:center">
   <div class="card" style="width:380px;max-width:95vw">
     <div style="font-size:16px;font-weight:700;color:#93c5fd;margin-bottom:16px">Novo Período de Medição</div>
     <div id="modal_bm_label" style="font-size:13px;color:#94a3b8;margin-bottom:14px"></div>
@@ -781,6 +800,47 @@ function criarPeriodo() {
       showMsg('msg_periodo', '✘ ' + (res.erro || 'Erro'), '#fca5a5');
     }
   });
+}
+
+// ── Excluir Período ──────────────────────────────────────────
+const TODOS_PERIODOS = [
+  {% for p in periodos %}
+  {id: {{ p.id }}, numero: {{ p.numero }}, label: "{{ p.label }}"},
+  {% endfor %}
+];
+
+function confirmarExcluirPeriodo() {
+  if (!PERIODO_ATIVO_ID) return;
+  const periodo = TODOS_PERIODOS.find(p => p.id === PERIODO_ATIVO_ID);
+  if (!periodo) return;
+  const anterior = TODOS_PERIODOS.find(p => p.numero === periodo.numero - 1);
+  const textoAnterior = anterior
+    ? `Após a exclusão, você será redirecionado para <strong>${anterior.label}</strong>.`
+    : `Este é o único período. Após a exclusão, o boletim ficará sem períodos.`;
+  document.getElementById('modal_excluir_texto').innerHTML =
+    `Você está prestes a excluir o período <strong>${periodo.label}</strong> e todas as suas medições.<br><br>${textoAnterior}`;
+  document.getElementById('modal_excluir_periodo').style.display = 'flex';
+}
+
+function executarExcluirPeriodo() {
+  if (!PERIODO_ATIVO_ID) return;
+  const periodo = TODOS_PERIODOS.find(p => p.id === PERIODO_ATIVO_ID);
+  const anterior = periodo ? TODOS_PERIODOS.find(p => p.numero === periodo.numero - 1) : null;
+  post(`/medicao/${BM_ID}/api/periodos/excluir/`, {periodo_id: PERIODO_ATIVO_ID})
+    .then(res => {
+      if (res.ok) {
+        showMsg('msg_excluir_periodo', '✔ ' + res.mensagem);
+        setTimeout(() => {
+          if (anterior) {
+            window.location.href = `/medicao/${BM_ID}/?periodo_id=${anterior.id}`;
+          } else {
+            window.location.href = `/medicao/${BM_ID}/`;
+          }
+        }, 600);
+      } else {
+        showMsg('msg_excluir_periodo', '✘ ' + (res.erro || 'Erro ao excluir'), '#fca5a5');
+      }
+    });
 }
 
 // ── Impressão ─────────────────────────────────────────────────
