@@ -276,11 +276,21 @@ def transacoes(request):
             obj.save()
             return JsonResponse({'ok': True, 'status': obj.status})
 
-    tipo_f = request.GET.get('tipo', '')
+    tipo_f   = request.GET.get('tipo', '')
     status_f = request.GET.get('status', '')
+    ini_f    = request.GET.get('data_ini', '')
+    fim_f    = request.GET.get('data_fim', '')
+
+    # Se nenhum filtro de período for passado, usa o mês atual como padrão
+    hoje = date.today()
+    mes_default = hoje.strftime('%Y-%m')
     mes_f = request.GET.get('mes', '')
-    ini_f = request.GET.get('data_ini', '')
-    fim_f = request.GET.get('data_fim', '')
+
+    # Só aplica default quando nenhum parâmetro de filtro foi enviado na URL
+    # (permite que "✕ Limpar" sem parâmetros ainda mostre o mês atual)
+    sem_filtro_periodo = not ini_f and not fim_f and not mes_f
+    if sem_filtro_periodo:
+        mes_f = mes_default
 
     qs = Transacao.objects.select_related('conta', 'categoria', 'cliente', 'fornecedor', 'centro_custo')
 
