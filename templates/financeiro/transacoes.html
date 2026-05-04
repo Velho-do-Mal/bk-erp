@@ -288,8 +288,8 @@ function filtrarSubcategoria() {
     return;
   }
 
-  // parseInt nos dois lados — JSON pode trazer pai_id como string ou int
-  const filhos = categorias.filter(c => parseInt(c.pai_id) === catId);
+  // pai_id vem como int do Django; parseInt garante segurança de tipo
+  const filhos = categorias.filter(c => c.pai_id != null && parseInt(c.pai_id) === catId);
   if (!filhos.length) {
     wrap.style.display = 'none';
     sel.value = '';
@@ -400,7 +400,7 @@ async function excluir() {
   _delId = id;
 
   // Verifica se tem recorrência
-  const t = dados.find(x => x.id === id);
+  const t = dados.find(x => parseInt(x.id) === id);
   if (t && t.recorrencia_grupo) {
     // Fecha modal de edição e abre modal de escolha de exclusão
     fecharModal();
