@@ -1,5 +1,32 @@
 {% extends 'base.html' %}
-{% block title %}Transações — BK ERP{% endblock %}
+{% block title %}Transações — BK ERP
+<!-- ═══ Modal Excluir Recorrência ═══ -->
+<div id="modal-del-rec" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.65);align-items:center;justify-content:center">
+  <div class="card" style="width:440px;max-width:95vw">
+    <div style="font-size:16px;font-weight:700;color:#fca5a5;margin-bottom:10px">🗑️ Excluir Transação Recorrente</div>
+    <div id="del-rec-desc" style="font-size:13px;color:#e2e8f0;margin-bottom:16px;line-height:1.6"></div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:8px">
+      <button class="btn" style="background:#334155;color:#f1f5f9;text-align:left;padding:12px 16px;border-radius:8px;border:1px solid #475569"
+        onclick="executarDelete('somente_esta')">
+        <div style="font-weight:600">🔹 Excluir somente esta</div>
+        <div style="font-size:11px;color:#94A3B8;margin-top:3px">Remove apenas este lançamento, os demais permanecem</div>
+      </button>
+      <button class="btn" style="background:#422006;color:#fed7aa;text-align:left;padding:12px 16px;border-radius:8px;border:1px solid #92400e"
+        onclick="executarDelete('proximas')">
+        <div style="font-weight:600">🔶 Excluir esta e as próximas</div>
+        <div style="font-size:11px;color:#fdba74;margin-top:3px">Remove este lançamento e todos os futuros do mesmo grupo</div>
+      </button>
+      <button class="btn" style="background:#450a0a;color:#fca5a5;text-align:left;padding:12px 16px;border-radius:8px;border:1px solid #991b1b"
+        onclick="executarDelete('todas')">
+        <div style="font-weight:600">🔴 Excluir todas (passadas e futuras)</div>
+        <div style="font-size:11px;color:#fca5a5;margin-top:3px">Remove todos os lançamentos do grupo de recorrência</div>
+      </button>
+    </div>
+    <button class="btn btn-secondary" style="width:100%;margin-top:4px" onclick="document.getElementById('modal-del-rec').style.display='none'">Cancelar</button>
+  </div>
+</div>
+
+{% endblock %}
 {% block page_title %}Transações{% endblock %}
 {% block page_sub %}Entradas e saídas financeiras{% endblock %}
 
@@ -310,10 +337,36 @@ async function salvar(e) {
   }
 }
 
+let _delId = null;
+
 async function excluir() {
-  const id = document.getElementById('m-id').value;
-  if (!id || !confirm('Excluir transação?')) return;
-  const r = await fetch('', {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':CSRF}, body:JSON.stringify({action:'delete',id})});
+  const id = parseInt(document.getElementById('m-id').value);
+  if (!id) return;
+  _delId = id;
+
+  // Verifica se tem recorrência
+  const t = TRANSACOES.find(x => x.id === id);
+  if (t && t.recorrencia_grupo) {
+    // Fecha modal de edição e abre modal de escolha de exclusão
+    fecharModal();
+    document.getElementById('del-rec-desc').innerHTML =
+      `<strong>${t.descricao}</strong><br>` +
+      `Esta transação faz parte de um grupo de recorrência <strong>${REC_LABEL[t.recorrencia] || t.recorrencia}</strong>.<br>` +
+      `Como deseja excluir?`;
+    document.getElementById('modal-del-rec').style.display = 'flex';
+  } else {
+    if (!confirm('Excluir esta transação?')) return;
+    await executarDelete('somente_esta');
+  }
+}
+
+async function executarDelete(modo) {
+  document.getElementById('modal-del-rec').style.display = 'none';
+  const r = await fetch('', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},
+    body:JSON.stringify({action:'delete', id:_delId, modo})
+  });
   if ((await r.json()).ok) location.reload();
 }
 
