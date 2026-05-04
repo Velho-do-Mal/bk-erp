@@ -247,7 +247,25 @@ def transacoes(request):
             return JsonResponse({'ok': True, 'id': obj.id})
 
         elif action == 'delete':
-            Transacao.objects.filter(id=data.get('id')).delete()
+            tid  = data.get('id')
+            modo = data.get('modo', 'somente_esta')  # somente_esta | proximas | todas
+
+            obj = get_object_or_404(Transacao, id=tid)
+            grupo = obj.recorrencia_grupo
+
+            if modo == 'somente_esta' or not grupo:
+                obj.delete()
+            elif modo == 'proximas':
+                # Exclui esta e todas do mesmo grupo com data >= data desta
+                Transacao.objects.filter(
+                    recorrencia_grupo=grupo,
+                    data_competencia__gte=obj.data_competencia
+                ).delete()
+            elif modo == 'todas':
+                Transacao.objects.filter(recorrencia_grupo=grupo).delete()
+            else:
+                obj.delete()
+
             return JsonResponse({'ok': True})
 
         elif action == 'toggle_status':
