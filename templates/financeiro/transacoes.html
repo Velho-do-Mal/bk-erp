@@ -166,7 +166,13 @@
         </div>
         <div>
           <label class="form-label">Categoria</label>
-          <select id="m-cat" name="categoria_id" class="form-control">
+          <select id="m-cat" name="categoria_id" class="form-control" onchange="filtrarSubcategoria()">
+            <option value="">— Selecione —</option>
+          </select>
+        </div>
+        <div id="wrap-subcat" style="display:none">
+          <label class="form-label">Subcategoria <span style="color:#94A3B8;font-size:11px">(opcional)</span></label>
+          <select id="m-subcat" class="form-control">
             <option value="">— Selecione —</option>
           </select>
         </div>
@@ -238,7 +244,15 @@ function renderTabela() {
       <td style="font-weight:600;color:${r.tipo==='entrada'?'#10B981':'#EF4444'}">${fmtVal(r.valor)}</td>
       <td>${fmtDate(r.data_competencia)}</td>
       <td>${fmtDate(r.data_vencimento)}</td>
-      <td>${r['categoria__nome']||'—'}</td>
+      <td style="font-size:12px">${(() => {
+        const c = categorias.find(x => x.id === r.categoria_id);
+        if (!c) return '—';
+        if (c.pai_id) {
+          const pai = categorias.find(x => x.id === c.pai_id);
+          return (pai ? `<span style='color:#94A3B8'>${pai.nome}</span> › ` : '') + c.nome;
+        }
+        return c.nome;
+      })()}</td>
       <td style="font-size:11px;color:#94A3B8">${r.recorrencia ? (REC_LABEL[r.recorrencia]||r.recorrencia) : '—'}</td>
       <td>${r.anexo_nome ? `<a href="/financeiro/transacoes/${r.id}/anexo/" style="font-size:11px;color:#3B82F6">📎 ${r.anexo_nome.substring(0,18)}</a>` : '—'}</td>
       <td>
@@ -255,8 +269,35 @@ function populateSelects() {
     el.innerHTML = '<option value="">— Selecione —</option>' + list.map(r=>`<option value="${r[vf]}">${r[tf]}</option>`).join('');
     el.value = cur;
   };
-  sel('m-conta', contas); sel('m-cat', categorias); sel('m-cli', clientes);
+  sel('m-conta', contas);
+  // Categoria: só mostrar pais (pai_id == null)
+  const cats_pai = categorias.filter(c => !c.pai_id);
+  sel('m-cat', cats_pai);
+  sel('m-cli', clientes);
   sel('m-forn', fornecedores); sel('m-cc', centros);
+}
+
+function filtrarSubcategoria() {
+  const catId = parseInt(document.getElementById('m-cat').value) || null;
+  const wrap  = document.getElementById('wrap-subcat');
+  const sel   = document.getElementById('m-subcat');
+
+  if (!catId) {
+    wrap.style.display = 'none';
+    sel.value = '';
+    return;
+  }
+
+  const filhos = categorias.filter(c => c.pai_id === catId);
+  if (!filhos.length) {
+    wrap.style.display = 'none';
+    sel.value = '';
+    return;
+  }
+
+  sel.innerHTML = '<option value="">— Selecione —</option>' +
+    filhos.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+  wrap.style.display = 'block';
 }
 
 function toggleParcelas() {
@@ -285,7 +326,18 @@ function abrirModal(r=null) {
   document.getElementById('m-parcelas').value = r?.recorrencia_parcelas || 2;
   toggleParcelas();
   document.getElementById('m-conta').value = r?.conta_id||'';
-  document.getElementById('m-cat').value = r?.categoria_id||'';
+  // Ao editar: descobrir se categoria é pai ou filho
+  const catAtual = categorias.find(c => c.id === (r?.categoria_id || null));
+  if (catAtual && catAtual.pai_id) {
+    // É subcategoria: selecionar o pai no m-cat e a sub em m-subcat
+    document.getElementById('m-cat').value = catAtual.pai_id;
+    filtrarSubcategoria();
+    document.getElementById('m-subcat').value = catAtual.id;
+  } else {
+    // É categoria pai (ou sem categoria)
+    document.getElementById('m-cat').value = r?.categoria_id||'';
+    filtrarSubcategoria();
+  }
   document.getElementById('m-cli').value = r?.cliente_id||'';
   document.getElementById('m-forn').value = r?.fornecedor_id||'';
   document.getElementById('m-cc').value = r?.centro_custo_id||'';
@@ -325,7 +377,9 @@ async function salvar(e) {
       recorrencia: document.getElementById('m-rec').value,
       recorrencia_parcelas: parseInt(document.getElementById('m-parcelas')?.value || 0),
       conta_id: document.getElementById('m-conta').value||null,
-      categoria_id: document.getElementById('m-cat').value||null,
+      // Usar subcategoria se selecionada, senão usar categoria pai
+      categoria_id: (document.getElementById('m-subcat').value ||
+                     document.getElementById('m-cat').value) || null,
       cliente_id: document.getElementById('m-cli').value||null,
       fornecedor_id: document.getElementById('m-forn').value||null,
       centro_custo_id: document.getElementById('m-cc').value||null,
