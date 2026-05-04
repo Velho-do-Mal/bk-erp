@@ -67,6 +67,7 @@ class Transacao(models.Model):
 
     # Recorrência
     recorrencia = models.CharField(max_length=15, choices=RECORRENCIA_CHOICES, blank=True, default='')
+    recorrencia_parcelas = models.PositiveSmallIntegerField(default=0, help_text='0 = sem limite (até cancelar); >0 = número de repetições a gerar')
     recorrencia_grupo = models.CharField(max_length=50, blank=True)
 
     # Anexo
