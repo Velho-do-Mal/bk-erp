@@ -192,6 +192,7 @@ def transacoes(request):
         obj.data_pagamento = _to_date(request.POST.get('data_pagamento'))
         obj.status = request.POST.get('status', 'pendente')
         obj.recorrencia = request.POST.get('recorrencia', '')
+        obj.recorrencia_parcelas = int(request.POST.get('recorrencia_parcelas') or 0)
         obj.referencia = request.POST.get('referencia', '').strip()
         obj.observacoes = request.POST.get('observacoes', '').strip()
         cid = request.POST.get('conta_id')
@@ -226,6 +227,7 @@ def transacoes(request):
             obj.data_pagamento = _to_date(data.get('data_pagamento'))
             obj.status = data.get('status', 'pendente')
             obj.recorrencia = data.get('recorrencia', '')
+            obj.recorrencia_parcelas = int(data.get('recorrencia_parcelas') or 0)
             obj.referencia = data.get('referencia', '').strip()
             obj.observacoes = data.get('observacoes', '').strip()
             cid = data.get('conta_id')
@@ -318,11 +320,23 @@ def transacoes(request):
 
 
 def _gerar_recorrencia(origem: Transacao):
-    """Gera cópias futuras para transações recorrentes (12 repetições)."""
+    """
+    Gera cópias futuras para transações recorrentes.
+    - recorrencia_parcelas = 0  → gera 11 repetições (padrão, sem limite definido)
+    - recorrencia_parcelas = N  → gera N-1 repetições (N parcelas no total, incluindo a original)
+    Exemplos:
+      parcelas=3  → origem (1) + 2 cópias  = 3 lançamentos
+      parcelas=12 → origem (1) + 11 cópias = 12 lançamentos
+      parcelas=0  → origem (1) + 11 cópias = 12 lançamentos (padrão)
+    """
     rec = origem.recorrencia
-
     if not rec or rec not in RECORRENCIA_DELTAS:
         return
+
+    parcelas = int(origem.recorrencia_parcelas or 0)
+    # Número de cópias a gerar = parcelas - 1 (a origem já é a 1ª)
+    # Se parcelas=0 ou 1, usa padrão de 11 cópias
+    n_copias = (parcelas - 1) if parcelas >= 2 else 11
 
     delta_fn = RECORRENCIA_DELTAS[rec]
     grupo = str(uuid.uuid4())[:8]
@@ -330,15 +344,18 @@ def _gerar_recorrencia(origem: Transacao):
     origem.save(update_fields=['recorrencia_grupo'])
 
     proxima = _to_date(str(origem.data_competencia))
+    venc_proxima = _to_date(str(origem.data_vencimento)) if origem.data_vencimento else None
 
-    for _ in range(11):
+    for i in range(n_copias):
         proxima = delta_fn(proxima)
+        if venc_proxima:
+            venc_proxima = delta_fn(venc_proxima)
         Transacao.objects.create(
             descricao=origem.descricao,
             tipo=origem.tipo,
             valor=origem.valor,
             data_competencia=proxima,
-            data_vencimento=delta_fn(_to_date(str(origem.data_vencimento))) if origem.data_vencimento else None,
+            data_vencimento=venc_proxima,
             status='pendente',
             conta_id=origem.conta_id,
             categoria_id=origem.categoria_id,
@@ -348,6 +365,7 @@ def _gerar_recorrencia(origem: Transacao):
             referencia=origem.referencia,
             observacoes=origem.observacoes,
             recorrencia=rec,
+            recorrencia_parcelas=origem.recorrencia_parcelas,
             recorrencia_grupo=grupo,
         )
 
