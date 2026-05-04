@@ -111,7 +111,7 @@
         </div>
         <div>
           <label class="form-label">Recorrência</label>
-          <select id="m-rec" name="recorrencia" class="form-control">
+          <select id="m-rec" name="recorrencia" class="form-control" onchange="toggleParcelas()">
             <option value="">Sem recorrência</option>
             <option value="semanal">Semanal</option>
             <option value="quinzenal">Quinzenal</option>
@@ -121,6 +121,15 @@
             <option value="semestral">Semestral</option>
             <option value="anual">Anual</option>
           </select>
+        </div>
+        <div id="wrap-parcelas" style="display:none">
+          <label class="form-label">Nº de Parcelas <span style="color:#94A3B8;font-size:11px">(total, incluindo esta)</span></label>
+          <input type="number" id="m-parcelas" name="recorrencia_parcelas"
+            class="form-control" min="2" max="360" step="1" value="2"
+            placeholder="Ex: 12 para 1 ano mensal">
+          <div style="font-size:11px;color:#94A3B8;margin-top:4px">
+            💡 Ex.: 12× mensal = 12 parcelas | 0 = sem limite (gera 12 automático)
+          </div>
         </div>
         <div>
           <label class="form-label">Conta</label>
@@ -223,6 +232,17 @@ function populateSelects() {
   sel('m-forn', fornecedores); sel('m-cc', centros);
 }
 
+function toggleParcelas() {
+  const rec = document.getElementById('m-rec').value;
+  const wrap = document.getElementById('wrap-parcelas');
+  if (rec) {
+    wrap.style.display = 'block';
+  } else {
+    wrap.style.display = 'none';
+    document.getElementById('m-parcelas').value = 2;
+  }
+}
+
 function abrirModal(r=null) {
   populateSelects();
   const today = new Date().toISOString().substring(0,10);
@@ -235,6 +255,8 @@ function abrirModal(r=null) {
   document.getElementById('m-pago').value = r?.data_pagamento ? r.data_pagamento.substring(0,10) : '';
   document.getElementById('m-status').value = r?.status||'pendente';
   document.getElementById('m-rec').value = r?.recorrencia||'';
+  document.getElementById('m-parcelas').value = r?.recorrencia_parcelas || 2;
+  toggleParcelas();
   document.getElementById('m-conta').value = r?.conta_id||'';
   document.getElementById('m-cat').value = r?.categoria_id||'';
   document.getElementById('m-cli').value = r?.cliente_id||'';
@@ -274,6 +296,7 @@ async function salvar(e) {
       data_pagamento: document.getElementById('m-pago').value||null,
       status: document.getElementById('m-status').value,
       recorrencia: document.getElementById('m-rec').value,
+      recorrencia_parcelas: parseInt(document.getElementById('m-parcelas')?.value || 0),
       conta_id: document.getElementById('m-conta').value||null,
       categoria_id: document.getElementById('m-cat').value||null,
       cliente_id: document.getElementById('m-cli').value||null,
