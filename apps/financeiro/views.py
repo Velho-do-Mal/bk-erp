@@ -310,12 +310,12 @@ def transacoes(request):
         'conta__nome', 'categoria__nome', 'cliente__nome',
         'fornecedor__nome', 'centro_custo__nome', 'referencia',
         'conta_id', 'categoria_id', 'cliente_id', 'fornecedor_id', 'centro_custo_id',
-        'observacoes', 'recorrencia', 'recorrencia_grupo',
+        'observacoes', 'recorrencia', 'recorrencia_parcelas', 'recorrencia_grupo',
         'anexo_nome', 'anexo_tipo',
     ))
 
     contas = list(Conta.objects.filter(ativa=True).values('id', 'nome'))
-    categorias = list(Categoria.objects.values('id', 'nome', 'tipo'))
+    categorias = list(Categoria.objects.values('id', 'nome', 'tipo', 'pai_id'))
     clientes = list(Cliente.objects.filter(ativo=True).values('id', 'nome'))
     fornecedores_list = list(Fornecedor.objects.filter(ativo=True).values('id', 'nome'))
     centros = list(CentrosDeCusto.objects.filter(ativo=True).values('id', 'nome'))
