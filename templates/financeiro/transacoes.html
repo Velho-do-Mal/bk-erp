@@ -245,15 +245,11 @@ function renderTabela() {
       <td style="font-weight:600;color:${r.tipo==='entrada'?'#10B981':'#EF4444'}">${fmtVal(r.valor)}</td>
       <td>${fmtDate(r.data_competencia)}</td>
       <td>${fmtDate(r.data_vencimento)}</td>
-      <td style="font-size:12px">${(() => {
-        const c = categorias.find(x => x.id === r.categoria_id);
-        if (!c) return '—';
-        if (c.pai_id) {
-          const pai = categorias.find(x => x.id === c.pai_id);
-          return (pai ? `<span style='color:#94A3B8'>${pai.nome}</span> › ` : '') + c.nome;
-        }
-        return c.nome;
-      })()}</td>
+      <td style="font-size:12px">${
+        r['categoria__pai__nome']
+          ? `<span style='color:#94A3B8'>${r['categoria__pai__nome']}</span> › ${r['categoria__nome']||'—'}`
+          : (r['categoria__nome'] || '—')
+      }</td>
       <td style="font-size:11px;color:#94A3B8">${r.recorrencia ? (REC_LABEL[r.recorrencia]||r.recorrencia) : '—'}</td>
       <td>${r.anexo_nome ? `<a href="/financeiro/transacoes/${r.id}/anexo/" style="font-size:11px;color:#3B82F6">📎 ${r.anexo_nome.substring(0,18)}</a>` : '—'}</td>
       <td>
@@ -329,7 +325,7 @@ function abrirModal(r=null) {
   toggleParcelas();
   document.getElementById('m-conta').value = r?.conta_id||'';
   // Ao editar: descobrir se categoria é pai ou filho
-  const catAtual = categorias.find(c => c.id === (r?.categoria_id || null));
+  const catAtual = categorias.find(c => parseInt(c.id) === parseInt(r?.categoria_id || 0));
   if (catAtual && catAtual.pai_id) {
     // É subcategoria: selecionar o pai no m-cat e a sub em m-subcat
     document.getElementById('m-cat').value = parseInt(catAtual.pai_id);
