@@ -317,7 +317,7 @@ def transacoes(request):
     transacoes_list = list(qs.values(
         'id', 'descricao', 'tipo', 'valor', 'status',
         'data_competencia', 'data_vencimento', 'data_pagamento',
-        'conta__nome', 'categoria__nome', 'cliente__nome',
+        'conta__nome', 'categoria__nome', 'categoria__pai__nome', 'cliente__nome',
         'fornecedor__nome', 'centro_custo__nome', 'referencia',
         'conta_id', 'categoria_id', 'cliente_id', 'fornecedor_id', 'centro_custo_id',
         'observacoes', 'recorrencia', 'recorrencia_parcelas', 'recorrencia_grupo',
@@ -464,8 +464,13 @@ def orcamento(request):
     ano_selecionado = int(request.GET.get('ano', hoje.year))
 
     # Q já importado no topo do arquivo — sem mais NameError
-    categorias_entrada = Categoria.objects.filter(Q(tipo='entrada') | Q(tipo='ambos')).order_by('nome')
-    categorias_saida = Categoria.objects.filter(Q(tipo='saida') | Q(tipo='ambos')).order_by('nome')
+    # Orçamento: só categorias pai (as subcategorias ficam dentro do pai)
+    categorias_entrada = Categoria.objects.filter(
+        Q(tipo='entrada') | Q(tipo='ambos'), pai__isnull=True
+    ).prefetch_related('subcategorias').order_by('nome')
+    categorias_saida = Categoria.objects.filter(
+        Q(tipo='saida') | Q(tipo='ambos'), pai__isnull=True
+    ).prefetch_related('subcategorias').order_by('nome')
 
     orcamentos_raw = Orcamento.objects.filter(ano=ano_selecionado).values('categoria_id', 'mes', 'valor')
 
