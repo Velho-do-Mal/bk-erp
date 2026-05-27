@@ -6,7 +6,7 @@ class Proposta(models.Model):
     STATUS_CHOICES = [
         ('rascunho', 'Rascunho'),
         ('enviada', 'Enviada'),
-        ('negociacao', 'Em Negociação'),
+        ('negociacao', 'Em Negociacao'),
         ('aprovada', 'Aprovada'),
         ('perdida', 'Perdida'),
         ('cancelada', 'Cancelada'),
@@ -14,22 +14,26 @@ class Proposta(models.Model):
 
     codigo = models.CharField(max_length=100)
     titulo = models.CharField(max_length=300)
-    cliente = models.ForeignKey(Cliente, on_delete=models.SET_NULL, null=True, blank=True,
-                                related_name='propostas')
+    cliente = models.ForeignKey(
+        Cliente, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='propostas'
+    )
+    lead = models.ForeignKey(
+        'Lead', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='propostas'
+    )
     projeto_nome = models.CharField(max_length=200, blank=True)
     data_emissao = models.DateField()
     data_validade = models.DateField(null=True, blank=True)
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='rascunho')
     valor_total = models.DecimalField(max_digits=14, decimal_places=2, default=0)
-
     condicoes_pagamento = models.CharField(max_length=200, blank=True)
     prazo_execucao = models.CharField(max_length=100, blank=True)
     observacoes = models.TextField(blank=True)
     notas_tecnicas = models.TextField(blank=True)
-
-    # Referência para lançamento financeiro gerado
+    dados_orcamento = models.JSONField(default=dict, blank=True)
     transacao_financeiro_ref = models.CharField(max_length=50, blank=True)
-
+    projeto_ref_id = models.IntegerField(null=True, blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
 
@@ -39,7 +43,28 @@ class Proposta(models.Model):
         ordering = ['-criado_em']
 
     def __str__(self):
-        return f"{self.codigo} — {self.titulo}"
+        return f"{self.codigo} - {self.titulo}"
+
+    def get_cliente_nome(self):
+        if self.cliente:
+            return self.cliente.nome
+        if self.lead:
+            return self.lead.empresa or self.lead.nome
+        return ''
+
+    def get_cliente_tipo(self):
+        if self.cliente_id:
+            return 'cliente'
+        if self.lead_id:
+            return 'lead'
+        return ''
+
+    def get_cliente_ref(self):
+        if self.cliente_id:
+            return {'tipo': 'cliente', 'id': self.cliente_id}
+        if self.lead_id:
+            return {'tipo': 'lead', 'id': self.lead_id}
+        return {'tipo': '', 'id': None}
 
 
 class ItemProposta(models.Model):
@@ -64,10 +89,10 @@ class ItemProposta(models.Model):
 
 class Lead(models.Model):
     ESTAGIO_CHOICES = [
-        ('prospeccao', 'Prospecção'),
-        ('qualificacao', 'Qualificação'),
+        ('prospeccao', 'Prospeccao'),
+        ('qualificacao', 'Qualificacao'),
         ('proposta', 'Proposta Enviada'),
-        ('negociacao', 'Negociação'),
+        ('negociacao', 'Negociacao'),
         ('fechado_ganho', 'Fechado Ganho'),
         ('fechado_perdido', 'Fechado Perdido'),
     ]
