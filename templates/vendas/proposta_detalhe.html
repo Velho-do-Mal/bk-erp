@@ -24,6 +24,7 @@
 
 {% block extra_css %}
 <style>
+  /* ── Abas ── */
   .prop-tabs { display:flex; gap:0; border-bottom:2px solid #e5e7eb; margin-bottom:20px; }
   .prop-tab-btn {
     padding:10px 24px; font-size:14px; font-weight:600; cursor:pointer;
@@ -34,6 +35,8 @@
   .prop-tab-btn:hover { color:#1e40af; }
   .prop-tab-panel { display:none; }
   .prop-tab-panel.active { display:block; }
+
+  /* ── Cards de seção ── */
   .section-card {
     background:#fff; border:1px solid #e5e7eb; border-radius:10px;
     padding:20px; margin-bottom:18px;
@@ -42,6 +45,8 @@
     font-size:14px; font-weight:700; color:#1e40af;
     margin-bottom:14px; display:flex; align-items:center; gap:8px;
   }
+
+  /* ── Grid de campos ── */
   .form-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px; }
   .form-group { display:flex; flex-direction:column; gap:4px; }
   .form-group label { font-size:12px; font-weight:600; color:#374151; }
@@ -54,6 +59,8 @@
   }
   .form-group textarea { resize:vertical; min-height:70px; }
   .form-full { grid-column:1/-1; }
+
+  /* ── Tabelas editáveis ── */
   .edit-table { width:100%; border-collapse:collapse; font-size:13px; }
   .edit-table th {
     background:#f1f5f9; color:#374151; font-weight:700;
@@ -77,10 +84,14 @@
     cursor:pointer; color:#475569; transition:all .15s;
   }
   .btn-add-row:hover { background:#e0e7ff; border-color:#1e40af; color:#1e40af; }
+
+  /* ── Custos percentuais ── */
   .perc-row { display:flex; gap:8px; align-items:center; margin-bottom:6px; }
   .perc-row input[type=text] { flex:1; padding:6px 9px; border:1px solid #e5e7eb; border-radius:5px; font-size:13px; }
   .perc-row input[type=number] { width:90px; padding:6px 9px; border:1px solid #e5e7eb; border-radius:5px; font-size:13px; }
   .perc-row span { font-size:13px; color:#6b7280; }
+
+  /* ── Resultado ── */
   .resultado-grid {
     display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px;
     margin-top:16px;
@@ -93,13 +104,19 @@
   .resultado-card .rc-valor { font-size:22px; font-weight:800; color:#1e40af; margin-top:4px; }
   .resultado-card .rc-valor.verde { color:#16a34a; }
   .resultado-card .rc-valor.laranja { color:#d97706; }
+
+  /* Tabela detalhe percentuais */
   .perc-resultado-table { width:100%; border-collapse:collapse; font-size:13px; margin-top:12px; }
   .perc-resultado-table th { background:#f1f5f9; padding:7px 10px; text-align:left; font-weight:700; color:#374151; }
   .perc-resultado-table td { padding:6px 10px; border-bottom:1px solid #f3f4f6; }
+
+  /* ── Gráficos ── */
   .graficos-row { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:20px; }
   @media(max-width:768px){ .graficos-row { grid-template-columns:1fr; } }
   .grafico-card { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:16px; }
   .grafico-card h4 { font-size:13px; font-weight:700; color:#374151; margin-bottom:10px; }
+
+  /* ── Badges de status ── */
   .badge { display:inline-block; border-radius:6px; font-size:12px; font-weight:700; }
   .badge-rascunho { background:#f1f5f9; color:#475569; }
   .badge-enviada { background:#dbeafe; color:#1e40af; }
@@ -107,6 +124,8 @@
   .badge-aprovada { background:#dcfce7; color:#16a34a; }
   .badge-perdida { background:#fee2e2; color:#ef4444; }
   .badge-cancelada { background:#f3f4f6; color:#9ca3af; }
+
+  /* ── Toast ── */
   #toast {
     position:fixed; bottom:24px; right:24px; background:#1e40af; color:#fff;
     padding:12px 20px; border-radius:8px; font-size:13px; font-weight:600;
@@ -119,6 +138,8 @@
 
 {% block content %}
 <div id="toast"></div>
+
+{# ── Dados JSON injetados pelo Django ── #}
 <script>
   const PROPOSTA = {{ proposta_json|safe }};
   const CLIENTES = {{ clientes_json|safe }};
@@ -129,6 +150,7 @@
   const CSRF_TOKEN = "{{ csrf_token }}";
 </script>
 
+{# ── Abas ── #}
 <div class="prop-tabs">
   <button class="prop-tab-btn active" data-tab="orcamento" onclick="trocarAba('orcamento')">
     📊 Cálculo do Orçamento
@@ -138,7 +160,12 @@
   </button>
 </div>
 
+{# ════════════════════════════════════════════════════════════════
+   ABA 1 — CÁLCULO DO ORÇAMENTO
+   ════════════════════════════════════════════════════════════════ #}
 <div class="prop-tab-panel active" id="tab-orcamento">
+
+  {# Cabeçalho da proposta #}
   <div class="section-card">
     <div class="section-title">📋 Dados da Proposta</div>
     <div class="form-grid">
@@ -189,6 +216,7 @@
     </div>
   </div>
 
+  {# Mão de Obra #}
   <div class="section-card">
     <div class="section-title">👷 Mão de Obra</div>
     <table class="edit-table" id="tab-mob">
@@ -207,6 +235,7 @@
     <button class="btn-add-row" onclick="addMobRow()">+ Adicionar linha</button>
   </div>
 
+  {# Custos Diretos #}
   <div class="section-card">
     <div class="section-title">📦 Custos Diretos</div>
     <table class="edit-table" id="tab-cd">
@@ -225,14 +254,18 @@
     <button class="btn-add-row" onclick="addCdRow()">+ Adicionar linha</button>
   </div>
 
+  {# Custos Percentuais #}
   <div class="section-card">
     <div class="section-title">💸 Custos Percentuais
-      <span style="font-size:11px;color:#6b7280;font-weight:400">(calculados sobre o valor de venda)</span>
+      <span style="font-size:11px;color:#6b7280;font-weight:400">
+        (calculados sobre o valor de venda)
+      </span>
     </div>
     <div id="perc-list"></div>
     <button class="btn-add-row" onclick="addPercRow()">+ Adicionar item</button>
   </div>
 
+  {# Botão Calcular #}
   <div style="text-align:center;margin:24px 0;">
     <button class="btn" onclick="calcular()"
       style="font-size:15px;padding:12px 40px;background:#1e40af;color:#fff;border-radius:8px;">
@@ -240,6 +273,7 @@
     </button>
   </div>
 
+  {# Resultado (oculto até calcular) #}
   <div id="resultado-section" style="display:none;">
     <div class="section-card">
       <div class="section-title">📈 Resultado do Cálculo</div>
@@ -270,14 +304,26 @@
           <div style="font-size:12px;color:#6b7280;margin-top:2px" id="rc-margem-pct">0,0%</div>
         </div>
       </div>
+
+      {# Detalhe dos custos percentuais em R$ #}
       <div style="margin-top:18px;">
-        <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:6px;">Detalhe dos Custos Percentuais</div>
+        <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:6px;">
+          Detalhe dos Custos Percentuais
+        </div>
         <table class="perc-resultado-table">
-          <thead><tr><th>Item</th><th>%</th><th>Valor (R$)</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>%</th>
+              <th>Valor (R$)</th>
+            </tr>
+          </thead>
           <tbody id="perc-resultado-body"></tbody>
         </table>
       </div>
     </div>
+
+    {# Gráficos #}
     <div class="graficos-row">
       <div class="grafico-card">
         <h4>🥧 Composição dos Custos</h4>
@@ -288,6 +334,7 @@
         <canvas id="chart-resumo" height="220"></canvas>
       </div>
     </div>
+
     <div style="text-align:center;margin-top:16px;">
       <button class="btn" onclick="salvarOrcamento()"
         style="background:#16a34a;color:#fff;padding:10px 32px;font-size:14px;border-radius:8px;">
@@ -295,26 +342,35 @@
       </button>
     </div>
   </div>
-</div>
 
+</div>{# /tab-orcamento #}
+
+
+{# ════════════════════════════════════════════════════════════════
+   ABA 2 — PROPOSTA (itens + exportar Word)
+   ════════════════════════════════════════════════════════════════ #}
 <div class="prop-tab-panel" id="tab-proposta">
+
   <div class="section-card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
       <div class="section-title" style="margin-bottom:0;">📝 Itens da Proposta</div>
       <div style="display:flex;gap:8px;">
-        <button class="btn" onclick="salvarItens()" style="font-size:13px;background:#1e40af;color:#fff;">
+        <button class="btn" onclick="salvarItens()"
+          style="font-size:13px;background:#1e40af;color:#fff;">
           💾 Salvar Itens
         </button>
-        <a id="btn-exportar-word" href="{{ URL_WORD }}"
+        <a id="btn-exportar-word" href="{{ url_word }}"
           class="btn" style="font-size:13px;background:#fff;border:1px solid #1e40af;color:#1e40af;text-decoration:none;">
           📄 Exportar Word
         </a>
       </div>
     </div>
+
     <table class="edit-table">
       <thead>
         <tr>
-          <th>#</th><th>Descrição</th>
+          <th>#</th>
+          <th>Descrição</th>
           <th style="width:70px">Unid.</th>
           <th style="width:80px">Qtd.</th>
           <th style="width:130px">Preço Unit. (R$)</th>
@@ -325,54 +381,78 @@
       <tbody id="itens-body"></tbody>
     </table>
     <button class="btn-add-row" onclick="addItemRow()">+ Adicionar item</button>
+
     <div style="text-align:right;margin-top:12px;font-size:15px;font-weight:700;color:#1e40af;">
       TOTAL: R$ <span id="itens-total">0,00</span>
     </div>
   </div>
-</div>
+
+  {# Resumo financeiro (somente leitura — vem do orçamento) #}
+  <div class="section-card" id="resumo-financeiro" style="display:none;">
+    <div class="section-title">💡 Resumo Financeiro (do Cálculo)</div>
+    <div style="font-size:13px;color:#374151;" id="resumo-financeiro-txt"></div>
+  </div>
+
+</div>{# /tab-proposta #}
+
 {% endblock %}
+
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script>
+// ─── Estado local ────────────────────────────────────────────────────────────
 let dadosOrcamento = Object.assign({
-  mao_de_obra: [], custos_diretos: [],
+  mao_de_obra: [],
+  custos_diretos: [],
   custos_percentuais: [
-    {nome:'ISS',percentual:5.0},{nome:'PIS/COFINS',percentual:3.65},
-    {nome:'IRPJ/CSLL',percentual:8.0},{nome:'Comissao',percentual:5.0},
-    {nome:'Markup/ROI',percentual:10.0},
+    {nome: 'ISS', percentual: 5.0},
+    {nome: 'PIS/COFINS', percentual: 3.65},
+    {nome: 'IRPJ/CSLL', percentual: 8.0},
+    {nome: 'Comissão', percentual: 5.0},
+    {nome: 'Markup / ROI', percentual: 10.0},
   ],
   resultado: {}
 }, PROPOSTA.dados_orcamento || {});
 
-let chartCustos = null, chartResumo = null;
+let chartCustos = null;
+let chartResumo = null;
 
+// ─── Inicialização ────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   preencherCabecalho();
   preencherOrigemSelect();
-  renderMob(); renderCd(); renderPerc(); renderItens();
+  renderMob();
+  renderCd();
+  renderPerc();
+  renderItens();
   if (dadosOrcamento.resultado && dadosOrcamento.resultado.valor_venda) {
     mostrarResultado(dadosOrcamento.resultado);
   }
+  if (PROPOSTA.projeto_ref_id) {
+    document.getElementById('btn-exportar-word').href = URL_WORD;
+  }
 });
 
+// ─── Abas ─────────────────────────────────────────────────────────────────────
 function trocarAba(aba) {
   document.querySelectorAll('.prop-tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.prop-tab-panel').forEach(p => p.classList.remove('active'));
-  document.querySelector('.prop-tab-btn[data-tab="'+aba+'"]').classList.add('active');
-  document.getElementById('tab-'+aba).classList.add('active');
+  document.querySelector(`.prop-tab-btn[data-tab="${aba}"]`).classList.add('active');
+  document.getElementById(`tab-${aba}`).classList.add('active');
 }
 
+// ─── Preenchimento inicial ────────────────────────────────────────────────────
 function preencherCabecalho() {
-  document.getElementById('f-codigo').value        = PROPOSTA.codigo || '';
-  document.getElementById('f-titulo').value        = PROPOSTA.titulo || '';
-  document.getElementById('f-projeto-nome').value  = PROPOSTA.projeto_nome || '';
-  document.getElementById('f-data-emissao').value  = PROPOSTA.data_emissao || '';
-  document.getElementById('f-data-validade').value = PROPOSTA.data_validade || '';
-  document.getElementById('f-prazo').value         = PROPOSTA.prazo_execucao || '';
-  document.getElementById('f-condicoes').value     = PROPOSTA.condicoes_pagamento || '';
-  document.getElementById('f-notas').value         = PROPOSTA.notas_tecnicas || '';
-  document.getElementById('f-obs').value           = PROPOSTA.observacoes || '';
+  document.getElementById('f-codigo').value       = PROPOSTA.codigo || '';
+  document.getElementById('f-titulo').value       = PROPOSTA.titulo || '';
+  document.getElementById('f-projeto-nome').value = PROPOSTA.projeto_nome || '';
+  document.getElementById('f-data-emissao').value = PROPOSTA.data_emissao || '';
+  document.getElementById('f-data-validade').value= PROPOSTA.data_validade || '';
+  document.getElementById('f-prazo').value        = PROPOSTA.prazo_execucao || '';
+  document.getElementById('f-condicoes').value    = PROPOSTA.condicoes_pagamento || '';
+  document.getElementById('f-notas').value        = PROPOSTA.notas_tecnicas || '';
+  document.getElementById('f-obs').value          = PROPOSTA.observacoes || '';
 }
 
 function preencherOrigemSelect() {
@@ -380,25 +460,36 @@ function preencherOrigemSelect() {
   const og_lead = document.getElementById('optgroup-leads');
   CLIENTES.forEach(c => {
     const o = document.createElement('option');
-    o.value = 'cliente:'+c.id; o.textContent = c.nome; og_cli.appendChild(o);
+    o.value = `cliente:${c.id}`;
+    o.textContent = c.nome;
+    og_cli.appendChild(o);
   });
   LEADS.forEach(l => {
     const o = document.createElement('option');
-    o.value = 'lead:'+l.id;
-    o.textContent = (l.empresa||l.nome) + (l.empresa && l.nome ? ' — '+l.nome : '');
+    o.value = `lead:${l.id}`;
+    o.textContent = `${l.empresa || l.nome}${l.empresa && l.nome ? ' — ' + l.nome : ''}`;
     og_lead.appendChild(o);
   });
+  // Selecionar o atual
   const sel = document.getElementById('f-origem');
-  if (PROPOSTA.cliente_id) sel.value = 'cliente:'+PROPOSTA.cliente_id;
-  else if (PROPOSTA.lead_id) sel.value = 'lead:'+PROPOSTA.lead_id;
+  if (PROPOSTA.cliente_id) {
+    sel.value = `cliente:${PROPOSTA.cliente_id}`;
+  } else if (PROPOSTA.lead_id) {
+    sel.value = `lead:${PROPOSTA.lead_id}`;
+  }
 }
 
+// ─── Salvar Cabeçalho ─────────────────────────────────────────────────────────
 async function salvarCabecalho() {
   const origemVal = document.getElementById('f-origem').value;
   let tipo = '', id = null;
-  if (origemVal) { const p = origemVal.split(':'); tipo = p[0]; id = parseInt(p[1]); }
-  const r = await postJSON({
-    action:'save_cabecalho',
+  if (origemVal) {
+    const parts = origemVal.split(':');
+    tipo = parts[0];
+    id = parseInt(parts[1]);
+  }
+  const payload = {
+    action: 'save_cabecalho',
     codigo: document.getElementById('f-codigo').value.trim(),
     titulo: document.getElementById('f-titulo').value.trim(),
     projeto_nome: document.getElementById('f-projeto-nome').value.trim(),
@@ -408,188 +499,337 @@ async function salvarCabecalho() {
     condicoes_pagamento: document.getElementById('f-condicoes').value.trim(),
     notas_tecnicas: document.getElementById('f-notas').value.trim(),
     observacoes: document.getElementById('f-obs').value.trim(),
-    origem_tipo: tipo, origem_id: id,
-  });
-  if (r.ok) toast('Dados salvos!','sucesso'); else toast('Erro ao salvar.','erro');
+    origem_tipo: tipo,
+    origem_id: id,
+  };
+  const r = await postJSON(payload);
+  if (r.ok) toast('Dados salvos!', 'sucesso');
+  else toast('Erro ao salvar.', 'erro');
 }
 
+// ─── Tabela MOB ───────────────────────────────────────────────────────────────
 function renderMob() {
-  const tbody = document.getElementById('mob-body'); tbody.innerHTML = '';
-  (dadosOrcamento.mao_de_obra||[]).forEach((r,i) => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = '<td><input type="text" value="'+esc(r.descricao)+'" onchange="updateMob('+i+','descricao',this.value)"></td>'
-      +'<td><input type="number" value="'+(r.quantidade||1)+'" onchange="updateMob('+i+','quantidade',+this.value)" step="0.5" min="0"></td>'
-      +'<td><input type="number" value="'+(r.prazo_meses||1)+'" onchange="updateMob('+i+','prazo_meses',+this.value)" step="0.5" min="0"></td>'
-      +'<td><input type="number" value="'+(r.valor_unitario||0)+'" onchange="updateMob('+i+','valor_unitario',+this.value)" step="100" min="0"></td>'
-      +'<td class="col-total">R$ <span id="mob-total-'+i+'">'+fmtBr(r.valor_total||0)+'</span></td>'
-      +'<td class="col-acao"><button class="btn-del-row" onclick="delMob('+i+')">✕</button></td>';
-    tbody.appendChild(tr);
-  });
+  const tbody = document.getElementById('mob-body');
+  tbody.innerHTML = '';
+  (dadosOrcamento.mao_de_obra || []).forEach((r, i) => appendMobRow(tbody, r, i));
 }
-function addMobRow() { dadosOrcamento.mao_de_obra.push({descricao:'',quantidade:1,prazo_meses:1,valor_unitario:0,valor_total:0}); renderMob(); }
-function updateMob(i,campo,val) {
-  dadosOrcamento.mao_de_obra[i][campo]=val;
-  const r=dadosOrcamento.mao_de_obra[i]; r.valor_total=(r.quantidade||0)*(r.prazo_meses||0)*(r.valor_unitario||0);
-  const s=document.getElementById('mob-total-'+i); if(s) s.textContent=fmtBr(r.valor_total);
-}
-function delMob(i) { dadosOrcamento.mao_de_obra.splice(i,1); renderMob(); }
 
+function appendMobRow(tbody, r, i) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text"   value="${esc(r.descricao)}"    onchange="updateMob(${i},'descricao',this.value)"></td>
+    <td><input type="number" value="${r.quantidade||1}"      onchange="updateMob(${i},'quantidade',+this.value)" step="0.5" min="0"></td>
+    <td><input type="number" value="${r.prazo_meses||1}"     onchange="updateMob(${i},'prazo_meses',+this.value)" step="0.5" min="0"></td>
+    <td><input type="number" value="${r.valor_unitario||0}"  onchange="updateMob(${i},'valor_unitario',+this.value)" step="100" min="0"></td>
+    <td class="col-total">R$ <span id="mob-total-${i}">${fmtBr(r.valor_total||0)}</span></td>
+    <td class="col-acao"><button class="btn-del-row" onclick="delMob(${i})">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+function addMobRow() {
+  dadosOrcamento.mao_de_obra.push({descricao:'',quantidade:1,prazo_meses:1,valor_unitario:0,valor_total:0});
+  renderMob();
+}
+
+function updateMob(i, campo, val) {
+  dadosOrcamento.mao_de_obra[i][campo] = val;
+  const r = dadosOrcamento.mao_de_obra[i];
+  r.valor_total = (r.quantidade||0) * (r.prazo_meses||0) * (r.valor_unitario||0);
+  const span = document.getElementById(`mob-total-${i}`);
+  if (span) span.textContent = fmtBr(r.valor_total);
+}
+
+function delMob(i) {
+  dadosOrcamento.mao_de_obra.splice(i, 1);
+  renderMob();
+}
+
+// ─── Tabela Custos Diretos ────────────────────────────────────────────────────
 function renderCd() {
-  const tbody = document.getElementById('cd-body'); tbody.innerHTML = '';
-  (dadosOrcamento.custos_diretos||[]).forEach((r,i) => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = '<td><input type="text" value="'+esc(r.descricao)+'" onchange="updateCd('+i+','descricao',this.value)"></td>'
-      +'<td><input type="number" value="'+(r.quantidade||1)+'" onchange="updateCd('+i+','quantidade',+this.value)" step="1" min="0"></td>'
-      +'<td><input type="number" value="'+(r.repeticao||1)+'" onchange="updateCd('+i+','repeticao',+this.value)" step="1" min="0"></td>'
-      +'<td><input type="number" value="'+(r.valor_unitario||0)+'" onchange="updateCd('+i+','valor_unitario',+this.value)" step="10" min="0"></td>'
-      +'<td class="col-total">R$ <span id="cd-total-'+i+'">'+fmtBr(r.valor_total||0)+'</span></td>'
-      +'<td class="col-acao"><button class="btn-del-row" onclick="delCd('+i+')">✕</button></td>';
-    tbody.appendChild(tr);
-  });
+  const tbody = document.getElementById('cd-body');
+  tbody.innerHTML = '';
+  (dadosOrcamento.custos_diretos || []).forEach((r, i) => appendCdRow(tbody, r, i));
 }
-function addCdRow() { dadosOrcamento.custos_diretos.push({descricao:'',quantidade:1,repeticao:1,valor_unitario:0,valor_total:0}); renderCd(); }
-function updateCd(i,campo,val) {
-  dadosOrcamento.custos_diretos[i][campo]=val;
-  const r=dadosOrcamento.custos_diretos[i]; r.valor_total=(r.quantidade||0)*(r.repeticao||0)*(r.valor_unitario||0);
-  const s=document.getElementById('cd-total-'+i); if(s) s.textContent=fmtBr(r.valor_total);
-}
-function delCd(i) { dadosOrcamento.custos_diretos.splice(i,1); renderCd(); }
 
+function appendCdRow(tbody, r, i) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text"   value="${esc(r.descricao)}"   onchange="updateCd(${i},'descricao',this.value)"></td>
+    <td><input type="number" value="${r.quantidade||1}"     onchange="updateCd(${i},'quantidade',+this.value)" step="1" min="0"></td>
+    <td><input type="number" value="${r.repeticao||1}"      onchange="updateCd(${i},'repeticao',+this.value)" step="1" min="0"></td>
+    <td><input type="number" value="${r.valor_unitario||0}" onchange="updateCd(${i},'valor_unitario',+this.value)" step="10" min="0"></td>
+    <td class="col-total">R$ <span id="cd-total-${i}">${fmtBr(r.valor_total||0)}</span></td>
+    <td class="col-acao"><button class="btn-del-row" onclick="delCd(${i})">✕</button></td>
+  `;
+  tbody.appendChild(tr);
+}
+
+function addCdRow() {
+  dadosOrcamento.custos_diretos.push({descricao:'',quantidade:1,repeticao:1,valor_unitario:0,valor_total:0});
+  renderCd();
+}
+
+function updateCd(i, campo, val) {
+  dadosOrcamento.custos_diretos[i][campo] = val;
+  const r = dadosOrcamento.custos_diretos[i];
+  r.valor_total = (r.quantidade||0) * (r.repeticao||0) * (r.valor_unitario||0);
+  const span = document.getElementById(`cd-total-${i}`);
+  if (span) span.textContent = fmtBr(r.valor_total);
+}
+
+function delCd(i) {
+  dadosOrcamento.custos_diretos.splice(i, 1);
+  renderCd();
+}
+
+// ─── Custos Percentuais ───────────────────────────────────────────────────────
 function renderPerc() {
-  const div=document.getElementById('perc-list'); div.innerHTML='';
-  (dadosOrcamento.custos_percentuais||[]).forEach((p,i) => {
-    const row=document.createElement('div'); row.className='perc-row';
-    row.innerHTML='<input type="text" value="'+esc(p.nome)+'" placeholder="Nome" onchange="dadosOrcamento.custos_percentuais['+i+'].nome=this.value">'
-      +'<input type="number" value="'+(p.percentual||0)+'" step="0.1" min="0" max="100" onchange="dadosOrcamento.custos_percentuais['+i+'].percentual=+this.value">'
-      +'<span>%</span><button class="btn-del-row" onclick="delPerc('+i+')">✕</button>';
+  const div = document.getElementById('perc-list');
+  div.innerHTML = '';
+  (dadosOrcamento.custos_percentuais || []).forEach((p, i) => {
+    const row = document.createElement('div');
+    row.className = 'perc-row';
+    row.innerHTML = `
+      <input type="text"   value="${esc(p.nome)}" placeholder="Nome (Ex: ISS)" onchange="dadosOrcamento.custos_percentuais[${i}].nome=this.value">
+      <input type="number" value="${p.percentual||0}" step="0.1" min="0" max="100" onchange="dadosOrcamento.custos_percentuais[${i}].percentual=+this.value">
+      <span>%</span>
+      <button class="btn-del-row" onclick="delPerc(${i})">✕</button>
+    `;
     div.appendChild(row);
   });
 }
-function addPercRow() { dadosOrcamento.custos_percentuais.push({nome:'',percentual:0}); renderPerc(); }
-function delPerc(i) { dadosOrcamento.custos_percentuais.splice(i,1); renderPerc(); }
 
+function addPercRow() {
+  dadosOrcamento.custos_percentuais.push({nome:'', percentual:0});
+  renderPerc();
+}
+
+function delPerc(i) {
+  dadosOrcamento.custos_percentuais.splice(i, 1);
+  renderPerc();
+}
+
+// ─── Cálculo ──────────────────────────────────────────────────────────────────
 function calcular() {
-  const rows=document.querySelectorAll('#perc-list .perc-row');
-  rows.forEach((row,i) => {
-    const inp=row.querySelectorAll('input');
-    if(dadosOrcamento.custos_percentuais[i]){
-      dadosOrcamento.custos_percentuais[i].nome=inp[0].value;
-      dadosOrcamento.custos_percentuais[i].percentual=parseFloat(inp[1].value)||0;
-    }
-  });
-  const custo_mob=(dadosOrcamento.mao_de_obra||[]).reduce((s,r)=>s+(r.valor_total||0),0);
-  const custo_direto=(dadosOrcamento.custos_diretos||[]).reduce((s,r)=>s+(r.valor_total||0),0);
-  const custo_base=custo_mob+custo_direto;
-  const soma_pct=(dadosOrcamento.custos_percentuais||[]).reduce((s,p)=>s+(p.percentual||0),0);
-  if(soma_pct>=100){ toast('A soma dos percentuais nao pode ser >= 100%.','erro'); return; }
-  const valor_venda=custo_base/(1-soma_pct/100);
-  const cpCalc=(dadosOrcamento.custos_percentuais||[]).map(p=>({nome:p.nome,percentual:p.percentual,valor:valor_venda*(p.percentual/100)}));
-  const total_percentuais=cpCalc.reduce((s,p)=>s+p.valor,0);
-  const margem_lucro=valor_venda-custo_base-total_percentuais;
-  const margem_percentual=valor_venda>0?(margem_lucro/valor_venda)*100:0;
-  const resultado={custo_mob,custo_direto,custo_base,soma_pct,total_percentuais,valor_venda,margem_lucro,margem_percentual,custos_percentuais_calculados:cpCalc};
-  dadosOrcamento.resultado=resultado;
+  // Coleta valores atuais dos inputs (para garantir sem onchange perdido)
+  coletarPercInputs();
+
+  const custo_mob = (dadosOrcamento.mao_de_obra || []).reduce((s,r) => s + (r.valor_total||0), 0);
+  const custo_direto = (dadosOrcamento.custos_diretos || []).reduce((s,r) => s + (r.valor_total||0), 0);
+  const custo_base = custo_mob + custo_direto;
+
+  const soma_pct = (dadosOrcamento.custos_percentuais || []).reduce((s,p) => s + (p.percentual||0), 0);
+
+  if (soma_pct >= 100) {
+    toast('A soma dos percentuais não pode ser ≥ 100%.', 'erro');
+    return;
+  }
+
+  // PV = Custo Base / (1 - soma_percentuais/100)
+  const valor_venda = custo_base / (1 - soma_pct / 100);
+  const custos_percentuais_calculados = (dadosOrcamento.custos_percentuais || []).map(p => ({
+    nome: p.nome,
+    percentual: p.percentual,
+    valor: valor_venda * (p.percentual / 100),
+  }));
+  const total_percentuais = custos_percentuais_calculados.reduce((s, p) => s + p.valor, 0);
+  const margem_lucro = valor_venda - custo_base - total_percentuais;
+  const margem_percentual = valor_venda > 0 ? (margem_lucro / valor_venda) * 100 : 0;
+
+  const resultado = {
+    custo_mob, custo_direto, custo_base,
+    soma_pct, total_percentuais,
+    valor_venda, margem_lucro, margem_percentual,
+    custos_percentuais_calculados,
+  };
+
+  dadosOrcamento.resultado = resultado;
   mostrarResultado(resultado);
 }
 
+function coletarPercInputs() {
+  const rows = document.querySelectorAll('#perc-list .perc-row');
+  rows.forEach((row, i) => {
+    const inputs = row.querySelectorAll('input');
+    if (dadosOrcamento.custos_percentuais[i]) {
+      dadosOrcamento.custos_percentuais[i].nome       = inputs[0].value;
+      dadosOrcamento.custos_percentuais[i].percentual = parseFloat(inputs[1].value) || 0;
+    }
+  });
+}
+
 function mostrarResultado(r) {
-  document.getElementById('resultado-section').style.display='block';
-  document.getElementById('rc-mob').textContent='R$ '+fmtBr(r.custo_mob||0);
-  document.getElementById('rc-cd').textContent='R$ '+fmtBr(r.custo_direto||0);
-  document.getElementById('rc-custos').textContent='R$ '+fmtBr(r.custo_base||0);
-  document.getElementById('rc-perc-total').textContent='R$ '+fmtBr(r.total_percentuais||0);
-  document.getElementById('rc-venda').textContent='R$ '+fmtBr(r.valor_venda||0);
-  document.getElementById('rc-margem').textContent='R$ '+fmtBr(r.margem_lucro||0);
-  document.getElementById('rc-margem-pct').textContent=fmtBr(r.margem_percentual||0)+'%';
-  const tbody=document.getElementById('perc-resultado-body'); tbody.innerHTML='';
-  (r.custos_percentuais_calculados||[]).forEach(p=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML='<td>'+p.nome+'</td><td>'+fmtBr(p.percentual)+'%</td><td>R$ '+fmtBr(p.valor)+'</td>';
+  document.getElementById('resultado-section').style.display = 'block';
+  document.getElementById('rc-mob').textContent     = 'R$ ' + fmtBr(r.custo_mob||0);
+  document.getElementById('rc-cd').textContent      = 'R$ ' + fmtBr(r.custo_direto||0);
+  document.getElementById('rc-custos').textContent  = 'R$ ' + fmtBr(r.custo_base||0);
+  document.getElementById('rc-perc-total').textContent = 'R$ ' + fmtBr(r.total_percentuais||0);
+  document.getElementById('rc-venda').textContent   = 'R$ ' + fmtBr(r.valor_venda||0);
+  document.getElementById('rc-margem').textContent  = 'R$ ' + fmtBr(r.margem_lucro||0);
+  document.getElementById('rc-margem-pct').textContent = fmtBr(r.margem_percentual||0) + '%';
+
+  // Tabela detalhe percentuais
+  const tbody = document.getElementById('perc-resultado-body');
+  tbody.innerHTML = '';
+  (r.custos_percentuais_calculados || []).forEach(p => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${p.nome}</td><td>${fmtBr(p.percentual)}%</td><td>R$ ${fmtBr(p.valor)}</td>`;
     tbody.appendChild(tr);
   });
+
   renderGraficos(r);
 }
 
+// ─── Gráficos ─────────────────────────────────────────────────────────────────
 function renderGraficos(r) {
-  const labels1=['Mao de Obra','Custos Diretos',...(r.custos_percentuais_calculados||[]).map(p=>p.nome)];
-  const data1=[r.custo_mob||0,r.custo_direto||0,...(r.custos_percentuais_calculados||[]).map(p=>p.valor)];
-  const cores=['#1e40af','#3b82f6','#f59e0b','#10b981','#ef4444','#8b5cf6','#ec4899','#14b8a6'];
-  if(chartCustos) chartCustos.destroy();
-  chartCustos=new Chart(document.getElementById('chart-custos'),{
-    type:'doughnut',
-    data:{labels:labels1,datasets:[{data:data1,backgroundColor:cores.slice(0,data1.length),borderWidth:2}]},
-    options:{plugins:{legend:{position:'bottom',labels:{font:{size:11}}},tooltip:{callbacks:{label:ctx=>' R$ '+fmtBr(ctx.parsed)}}}}
+  // Gráfico 1: Pizza — Composição dos Custos
+  const labels1 = ['Mão de Obra', 'Custos Diretos',
+    ...(r.custos_percentuais_calculados||[]).map(p => p.nome)];
+  const data1 = [r.custo_mob||0, r.custo_direto||0,
+    ...(r.custos_percentuais_calculados||[]).map(p => p.valor)];
+  const cores = ['#1e40af','#3b82f6','#f59e0b','#10b981','#ef4444','#8b5cf6','#ec4899','#14b8a6'];
+
+  if (chartCustos) chartCustos.destroy();
+  chartCustos = new Chart(document.getElementById('chart-custos'), {
+    type: 'doughnut',
+    data: {
+      labels: labels1,
+      datasets: [{ data: data1, backgroundColor: cores.slice(0, data1.length), borderWidth: 2 }]
+    },
+    options: {
+      plugins: {
+        legend: { position: 'bottom', labels: { font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => ` R$ ${fmtBr(ctx.parsed)}` } }
+      }
+    }
   });
-  if(chartResumo) chartResumo.destroy();
-  chartResumo=new Chart(document.getElementById('chart-resumo'),{
-    type:'bar',
-    data:{labels:['Custo Base','Custos %','Margem de Lucro','Valor de Venda'],datasets:[{label:'R$',data:[r.custo_base||0,r.total_percentuais||0,r.margem_lucro||0,r.valor_venda||0],backgroundColor:['#3b82f6','#f59e0b','#16a34a','#1e40af'],borderRadius:6}]},
-    options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'R$ '+fmtBr(v)}}}}
+
+  // Gráfico 2: Barras — Custo total / Valor de venda / Margem
+  if (chartResumo) chartResumo.destroy();
+  chartResumo = new Chart(document.getElementById('chart-resumo'), {
+    type: 'bar',
+    data: {
+      labels: ['Custo Base', 'Custos %', 'Margem de Lucro', 'Valor de Venda'],
+      datasets: [{
+        label: 'R$',
+        data: [r.custo_base||0, r.total_percentuais||0, r.margem_lucro||0, r.valor_venda||0],
+        backgroundColor: ['#3b82f6','#f59e0b','#16a34a','#1e40af'],
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { ticks: { callback: v => 'R$ ' + fmtBr(v) } }
+      }
+    }
   });
 }
 
+// ─── Salvar Orçamento ─────────────────────────────────────────────────────────
 async function salvarOrcamento() {
-  const r=await postJSON({action:'save_orcamento',dados_orcamento:dadosOrcamento});
-  if(r.ok) toast('Orcamento salvo!','sucesso'); else toast('Erro ao salvar orcamento.','erro');
+  const r = await postJSON({ action: 'save_orcamento', dados_orcamento: dadosOrcamento });
+  if (r.ok) toast('Orçamento salvo!', 'sucesso');
+  else toast('Erro ao salvar orçamento.', 'erro');
 }
 
-let itens=(PROPOSTA.itens||[]).map(it=>({...it}));
+// ─── Itens da Proposta ────────────────────────────────────────────────────────
+let itens = (PROPOSTA.itens || []).map(it => ({...it}));
 
 function renderItens() {
-  const tbody=document.getElementById('itens-body'); tbody.innerHTML='';
-  itens.forEach((it,i)=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML='<td style="color:#9ca3af;text-align:center;padding:5px 8px;">'+(i+1)+'</td>'
-      +'<td><input type="text" value="'+esc(it.descricao)+'" onchange="updateItem('+i+','descricao',this.value)"></td>'
-      +'<td><input type="text" value="'+esc(it.unidade)+'" onchange="updateItem('+i+','unidade',this.value)" style="width:60px"></td>'
-      +'<td><input type="number" value="'+(it.quantidade||1)+'" onchange="updateItem('+i+','quantidade',+this.value)" step="0.5" min="0"></td>'
-      +'<td><input type="number" value="'+(it.preco_unitario||0)+'" onchange="updateItem('+i+','preco_unitario',+this.value)" step="100" min="0"></td>'
-      +'<td class="col-total">R$ <span id="it-total-'+i+'">'+fmtBr(it.preco_total||0)+'</span></td>'
-      +'<td class="col-acao"><button class="btn-del-row" onclick="delItem('+i+')">✕</button></td>';
+  const tbody = document.getElementById('itens-body');
+  tbody.innerHTML = '';
+  itens.forEach((it, i) => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:#9ca3af;text-align:center;padding:5px 8px;">${i+1}</td>
+      <td><input type="text"   value="${esc(it.descricao)}"    onchange="updateItem(${i},'descricao',this.value)"></td>
+      <td><input type="text"   value="${esc(it.unidade)}"      onchange="updateItem(${i},'unidade',this.value)" style="width:60px"></td>
+      <td><input type="number" value="${it.quantidade||1}"      onchange="updateItem(${i},'quantidade',+this.value)" step="0.5" min="0"></td>
+      <td><input type="number" value="${it.preco_unitario||0}"  onchange="updateItem(${i},'preco_unitario',+this.value)" step="100" min="0"></td>
+      <td class="col-total">R$ <span id="it-total-${i}">${fmtBr(it.preco_total||0)}</span></td>
+      <td class="col-acao"><button class="btn-del-row" onclick="delItem(${i})">✕</button></td>
+    `;
     tbody.appendChild(tr);
   });
   atualizarTotalItens();
 }
-function addItemRow() { itens.push({descricao:'',unidade:'',quantidade:1,preco_unitario:0,preco_total:0}); renderItens(); }
-function updateItem(i,campo,val) {
-  itens[i][campo]=val; itens[i].preco_total=(itens[i].quantidade||0)*(itens[i].preco_unitario||0);
-  const s=document.getElementById('it-total-'+i); if(s) s.textContent=fmtBr(itens[i].preco_total);
+
+function addItemRow() {
+  itens.push({descricao:'',unidade:'',quantidade:1,preco_unitario:0,preco_total:0});
+  renderItens();
+}
+
+function updateItem(i, campo, val) {
+  itens[i][campo] = val;
+  itens[i].preco_total = (itens[i].quantidade||0) * (itens[i].preco_unitario||0);
+  const span = document.getElementById(`it-total-${i}`);
+  if (span) span.textContent = fmtBr(itens[i].preco_total);
   atualizarTotalItens();
 }
-function delItem(i) { itens.splice(i,1); renderItens(); }
+
+function delItem(i) {
+  itens.splice(i, 1);
+  renderItens();
+}
+
 function atualizarTotalItens() {
-  document.getElementById('itens-total').textContent=fmtBr(itens.reduce((s,it)=>s+(it.preco_total||0),0));
+  const total = itens.reduce((s, it) => s + (it.preco_total||0), 0);
+  document.getElementById('itens-total').textContent = fmtBr(total);
 }
+
 async function salvarItens() {
-  const r=await postJSON({action:'save_itens',itens});
-  if(r.ok) toast('Itens salvos! Total: R$ '+fmtBr(r.valor_total),'sucesso'); else toast('Erro ao salvar itens.','erro');
+  const r = await postJSON({ action: 'save_itens', itens });
+  if (r.ok) toast('Itens salvos! Total: R$ ' + fmtBr(r.valor_total), 'sucesso');
+  else toast('Erro ao salvar itens.', 'erro');
 }
 
+// ─── Mudar Status ─────────────────────────────────────────────────────────────
 async function mudarStatus(novoStatus) {
-  const r=await postJSON({action:'mudar_status',status:novoStatus});
-  if(r.ok){
-    toast(r.msg,r.projeto_id?'sucesso':'');
-    const badge=document.getElementById('status-badge');
-    badge.textContent=document.querySelector('#select-status option[value="'+novoStatus+'"]').textContent;
-    badge.className='badge badge-'+novoStatus;
-    if(r.projeto_id){
-      setTimeout(()=>{
-        if(confirm('Projeto criado com sucesso! Deseja ir para a Gestao de Projetos?'))
-          window.location.href='/projetos/'+r.projeto_id+'/';
-      },500);
+  const r = await postJSON({ action: 'mudar_status', status: novoStatus });
+  if (r.ok) {
+    toast(r.msg, r.projeto_id ? 'sucesso' : '');
+    // Atualiza badge
+    const badge = document.getElementById('status-badge');
+    badge.textContent = document.querySelector(`#select-status option[value="${novoStatus}"]`).textContent;
+    badge.className = `badge badge-${novoStatus}`;
+    if (r.projeto_id) {
+      setTimeout(() => {
+        if (confirm(`Projeto criado com sucesso! Deseja ir para a Gestão de Projetos?`)) {
+          window.location.href = `/projetos/${r.projeto_id}/`;
+        }
+      }, 500);
     }
-  } else toast(r.msg||'Erro ao mudar status.','erro');
+  } else {
+    toast(r.msg || 'Erro ao mudar status.', 'erro');
+  }
 }
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 async function postJSON(payload) {
-  const resp=await fetch(URL_SALVAR,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF_TOKEN},body:JSON.stringify(payload)});
+  const resp = await fetch(URL_SALVAR, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
+    body: JSON.stringify(payload),
+  });
   return resp.json();
 }
-function fmtBr(n) { return Number(n).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-function esc(s) { return (s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
-function toast(msg,tipo) {
-  const el=document.getElementById('toast'); el.textContent=msg; el.className=tipo||'';
-  el.style.display='block'; setTimeout(()=>el.style.display='none',3500);
+
+function fmtBr(n) {
+  return Number(n).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function esc(s) {
+  return (s || '').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+function toast(msg, tipo) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = tipo || '';
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 3500);
 }
 </script>
 {% endblock %}
