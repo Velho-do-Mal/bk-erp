@@ -5,6 +5,7 @@
 {% block page_sub %}Propostas e CRM{% endblock %}
 
 {% block topbar_actions %}
+{# Botão agora leva para página dedicada — sem modal #}
 <a href="{% url 'vendas:proposta_nova' %}" class="btn">
   + Nova Proposta
 </a>
@@ -12,12 +13,15 @@
 
 {% block extra_css %}
 <style>
+  /* ── KPI Cards ── */
   .kpi-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:16px; margin-bottom:24px; }
   .kpi-card { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:16px 20px; }
   .kpi-label { font-size:12px; color:#6b7280; font-weight:600; text-transform:uppercase; }
   .kpi-valor { font-size:26px; font-weight:800; color:#1e40af; margin-top:4px; }
   .kpi-valor.verde { color:#16a34a; }
   .kpi-valor.laranja { color:#d97706; }
+
+  /* ── Abas ── */
   .tab-nav { display:flex; gap:0; border-bottom:2px solid #e5e7eb; margin-bottom:20px; }
   .tab-nav .tab-btn {
     padding:9px 20px; font-size:13px; font-weight:600; cursor:pointer;
@@ -27,6 +31,8 @@
   .tab-nav .tab-btn.active { color:#1e40af; border-bottom-color:#1e40af; }
   .tab-panel { display:none; }
   .tab-panel.active { display:block; }
+
+  /* ── Tabela ── */
   .data-table { width:100%; border-collapse:collapse; font-size:13px; }
   .data-table th {
     background:#f8fafc; color:#374151; font-weight:700;
@@ -34,6 +40,8 @@
   }
   .data-table td { padding:9px 12px; border-bottom:1px solid #f3f4f6; vertical-align:middle; }
   .data-table tr:hover td { background:#fafafa; }
+
+  /* ── Badges status ── */
   .badge { display:inline-block; padding:2px 10px; border-radius:12px; font-size:11px; font-weight:700; }
   .badge-rascunho  { background:#f1f5f9; color:#475569; }
   .badge-enviada   { background:#dbeafe; color:#1e40af; }
@@ -41,6 +49,8 @@
   .badge-aprovada  { background:#dcfce7; color:#16a34a; }
   .badge-perdida   { background:#fee2e2; color:#ef4444; }
   .badge-cancelada { background:#f3f4f6; color:#9ca3af; }
+
+  /* ── Ações de linha ── */
   .row-actions { display:flex; gap:6px; }
   .btn-sm { font-size:12px; padding:4px 10px; border-radius:5px; text-decoration:none;
             border:1px solid #e5e7eb; background:#fff; color:#374151; cursor:pointer;
@@ -50,6 +60,8 @@
   .btn-sm.danger:hover { background:#fee2e2; }
   .btn-sm.primary { border-color:#93c5fd; color:#1e40af; }
   .btn-sm.primary:hover { background:#eff6ff; }
+
+  /* ── Filtro / Busca ── */
   .table-toolbar {
     display:flex; justify-content:space-between; align-items:center;
     margin-bottom:12px; gap:12px;
@@ -62,12 +74,14 @@
     padding:7px 10px; border:1px solid #d1d5db; border-radius:7px;
     font-size:13px; background:#fff;
   }
+
+  /* ── Modal Lead ── */
   .modal-overlay {
     display:none; position:fixed; inset:0; background:rgba(0,0,0,.4);
     z-index:1000; align-items:center; justify-content:center;
   }
   .modal-overlay.open { display:flex; }
-  .modal-box {
+  .modal-box%{
     background:#fff; border-radius:12px; padding:28px; width:520px; max-width:95vw;
     box-shadow:0 8px 30px rgba(0,0,0,.15);
   }
@@ -80,6 +94,8 @@
   }
   .form-full { grid-column:1/-1; }
   .modal-footer { display:flex; justify-content:flex-end; gap:8px; margin-top:18px; }
+
+  /* ── Toast ── */
   #toast {
     position:fixed; bottom:24px; right:24px; background:#1e40af; color:#fff;
     padding:12px 20px; border-radius:8px; font-size:13px; font-weight:600;
@@ -101,6 +117,7 @@
   const URL_NOVA   = "{% url 'vendas:proposta_nova' %}";
 </script>
 
+{# ── KPIs ── #}
 <div class="kpi-grid">
   <div class="kpi-card">
     <div class="kpi-label">Total de Propostas</div>
@@ -108,7 +125,9 @@
   </div>
   <div class="kpi-card">
     <div class="kpi-label">Valor Total (R$)</div>
-    <div class="kpi-valor laranja">R$ {{ total_valor|floatformat:2 }}</div>
+    <div class="kpi-valor laranja" id="kpi-valor">
+      R$ {{ total_valor|floatformat:2 }}
+    </div>
   </div>
   <div class="kpi-card">
     <div class="kpi-label">Aprovadas</div>
@@ -116,19 +135,23 @@
   </div>
   <div class="kpi-card">
     <div class="kpi-label">Pipeline (Leads)</div>
-    <div class="kpi-valor">R$ {{ pipeline_valor|floatformat:2 }}</div>
+    <div class="kpi-valor" id="kpi-pipeline">
+      R$ {{ pipeline_valor|floatformat:2 }}
+    </div>
   </div>
 </div>
 
+{# ── Abas: Propostas / Leads ── #}
 <div class="tab-nav">
-  <button class="tab-btn active" data-group="main" data-tab="tab-propostas">
+  <button class="tab-btn active" data-group="main" data-tab="tab-propostas" onclick="">
     📋 Propostas
   </button>
-  <button class="tab-btn" data-group="main" data-tab="tab-leads">
+  <button class="tab-btn" data-group="main" data-tab="tab-leads" onclick="">
     🎯 Leads / CRM
   </button>
 </div>
 
+{# ══════════ ABA PROPOSTAS ══════════ #}
 <div class="tab-panel active" id="tab-propostas" data-group="main">
   <div class="table-toolbar">
     <div style="display:flex;gap:8px;">
@@ -138,7 +161,7 @@
         <option value="">Todos os status</option>
         <option value="rascunho">Rascunho</option>
         <option value="enviada">Enviada</option>
-        <option value="negociacao">Em Negociacao</option>
+        <option value="negociacao">Em Negociação</option>
         <option value="aprovada">Aprovada</option>
         <option value="perdida">Perdida</option>
         <option value="cancelada">Cancelada</option>
@@ -146,13 +169,19 @@
     </div>
     <span id="count-propostas" style="font-size:12px;color:#6b7280;"></span>
   </div>
+
   <div style="overflow-x:auto;background:#fff;border:1px solid #e5e7eb;border-radius:10px;">
     <table class="data-table">
       <thead>
         <tr>
-          <th>Codigo</th><th>Titulo / Projeto</th><th>Cliente</th>
-          <th>Emissao</th><th>Validade</th><th>Status</th>
-          <th style="text-align:right">Valor (R$)</th><th>Acoes</th>
+          <th>Código</th>
+          <th>Título / Projeto</th>
+          <th>Cliente</th>
+          <th>Emissão</th>
+          <th>Validade</th>
+          <th>Status</th>
+          <th style="text-align:right">Valor (R$)</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody id="tbody-propostas"></tbody>
@@ -160,29 +189,36 @@
   </div>
 </div>
 
+{# ══════════ ABA LEADS ══════════ #}
 <div class="tab-panel" id="tab-leads" data-group="main">
   <div class="table-toolbar">
     <div style="display:flex;gap:8px;">
       <input type="text" class="search-input" id="busca-lead"
              placeholder="🔍 Buscar lead..." oninput="renderLeads()">
       <select class="filter-select" id="filtro-estagio" onchange="renderLeads()">
-        <option value="">Todos os estagios</option>
-        <option value="prospeccao">Prospeccao</option>
-        <option value="qualificacao">Qualificacao</option>
+        <option value="">Todos os estágios</option>
+        <option value="prospeccao">Prospecção</option>
+        <option value="qualificacao">Qualificação</option>
         <option value="proposta">Proposta Enviada</option>
-        <option value="negociacao">Negociacao</option>
+        <option value="negociacao">Negociação</option>
         <option value="fechado_ganho">Fechado Ganho</option>
         <option value="fechado_perdido">Fechado Perdido</option>
       </select>
     </div>
     <button class="btn" onclick="abrirModalLead()">+ Novo Lead</button>
   </div>
+
   <div style="overflow-x:auto;background:#fff;border:1px solid #e5e7eb;border-radius:10px;">
     <table class="data-table">
       <thead>
         <tr>
-          <th>Nome</th><th>Empresa</th><th>Contato</th><th>E-mail</th>
-          <th>Estagio</th><th style="text-align:right">Valor Est. (R$)</th><th>Acoes</th>
+          <th>Nome</th>
+          <th>Empresa</th>
+          <th>Contato</th>
+          <th>E-mail</th>
+          <th>Estágio</th>
+          <th style="text-align:right">Valor Est. (R$)</th>
+          <th>Ações</th>
         </tr>
       </thead>
       <tbody id="tbody-leads"></tbody>
@@ -190,6 +226,7 @@
   </div>
 </div>
 
+{# ══════════ MODAL LEAD ══════════ #}
 <div class="modal-overlay" id="modal-lead">
   <div class="modal-box">
     <div class="modal-title" id="modal-lead-titulo">Novo Lead</div>
@@ -201,7 +238,7 @@
       </div>
       <div class="form-group">
         <label>Empresa</label>
-        <input type="text" id="lead-empresa" placeholder="Razao social">
+        <input type="text" id="lead-empresa" placeholder="Razão social">
       </div>
       <div class="form-group">
         <label>Contato / Telefone</label>
@@ -212,12 +249,12 @@
         <input type="email" id="lead-email" placeholder="email@empresa.com">
       </div>
       <div class="form-group">
-        <label>Estagio</label>
+        <label>Estágio</label>
         <select id="lead-estagio">
-          <option value="prospeccao">Prospeccao</option>
-          <option value="qualificacao">Qualificacao</option>
+          <option value="prospeccao">Prospecção</option>
+          <option value="qualificacao">Qualificação</option>
           <option value="proposta">Proposta Enviada</option>
-          <option value="negociacao">Negociacao</option>
+          <option value="negociacao">Negociação</option>
           <option value="fechado_ganho">Fechado Ganho</option>
           <option value="fechado_perdido">Fechado Perdido</option>
         </select>
@@ -227,7 +264,7 @@
         <input type="number" id="lead-valor" step="100" min="0" value="0">
       </div>
       <div class="form-group form-full">
-        <label>Observacoes</label>
+        <label>Observações</label>
         <textarea id="lead-obs" rows="2"></textarea>
       </div>
     </div>
@@ -237,23 +274,28 @@
     </div>
   </div>
 </div>
+
 {% endblock %}
+
 
 {% block extra_js %}
 <script>
+// ─── Labels de status / estágio ───────────────────────────────────────────────
 const STATUS_LABELS = {
-  rascunho:'Rascunho', enviada:'Enviada', negociacao:'Em Negociacao',
+  rascunho:'Rascunho', enviada:'Enviada', negociacao:'Em Negociação',
   aprovada:'Aprovada', perdida:'Perdida', cancelada:'Cancelada'
 };
 const ESTAGIO_LABELS = {
-  prospeccao:'Prospeccao', qualificacao:'Qualificacao', proposta:'Proposta Enviada',
-  negociacao:'Negociacao', fechado_ganho:'Fechado Ganho', fechado_perdido:'Fechado Perdido'
+  prospeccao:'Prospecção', qualificacao:'Qualificação', proposta:'Proposta Enviada',
+  negociacao:'Negociação', fechado_ganho:'Fechado Ganho', fechado_perdido:'Fechado Perdido'
 };
 
+// ─── Renderizar Propostas ─────────────────────────────────────────────────────
 function renderPropostas() {
   const busca  = document.getElementById('busca-proposta').value.toLowerCase();
   const status = document.getElementById('filtro-status').value;
   const tbody  = document.getElementById('tbody-propostas');
+
   const filtradas = PROPOSTAS.filter(p => {
     const matchBusca = !busca ||
       (p.codigo||'').toLowerCase().includes(busca) ||
@@ -263,136 +305,175 @@ function renderPropostas() {
     const matchStatus = !status || p.status === status;
     return matchBusca && matchStatus;
   });
-  document.getElementById('count-propostas').textContent = filtradas.length+' proposta(s)';
-  tbody.innerHTML = filtradas.map(p =>
-    '<tr>'
-    +'<td><strong>'+(p.codigo||'—')+'</strong></td>'
-    +'<td><div style="font-weight:600">'+esc(p.titulo)+'</div>'+(p.projeto_nome?'<div style="font-size:11px;color:#6b7280">'+esc(p.projeto_nome)+'</div>':'')+'</td>'
-    +'<td>'+(esc(p.cliente_nome)||'<span style="color:#9ca3af">—</span>')+'</td>'
-    +'<td>'+fmtData(p.data_emissao)+'</td>'
-    +'<td>'+fmtData(p.data_validade)+'</td>'
-    +'<td><span class="badge badge-'+p.status+'">'+(STATUS_LABELS[p.status]||p.status)+'</span></td>'
-    +'<td style="text-align:right;font-weight:600">R$ '+fmtBr(p.valor_total)+'</td>'
-    +'<td><div class="row-actions">'
-    +'<a href="/vendas/propostas/'+p.id+'/" class="btn-sm primary">✏️ Editar</a>'
-    +(!p.tem_financeiro && p.status==='aprovada'?'<button class="btn-sm" onclick="gerarFinanceiro('+p.id+',this)">💰 Financeiro</button>':'')
-    +(p.projeto_ref_id?'<a href="/projetos/'+p.projeto_ref_id+'/" class="btn-sm">📋 Projeto</a>':'')
-    +'<button class="btn-sm danger" onclick="confirmarDelete('+p.id+',''+esc(p.codigo||p.titulo)+'')">🗑️</button>'
-    +'</div></td></tr>'
-  ).join('') || '<tr><td colspan="8" style="text-align:center;padding:24px;color:#9ca3af;">Nenhuma proposta encontrada.</td></tr>';
+
+  document.getElementById('count-propostas').textContent = `${filtradas.length} proposta(s)`;
+
+  tbody.innerHTML = filtradas.map(p => `
+    <tr>
+      <td><strong>${p.codigo || '—'}</strong></td>
+      <td>
+        <div style="font-weight:600">${esc(p.titulo)}</div>
+        ${p.projeto_nome ? `<div style="font-size:11px;color:#6b7280">${esc(p.projeto_nome)}</div>` : ''}
+      </td>
+      <td>${esc(p.cliente_nome) || '<span style="color:#9ca3af">—</span>'}</td>
+      <td>${fmtData(p.data_emissao)}</td>
+      <td>${fmtData(p.data_validade)}</td>
+      <td><span class="badge badge-${p.status}">${STATUS_LABELS[p.status]||p.status}</span></td>
+      <td style="text-align:right;font-weight:600">R$ ${fmtBr(p.valor_total)}</td>
+      <td>
+        <div class="row-actions">
+          <a href="/vendas/propostas/${p.id}/" class="btn-sm primary">✏️ Editar</a>
+          ${!p.tem_financeiro && p.status === 'aprovada' ?
+            `<button class="btn-sm" onclick="gerarFinanceiro(${p.id},this)">💰 Financeiro</button>` : ''}
+          ${p.projeto_ref_id ?
+            `<a href="/projetos/${p.projeto_ref_id}/" class="btn-sm">📋 Projeto</a>` : ''}
+          <button class="btn-sm danger" onclick="confirmarDelete(${p.id},'${esc(p.codigo||p.titulo)}')">🗑️</button>
+        </div>
+      </td>
+    </tr>
+  `).join('') || `<tr><td colspan="8" style="text-align:center;padding:24px;color:#9ca3af;">Nenhuma proposta encontrada.</td></tr>`;
 }
 
+// ─── Renderizar Leads ─────────────────────────────────────────────────────────
 function renderLeads() {
   const busca   = document.getElementById('busca-lead').value.toLowerCase();
   const estagio = document.getElementById('filtro-estagio').value;
   const tbody   = document.getElementById('tbody-leads');
+
   const filtrados = LEADS_DATA.filter(l => {
-    const matchBusca = !busca || (l.nome||'').toLowerCase().includes(busca) || (l.empresa||'').toLowerCase().includes(busca);
+    const matchBusca = !busca ||
+      (l.nome||'').toLowerCase().includes(busca) ||
+      (l.empresa||'').toLowerCase().includes(busca);
     const matchEstagio = !estagio || l.estagio === estagio;
     return matchBusca && matchEstagio;
   });
-  tbody.innerHTML = filtrados.map(l =>
-    '<tr>'
-    +'<td>'+esc(l.nome)+'</td>'
-    +'<td>'+(esc(l.empresa)||'—')+'</td>'
-    +'<td>'+(esc(l.contato)||'—')+'</td>'
-    +'<td>'+(esc(l.email)||'—')+'</td>'
-    +'<td><span class="badge badge-enviada">'+(ESTAGIO_LABELS[l.estagio]||l.estagio)+'</span></td>'
-    +'<td style="text-align:right;font-weight:600">R$ '+fmtBr(l.valor_estimado)+'</td>'
-    +'<td><div class="row-actions">'
-    +'<button class="btn-sm primary" onclick="editarLead('+l.id+')">✏️</button>'
-    +'<button class="btn-sm danger" onclick="deletarLead('+l.id+',''+esc(l.nome)+'')">🗑️</button>'
-    +'</div></td></tr>'
-  ).join('') || '<tr><td colspan="7" style="text-align:center;padding:24px;color:#9ca3af;">Nenhum lead encontrado.</td></tr>';
+
+  tbody.innerHTML = filtrados.map(l => `
+    <tr>
+      <td>${esc(l.nome)}</td>
+      <td>${esc(l.empresa) || '—'}</td>
+      <td>${esc(l.contato) || '—'}</td>
+      <td>${esc(l.email) || '—'}</td>
+      <td><span class="badge badge-enviada">${ESTAGIO_LABELS[l.estagio]||l.estagio}</span></td>
+      <td style="text-align:right;font-weight:600">R$ ${fmtBr(l.valor_estimado)}</td>
+      <td>
+        <div class="row-actions">
+          <button class="btn-sm primary" onclick="editarLead(${l.id})">✏️</button>
+          <button class="btn-sm danger"  onclick="deletarLead(${l.id},'${esc(l.nome)}')">🗑️</button>
+        </div>
+      </td>
+    </tr>
+  `).join('') || `<tr><td colspan="7" style="text-align:center;padding:24px;color:#9ca3af;">Nenhum lead encontrado.</td></tr>`;
 }
 
+// ─── Proposta: ações ──────────────────────────────────────────────────────────
 function confirmarDelete(id, nome) {
-  if (!confirm('Excluir a proposta "'+nome+'"? Esta acao nao pode ser desfeita.')) return;
-  postJSON({action:'delete_proposta',id}).then(r => {
-    if(r.ok){ const idx=PROPOSTAS.findIndex(p=>p.id===id); if(idx>=0) PROPOSTAS.splice(idx,1); renderPropostas(); toast('Proposta excluida.'); }
-    else toast('Erro ao excluir.','erro');
+  if (!confirm(`Excluir a proposta "${nome}"? Esta ação não pode ser desfeita.`)) return;
+  postJSON({ action: 'delete_proposta', id }).then(r => {
+    if (r.ok) { const idx = PROPOSTAS.findIndex(p => p.id === id); if (idx>=0) PROPOSTAS.splice(idx,1); renderPropostas(); toast('Proposta excluída.'); }
+    else toast('Erro ao excluir.', 'erro');
   });
 }
 
 async function gerarFinanceiro(id, btn) {
-  btn.disabled=true; btn.textContent='⏳';
-  const r=await postJSON({action:'gerar_financeiro',id});
-  toast(r.msg, r.ok?'sucesso':'erro');
-  if(r.ok){ btn.textContent='✅'; const p=PROPOSTAS.find(x=>x.id===id); if(p) p.tem_financeiro=true; }
-  else btn.disabled=false;
+  btn.disabled = true; btn.textContent = '⏳';
+  const r = await postJSON({ action: 'gerar_financeiro', id });
+  toast(r.msg, r.ok ? 'sucesso' : 'erro');
+  if (r.ok) { btn.textContent = '✅'; const p = PROPOSTAS.find(x=>x.id===id); if(p) p.tem_financeiro=true; }
+  else btn.disabled = false;
 }
 
+// ─── Lead: Modal ──────────────────────────────────────────────────────────────
 function abrirModalLead(dados) {
-  document.getElementById('modal-lead-titulo').textContent=dados?'Editar Lead':'Novo Lead';
-  document.getElementById('lead-id').value=dados?.id||'';
-  document.getElementById('lead-nome').value=dados?.nome||'';
-  document.getElementById('lead-empresa').value=dados?.empresa||'';
-  document.getElementById('lead-contato').value=dados?.contato||'';
-  document.getElementById('lead-email').value=dados?.email||'';
-  document.getElementById('lead-estagio').value=dados?.estagio||'prospeccao';
-  document.getElementById('lead-valor').value=dados?.valor_estimado||0;
-  document.getElementById('lead-obs').value=dados?.observacoes||'';
+  document.getElementById('modal-lead-titulo').textContent = dados ? 'Editar Lead' : 'Novo Lead';
+  document.getElementById('lead-id').value      = dados?.id || '';
+  document.getElementById('lead-nome').value    = dados?.nome || '';
+  document.getElementById('lead-empresa').value = dados?.empresa || '';
+  document.getElementById('lead-contato').value = dados?.contato || '';
+  document.getElementById('lead-email').value   = dados?.email || '';
+  document.getElementById('lead-estagio').value = dados?.estagio || 'prospeccao';
+  document.getElementById('lead-valor').value   = dados?.valor_estimado || 0;
+  document.getElementById('lead-obs').value     = dados?.observacoes || '';
   document.getElementById('modal-lead').classList.add('open');
 }
 
-function fecharModalLead() { document.getElementById('modal-lead').classList.remove('open'); }
-function editarLead(id) { const l=LEADS_DATA.find(l=>l.id===id); if(l) abrirModalLead(l); }
+function fecharModalLead() {
+  document.getElementById('modal-lead').classList.remove('open');
+}
+
+function editarLead(id) {
+  const lead = LEADS_DATA.find(l => l.id === id);
+  if (lead) abrirModalLead(lead);
+}
 
 async function salvarLead() {
-  const id=document.getElementById('lead-id').value;
-  const payload={
-    action:'save_lead', id:id?parseInt(id):null,
-    nome:document.getElementById('lead-nome').value.trim(),
-    empresa:document.getElementById('lead-empresa').value.trim(),
-    contato:document.getElementById('lead-contato').value.trim(),
-    email:document.getElementById('lead-email').value.trim(),
-    estagio:document.getElementById('lead-estagio').value,
-    valor_estimado:parseFloat(document.getElementById('lead-valor').value)||0,
-    observacoes:document.getElementById('lead-obs').value.trim(),
+  const id = document.getElementById('lead-id').value;
+  const payload = {
+    action: 'save_lead',
+    id: id ? parseInt(id) : null,
+    nome: document.getElementById('lead-nome').value.trim(),
+    empresa: document.getElementById('lead-empresa').value.trim(),
+    contato: document.getElementById('lead-contato').value.trim(),
+    email: document.getElementById('lead-email').value.trim(),
+    estagio: document.getElementById('lead-estagio').value,
+    valor_estimado: parseFloat(document.getElementById('lead-valor').value) || 0,
+    observacoes: document.getElementById('lead-obs').value.trim(),
   };
-  if(!payload.nome){ toast('Nome e obrigatorio.','erro'); return; }
-  const r=await postJSON(payload);
-  if(r.ok){
+  if (!payload.nome) { toast('Nome é obrigatório.', 'erro'); return; }
+  const r = await postJSON(payload);
+  if (r.ok) {
     fecharModalLead();
-    const existente=LEADS_DATA.findIndex(l=>l.id===r.id);
-    const novo={...payload,id:r.id};
-    if(existente>=0) LEADS_DATA[existente]=novo; else LEADS_DATA.unshift(novo);
-    renderLeads(); toast('Lead salvo!','sucesso');
-  } else toast('Erro ao salvar lead.','erro');
+    // Atualiza lista local
+    const existente = LEADS_DATA.findIndex(l => l.id === r.id);
+    const novo = { ...payload, id: r.id };
+    if (existente >= 0) LEADS_DATA[existente] = novo;
+    else LEADS_DATA.unshift(novo);
+    renderLeads();
+    toast('Lead salvo!', 'sucesso');
+  } else toast('Erro ao salvar lead.', 'erro');
 }
 
 async function deletarLead(id, nome) {
-  if(!confirm('Excluir o lead "'+nome+'"?')) return;
-  const r=await postJSON({action:'delete_lead',id});
-  if(r.ok){ const idx=LEADS_DATA.findIndex(l=>l.id===id); if(idx>=0) LEADS_DATA.splice(idx,1); renderLeads(); toast('Lead excluido.'); }
-  else toast('Erro ao excluir.','erro');
+  if (!confirm(`Excluir o lead "${nome}"?`)) return;
+  const r = await postJSON({ action: 'delete_lead', id });
+  if (r.ok) { const idx = LEADS_DATA.findIndex(l=>l.id===id); if(idx>=0) LEADS_DATA.splice(idx,1); renderLeads(); toast('Lead excluído.'); }
+  else toast('Erro ao excluir.', 'erro');
 }
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 async function postJSON(payload) {
-  const r=await fetch(URL_LISTA,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF_TOKEN},body:JSON.stringify(payload)});
+  const r = await fetch(URL_LISTA, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-CSRFToken':CSRF_TOKEN},
+    body: JSON.stringify(payload),
+  });
   return r.json();
 }
 
-function fmtBr(n) { return Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-function fmtData(d) { if(!d) return '—'; const [y,m,dia]=d.split('-'); return dia+'/'+m+'/'+y; }
-function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function toast(msg,tipo) {
-  const el=document.getElementById('toast'); el.textContent=msg; el.className=tipo||'';
-  el.style.display='block'; setTimeout(()=>el.style.display='none',3500);
+function fmtBr(n) {
+  return Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
 }
 
+function fmtData(d) {
+  if (!d) return '—';
+  const [y,m,dia] = d.split('-');
+  return `${dia}/${m}/${y}`;
+}
+
+function esc(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toast(msg, tipo) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = tipo || '';
+  el.style.display = 'block';
+  setTimeout(() => el.style.display='none', 3500);
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // Ativar sistema de abas
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const group = btn.dataset.group;
-      const tab = btn.dataset.tab;
-      document.querySelectorAll('.tab-btn[data-group="'+group+'"]').forEach(b=>b.classList.remove('active'));
-      document.querySelectorAll('.tab-panel[data-group="'+group+'"]').forEach(p=>p.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById(tab).classList.add('active');
-    });
-  });
   renderPropostas();
   renderLeads();
 });
