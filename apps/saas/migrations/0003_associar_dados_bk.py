@@ -51,6 +51,7 @@ class Migration(migrations.Migration):
         ('orcamento', '0005_add_empresa_fk'),
         ('medicao', '0002_add_empresa_fk'),
         ('accounts', '0003_associar_usuarios_bk'),
+        ('saas', '0002_dados_iniciais'),
     ]
 
     operations = [
