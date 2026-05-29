@@ -1,8 +1,8 @@
 [build]
-buildCommand = "pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate --noinput"
+buildCommand = "pip install -r requirements.txt && python manage.py collectstatic --noinput"
 
 [deploy]
-startCommand = "gunicorn bk_erp.wsgi:application --bind 0.0.0.0:$PORT"
+startCommand = "python manage.py migrate --noinput && gunicorn bk_erp.wsgi:application --bind 0.0.0.0:$PORT"
 
 [[crons]]
 schedule = "0 7 * * *"
