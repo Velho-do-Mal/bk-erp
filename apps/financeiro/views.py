@@ -11,6 +11,12 @@ from django.db.models import Sum, Q          # ← Q adicionado aqui (era só Su
 from .models import Conta, Categoria, Transacao, Orcamento
 from apps.cadastros.models import Cliente, Fornecedor, CentrosDeCusto
 
+def _empresa(request):
+    """Retorna a empresa do usuário ou None para superadmin."""
+    return getattr(request, 'empresa', None)
+
+
+
 
 def _to_dec(v):
     try:
@@ -72,18 +78,18 @@ def dashboard_financeiro(request):
         d_fim = hoje
 
     def _qs_base():
-        qs = Transacao.objects.filter(data_competencia__gte=d_ini, data_competencia__lte=d_fim)
+        qs = Transacao.objects.filter(empresa=_empresa(request), data_competencia__gte=d_ini, data_competencia__lte=d_fim)
         if modo == 'realizado':
             qs = qs.filter(status='realizado')
         elif modo == 'previsto':
             qs = qs.filter(status='pendente')
         return qs
 
-    total_entrada = Transacao.objects.filter(tipo='entrada', status='realizado').aggregate(s=Sum('valor'))['s'] or Decimal('0')
-    total_saida = Transacao.objects.filter(tipo='saida', status='realizado').aggregate(s=Sum('valor'))['s'] or Decimal('0')
+    total_entrada = Transacao.objects.filter(empresa=_empresa(request), tipo='entrada', status='realizado').aggregate(s=Sum('valor'))['s'] or Decimal('0')
+    total_saida = Transacao.objects.filter(empresa=_empresa(request), tipo='saida', status='realizado').aggregate(s=Sum('valor'))['s'] or Decimal('0')
     saldo = total_entrada - total_saida
-    pendentes_receber = Transacao.objects.filter(tipo='entrada', status='pendente').aggregate(s=Sum('valor'))['s'] or Decimal('0')
-    pendentes_pagar = Transacao.objects.filter(tipo='saida', status='pendente').aggregate(s=Sum('valor'))['s'] or Decimal('0')
+    pendentes_receber = Transacao.objects.filter(empresa=_empresa(request), tipo='entrada', status='pendente').aggregate(s=Sum('valor'))['s'] or Decimal('0')
+    pendentes_pagar = Transacao.objects.filter(empresa=_empresa(request), tipo='saida', status='pendente').aggregate(s=Sum('valor'))['s'] or Decimal('0')
 
     ent_periodo = _qs_base().filter(tipo='entrada').aggregate(s=Sum('valor'))['s'] or Decimal('0')
     said_periodo = _qs_base().filter(tipo='saida').aggregate(s=Sum('valor'))['s'] or Decimal('0')
@@ -209,6 +215,10 @@ def transacoes(request):
         obj.anexo_nome = f.name
         obj.anexo_tipo = f.content_type or 'application/octet-stream'
         obj.anexo_dados = f.read()
+        if obj.pk is None and _empresa(request):
+
+            obj.empresa = _empresa(request)
+
         obj.save()
         _gerar_recorrencia(obj)
         return JsonResponse({'ok': True, 'id': obj.id})
@@ -242,6 +252,10 @@ def transacoes(request):
             ccid = data.get('centro_custo_id')
             obj.centro_custo_id = int(ccid) if ccid else None
             is_new = not obj.pk
+            if obj.pk is None and _empresa(request):
+
+                obj.empresa = _empresa(request)
+
             obj.save()
             if is_new:
                 _gerar_recorrencia(obj)
@@ -258,12 +272,12 @@ def transacoes(request):
                 obj.delete()
             elif modo == 'proximas':
                 # Exclui esta e todas do mesmo grupo com data >= data desta
-                Transacao.objects.filter(
+                Transacao.objects.filter(empresa=_empresa(request), 
                     recorrencia_grupo=grupo,
                     data_competencia__gte=obj.data_competencia
                 ).delete()
             elif modo == 'todas':
-                Transacao.objects.filter(recorrencia_grupo=grupo).delete()
+                Transacao.objects.filter(empresa=_empresa(request), recorrencia_grupo=grupo).delete()
             else:
                 obj.delete()
 
@@ -274,6 +288,10 @@ def transacoes(request):
             obj.status = 'realizado' if obj.status == 'pendente' else 'pendente'
             if obj.status == 'realizado' and not obj.data_pagamento:
                 obj.data_pagamento = date.today()
+            if obj.pk is None and _empresa(request):
+
+                obj.empresa = _empresa(request)
+
             obj.save()
             return JsonResponse({'ok': True, 'status': obj.status})
 
@@ -325,11 +343,11 @@ def transacoes(request):
         'anexo_nome', 'anexo_tipo',
     ))
 
-    contas = list(Conta.objects.filter(ativa=True).values('id', 'nome'))
-    categorias = list(Categoria.objects.values('id', 'nome', 'tipo', 'pai_id'))
-    clientes = list(Cliente.objects.filter(ativo=True).values('id', 'nome'))
-    fornecedores_list = list(Fornecedor.objects.filter(ativo=True).values('id', 'nome'))
-    centros = list(CentrosDeCusto.objects.filter(ativo=True).values('id', 'nome'))
+    contas = list(Conta.objects.filter(empresa=_empresa(request), ativa=True).values('id', 'nome'))
+    categorias = list(Categoria.objects.filter(empresa=_empresa(request)).values('id', 'nome', 'tipo', 'pai_id'))
+    clientes = list(Cliente.objects.filter(empresa=_empresa(request), ativo=True).values('id', 'nome'))
+    fornecedores_list = list(Fornecedor.objects.filter(empresa=_empresa(request), ativo=True).values('id', 'nome'))
+    centros = list(CentrosDeCusto.objects.filter(empresa=_empresa(request), ativo=True).values('id', 'nome'))
 
     ctx = {
         'transacoes_json': json.dumps(transacoes_list, default=str),
@@ -413,18 +431,22 @@ def contas(request):
             obj.saldo_inicial = _to_dec(data.get('saldo_inicial', 0))
             obj.ativa = data.get('ativa', True)
             obj.observacoes = data.get('observacoes', '').strip()
+            if obj.pk is None and _empresa(request):
+
+                obj.empresa = _empresa(request)
+
             obj.save()
             return JsonResponse({'ok': True, 'id': obj.id})
 
         elif action == 'delete':
-            Conta.objects.filter(id=data.get('id')).delete()
+            Conta.objects.filter(empresa=_empresa(request), id=data.get('id')).delete()
             return JsonResponse({'ok': True})
 
-    qs = list(Conta.objects.values('id', 'nome', 'banco', 'saldo_inicial', 'ativa', 'observacoes'))
+    qs = list(Conta.objects.filter(empresa=_empresa(request)).values('id', 'nome', 'banco', 'saldo_inicial', 'ativa', 'observacoes'))
 
     for c in qs:
-        entrada = Transacao.objects.filter(conta_id=c['id'], tipo='entrada', status='realizado').aggregate(s=Sum('valor'))['s'] or Decimal('0')
-        saida = Transacao.objects.filter(conta_id=c['id'], tipo='saida', status='realizado').aggregate(s=Sum('valor'))['s'] or Decimal('0')
+        entrada = Transacao.objects.filter(empresa=_empresa(request), conta_id=c['id'], tipo='entrada', status='realizado').aggregate(s=Sum('valor'))['s'] or Decimal('0')
+        saida = Transacao.objects.filter(empresa=_empresa(request), conta_id=c['id'], tipo='saida', status='realizado').aggregate(s=Sum('valor'))['s'] or Decimal('0')
         c['saldo_atual'] = float(Decimal(str(c['saldo_inicial'])) + entrada - saida)
         c['saldo_inicial'] = float(c['saldo_inicial'])
 
@@ -445,14 +467,18 @@ def categorias(request):
             pid = data.get('pai_id')
             obj.pai_id = int(pid) if pid else None
             obj.observacoes = data.get('observacoes', '').strip()
+            if obj.pk is None and _empresa(request):
+
+                obj.empresa = _empresa(request)
+
             obj.save()
             return JsonResponse({'ok': True, 'id': obj.id})
 
         elif action == 'delete':
-            Categoria.objects.filter(id=data.get('id')).delete()
+            Categoria.objects.filter(empresa=_empresa(request), id=data.get('id')).delete()
             return JsonResponse({'ok': True})
 
-    qs = list(Categoria.objects.values('id', 'nome', 'tipo', 'pai_id', 'observacoes'))
+    qs = list(Categoria.objects.filter(empresa=_empresa(request)).values('id', 'nome', 'tipo', 'pai_id', 'observacoes'))
 
     return render(request, 'financeiro/categorias.html', {'categorias_json': json.dumps(qs)})
 
@@ -466,14 +492,10 @@ def orcamento(request):
 
     # Q já importado no topo do arquivo — sem mais NameError
     # Orçamento: só categorias pai (as subcategorias ficam dentro do pai)
-    categorias_entrada = Categoria.objects.filter(
-        Q(tipo='entrada') | Q(tipo='ambos'), pai__isnull=True
-    ).prefetch_related('subcategorias').order_by('nome')
-    categorias_saida = Categoria.objects.filter(
-        Q(tipo='saida') | Q(tipo='ambos'), pai__isnull=True
-    ).prefetch_related('subcategorias').order_by('nome')
+    categorias_entrada = Categoria.objects.filter(Q(tipo='entrada') | Q(tipo='ambos'), empresa=_empresa(request), pai__isnull=True).prefetch_related('subcategorias').order_by('nome')
+    categorias_saida = Categoria.objects.filter(Q(tipo='saida') | Q(tipo='ambos'), empresa=_empresa(request), pai__isnull=True).prefetch_related('subcategorias').order_by('nome')
 
-    orcamentos_raw = Orcamento.objects.filter(ano=ano_selecionado).values('categoria_id', 'mes', 'valor')
+    orcamentos_raw = Orcamento.objects.filter(empresa=_empresa(request), ano=ano_selecionado).values('categoria_id', 'mes', 'valor')
 
     orc_map = {}
     for o in orcamentos_raw:
@@ -484,7 +506,7 @@ def orcamento(request):
         orc_map[cat_id][mes] = float(o['valor'])
 
     reais_raw = (
-        Transacao.objects.filter(data_competencia__year=ano_selecionado, status='realizado')
+        Transacao.objects.filter(empresa=_empresa(request), data_competencia__year=ano_selecionado, status='realizado')
         .annotate(mes_num=ExtractMonth('data_competencia'))
         .values('categoria_id', 'mes_num')
         .annotate(total=Sum('valor'))

@@ -5,6 +5,12 @@ from django.http import JsonResponse
 from apps.accounts.decorators import admin_required
 from .models import ProdutoServico
 
+def _empresa(request):
+    """Retorna a empresa do usuário ou None para superadmin."""
+    return getattr(request, 'empresa', None)
+
+
+
 
 @admin_required
 def lista(request):
@@ -31,6 +37,10 @@ def lista(request):
             except Exception:
                 obj.preco_unitario = Decimal('0')
             obj.ativo = data.get('ativo', True)
+            if obj.pk is None and _empresa(request):
+
+                obj.empresa = _empresa(request)
+
             obj.save()
             return JsonResponse({'ok': True, 'id': obj.id})
 
@@ -38,7 +48,7 @@ def lista(request):
             rid = data.get('id')
             if not rid:
                 return JsonResponse({'ok': False, 'error': 'ID não informado.'})
-            ProdutoServico.objects.filter(id=rid).delete()
+            ProdutoServico.objects.filter(empresa=_empresa(request), id=rid).delete()
             return JsonResponse({'ok': True})
 
         elif action == 'toggle_ativo':
@@ -47,12 +57,16 @@ def lista(request):
             except ProdutoServico.DoesNotExist:
                 return JsonResponse({'ok': False, 'error': 'Registro não encontrado.'})
             obj.ativo = not obj.ativo
+            if obj.pk is None and _empresa(request):
+
+                obj.empresa = _empresa(request)
+
             obj.save()
             return JsonResponse({'ok': True, 'ativo': obj.ativo})
 
         return JsonResponse({'ok': False, 'error': 'Ação inválida.'})
 
-    items = list(ProdutoServico.objects.values(
+    items = list(ProdutoServico.objects.filter(empresa=_empresa(request)).values(
         'id', 'codigo', 'tipo', 'nome', 'descricao', 'unidade', 'preco_unitario', 'ativo'
     ))
     for i in items:
@@ -61,5 +75,5 @@ def lista(request):
     return render(request, 'servicos/lista.html', {
         'items_json': json.dumps(items, ensure_ascii=False),
         'total': ProdutoServico.objects.count(),
-        'ativos': ProdutoServico.objects.filter(ativo=True).count(),
+        'ativos': ProdutoServico.objects.filter(empresa=_empresa(request), ativo=True).count(),
     })

@@ -1,8 +1,10 @@
 from django.db import models
+from django.db.models import ForeignKey, CASCADE
 from apps.cadastros.models import Fornecedor
 
 
 class MaterialEstoque(models.Model):
+    empresa = models.ForeignKey('saas.Empresa', on_delete=models.CASCADE, null=True, blank=True, related_name='+', verbose_name='Empresa', db_index=True)
     codigo = models.CharField(max_length=100)
     descricao = models.CharField(max_length=300)
     fornecedor = models.ForeignKey(Fornecedor, on_delete=models.SET_NULL, null=True, blank=True)

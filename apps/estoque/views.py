@@ -9,6 +9,12 @@ from django.db.models import Sum, F, ExpressionWrapper, DecimalField
 from .models import MaterialEstoque
 from apps.cadastros.models import Fornecedor
 
+def _empresa(request):
+    """Retorna a empresa do usuário ou None para superadmin."""
+    return getattr(request, 'empresa', None)
+
+
+
 
 def _to_dec(v):
     try:
@@ -54,6 +60,10 @@ def lista(request):
             obj.data_compra = _to_date(data.get('data_compra'))
             obj.data_validade = _to_date(data.get('data_validade'))
             obj.observacoes = data.get('observacoes', '').strip()
+            if obj.pk is None and _empresa(request):
+
+                obj.empresa = _empresa(request)
+
             obj.save()
             return JsonResponse({'ok': True, 'id': obj.id})
 
@@ -61,7 +71,7 @@ def lista(request):
             # Atualiza apenas qtd_utilizada (tabela inline)
             updates = data.get('updates', [])
             for u in updates:
-                MaterialEstoque.objects.filter(id=u['id']).update(
+                MaterialEstoque.objects.filter(empresa=_empresa(request), id=u['id']).update(
                     qtd_utilizada=_to_dec(u['qtd_utilizada'])
                 )
             return JsonResponse({'ok': True, 'n': len(updates)})
@@ -70,7 +80,7 @@ def lista(request):
             rid = data.get('id')
             if not rid:
                 return JsonResponse({'ok': False, 'error': 'ID não informado.'})
-            MaterialEstoque.objects.filter(id=rid).delete()
+            MaterialEstoque.objects.filter(empresa=_empresa(request), id=rid).delete()
             return JsonResponse({'ok': True})
 
     qs = MaterialEstoque.objects.select_related('fornecedor')
@@ -99,7 +109,7 @@ def lista(request):
 
     ctx = {
         'materiais_json': json.dumps(materiais),
-        'fornecedores': list(Fornecedor.objects.filter(ativo=True).values('id', 'nome')),
+        'fornecedores': list(Fornecedor.objects.filter(empresa=_empresa(request), ativo=True).values('id', 'nome')),
         'total_investido': total_investido,
         'total_itens': total_itens,
         'itens_criticos': itens_criticos,

@@ -1,8 +1,10 @@
 from django.db import models
+from django.db.models import ForeignKey, CASCADE
 from apps.cadastros.models import Cliente, Fornecedor
 
 
 class Documento(models.Model):
+    empresa = models.ForeignKey('saas.Empresa', on_delete=models.CASCADE, null=True, blank=True, related_name='+', verbose_name='Empresa', db_index=True)
     TIPO_CHOICES = [
         ('contrato', 'Contratos'),
         ('empresa', 'Doc. Empresa'),

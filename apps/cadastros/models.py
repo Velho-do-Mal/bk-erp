@@ -1,7 +1,9 @@
 from django.db import models
+from django.db.models import ForeignKey, CASCADE
 
 
 class Cliente(models.Model):
+    empresa = models.ForeignKey('saas.Empresa', on_delete=models.CASCADE, null=True, blank=True, related_name='+', verbose_name='Empresa', db_index=True)
     nome = models.CharField(max_length=200)
     documento = models.CharField(max_length=30, blank=True)
     email = models.EmailField(blank=True)
@@ -19,6 +21,7 @@ class Cliente(models.Model):
 
 
 class Fornecedor(models.Model):
+    empresa = models.ForeignKey('saas.Empresa', on_delete=models.CASCADE, null=True, blank=True, related_name='+', verbose_name='Empresa', db_index=True)
     nome = models.CharField(max_length=200)
     documento = models.CharField(max_length=30, blank=True)
     email = models.EmailField(blank=True)
@@ -36,6 +39,7 @@ class Fornecedor(models.Model):
 
 
 class CentrosDeCusto(models.Model):
+    empresa = models.ForeignKey('saas.Empresa', on_delete=models.CASCADE, null=True, blank=True, related_name='+', verbose_name='Empresa', db_index=True)
     nome = models.CharField(max_length=200)
     observacoes = models.TextField(blank=True)
     ativo = models.BooleanField(default=True)

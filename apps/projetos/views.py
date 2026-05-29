@@ -8,20 +8,26 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages
 from .models import Projeto, ProjetoAcesso
 
+def _empresa(request):
+    """Retorna a empresa do usuário ou None para superadmin."""
+    return getattr(request, 'empresa', None)
+
+
+
 
 def get_projetos_usuario(user):
     """Retorna queryset de projetos acessíveis ao usuário."""
     if user.is_admin_erp:
-        return Projeto.objects.all()
-    ids = ProjetoAcesso.objects.filter(usuario=user).values_list('projeto_id', flat=True)
-    return Projeto.objects.filter(id__in=ids)
+        return Projeto.objects.filter(empresa=_empresa(request))
+    ids = ProjetoAcesso.objects.filter(empresa=_empresa(request), usuario=user).values_list('projeto_id', flat=True)
+    return Projeto.objects.filter(empresa=_empresa(request), id__in=ids)
 
 
 def check_acesso(user, projeto):
     """Verifica se usuário tem acesso ao projeto. Lança Http404 se não."""
     if user.is_admin_erp:
         return True
-    if not ProjetoAcesso.objects.filter(usuario=user, projeto=projeto).exists():
+    if not ProjetoAcesso.objects.filter(empresa=_empresa(request), usuario=user, projeto=projeto).exists():
         raise Http404
 
 
@@ -136,7 +142,7 @@ def detalhe(request, pk):
 
     acesso = None
     if not request.user.is_admin_erp:
-        acesso = ProjetoAcesso.objects.filter(usuario=request.user, projeto=projeto).first()
+        acesso = ProjetoAcesso.objects.filter(empresa=_empresa(request), usuario=request.user, projeto=projeto).first()
 
     return render(request, 'projetos/detalhe.html', {
         'projeto': projeto,
@@ -257,13 +263,13 @@ def gerenciar_acessos(request, pk):
         raise Http404
     from apps.accounts.models import User
     projeto = get_object_or_404(Projeto, pk=pk)
-    clientes = User.objects.filter(perfil='cliente', is_active=True)
-    acessos = {a.usuario_id: a for a in ProjetoAcesso.objects.filter(projeto=projeto)}
+    clientes = User.objects.filter(empresa=_empresa(request), perfil='cliente', is_active=True)
+    acessos = {a.usuario_id: a for a in ProjetoAcesso.objects.filter(empresa=_empresa(request), projeto=projeto)}
 
     if request.method == 'POST':
         usuarios_ids = request.POST.getlist('usuarios')
         # Remove acessos não selecionados
-        ProjetoAcesso.objects.filter(projeto=projeto).exclude(usuario_id__in=usuarios_ids).delete()
+        ProjetoAcesso.objects.filter(empresa=_empresa(request), projeto=projeto).exclude(usuario_id__in=usuarios_ids).delete()
         # Cria novos acessos
         for uid in usuarios_ids:
             ProjetoAcesso.objects.get_or_create(projeto=projeto, usuario_id=uid)
@@ -304,7 +310,7 @@ def controle_docs(request, pk):
 
     def _calcular_dias(doc):
         """Calcula dias BK e dias CLIENTE via histórico de eventos."""
-        eventos = list(StatusEventoDocumento.objects.filter(documento=doc).order_by('data_evento', 'id').values(
+        eventos = list(StatusEventoDocumento.objects.filter(empresa=_empresa(request), documento=doc).order_by('data_evento', 'id').values(
             'data_evento', 'status', 'responsavel'
         ))
         if not eventos:
@@ -384,6 +390,10 @@ def controle_docs(request, pk):
                 obj.percentual_concluido = int(d.get('percentual', 0) or 0)
                 obj.status = d.get('status', 'nao_iniciado')
                 obj.observacao = d.get('observacao', '').strip()
+                if obj.pk is None and _empresa(request):
+
+                    obj.empresa = _empresa(request)
+
                 obj.save()
 
                 # Registrar evento se status mudou
@@ -401,7 +411,7 @@ def controle_docs(request, pk):
             return JsonResponse({'ok': True, 'saved': saved})
 
         elif action == 'delete_doc':
-            DocumentoControle.objects.filter(id=data.get('id'), projeto=projeto).delete()
+            DocumentoControle.objects.filter(empresa=_empresa(request), id=data.get('id'), projeto=projeto).delete()
             return JsonResponse({'ok': True})
 
     # ── GET ─────────────────────────────────────────────────────────────────
@@ -427,7 +437,7 @@ def controle_docs(request, pk):
         meta = {'cliente_nome': '', 'projeto_numero': '', 'revisao': '',
                 'projeto_status': '', 'logo_bk_uri': '', 'logo_cliente_uri': ''}
 
-    docs_qs = DocumentoControle.objects.filter(projeto=projeto).order_by('id')
+    docs_qs = DocumentoControle.objects.filter(empresa=_empresa(request), projeto=projeto).order_by('id')
     docs = []
     for doc in docs_qs:
         dias_bk, dias_cli = _calcular_dias(doc)
@@ -488,7 +498,7 @@ def api_anexos(request, pk, doc_id):
         })
 
     # GET — retorna lista
-    anexos = AnexoDocumento.objects.filter(documento=doc)
+    anexos = AnexoDocumento.objects.filter(empresa=_empresa(request), documento=doc)
     return JsonResponse({
         'ok': True,
         'anexos': [

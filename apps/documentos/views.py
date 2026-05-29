@@ -6,6 +6,12 @@ from django.http import HttpResponse, JsonResponse
 from .models import Documento
 from apps.cadastros.models import Cliente, Fornecedor
 
+def _empresa(request):
+    """Retorna a empresa do usuário ou None para superadmin."""
+    return getattr(request, 'empresa', None)
+
+
+
 
 @admin_required
 def lista(request):
@@ -31,7 +37,7 @@ def lista(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         if data.get('action') == 'delete':
-            Documento.objects.filter(id=data.get('id')).delete()
+            Documento.objects.filter(empresa=_empresa(request), id=data.get('id')).delete()
             return JsonResponse({'ok': True})
 
     # Filtros
@@ -51,8 +57,8 @@ def lista(request):
 
     ctx = {
         'docs_json': json.dumps(docs, default=str),
-        'clientes': Cliente.objects.filter(ativo=True).values('id', 'nome'),
-        'fornecedores': Fornecedor.objects.filter(ativo=True).values('id', 'nome'),
+        'clientes': Cliente.objects.filter(empresa=_empresa(request), ativo=True).values('id', 'nome'),
+        'fornecedores': Fornecedor.objects.filter(empresa=_empresa(request), ativo=True).values('id', 'nome'),
         'tipo_f': tipo_f,
         'q': q,
         'tipos': Documento.TIPO_CHOICES,

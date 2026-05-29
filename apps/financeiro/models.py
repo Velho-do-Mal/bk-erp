@@ -1,8 +1,10 @@
 from django.db import models
+from django.db.models import ForeignKey, CASCADE
 from apps.cadastros.models import Cliente, Fornecedor, CentrosDeCusto
 
 
 class Conta(models.Model):
+    empresa = models.ForeignKey('saas.Empresa', on_delete=models.CASCADE, null=True, blank=True, related_name='+', verbose_name='Empresa', db_index=True)
     nome = models.CharField(max_length=200)
     banco = models.CharField(max_length=100, blank=True)
     saldo_inicial = models.DecimalField(max_digits=14, decimal_places=2, default=0)
@@ -18,6 +20,7 @@ class Conta(models.Model):
 
 
 class Categoria(models.Model):
+    empresa = models.ForeignKey('saas.Empresa', on_delete=models.CASCADE, null=True, blank=True, related_name='+', verbose_name='Empresa', db_index=True)
     TIPO_CHOICES = [('entrada', 'Entrada'), ('saida', 'Saída'), ('ambos', 'Ambos')]
     nome = models.CharField(max_length=200)
     tipo = models.CharField(max_length=10, choices=TIPO_CHOICES, default='ambos')
@@ -35,6 +38,7 @@ class Categoria(models.Model):
 
 
 class Transacao(models.Model):
+    empresa = models.ForeignKey('saas.Empresa', on_delete=models.CASCADE, null=True, blank=True, related_name='+', verbose_name='Empresa', db_index=True)
     TIPO_CHOICES = [('entrada', 'Entrada'), ('saida', 'Saída')]
     STATUS_CHOICES = [('pendente', 'Pendente'), ('realizado', 'Realizado')]
     RECORRENCIA_CHOICES = [
@@ -86,6 +90,7 @@ class Transacao(models.Model):
 
 
 class Orcamento(models.Model):
+    empresa = models.ForeignKey('saas.Empresa', on_delete=models.CASCADE, null=True, blank=True, related_name='+', verbose_name='Empresa', db_index=True)
     categoria = models.ForeignKey(Categoria, on_delete=models.CASCADE)
     ano = models.IntegerField()
     mes = models.IntegerField()

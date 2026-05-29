@@ -1,9 +1,11 @@
 from django.db import models
+from django.db.models import ForeignKey, CASCADE
 from apps.cadastros.models import Cliente
 from apps.servicos.models import ProdutoServico
 
 
 class Obra(models.Model):
+    empresa = models.ForeignKey('saas.Empresa', on_delete=models.CASCADE, null=True, blank=True, related_name='+', verbose_name='Empresa', db_index=True)
     cliente = models.ForeignKey(
         Cliente, on_delete=models.PROTECT, null=True, blank=True, verbose_name='Cliente'
     )
@@ -29,6 +31,7 @@ class Obra(models.Model):
 
 
 class Orcamento(models.Model):
+    empresa = models.ForeignKey('saas.Empresa', on_delete=models.CASCADE, null=True, blank=True, related_name='+', verbose_name='Empresa', db_index=True)
     obra = models.ForeignKey(Obra, on_delete=models.CASCADE, related_name='orcamentos', verbose_name='Obra')
     nome = models.CharField(max_length=200, default='Orçamento', verbose_name='Nome')
     criado_em = models.DateTimeField(auto_now_add=True)

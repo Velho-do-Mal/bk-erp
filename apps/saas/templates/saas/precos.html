@@ -1,0 +1,73 @@
+{% load bk_filters %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Planos e Preços — BK ERP</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; color: #111827; }
+  .hero { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); color: #fff; text-align: center; padding: 60px 20px 80px; }
+  .hero h1 { font-size: 36px; font-weight: 800; margin-bottom: 12px; }
+  .hero p  { font-size: 17px; opacity: .85; max-width: 520px; margin: 0 auto; }
+  .plans   { display: flex; flex-wrap: wrap; gap: 24px; justify-content: center; padding: 48px 20px; max-width: 1100px; margin: -40px auto 0; }
+  .card    { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 32px 28px; width: 240px; flex: 0 0 240px; box-shadow: 0 2px 12px rgba(0,0,0,.06); position: relative; transition: box-shadow .2s; }
+  .card:hover { box-shadow: 0 8px 32px rgba(30,58,138,.12); }
+  .card.destaque { border-color: #1e40af; box-shadow: 0 4px 24px rgba(30,64,175,.18); }
+  .tag-destaque { position: absolute; top: -13px; left: 50%; transform: translateX(-50%); background: #1e40af; color: #fff; font-size: 11px; font-weight: 700; padding: 3px 14px; border-radius: 20px; white-space: nowrap; }
+  .plan-name  { font-size: 20px; font-weight: 800; color: #1e3a8a; margin-bottom: 6px; }
+  .plan-price { font-size: 34px; font-weight: 800; color: #111827; margin: 10px 0 4px; }
+  .plan-price span { font-size: 14px; font-weight: 400; color: #6b7280; }
+  .plan-desc  { font-size: 13px; color: #6b7280; margin-bottom: 20px; min-height: 36px; }
+  .plan-features { list-style: none; margin-bottom: 28px; }
+  .plan-features li { font-size: 13px; color: #374151; padding: 5px 0; border-bottom: 1px solid #f3f4f6; display: flex; align-items: center; gap: 8px; }
+  .plan-features li::before { content: "✓"; color: #16a34a; font-weight: 700; }
+  .btn-plan { display: block; text-align: center; background: #1e40af; color: #fff; padding: 12px; border-radius: 8px; font-weight: 700; text-decoration: none; font-size: 14px; transition: background .2s; }
+  .btn-plan:hover { background: #1e3a8a; }
+  .btn-plan.outline { background: #fff; color: #1e40af; border: 2px solid #1e40af; }
+  .btn-plan.outline:hover { background: #eff6ff; }
+  .footer-cta { text-align: center; padding: 40px 20px; color: #6b7280; font-size: 14px; }
+  .footer-cta a { color: #1e40af; font-weight: 600; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>🚀 Planos e Preços</h1>
+  <p>Escolha o plano ideal para sua empresa. Comece grátis, escale quando precisar.</p>
+</div>
+
+<div class="plans">
+  {% for plano in planos %}
+  <div class="card {% if plano.nome == 'pro' %}destaque{% endif %}">
+    {% if plano.nome == 'pro' %}<div class="tag-destaque">⭐ Mais Popular</div>{% endif %}
+    <div class="plan-name">{{ plano.get_nome_display }}</div>
+    <div class="plan-price">
+      {% if plano.preco_mensal == 0 %}Grátis
+      {% else %}{{ plano.preco_mensal|moeda }}<span>/mês</span>
+      {% endif %}
+    </div>
+    <div class="plan-desc">{{ plano.descricao }}</div>
+    <ul class="plan-features">
+      <li>{% if plano.limite_usuarios == 0 %}Usuários ilimitados{% else %}{{ plano.limite_usuarios }} usuário{% if plano.limite_usuarios > 1 %}s{% endif %}{% endif %}</li>
+      <li>{% if plano.limite_projetos == 0 %}Projetos ilimitados{% else %}{{ plano.limite_projetos }} projeto{% if plano.limite_projetos > 1 %}s{% endif %}{% endif %}</li>
+      <li>{% if plano.limite_propostas == 0 %}Propostas ilimitadas{% else %}{{ plano.limite_propostas }} propostas{% endif %}</li>
+      <li>Dashboard executivo</li>
+      <li>Suporte por e-mail</li>
+      {% if plano.nome == 'pro' or plano.nome == 'enterprise' %}<li>Suporte prioritário</li>{% endif %}
+      {% if plano.nome == 'enterprise' %}<li>SLA dedicado</li>{% endif %}
+    </ul>
+    <a href="{% url 'saas:cadastro' %}?plano={{ plano.id }}" class="btn-plan {% if plano.nome != 'pro' %}outline{% endif %}">
+      {% if plano.nome == 'free' %}Começar Grátis{% else %}Assinar Agora{% endif %}
+    </a>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="footer-cta">
+  Já tem uma conta? <a href="{% url 'accounts:login' %}">Faça login →</a>
+</div>
+
+</body>
+</html>

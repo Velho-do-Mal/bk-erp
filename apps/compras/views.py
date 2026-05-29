@@ -9,6 +9,12 @@ from django.db.models import Sum, Count, Q
 from .models import PedidoCompra, ItemPedidoCompra
 from apps.cadastros.models import Fornecedor
 
+def _empresa(request):
+    """Retorna a empresa do usuário ou None para superadmin."""
+    return getattr(request, 'empresa', None)
+
+
+
 
 def _to_dec(v):
     try:
@@ -53,6 +59,10 @@ def lista(request):
             obj.data_entrega_real = _to_date(data.get('data_entrega_real'))
             obj.status = data.get('status', 'aberta')
             obj.observacoes = data.get('observacoes', '').strip()
+            if obj.pk is None and _empresa(request):
+
+                obj.empresa = _empresa(request)
+
             obj.save()
 
             # Salva itens
@@ -78,7 +88,7 @@ def lista(request):
             return JsonResponse({'ok': True, 'id': obj.id})
 
         elif action == 'delete':
-            PedidoCompra.objects.filter(id=data.get('id')).delete()
+            PedidoCompra.objects.filter(empresa=_empresa(request), id=data.get('id')).delete()
             return JsonResponse({'ok': True})
 
         elif action == 'gerar_financeiro':
@@ -87,7 +97,7 @@ def lista(request):
             ref = f"PC:{po.id}"
             try:
                 from apps.financeiro.models import Transacao
-                if Transacao.objects.filter(referencia=ref).exists():
+                if Transacao.objects.filter(empresa=_empresa(request), referencia=ref).exists():
                     return JsonResponse({'ok': False, 'msg': 'Já existe lançamento para este pedido.'})
                 t = Transacao.objects.create(
                     descricao=f"Pedido de Compra {po.codigo}",
@@ -144,7 +154,7 @@ def lista(request):
 
     ctx = {
         'pedidos_json': json.dumps(pedidos_data),
-        'fornecedores': list(Fornecedor.objects.filter(ativo=True).values('id', 'nome')),
+        'fornecedores': list(Fornecedor.objects.filter(empresa=_empresa(request), ativo=True).values('id', 'nome')),
         'total_pedidos': qs.count(),
         'total_valor': float(total_valor),
         'em_aberto': em_aberto,

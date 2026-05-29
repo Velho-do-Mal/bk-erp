@@ -13,6 +13,12 @@ from django.contrib import messages
 from .models import Proposta, ItemProposta, Lead
 from apps.cadastros.models import Cliente
 
+def _empresa(request):
+    """Retorna a empresa do usuário ou None para superadmin."""
+    return getattr(request, 'empresa', None)
+
+
+
 
 # ─── Helpers ──────────────────────────────────────────────
 
@@ -169,15 +175,19 @@ def lista(request):
             obj.estagio = data.get('estagio', 'prospeccao')
             obj.valor_estimado = _to_dec(data.get('valor_estimado', 0))
             obj.observacoes = data.get('observacoes', '').strip()
+            if obj.pk is None and _empresa(request):
+
+                obj.empresa = _empresa(request)
+
             obj.save()
             return JsonResponse({'ok': True, 'id': obj.id})
 
         elif action == 'delete_lead':
-            Lead.objects.filter(id=data.get('id')).delete()
+            Lead.objects.filter(empresa=_empresa(request), id=data.get('id')).delete()
             return JsonResponse({'ok': True})
 
         elif action == 'delete_proposta':
-            Proposta.objects.filter(id=data.get('id')).delete()
+            Proposta.objects.filter(empresa=_empresa(request), id=data.get('id')).delete()
             return JsonResponse({'ok': True})
 
         elif action == 'gerar_financeiro':
@@ -185,7 +195,7 @@ def lista(request):
             ref = f"PROP:{prop.id}"
             try:
                 from apps.financeiro.models import Transacao
-                if Transacao.objects.filter(referencia=ref).exists():
+                if Transacao.objects.filter(empresa=_empresa(request), referencia=ref).exists():
                     return JsonResponse({'ok': False, 'msg': 'Ja existe lancamento para esta proposta.'})
                 t = Transacao.objects.create(
                     descricao=f"Proposta {prop.codigo} — {prop.titulo}",
@@ -207,15 +217,15 @@ def lista(request):
     propostas = Proposta.objects.select_related('cliente', 'lead').prefetch_related('itens')
     propostas_data = [_proposta_to_dict(p) for p in propostas]
 
-    leads_data = list(Lead.objects.values(
+    leads_data = list(Lead.objects.filter(empresa=_empresa(request)).values(
         'id', 'nome', 'empresa', 'contato', 'email', 'estagio', 'valor_estimado', 'observacoes'
     ))
     for l in leads_data:
         l['valor_estimado'] = float(l['valor_estimado'])
 
     total_valor = Proposta.objects.aggregate(s=Sum('valor_total'))['s'] or 0
-    aprovadas = Proposta.objects.filter(status='aprovada').count()
-    pipeline_valor = Lead.objects.filter(
+    aprovadas = Proposta.objects.filter(empresa=_empresa(request), status='aprovada').count()
+    pipeline_valor = Lead.objects.filter(empresa=_empresa(request), 
         estagio__in=['qualificacao', 'proposta', 'negociacao']
     ).aggregate(s=Sum('valor_estimado'))['s'] or 0
 
@@ -346,8 +356,8 @@ def proposta_detalhe(request, pk):
                 'msg': f'Status atualizado para "{proposta.get_status_display()}".{msg_extra}',
             })
 
-    clientes = list(Cliente.objects.filter(ativo=True).values('id', 'nome'))
-    leads = list(Lead.objects.values('id', 'nome', 'empresa'))
+    clientes = list(Cliente.objects.filter(empresa=_empresa(request), ativo=True).values('id', 'nome'))
+    leads = list(Lead.objects.filter(empresa=_empresa(request)).values('id', 'nome', 'empresa'))
     proposta_data = _proposta_to_dict(proposta)
 
     ctx = {

@@ -1,7 +1,9 @@
 from django.db import models
+from django.db.models import ForeignKey, CASCADE
 
 
 class ProdutoServico(models.Model):
+    empresa = models.ForeignKey('saas.Empresa', on_delete=models.CASCADE, null=True, blank=True, related_name='+', verbose_name='Empresa', db_index=True)
     TIPO_CHOICES = [
         ('servico', 'Serviço'),
         ('produto', 'Produto'),

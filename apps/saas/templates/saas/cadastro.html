@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Criar Conta — BK ERP</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; color: #111827; min-height: 100vh; display: flex; flex-direction: column; }
+  .top-bar { background: #1e3a8a; padding: 14px 32px; display: flex; align-items: center; justify-content: space-between; }
+  .top-bar .logo { color: #fff; font-size: 20px; font-weight: 800; text-decoration: none; }
+  .top-bar a.login { color: #93c5fd; font-size: 13px; text-decoration: none; }
+  .top-bar a.login:hover { color: #fff; }
+  .container { max-width: 860px; margin: 40px auto; padding: 0 20px; flex: 1; }
+  h1 { font-size: 26px; font-weight: 800; color: #1e3a8a; margin-bottom: 6px; }
+  .subtitle { color: #6b7280; font-size: 14px; margin-bottom: 32px; }
+  .bloqueio { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 14px 18px; margin-bottom: 24px; color: #dc2626; font-size: 14px; }
+  .erros { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 14px 18px; margin-bottom: 24px; }
+  .erros li { color: #dc2626; font-size: 13px; margin-left: 16px; }
+  .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 32px; box-shadow: 0 1px 6px rgba(0,0,0,.05); margin-bottom: 24px; }
+  .card h2 { font-size: 16px; font-weight: 700; color: #1e3a8a; margin-bottom: 20px; border-bottom: 1px solid #e5e7eb; padding-bottom: 10px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .form-row.full { grid-template-columns: 1fr; }
+  label { display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 4px; text-transform: uppercase; letter-spacing: .4px; }
+  input[type=text], input[type=email], input[type=password], select {
+    width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px;
+    font-size: 14px; color: #111827; background: #fff; outline: none; transition: border .15s;
+  }
+  input:focus, select:focus { border-color: #1e40af; box-shadow: 0 0 0 3px rgba(30,64,175,.08); }
+  .planos-grid { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+  .plano-opt { flex: 1; min-width: 160px; border: 2px solid #e5e7eb; border-radius: 8px; padding: 14px; cursor: pointer; transition: border .15s; }
+  .plano-opt input[type=radio] { display: none; }
+  .plano-opt.selecionado { border-color: #1e40af; background: #eff6ff; }
+  .plano-opt .pnome { font-weight: 700; color: #1e3a8a; font-size: 14px; }
+  .plano-opt .ppreco { font-size: 18px; font-weight: 800; color: #111827; margin: 4px 0; }
+  .plano-opt .pdesc { font-size: 12px; color: #6b7280; }
+  .btn-submit { width: 100%; padding: 14px; background: #1e40af; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 8px; transition: background .2s; }
+  .btn-submit:hover { background: #1e3a8a; }
+  .login-link { text-align: center; font-size: 13px; color: #6b7280; margin-top: 16px; }
+  .login-link a { color: #1e40af; font-weight: 600; text-decoration: none; }
+  @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <a href="/" class="logo">🏗️ BK ERP</a>
+  <a href="{% url 'accounts:login' %}" class="login">Já tenho conta →</a>
+</div>
+
+<div class="container">
+  <h1>Criar sua conta</h1>
+  <p class="subtitle">Comece seu trial gratuito de 30 dias. Sem cartão de crédito.</p>
+
+  {% if bloqueado == 'inativa' %}
+  <div class="bloqueio">⛔ Esta empresa está inativa. Entre em contato com o suporte.</div>
+  {% elif bloqueado == 'inadimplente' %}
+  <div class="bloqueio">⚠️ Sua assinatura está vencida. Regularize o pagamento para continuar.</div>
+  {% endif %}
+
+  {% if erros %}
+  <div class="erros">
+    <ul>{% for e in erros %}<li>{{ e }}</li>{% endfor %}</ul>
+  </div>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="card">
+      <h2>🏢 Dados da Empresa</h2>
+      <div class="form-row">
+        <div>
+          <label>Nome da Empresa *</label>
+          <input type="text" name="nome_empresa" value="{{ dados.nome_empresa|default:'' }}" required placeholder="Ex.: Minha Empresa Ltda">
+        </div>
+        <div>
+          <label>CNPJ</label>
+          <input type="text" name="cnpj" value="{{ dados.cnpj|default:'' }}" placeholder="00.000.000/0000-00">
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>E-mail da Empresa *</label>
+          <input type="email" name="email" value="{{ dados.email|default:'' }}" required placeholder="contato@empresa.com">
+        </div>
+        <div>
+          <label>Telefone</label>
+          <input type="text" name="telefone" value="{{ dados.telefone|default:'' }}" placeholder="(00) 00000-0000">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>👤 Dados do Administrador</h2>
+      <div class="form-row">
+        <div>
+          <label>Nome Completo</label>
+          <input type="text" name="nome_usuario" value="{{ dados.nome_usuario|default:'' }}" placeholder="João Silva">
+        </div>
+        <div>
+          <label>Nome de Usuário *</label>
+          <input type="text" name="username" value="{{ dados.username|default:'' }}" required placeholder="joaosilva">
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>Senha *</label>
+          <input type="password" name="senha" required placeholder="Mínimo 6 caracteres">
+        </div>
+        <div>
+          <label>Confirmar Senha</label>
+          <input type="password" name="senha2" placeholder="Repita a senha">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📋 Escolha seu Plano</h2>
+      <div class="planos-grid" id="planos-grid">
+        {% for plano in planos %}
+        <label class="plano-opt {% if forloop.first %}selecionado{% endif %}" id="opt-{{ plano.id }}">
+          <input type="radio" name="plano" value="{{ plano.id }}" {% if forloop.first %}checked{% endif %}>
+          <div class="pnome">{{ plano.get_nome_display }}</div>
+          <div class="ppreco">{% if plano.preco_mensal == 0 %}Grátis{% else %}R$ {{ plano.preco_mensal }}/mês{% endif %}</div>
+          <div class="pdesc">{{ plano.descricao }}</div>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <button type="submit" class="btn-submit">🚀 Criar Minha Conta</button>
+  </form>
+
+  <div class="login-link">Já tem uma conta? <a href="{% url 'accounts:login' %}">Fazer login</a></div>
+</div>
+
+<script>
+document.querySelectorAll('.plano-opt input[type=radio]').forEach(radio => {
+  radio.addEventListener('change', () => {
+    document.querySelectorAll('.plano-opt').forEach(l => l.classList.remove('selecionado'));
+    radio.closest('.plano-opt').classList.add('selecionado');
+  });
+});
+// Pré-seleciona plano via query string
+const params = new URLSearchParams(location.search);
+if (params.get('plano')) {
+  const r = document.querySelector(`input[value="${params.get('plano')}"]`);
+  if (r) { r.checked = true; r.dispatchEvent(new Event('change')); }
+}
+</script>
+</body>
+</html>

@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import ForeignKey, CASCADE
 from decimal import Decimal
 
 from apps.cadastros.models import Cliente
@@ -12,6 +13,7 @@ except Exception:
 
 class BoletimMedicao(models.Model):
     """
+    empresa = models.ForeignKey('saas.Empresa', on_delete=models.CASCADE, null=True, blank=True, related_name='+', verbose_name='Empresa', db_index=True)
     Cabeçalho do Boletim de Medição (BM).
     Agrupa as informações do contrato e do projeto medido.
     """
