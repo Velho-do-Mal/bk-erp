@@ -96,7 +96,7 @@ def dashboard_financeiro(request):
     ent_periodo = _qs_base().filter(tipo='entrada').aggregate(s=Sum('valor'))['s'] or Decimal('0')
     said_periodo = _qs_base().filter(tipo='saida').aggregate(s=Sum('valor'))['s'] or Decimal('0')
 
-    ultimas = list(Transacao.objects.select_related('categoria', 'conta').order_by('-criado_em')[:10].values(
+    ultimas = list(Transacao.objects.filter(empresa=_empresa(request)).select_related('categoria', 'conta').order_by('-criado_em')[:10].values(
         'id', 'descricao', 'tipo', 'valor', 'status', 'data_competencia', 'categoria__nome', 'conta__nome'
     ))
 

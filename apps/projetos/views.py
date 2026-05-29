@@ -15,16 +15,19 @@ def _empresa(request):
 
 
 
-def get_projetos_usuario(user):
+def get_projetos_usuario(request):
     """Retorna queryset de projetos acessíveis ao usuário."""
+    user = request.user
+    empresa = _empresa(request)
     if user.is_admin_erp:
-        return Projeto.objects.filter(empresa=_empresa(request))
-    ids = ProjetoAcesso.objects.filter(empresa=_empresa(request), usuario=user).values_list('projeto_id', flat=True)
-    return Projeto.objects.filter(empresa=_empresa(request), id__in=ids)
+        return Projeto.objects.filter(empresa=empresa)
+    ids = ProjetoAcesso.objects.filter(empresa=empresa, usuario=user).values_list('projeto_id', flat=True)
+    return Projeto.objects.filter(empresa=empresa, id__in=ids)
 
 
-def check_acesso(user, projeto):
+def check_acesso(request, projeto):
     """Verifica se usuário tem acesso ao projeto. Lança Http404 se não."""
+    user = request.user
     if user.is_admin_erp:
         return True
     if not ProjetoAcesso.objects.filter(empresa=_empresa(request), usuario=user, projeto=projeto).exists():
@@ -33,7 +36,7 @@ def check_acesso(user, projeto):
 
 @login_required
 def lista(request):
-    projetos = get_projetos_usuario(request.user)
+    projetos = get_projetos_usuario(request)
     ativos = projetos.filter(encerrado=False)
     encerrados = projetos.filter(encerrado=True)
     return render(request, 'projetos/lista.html', {
@@ -46,7 +49,7 @@ def lista(request):
 @login_required
 def relatorio_executivo(request):
     """Gera uma página HTML formatada para impressão do portfólio com dashboards."""
-    projetos = get_projetos_usuario(request.user)
+    projetos = get_projetos_usuario(request)
     ativos = projetos.filter(encerrado=False).order_by('-id')
     encerrados = projetos.filter(encerrado=True).order_by('-id')
     
@@ -138,7 +141,7 @@ def relatorio_executivo(request):
 @login_required
 def detalhe(request, pk):
     projeto = get_object_or_404(Projeto, pk=pk)
-    check_acesso(request.user, projeto)
+    check_acesso(request, projeto)
 
     acesso = None
     if not request.user.is_admin_erp:
@@ -294,7 +297,7 @@ def controle_docs(request, pk):
     from .models import ControleDocConfig, DocumentoControle, StatusEventoDocumento
 
     projeto = get_object_or_404(Projeto, pk=pk)
-    check_acesso(request.user, projeto)
+    check_acesso(request, projeto)
 
     def _to_date(v):
         if not v:
@@ -468,7 +471,7 @@ def api_anexos(request, pk, doc_id):
     from .models import DocumentoControle, AnexoDocumento
 
     projeto = get_object_or_404(Projeto, pk=pk)
-    check_acesso(request.user, projeto)
+    check_acesso(request, projeto)
     doc = get_object_or_404(DocumentoControle, id=doc_id, projeto=projeto)
 
     if request.method == 'POST':
@@ -526,7 +529,7 @@ def excluir_anexo(request, pk, anexo_id):
         return JsonResponse({'erro': 'Sem permissão'}, status=403)
 
     projeto = get_object_or_404(Projeto, pk=pk)
-    check_acesso(request.user, projeto)
+    check_acesso(request, projeto)
     anexo = get_object_or_404(AnexoDocumento, id=anexo_id, documento__projeto=projeto)
     # Remove arquivo físico e registro
     try:
@@ -543,7 +546,7 @@ def download_anexo(request, pk, anexo_id):
     from .models import AnexoDocumento
 
     projeto = get_object_or_404(Projeto, pk=pk)
-    check_acesso(request.user, projeto)
+    check_acesso(request, projeto)
     anexo = get_object_or_404(AnexoDocumento, id=anexo_id, documento__projeto=projeto)
     try:
         response = FileResponse(anexo.arquivo.open('rb'), as_attachment=True, filename=anexo.nome_original)
