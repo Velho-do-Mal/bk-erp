@@ -57,11 +57,11 @@
 <!-- SEÇÃO 2: GRÁFICOS ANALÍTICOS -->
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
     <div class="chart-container">
-        <h3 style="font-size:14px;font-weight:700;margin-bottom:16px;color:var(--bk-text-muted)">Composição de Despesas (Top 5)</h3>
+        <h3 style="font-size:14px;font-weight:700;margin-bottom:16px;color:#6b7280">Composição de Despesas (Top 5)</h3>
         <canvas id="chartFinanceiro"></canvas>
     </div>
     <div class="chart-container">
-        <h3 style="font-size:14px;font-weight:700;margin-bottom:16px;color:var(--bk-text-muted)">Funil de Vendas (Leads por Estágio)</h3>
+        <h3 style="font-size:14px;font-weight:700;margin-bottom:16px;color:#6b7280">Funil de Vendas (Leads por Estágio)</h3>
         <canvas id="chartVendas"></canvas>
     </div>
 </div>
@@ -84,7 +84,7 @@
   </div>
   <div class="kpi-card" style="border-left: 3px solid var(--bk-gray);">
     <div class="kpi-label">Encerrados</div>
-    <div class="kpi-value" style="color:var(--bk-text-muted)">{{ encerrados }}</div>
+    <div class="kpi-value" style="color:#6b7280">{{ encerrados }}</div>
     <div class="kpi-sub">concluídos</div>
   </div>
 </div>
@@ -110,7 +110,7 @@
       <tbody>
         {% for p in projetos_recentes %}
         <tr>
-          <td style="color:var(--bk-text-muted)">{{ p.id }}</td>
+          <td style="color:#6b7280">{{ p.id }}</td>
           <td style="font-weight:600">{{ p.nome }}</td>
           <td>
             {% if p.status == 'execucao' %}<span class="badge badge-green">Execução</span>
@@ -120,8 +120,8 @@
             {% else %}<span class="badge badge-gray">{{ p.get_status_display }}</span>
             {% endif %}
           </td>
-          <td style="color:var(--bk-text-muted)">{{ p.data_inicio|date:"d/m/Y"|default:"—" }}</td>
-          <td style="color:var(--bk-text-muted)">{{ p.gerente|default:"—" }}</td>
+          <td style="color:#6b7280">{{ p.data_inicio|date:"d/m/Y"|default:"—" }}</td>
+          <td style="color:#6b7280">{{ p.gerente|default:"—" }}</td>
           <td><a href="{% url 'projetos:detalhe' p.pk %}" class="btn btn-secondary btn-sm">Abrir →</a></td>
         </tr>
         {% endfor %}
@@ -129,7 +129,7 @@
     </table>
   </div>
   {% else %}
-  <div style="text-align:center;padding:40px;color:var(--bk-text-muted);">
+  <div style="text-align:center;padding:40px;color:#6b7280;">
     <div style="font-size:32px;margin-bottom:8px;">📋</div>
     <div>Nenhum projeto ativo encontrado.</div>
   </div>

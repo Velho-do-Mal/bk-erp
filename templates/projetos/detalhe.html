@@ -6,7 +6,7 @@
 
 {% block topbar_actions %}
 {% if is_admin %}
-<a href="{% url 'projetos:acessos' projeto.pk %}" class="btn btn-sm" style="background:rgba(139,92,246,0.15);color:#C4B5FD;border:1px solid rgba(139,92,246,0.3);">
+<a href="{% url 'projetos:acessos' projeto.pk %}" class="btn btn-sm" style="background:#f5f3ff;color:#6d28d9;border:1px solid #c4b5fd;">
   👥 Acessos
 </a>
 <button id="btn-salvar" class="btn btn-primary btn-sm" onclick="salvarProjeto()">
@@ -184,13 +184,13 @@
   <span class="badge badge-green">🟢 Ativo</span>
   {% endif %}
   {% if projeto.data_inicio %}
-  <span style="color:var(--bk-text-muted);font-size:13px;">📅 Início: {{ projeto.data_inicio|date:"d/m/Y" }}</span>
+  <span style="color:#6b7280;font-size:13px;">📅 Início: {{ projeto.data_inicio|date:"d/m/Y" }}</span>
   {% endif %}
   {% if projeto.data_conclusao %}
-  <span style="color:var(--bk-text-muted);font-size:13px;">🏁 Conclusão: {{ projeto.data_conclusao|date:"d/m/Y" }}</span>
+  <span style="color:#6b7280;font-size:13px;">🏁 Conclusão: {{ projeto.data_conclusao|date:"d/m/Y" }}</span>
   {% endif %}
   {% if projeto.patrocinador %}
-  <span style="color:var(--bk-text-muted);font-size:13px;">💼 {{ projeto.patrocinador }}</span>
+  <span style="color:#6b7280;font-size:13px;">💼 {{ projeto.patrocinador }}</span>
   {% endif %}
 </div>
 
@@ -223,7 +223,7 @@
     <!-- COLUNA ESQUERDA -->
     <div>
       <div class="card">
-        <h3 style="font-size:14px;font-weight:700;margin-bottom:16px;color:var(--bk-blue-light);">📌 Identificação</h3>
+        <h3 style="font-size:14px;font-weight:700;margin-bottom:16px;color:#1e40af;">📌 Identificação</h3>
         <div class="form-group">
           <label class="form-label">Nome do Projeto</label>
           {% if is_admin %}
@@ -285,7 +285,7 @@
     <!-- COLUNA DIREITA -->
     <div>
       <div class="card">
-        <h3 style="font-size:14px;font-weight:700;margin-bottom:16px;color:var(--bk-blue-light);">📋 Escopo e Objetivos</h3>
+        <h3 style="font-size:14px;font-weight:700;margin-bottom:16px;color:#1e40af;">📋 Escopo e Objetivos</h3>
         <div class="form-group">
           <label class="form-label">Objetivo do Projeto</label>
           {% if is_admin %}
@@ -330,7 +330,7 @@
     <div class="form-group" style="margin-bottom:14px;">
       <label class="form-label">Inserir alterações de escopo</label>
       <textarea id="tap-alteracoes-escopo" class="form-control" style="min-height:120px;" placeholder="Digite uma alteração por linha. Você pode usar 'AAAA-MM-DD | descrição' ou apenas a descrição.">{{ tap.alteracoesEscopo|default:'[]'|safe }}</textarea>
-      <div style="font-size:11px;color:var(--bk-text-muted);margin-top:6px;">
+      <div style="font-size:11px;color:#6b7280;margin-top:6px;">
         Uma linha por alteração. Exemplo: 2026-03-27 | Inclusão do estudo elétrico complementar
       </div>
     </div>
@@ -343,7 +343,7 @@
         <tbody>
           {% for alt in tap.alteracoesEscopo %}
           <tr>
-            <td style="color:var(--bk-text-muted);white-space:nowrap;">{{ alt.data }}</td>
+            <td style="color:#6b7280;white-space:nowrap;">{{ alt.data }}</td>
             <td>{{ alt.descricao }}</td>
           </tr>
           {% endfor %}
@@ -368,7 +368,7 @@
 <div class="tab-panel" data-group="proj" id="tab-eap">
   <div class="card" style="margin-bottom:16px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-      <h3 style="font-size:14px;font-weight:700;color:var(--bk-blue-light);">📦 Estrutura Analítica do Projeto (EAP)</h3>
+      <h3 style="font-size:14px;font-weight:700;color:#1e40af;">📦 Estrutura Analítica do Projeto (EAP)</h3>
       {% if is_admin %}
       <button class="btn btn-primary btn-sm" onclick="adicionarTarefa()">+ Adicionar Tarefa</button>
       {% endif %}
@@ -422,7 +422,7 @@
 ══════════════════════════════ -->
 <div class="tab-panel" data-group="proj" id="tab-gantt">
   <div class="card">
-    <h3 style="font-size:14px;font-weight:700;margin-bottom:16px;color:var(--bk-blue-light);">📊 Diagrama de Gantt</h3>
+    <h3 style="font-size:14px;font-weight:700;margin-bottom:16px;color:#1e40af;">📊 Diagrama de Gantt</h3>
     <div id="gantt-chart" style="height:500px;"></div>
   </div>
 </div>
@@ -435,7 +435,7 @@
   <!-- ── Configuração do Relatório ── -->
   <div class="card" style="margin-bottom:16px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-      <h3 style="font-size:14px;font-weight:700;color:var(--bk-blue-light);margin:0">🗂️ Controle de Documentos</h3>
+      <h3 style="font-size:14px;font-weight:700;color:#1e40af;margin:0">🗂️ Controle de Documentos</h3>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-secondary btn-sm" onclick="imprimirTodos()">🖨️ Imprimir Todos</button>
         <button class="btn btn-secondary btn-sm" onclick="imprimirAnalise()">🔍 Em Análise</button>
@@ -469,7 +469,7 @@
           <input type="file" id="ctrl-logo-bk" accept="image/*" class="form-control" style="flex:1" onchange="uploadLogo('bk')">
           <div style="width:90px;height:44px;border:1px solid var(--bk-border);border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.06)">
             <img id="img-logo-bk" style="max-width:100%;max-height:100%;object-fit:contain;display:none">
-            <span id="lbl-logo-bk" style="font-size:10px;color:var(--bk-text-muted)">sem logo</span>
+            <span id="lbl-logo-bk" style="font-size:10px;color:#6b7280">sem logo</span>
           </div>
         </div>
       </div>
@@ -479,7 +479,7 @@
           <input type="file" id="ctrl-logo-cli" accept="image/*" class="form-control" style="flex:1" onchange="uploadLogo('cli')">
           <div style="width:90px;height:44px;border:1px solid var(--bk-border);border-radius:6px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.06)">
             <img id="img-logo-cli" style="max-width:100%;max-height:100%;object-fit:contain;display:none">
-            <span id="lbl-logo-cli" style="font-size:10px;color:var(--bk-text-muted)">sem logo</span>
+            <span id="lbl-logo-cli" style="font-size:10px;color:#6b7280">sem logo</span>
           </div>
         </div>
       </div>
@@ -489,7 +489,7 @@
       {% if is_admin %}
       <button class="btn btn-primary btn-sm" onclick="salvarMeta()">💾 Salvar Configuração</button>
       {% endif %}
-      <span id="ctrl-meta-status" style="font-size:12px;color:var(--bk-text-muted)"></span>
+      <span id="ctrl-meta-status" style="font-size:12px;color:#6b7280"></span>
     </div>
   </div>
 
@@ -528,7 +528,7 @@
       </table>
     </div>
     <!-- Legenda de tempo -->
-    <div style="margin-top:10px;display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--bk-text-muted)">
+    <div style="margin-top:10px;display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:#6b7280">
       <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:50%;background:#3B82F6;display:inline-block"></span>Em andamento / Em revisão → conta dias BK</span>
       <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;border-radius:50%;background:#F59E0B;display:inline-block"></span>Em análise → conta dias Cliente</span>
     </div>
@@ -550,7 +550,7 @@
     <div id="riscos-lista"></div>
     <!-- Matriz -->
     <div style="margin-top:24px">
-      <h4 style="font-size:13px;font-weight:700;margin-bottom:12px;color:var(--bk-text-muted)">Matriz Probabilidade × Impacto</h4>
+      <h4 style="font-size:13px;font-weight:700;margin-bottom:12px;color:#6b7280">Matriz Probabilidade × Impacto</h4>
       <div id="risk-matrix-container"></div>
     </div>
   </div>
@@ -559,7 +559,7 @@
 <div class="tab-panel" data-group="proj" id="tab-fin-analise">
   <div class="card">
     <h3 style="font-size:14px;font-weight:700;color:#3B82F6;margin:0 0 16px 0">📈 Análise Financeira — Planejado × Realizado</h3>
-    <p style="font-size:12px;color:var(--bk-text-muted);margin-bottom:16px">Tabela comparativa, fluxo de caixa em barras e custo acumulado em linhas.</p>
+    <p style="font-size:12px;color:#6b7280;margin-bottom:16px">Tabela comparativa, fluxo de caixa em barras e custo acumulado em linhas.</p>
 
     <!-- Parecer -->
     <div id="fin-parecer" style="padding:12px 16px;border-radius:8px;margin-bottom:16px;font-size:13px;font-weight:600"></div>
@@ -571,15 +571,15 @@
     <div id="fin-analise-tabela" class="table-wrap" style="margin-bottom:20px"></div>
 
     <!-- Gráfico Barras - Fluxo de Caixa -->
-    <h4 style="font-size:13px;font-weight:700;color:var(--bk-text-muted);margin-bottom:10px">Fluxo de Caixa Mensal (Barras)</h4>
+    <h4 style="font-size:13px;font-weight:700;color:#6b7280;margin-bottom:10px">Fluxo de Caixa Mensal (Barras)</h4>
     <div id="fin-analise-barras" style="width:100%;height:350px"></div>
 
     <!-- Gráfico Linhas - Acumulado -->
-    <h4 style="font-size:13px;font-weight:700;color:var(--bk-text-muted);margin:20px 0 10px 0">Custo Acumulado (Linhas)</h4>
+    <h4 style="font-size:13px;font-weight:700;color:#6b7280;margin:20px 0 10px 0">Custo Acumulado (Linhas)</h4>
     <div id="fin-analise-linhas" style="width:100%;height:350px"></div>
 
     <!-- Gráfico Diferença -->
-    <h4 style="font-size:13px;font-weight:700;color:var(--bk-text-muted);margin:20px 0 10px 0">Diferença Planejado - Realizado</h4>
+    <h4 style="font-size:13px;font-weight:700;color:#6b7280;margin:20px 0 10px 0">Diferença Planejado - Realizado</h4>
     <div id="fin-analise-diff" style="width:100%;height:300px"></div>
   </div>
 </div>
@@ -638,7 +638,7 @@
     </div>
     <div id="kpi-lista" class="table-wrap"></div>
     <div style="margin-top:20px">
-      <h4 style="font-size:13px;font-weight:700;color:var(--bk-text-muted);margin-bottom:10px">Gráfico do KPI</h4>
+      <h4 style="font-size:13px;font-weight:700;color:#6b7280;margin-bottom:10px">Gráfico do KPI</h4>
       <div style="margin-bottom:8px">
         <select id="kpi-sel-chart" class="form-control" style="max-width:300px;display:inline-block" onchange="renderKPIChart()">
           <option value="">— Selecione o KPI —</option>
@@ -672,7 +672,7 @@
 <div class="tab-panel" data-group="proj" id="tab-encerramento">
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
     <div class="card">
-      <h3 style="font-size:14px;font-weight:700;margin-bottom:16px;color:var(--bk-blue-light)">📋 Termo de Encerramento</h3>
+      <h3 style="font-size:14px;font-weight:700;margin-bottom:16px;color:#1e40af">📋 Termo de Encerramento</h3>
       <div class="form-group">
         <label class="form-label">Data de Encerramento</label>
         {% if is_admin %}<input type="date" id="enc-data" class="form-control">{% else %}<div class="readonly-field" id="enc-data-ro"></div>{% endif %}
@@ -1104,7 +1104,7 @@ function calcularDatas() {
 function renderGantt() {
   const div = el('gantt-chart');
   if (!div || eapTasks.length === 0) {
-    if (div) div.innerHTML = '<div style="text-align:center;padding:60px;color:var(--bk-text-muted);">Nenhuma atividade na EAP. Adicione tarefas para gerar o Gantt.</div>';
+    if (div) div.innerHTML = '<div style="text-align:center;padding:60px;color:#6b7280;">Nenhuma atividade na EAP. Adicione tarefas para gerar o Gantt.</div>';
     return;
   }
 
@@ -1151,7 +1151,7 @@ function renderGantt() {
     xaxis: {
       type: 'date',
       gridcolor: '#334155',
-      tickfont: { color: '#94A3B8', size: 10 },
+      tickfont: { color: '#6b7280', size: 10 },
     },
     yaxis: {
       gridcolor: '#334155',
@@ -1171,7 +1171,7 @@ function renderGantt() {
 function renderCurvaS() {
   const div = el('curva-s-chart');
   if (!div || eapTasks.length === 0) {
-    if (div) div.innerHTML = '<div style="text-align:center;padding:60px;color:var(--bk-text-muted);">Sem dados suficientes para Curva S.</div>';
+    if (div) div.innerHTML = '<div style="text-align:center;padding:60px;color:#6b7280;">Sem dados suficientes para Curva S.</div>';
     return;
   }
 
@@ -1301,7 +1301,7 @@ function renderControle() {
     <div style="margin-bottom:20px;">
       <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
         <span style="font-size:13px;font-weight:600;">Progresso Geral do Projeto</span>
-        <span style="font-size:13px;color:var(--bk-text-muted)">${pctGeral}%</span>
+        <span style="font-size:13px;color:#6b7280">${pctGeral}%</span>
       </div>
       <div class="progress-bar-wrap" style="height:12px;">
         <div class="progress-bar-fill" style="width:${pctGeral}%;background:${barColor};height:12px;"></div>
@@ -1323,7 +1323,7 @@ function renderControle() {
           <div class="controle-card">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
               <div>
-                <span style="font-size:11px;color:var(--bk-text-muted);font-family:monospace;">${escHtml(t.codigo||'')}</span>
+                <span style="font-size:11px;color:#6b7280;font-family:monospace;">${escHtml(t.codigo||'')}</span>
                 <span style="font-size:13px;font-weight:600;margin-left:8px;">${escHtml(t.nome||'')}</span>
               </div>
               <span style="font-size:12px;color:${color};font-weight:600;">${statusLabels[t.status]||t.status||'⚪ Não Iniciado'}</span>
@@ -1332,13 +1332,13 @@ function renderControle() {
               <div class="progress-bar-wrap" style="flex:1;">
                 <div class="progress-bar-fill" style="width:${pct}%;background:${color};"></div>
               </div>
-              <span style="font-size:12px;color:var(--bk-text-muted);min-width:35px;">${pct}%</span>
-              ${t.responsavel ? `<span style="font-size:11px;color:var(--bk-text-muted);">👤 ${escHtml(t.responsavel)}</span>` : ''}
-              <span style="font-size:11px;color:var(--bk-text-muted);">${t.duracao||0}d</span>
+              <span style="font-size:12px;color:#6b7280;min-width:35px;">${pct}%</span>
+              ${t.responsavel ? `<span style="font-size:11px;color:#6b7280;">👤 ${escHtml(t.responsavel)}</span>` : ''}
+              <span style="font-size:11px;color:#6b7280;">${t.duracao||0}d</span>
             </div>
           </div>`;
       }).join('')}
-      ${filtered.length === 0 ? '<div style="text-align:center;padding:40px;color:var(--bk-text-muted);">Nenhuma atividade neste filtro.</div>' : ''}
+      ${filtered.length === 0 ? '<div style="text-align:center;padding:40px;color:#6b7280;">Nenhuma atividade neste filtro.</div>' : ''}
     </div>
   `;
 
@@ -1534,7 +1534,7 @@ async function salvarMeta() {
 async function salvarTodosDocumentos() {
   const el = document.getElementById('ctrl-meta-status');
   const show = (msg, cor) => { if(el){el.textContent=msg;el.style.color=cor;} };
-  show('⏳ Salvando...','#94A3B8');
+  show('⏳ Salvando...','#1e40af');
   try {
     const okMeta = await salvarMeta();
     if (okMeta === false) { show('❌ Erro ao salvar configuração (verifique permissões)','#EF4444'); return; }
@@ -1561,7 +1561,7 @@ async function uploadLogo(tipo) {
   if (!inp || !inp.files.length) return;
   const el = document.getElementById('ctrl-meta-status');
   const show = (msg,cor)=>{ if(el){el.textContent=msg;el.style.color=cor;} };
-  show('⏳ Enviando logo...','#94A3B8');
+  show('⏳ Enviando logo...','#1e40af');
   try {
     const fd = new FormData();
     fd.append(tipo==='bk' ? 'logo_bk' : 'logo_cliente', inp.files[0]);
@@ -1832,14 +1832,14 @@ function renderRiscos() {
   const div = document.getElementById('riscos-lista');
   if (!div) return;
   if (!riscos.length) {
-    div.innerHTML = '<div style="text-align:center;padding:30px;color:var(--bk-text-muted)">Nenhum risco registrado.</div>';
+    div.innerHTML = '<div style="text-align:center;padding:30px;color:#6b7280">Nenhum risco registrado.</div>';
   } else {
     div.innerHTML = `<div class="table-wrap"><table>
       <thead><tr><th>#</th><th>Descrição</th><th>Categoria</th><th>Probabilidade</th><th>Impacto</th><th>Classificação</th><th>Resposta</th><th>Responsável</th>${IS_ADMIN?'<th></th>':''}</tr></thead>
       <tbody>${riscos.map((r,i)=>{
         const cl=classeRisco(r.probabilidade,r.impacto);
         return `<tr>
-          <td style="color:var(--bk-text-muted)">${i+1}</td>
+          <td style="color:#6b7280">${i+1}</td>
           <td>${escHtml(r.descricao||'')}</td>
           <td>${escHtml(r.categoria||'')}</td>
           <td>${PROB_LABELS[(parseInt(r.probabilidade)||1)-1]||r.probabilidade}</td>
@@ -1869,9 +1869,9 @@ function renderRiscos() {
     return'rgba(16,185,129,0.12)';
   };
   mat.innerHTML = `<div style="display:grid;grid-template-columns:auto repeat(5,1fr);gap:3px;font-size:11px">
-    <div></div>${IMP_LABELS.map(l=>`<div style="text-align:center;color:var(--bk-text-muted);padding:3px">${l}</div>`).join('')}
+    <div></div>${IMP_LABELS.map(l=>`<div style="text-align:center;color:#6b7280;padding:3px">${l}</div>`).join('')}
     ${grid.map((row,ri)=>`
-      <div style="display:flex;align-items:center;justify-content:flex-end;padding-right:6px;color:var(--bk-text-muted)">${PROB_LABELS[4-ri]}</div>
+      <div style="display:flex;align-items:center;justify-content:flex-end;padding-right:6px;color:#6b7280">${PROB_LABELS[4-ri]}</div>
       ${row.map((cell,ci)=>`
         <div style="background:${cellColor(4-ri,ci)};border:1px solid var(--bk-border);border-radius:4px;min-height:44px;padding:4px;text-align:center">
           ${cell.map(r=>`<div style="font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(r.descricao||'')}">${escHtml((r.descricao||'').substring(0,12))}</div>`).join('')}
@@ -1940,13 +1940,13 @@ function renderEncerramento() {
   const div = document.getElementById('licoes-lista');
   if (!div) return;
   if (!licoes.length) {
-    div.innerHTML = '<div style="color:var(--bk-text-muted);font-size:13px;padding:16px;text-align:center">Nenhuma lição registrada.</div>';
+    div.innerHTML = '<div style="color:#6b7280;font-size:13px;padding:16px;text-align:center">Nenhuma lição registrada.</div>';
   } else {
     div.innerHTML = licoes.map((l,i) => `
       <div style="background:var(--bk-surface2);border:1px solid var(--bk-border);border-radius:8px;padding:12px;margin-bottom:8px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start">
           <div>
-            <span style="font-size:10px;font-weight:700;text-transform:uppercase;color:var(--bk-text-muted)">${escHtml(l.tipo||'Geral')}</span>
+            <span style="font-size:10px;font-weight:700;text-transform:uppercase;color:#6b7280">${escHtml(l.tipo||'Geral')}</span>
             <div style="font-size:13px;margin-top:2px">${escHtml(l.descricao||'')}</div>
           </div>
           ${IS_ADMIN?`<div style="display:flex;gap:4px">
@@ -1996,7 +1996,7 @@ function renderFinanceiro() {
 
   if (!finances.length) {
     kd.innerHTML = '';
-    ld.innerHTML = '<div style="text-align:center;padding:30px;color:var(--bk-text-muted)">Nenhum lançamento financeiro.</div>';
+    ld.innerHTML = '<div style="text-align:center;padding:30px;color:#6b7280">Nenhum lançamento financeiro.</div>';
     Plotly.purge('fin-curva-s');
     return;
   }
@@ -2119,7 +2119,7 @@ function renderFinanceiroAnalise() {
     parecerDiv.innerHTML = '';
     parecerDiv.style.display = 'none';
     if (kpisDiv) kpisDiv.innerHTML = '';
-    if (tabelaDiv) tabelaDiv.innerHTML = '<div style="text-align:center;padding:30px;color:var(--bk-text-muted)">Nenhum lançamento financeiro.</div>';
+    if (tabelaDiv) tabelaDiv.innerHTML = '<div style="text-align:center;padding:30px;color:#6b7280">Nenhum lançamento financeiro.</div>';
     Plotly.purge('fin-analise-barras');
     Plotly.purge('fin-analise-linhas');
     Plotly.purge('fin-analise-diff');
@@ -2143,7 +2143,7 @@ function renderFinanceiroAnalise() {
   if (!allKeys.length) {
     parecerDiv.style.display = 'none';
     if (kpisDiv) kpisDiv.innerHTML = '';
-    tabelaDiv.innerHTML = '<div style="text-align:center;padding:20px;color:var(--bk-text-muted)">Sem dados de despesas planejadas/realizadas para análise.</div>';
+    tabelaDiv.innerHTML = '<div style="text-align:center;padding:20px;color:#6b7280">Sem dados de despesas planejadas/realizadas para análise.</div>';
     Plotly.purge('fin-analise-barras');
     Plotly.purge('fin-analise-linhas');
     Plotly.purge('fin-analise-diff');
@@ -2238,7 +2238,7 @@ function renderKPIs() {
   if (!ld) return;
 
   if (!kpis.length) {
-    ld.innerHTML = '<div style="text-align:center;padding:30px;color:var(--bk-text-muted)">Nenhum KPI registrado.</div>';
+    ld.innerHTML = '<div style="text-align:center;padding:30px;color:#6b7280">Nenhum KPI registrado.</div>';
     if (sel) sel.innerHTML = '<option value="">— Nenhum KPI —</option>';
     Plotly.purge('kpi-chart');
     return;
@@ -2326,7 +2326,7 @@ function renderPlanoAcao() {
 
   if (!actionPlan.length) {
     kd.innerHTML = '';
-    ld.innerHTML = '<div style="text-align:center;padding:30px;color:var(--bk-text-muted)">Nenhuma ação registrada.</div>';
+    ld.innerHTML = '<div style="text-align:center;padding:30px;color:#6b7280">Nenhuma ação registrada.</div>';
     Plotly.purge('acao-chart');
     return;
   }
@@ -2344,7 +2344,7 @@ function renderPlanoAcao() {
     <div class="kpi-card" style="border-left:3px solid #10B981"><div class="kpi-label">Concluídas</div><div class="kpi-value" style="color:#10B981">${concluidas}</div></div>
   `;
 
-  const statusColor = s => s==='concluido'?'#10B981':s==='em_andamento'?'#3B82F6':s==='cancelado'?'#94A3B8':'#F59E0B';
+  const statusColor = s => s==='concluido'?'#10B981':s==='em_andamento'?'#3B82F6':s==='cancelado'?'#6b7280':'#F59E0B';
   const statusLabel = s => s==='concluido'?'Concluído':s==='em_andamento'?'Em andamento':s==='cancelado'?'Cancelado':'Pendente';
 
   ld.innerHTML = `<table class="table" style="font-size:12px">
@@ -2366,7 +2366,7 @@ function renderPlanoAcao() {
     values:[pendentes, andamento, concluidas, canceladas],
     labels:['Pendente','Em Andamento','Concluído','Cancelado'],
     type:'pie', hole:0.4,
-    marker:{colors:['#F59E0B','#3B82F6','#10B981','#94A3B8']},
+    marker:{colors:['#F59E0B','#3B82F6','#10B981','#6b7280']},
     textinfo:'label+percent', textfont:{size:11},
   }], {template:'plotly_dark', margin:{t:20,b:20,l:20,r:20},
        paper_bgcolor:'transparent', plot_bgcolor:'transparent', font:{color:'#9CA3AF'},

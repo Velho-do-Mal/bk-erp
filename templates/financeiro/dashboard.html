@@ -34,7 +34,7 @@
     </div>
     <button type="submit" class="btn btn-primary">🔍 Filtrar</button>
     <a href="{% url 'financeiro:dashboard' %}" class="btn btn-secondary">✕ Limpar</a>
-    <span style="margin-left:8px;font-size:11px;color:var(--bk-text-muted);align-self:center">
+    <span style="margin-left:8px;font-size:11px;color:#6b7280;align-self:center">
       Período: <b>{{ data_ini }}</b> → <b>{{ data_fim }}</b> &nbsp;|&nbsp; Modo: <b>{{ modo }}</b>
     </span>
   </form>
@@ -146,7 +146,7 @@ if (!ultimas.length) {
     return `<tr>
       <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.descricao}</td>
       <td><span class="badge ${r.tipo==='entrada'?'badge-success':'badge-danger'}">${r.tipo}</span></td>
-      <td style="font-size:11px;color:var(--bk-text-muted)">${r.categoria__nome||'—'}</td>
+      <td style="font-size:11px;color:#6b7280">${r.categoria__nome||'—'}</td>
       <td>R$ ${v}</td>
       <td style="font-size:11px">${r.data_competencia||'—'}</td>
       <td><span class="badge ${r.status==='realizado'?'badge-success':'badge-warning'}">${r.status}</span></td>

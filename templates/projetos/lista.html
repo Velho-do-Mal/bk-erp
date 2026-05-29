@@ -5,7 +5,7 @@
 
 {% block topbar_actions %}
 <div style="display:flex;gap:8px;">
-  <a href="{% url 'projetos:relatorio_executivo' %}" target="_blank" class="btn btn-secondary btn-sm" style="background:rgba(59,130,246,0.1);color:#60A5FA;border:1px solid rgba(59,130,246,0.2);">
+  <a href="{% url 'projetos:relatorio_executivo' %}" target="_blank" class="btn btn-secondary btn-sm" style="background:#eff6ff;color:#1e40af;border:1px solid #93c5fd;">
     <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin-right:4px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v2"/></svg>
     Relatório Executivo
   </a>
@@ -23,7 +23,7 @@
 <!-- ATIVOS -->
 <div class="card" style="margin-bottom:20px;">
   <h2 style="font-size:15px;font-weight:700;margin-bottom:16px;">
-    🟢 Projetos Ativos <span style="color:var(--bk-text-muted);font-weight:400;font-size:13px;">({{ projetos_ativos.count }})</span>
+    🟢 Projetos Ativos <span style="color:#6b7280;font-weight:400;font-size:13px;">({{ projetos_ativos.count }})</span>
   </h2>
   {% if projetos_ativos %}
   <div class="table-wrap">
@@ -36,7 +36,7 @@
       <tbody>
         {% for p in projetos_ativos %}
         <tr>
-          <td style="color:var(--bk-text-muted)">{{ p.id }}</td>
+          <td style="color:#374151">{{ p.id }}</td>
           <td style="font-weight:600;">{{ p.nome }}</td>
           <td>
             {% if p.status == 'execucao' %}<span class="badge badge-green">Execução</span>
@@ -47,10 +47,10 @@
             {% else %}<span class="badge badge-gray">{{ p.get_status_display }}</span>
             {% endif %}
           </td>
-          <td style="color:var(--bk-text-muted)">{{ p.data_inicio|date:"d/m/Y"|default:"—" }}</td>
-          <td style="color:var(--bk-text-muted)">{{ p.data_conclusao|date:"d/m/Y"|default:"—" }}</td>
-          <td style="color:var(--bk-text-muted)">{{ p.gerente|default:"—" }}</td>
-          <td style="color:var(--bk-text-muted)">{{ p.patrocinador|default:"—" }}</td>
+          <td style="color:#374151">{{ p.data_inicio|date:"d/m/Y"|default:"—" }}</td>
+          <td style="color:#374151">{{ p.data_conclusao|date:"d/m/Y"|default:"—" }}</td>
+          <td style="color:#374151">{{ p.gerente|default:"—" }}</td>
+          <td style="color:#374151">{{ p.patrocinador|default:"—" }}</td>
           <td>
             {% if p.status != 'encerrado' and p.data_conclusao %}
               {% with hoje=today %}
@@ -63,14 +63,14 @@
                 {% endif %}
               {% endwith %}
             {% else %}
-              <span style="color:var(--bk-text-muted)">—</span>
+              <span style="color:#374151">—</span>
             {% endif %}
           </td>
           <td>
             <div style="display:flex;gap:6px;flex-wrap:wrap;">
               <a href="{% url 'projetos:detalhe' p.pk %}" class="btn btn-secondary btn-sm">Abrir</a>
               {% if user.is_admin_erp %}
-              <a href="{% url 'projetos:acessos' p.pk %}" class="btn btn-sm" style="background:rgba(139,92,246,0.15);color:#C4B5FD;border:1px solid rgba(139,92,246,0.3);">Acessos</a>
+              <a href="{% url 'projetos:acessos' p.pk %}" class="btn btn-sm" style="background:#f5f3ff;color:#6d28d9;border:1px solid #c4b5fd;">Acessos</a>
               <a href="{% url 'projetos:encerrar' p.pk %}" class="btn btn-danger btn-sm" onclick="return confirm('Encerrar projeto?')">Encerrar</a>
               {% endif %}
             </div>
@@ -81,7 +81,7 @@
     </table>
   </div>
   {% else %}
-  <div style="text-align:center;padding:32px;color:var(--bk-text-muted);">
+  <div style="text-align:center;padding:32px;color:#6b7280;">
     Nenhum projeto ativo.
     {% if user.is_admin_erp %}<br><a href="{% url 'projetos:novo' %}" class="btn btn-primary" style="margin-top:12px">Criar Projeto</a>{% endif %}
   </div>
@@ -92,7 +92,7 @@
 {% if projetos_encerrados %}
 <div class="card">
   <h2 style="font-size:15px;font-weight:700;margin-bottom:16px;">
-    ⚫ Projetos Encerrados <span style="color:var(--bk-text-muted);font-weight:400;font-size:13px;">({{ projetos_encerrados.count }})</span>
+    ⚫ Projetos Encerrados <span style="color:#6b7280;font-weight:400;font-size:13px;">({{ projetos_encerrados.count }})</span>
   </h2>
   <div class="table-wrap">
     <table>

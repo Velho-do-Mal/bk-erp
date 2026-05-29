@@ -19,7 +19,7 @@
 </div>
 
 <div class="bk-card">
-  <div style="font-size:12px;color:#94A3B8;margin-bottom:12px">
+  <div style="font-size:12px;color:#6b7280;margin-bottom:12px">
     💡 Edite a coluna <strong>Utilizado</strong> diretamente na tabela e clique em <strong>💾 Salvar Utilizado</strong>.
   </div>
   <div class="excel-grid-wrap">
@@ -28,7 +28,7 @@
         <tr>
           <th>Código</th><th>Descrição</th><th>Fornecedor</th><th>Projeto</th>
           <th>Qtd. Comprada</th>
-          <th style="color:#60A5FA">✏️ Utilizado</th>
+          <th>✏️ Utilizado</th>
           <th>Saldo</th>
           <th>Valor Total</th><th>Data Compra</th><th>Validade</th><th style="width:80px">Ações</th>
         </tr>
@@ -82,12 +82,12 @@ function renderTabela(){
   if(!dados.length){tb.innerHTML='<tr><td colspan="11" style="text-align:center;color:#64748b;padding:24px">Nenhum material cadastrado</td></tr>';return;}
   tb.innerHTML=dados.map(r=>`
     <tr>
-      <td><input class="grid-input" value="${r.codigo}" readonly style="font-family:monospace;color:#93C5FD"></td>
+      <td><input class="grid-input" value="${r.codigo}" readonly style="font-family:monospace;color:#374151"></td>
       <td><input class="grid-input" value="${r.descricao}" readonly style="font-weight:600"></td>
       <td><input class="grid-input" value="${r.fornecedor_nome||'—'}" readonly></td>
       <td><input class="grid-input" value="${r.projeto_nome||'—'}" readonly></td>
       <td><input class="grid-input" value="${fmt(r.qtd_comprada)}" readonly style="text-align:right"></td>
-      <td><input type="number" class="grid-input utilizado-input" data-id="${r.id}" value="${r.qtd_utilizada}" min="0" max="${r.qtd_comprada}" step="0.001" style="text-align:right;color:#60A5FA"></td>
+      <td><input type="number" class="grid-input utilizado-input" data-id="${r.id}" value="${r.qtd_utilizada}" min="0" max="${r.qtd_comprada}" step="0.001" style="text-align:right;color:#374151"></td>
       <td><input class="grid-input" value="${fmt(r.saldo)}" readonly style="text-align:right;color:${r.saldo>0?'#10B981':r.saldo===0?'#F59E0B':'#EF4444'};font-weight:600"></td>
       <td><input class="grid-input" value="${fmtR(r.preco_total)}" readonly style="text-align:right"></td>
       <td><input class="grid-input" value="${r.data_compra||'—'}" readonly style="font-size:12px"></td>

@@ -28,7 +28,7 @@
         </select>
       </div>
       <div>
-        <label class="form-label">Categoria Pai <span style="color:#94A3B8;font-size:11px">(vazio = categoria principal)</span></label>
+        <label class="form-label">Categoria Pai <span style="color:#6b7280;font-size:11px">(vazio = categoria principal)</span></label>
         <select id="m-pai" class="form-control"><option value="">— Categoria principal —</option></select>
       </div>
       <div><label class="form-label">Observações</label><textarea id="m-obs" class="form-control" rows="2"></textarea></div>
@@ -55,9 +55,9 @@ function renderTabela(){
   let html='';
   for(const pai of pais){
     html+=`<tr style="background:rgba(30,41,59,0.6)">
-      <td><div style="display:flex;align-items:center;gap:8px">📁 <strong style="color:#E2E8F0">${pai.nome}</strong></div></td>
+      <td><div style="display:flex;align-items:center;gap:8px">📁 <strong style="color:#111827">${pai.nome}</strong></div></td>
       <td><span style="color:${TIPO_COLOR[pai.tipo]||'#94A3B8'};font-size:12px">${TIPO_LABEL[pai.tipo]||pai.tipo}</span></td>
-      <td><span style="font-size:11px;color:#94A3B8;background:#1E293B;padding:2px 8px;border-radius:12px">📂 Categoria</span></td>
+      <td><span style="font-size:11px;color:#6b7280;background:#f3f4f6;padding:2px 8px;border-radius:12px">📂 Categoria</span></td>
       <td class="col-actions"><button class="btn-sm primary" onclick="editar(${pai.id})">✏️ Editar</button></td>
     </tr>`;
     for(const f of dados.filter(c=>parseInt(c.pai_id)===parseInt(pai.id))){
