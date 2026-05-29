@@ -6,6 +6,7 @@ from datetime import date
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from apps.accounts.decorators import admin_required
+from apps.core.exportacao import exportar_csv
 from apps.core.audit import registrar as audit
 from django.http import JsonResponse, HttpResponse
 from django.db.models import Sum
@@ -626,3 +627,11 @@ def exportar_word(request, pk):
     response['Content-Disposition'] = f'attachment; filename="{nome_arquivo}"'
     return response
 
+
+
+@admin_required
+def exportar_propostas(request):
+    empresa = _empresa(request)
+    qs = Proposta.objects.filter(empresa=empresa).values('id', 'titulo', 'cliente__nome', 'status', 'valor_total', 'data_criacao')
+    rows = [list(r.values()) for r in qs]
+    return exportar_csv('propostas.csv', ['ID', 'Título', 'Cliente', 'Status', 'Valor Total', 'Data'], rows)

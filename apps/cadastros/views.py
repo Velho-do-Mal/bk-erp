@@ -3,6 +3,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from apps.accounts.decorators import admin_required
+from apps.core.exportacao import exportar_csv
 from apps.core.audit import registrar as audit
 from .models import Cliente, Fornecedor, CentrosDeCusto
 
@@ -119,3 +120,19 @@ def centros_custo(request):
         return JsonResponse({'ok': False, 'error': 'Ação inválida.'})
     qs = list(CentrosDeCusto.objects.filter(empresa=_empresa(request)).values('id', 'nome', 'observacoes', 'ativo'))
     return render(request, 'cadastros/centros_custo.html', {'centros_json': json.dumps(qs, ensure_ascii=False)})
+
+
+@admin_required
+def exportar_clientes(request):
+    empresa = _empresa(request)
+    qs = Cliente.objects.filter(empresa=empresa).values('id', 'nome', 'documento', 'email', 'telefone', 'ativo')
+    rows = [list(r.values()) for r in qs]
+    return exportar_csv('clientes.csv', ['ID', 'Nome', 'Documento', 'E-mail', 'Telefone', 'Ativo'], rows)
+
+
+@admin_required
+def exportar_fornecedores(request):
+    empresa = _empresa(request)
+    qs = Fornecedor.objects.filter(empresa=empresa).values('id', 'nome', 'cnpj', 'email', 'telefone', 'ativo')
+    rows = [list(r.values()) for r in qs]
+    return exportar_csv('fornecedores.csv', ['ID', 'Nome', 'CNPJ', 'E-mail', 'Telefone', 'Ativo'], rows)

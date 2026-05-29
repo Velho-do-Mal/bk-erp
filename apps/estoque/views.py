@@ -4,6 +4,7 @@ from datetime import date
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from apps.accounts.decorators import admin_required
+from apps.core.exportacao import exportar_csv
 from apps.core.audit import registrar as audit
 from django.http import JsonResponse
 from django.db.models import Sum, F, ExpressionWrapper, DecimalField
@@ -116,3 +117,11 @@ def lista(request):
         'itens_criticos': itens_criticos,
     }
     return render(request, 'estoque/lista.html', ctx)
+
+
+@admin_required
+def exportar_estoque(request):
+    empresa = _empresa(request)
+    qs = MaterialEstoque.objects.filter(empresa=empresa).values('id', 'codigo_bk', 'descricao', 'unidade', 'qtd_comprada', 'qtd_utilizada', 'qtd_saldo')
+    rows = [list(r.values()) for r in qs]
+    return exportar_csv('estoque.csv', ['ID', 'Código BK', 'Descrição', 'Unidade', 'Qtd Comprada', 'Qtd Utilizada', 'Saldo'], rows)
