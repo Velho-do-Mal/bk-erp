@@ -42,7 +42,7 @@
   .cell-num { text-align: right; padding: 8px 10px; color: #1d4ed8; font-weight: 600; font-size: 13px; }
   .cell-pct { text-align: right; padding: 8px 10px; font-weight: 700; font-size: 13px; }
   .pct-ok { color: #059669; }
-  .pct-par { color: #d97706; }
+  .pct-par { color: #b45309; }
   .pct-zero { color: #6b7280; }
   .total-row td { background: #1e3a5f !important; color: #fff !important; font-weight: 700; }
   .total-row .cell-num { color: #1e40af !important; }
@@ -87,7 +87,7 @@
   .kpi-med-value { font-size: 22px; font-weight: 800; margin-top: 4px; color: #111827; }
   .kpi-med-value.blue { color: #1e40af; }
   .kpi-med-value.green { color: #16a34a; }
-  .kpi-med-value.orange { color: #fcd34d; }
+  .kpi-med-value.orange { color: #b45309; }
 </style>
 {% endblock %}
 
@@ -288,7 +288,7 @@
     </div>
     <div class="kpi-med-card">
       <div class="kpi-med-label">% Medido</div>
-      <div class="kpi-med-value" id="kpi_pct" style="color:#f59e0b">{{ pct_total }}%</div>
+      <div class="kpi-med-value" id="kpi_pct" style="color:#b45309">{{ pct_total }}%</div>
     </div>
   </div>
 
@@ -344,12 +344,12 @@
       <tfoot>
         <tr class="total-row">
           <td colspan="2" style="padding:8px 10px;color:#1e40af;font-size:12px;font-weight:700">TOTAIS</td>
-          <td><div class="cell-num" style="color:#93c5fd !important">{{ total_contrato|moeda }}</div></td>
+          <td><div class="cell-num" style="color:#1e40af !important">{{ total_contrato|moeda }}</div></td>
           <td></td><td></td><td></td><td></td>
           <td><div class="cell-num tfoot-acum" style="color:#16a34a !important">{{ total_acum|moeda }}</div></td>
           <td><div class="cell-num tfoot-periodo" style="color:#1e40af !important">{{ total_periodo|moeda }}</div></td>
-          <td><div class="cell-num tfoot-saldo" style="color:#fcd34d !important">{{ total_saldo|moeda }}</div></td>
-          <td><div class="cell-pct tfoot-pct" style="color:#f59e0b !important">{{ pct_total }}%</div></td>
+          <td><div class="cell-num tfoot-saldo" style="color:#b45309 !important">{{ total_saldo|moeda }}</div></td>
+          <td><div class="cell-pct tfoot-pct" style="color:#b45309 !important">{{ pct_total }}%</div></td>
         </tr>
       </tfoot>
     </table>
@@ -379,7 +379,7 @@
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Saldo a Medir</div>
-      <div class="kpi-value" style="color:#fcd34d" id="dash_saldo">{{ total_saldo|moeda }}</div>
+      <div class="kpi-value" style="color:#b45309" id="dash_saldo">{{ total_saldo|moeda }}</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Períodos (BMs)</div>
@@ -387,7 +387,7 @@
     </div>
     <div class="kpi-card">
       <div class="kpi-label">% Executado</div>
-      <div class="kpi-value" style="color:#f59e0b" id="dash_pct">{{ pct_total }}%</div>
+      <div class="kpi-value" style="color:#b45309" id="dash_pct">{{ pct_total }}%</div>
     </div>
   </div>
 
@@ -395,7 +395,7 @@
   <div class="card" style="margin-bottom:20px">
     <div style="display:flex;justify-content:space-between;margin-bottom:8px">
       <span style="font-size:13px;font-weight:600;color:#374151">Progresso geral</span>
-      <span style="font-size:13px;font-weight:700;color:#f59e0b" id="dash_pct_bar">{{ pct_total }}%</span>
+      <span style="font-size:13px;font-weight:700;color:#b45309" id="dash_pct_bar">{{ pct_total }}%</span>
     </div>
     <div style="height:10px;background:#334155;border-radius:99px;overflow:hidden">
       <div id="dash_bar" style="height:100%;background:linear-gradient(90deg,#3b82f6,#10b981);border-radius:99px;width:{{ pct_total }}%;transition:width 0.5s"></div>
@@ -448,13 +448,13 @@
             <td>{{ linha.item.descricao }}</td>
             <td style="color:#111827">{{ linha.valor_total_item|moeda }}</td>
             <td style="color:#16a34a;font-weight:600">{{ linha.valor_acum|moeda }}</td>
-            <td style="color:#fcd34d">{{ linha.saldo|moeda }}</td>
+            <td style="color:#b45309">{{ linha.saldo|moeda }}</td>
             <td>
               <div style="display:flex;align-items:center;gap:6px">
                 <div style="flex:1;height:6px;background:#334155;border-radius:99px;min-width:60px">
                   <div style="height:100%;border-radius:99px;width:{{ linha.pct }}%;background:{% if linha.pct >= 100 %}#10b981{% elif linha.pct > 0 %}#3b82f6{% else %}#334155{% endif %}"></div>
                 </div>
-                <span style="font-size:12px;font-weight:700;color:{% if linha.pct >= 100 %}#6ee7b7{% elif linha.pct > 0 %}#93c5fd{% else %}#94a3b8{% endif %}">{{ linha.pct }}%</span>
+                <span style="font-size:12px;font-weight:700;color:{% if linha.pct >= 100 %}#16a34a{% elif linha.pct > 0 %}#1e40af{% else %}#6b7280{% endif %}">{{ linha.pct }}%</span>
               </div>
             </td>
           </tr>
