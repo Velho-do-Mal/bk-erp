@@ -45,15 +45,15 @@
         {% for bm in boletins %}
         <tr>
           <td>
-            <a href="{% url 'medicao:detalhe' bm.id %}" style="color:#93c5fd;font-weight:700;text-decoration:none">
+            <a href="{% url 'medicao:detalhe' bm.id %}" style="color:#1e40af;font-weight:700;text-decoration:none">
               {{ bm.nome }}
             </a>
           </td>
           <td>{% if bm.cliente %}<span class="badge badge-blue">{{ bm.cliente.nome }}</span>{% else %}<span style="color:#475569">—</span>{% endif %}</td>
-          <td style="color:#94a3b8;font-size:12px">{% if bm.projeto %}{{ bm.projeto.nome }}{% else %}—{% endif %}</td>
-          <td style="color:#94a3b8;font-size:12px">{{ bm.contrato|default:"—" }}</td>
-          <td style="color:#94a3b8;font-size:12px">{{ bm.codigo_obra|default:"—" }}</td>
-          <td style="color:#93c5fd;font-weight:600">{{ bm.total_contrato|moeda }}</td>
+          <td style="color:#374151;font-size:12px">{% if bm.projeto %}{{ bm.projeto.nome }}{% else %}—{% endif %}</td>
+          <td style="color:#374151;font-size:12px">{{ bm.contrato|default:"—" }}</td>
+          <td style="color:#374151;font-size:12px">{{ bm.codigo_obra|default:"—" }}</td>
+          <td style="color:#1e40af;font-weight:600">{{ bm.total_contrato|moeda }}</td>
           <td>
             {% with n=bm.periodos.count %}
             {% if n %}
@@ -78,8 +78,8 @@
 {% else %}
 <div class="card" style="text-align:center;padding:48px">
   <div style="font-size:48px;margin-bottom:12px">📋</div>
-  <div style="font-size:16px;font-weight:600;color:#f1f5f9">Nenhum boletim cadastrado</div>
-  <div style="font-size:13px;color:#94a3b8;margin-top:6px">Crie o primeiro Boletim de Medição para começar.</div>
+  <div style="font-size:16px;font-weight:600;color:#374151">Nenhum boletim cadastrado</div>
+  <div style="font-size:13px;color:#6b7280;margin-top:6px">Crie o primeiro Boletim de Medição para começar.</div>
   <button class="btn btn-primary" style="margin-top:20px" onclick="abrirModalNovo()">+ Novo Boletim de Medição</button>
 </div>
 {% endif %}
@@ -87,7 +87,7 @@
 <!-- Modal Novo BM -->
 <div id="modal_novo" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.6);align-items:center;justify-content:center">
   <div class="card" style="width:480px;max-width:95vw">
-    <div style="font-size:16px;font-weight:700;color:#93c5fd;margin-bottom:18px">Novo Boletim de Medição</div>
+    <div style="font-size:16px;font-weight:700;color:#1e3a8a;margin-bottom:18px">Novo Boletim de Medição</div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
       <div class="form-group">

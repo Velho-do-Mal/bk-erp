@@ -43,9 +43,9 @@
   .cell-pct { text-align: right; padding: 8px 10px; font-weight: 700; font-size: 13px; }
   .pct-ok { color: #059669; }
   .pct-par { color: #d97706; }
-  .pct-zero { color: #94a3b8; }
+  .pct-zero { color: #6b7280; }
   .total-row td { background: #1e3a5f !important; color: #fff !important; font-weight: 700; }
-  .total-row .cell-num { color: #93c5fd !important; }
+  .total-row .cell-num { color: #1e40af !important; }
 
   /* Medição input destacado */
   .cell-input-med {
@@ -67,7 +67,7 @@
     border-bottom: 1px solid #334155;
   }
   .autocomplete-item:hover { background: #2563eb; }
-  .autocomplete-item .ac-code { font-size: 11px; color: #94a3b8; margin-right: 6px; }
+  .autocomplete-item .ac-code { font-size: 11px; color: #374151; margin-right: 6px; }
 
   /* Períodos lista */
   .periodo-pill {
@@ -83,10 +83,10 @@
   /* KPI cards medição */
   .kpi-med { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
   .kpi-med-card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 14px 16px; }
-  .kpi-med-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; }
-  .kpi-med-value { font-size: 22px; font-weight: 800; margin-top: 4px; color: #f1f5f9; }
-  .kpi-med-value.blue { color: #93c5fd; }
-  .kpi-med-value.green { color: #6ee7b7; }
+  .kpi-med-label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: .5px; }
+  .kpi-med-value { font-size: 22px; font-weight: 800; margin-top: 4px; color: #111827; }
+  .kpi-med-value.blue { color: #1e40af; }
+  .kpi-med-value.green { color: #16a34a; }
   .kpi-med-value.orange { color: #fcd34d; }
 </style>
 {% endblock %}
@@ -102,7 +102,7 @@
 <!-- ═══════════════ ABA 1 — CADASTRO DO PROJETO ═══════════════ -->
 <div class="tab-panel active" id="tab-projeto" data-group="main">
   <div class="card" style="max-width:800px">
-    <div style="font-size:16px;font-weight:700;margin-bottom:20px;color:#93c5fd">Dados do Projeto</div>
+    <div style="font-size:16px;font-weight:700;margin-bottom:20px;color:#1e3a8a">Dados do Projeto</div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
       <div class="form-group">
@@ -171,8 +171,8 @@
 <!-- ═══════════════ ABA 2 — ITENS DO CONTRATO ═══════════════ -->
 <div class="tab-panel" id="tab-itens" data-group="main">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-    <div style="font-size:13px;color:#94a3b8">
-      Total contrato: <strong id="total_contrato" style="color:#93c5fd">{{ total_contrato|moeda }}</strong>
+    <div style="font-size:13px;color:#374151">
+      Total contrato: <strong id="total_contrato" style="color:#1e40af">{{ total_contrato|moeda }}</strong>
     </div>
     <button class="btn btn-primary btn-sm" onclick="adicionarLinhaItem()">+ Adicionar Item</button>
   </div>
@@ -194,7 +194,7 @@
       <tbody id="tbody_itens">
         {% for item in itens %}
         <tr data-item-id="{{ item.id }}">
-          <td><div class="cell-ro" style="color:#94a3b8">{{ forloop.counter }}</div></td>
+          <td><div class="cell-ro" style="color:#374151">{{ forloop.counter }}</div></td>
           <td>
             <div class="autocomplete-wrap">
               <input class="cell-input ac-servico" type="text"
@@ -221,8 +221,8 @@
       </tbody>
       <tfoot>
         <tr class="total-row">
-          <td colspan="6" style="padding:8px 10px;color:#93c5fd;font-size:12px">TOTAL DO CONTRATO</td>
-          <td><div class="cell-num" id="tfoot_total" style="color:#93c5fd !important">{{ total_contrato|moeda }}</div></td>
+          <td colspan="6" style="padding:8px 10px;color:#1e40af;font-size:12px;font-weight:700">TOTAL DO CONTRATO</td>
+          <td><div class="cell-num" id="tfoot_total" style="color:#1e40af !important">{{ total_contrato|moeda }}</div></td>
           <td></td>
         </tr>
       </tfoot>
@@ -239,7 +239,7 @@
 
   <!-- Seletor de períodos -->
   <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px">
-    <span style="font-size:12px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px">Períodos:</span>
+    <span style="font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.5px">Períodos:</span>
     {% for p in periodos %}
     <a href="?periodo_id={{ p.id }}" class="periodo-pill {% if periodo_ativo and periodo_ativo.id == p.id %}ativo{% else %}inativo{% endif %}">
       {{ p.label }}
@@ -253,8 +253,8 @@
   <!-- Cabeçalho do período ativo -->
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
     <div>
-      <span style="font-size:18px;font-weight:800;color:#93c5fd">{{ periodo_ativo.label }}</span>
-      <span style="font-size:13px;color:#94a3b8;margin-left:10px">
+      <span style="font-size:18px;font-weight:800;color:#1e3a8a">{{ periodo_ativo.label }}</span>
+      <span style="font-size:13px;color:#6b7280;margin-left:10px">
         {{ periodo_ativo.data_inicio|date:"d/m/Y" }} → {{ periodo_ativo.data_fim|date:"d/m/Y" }}
       </span>
     </div>
@@ -338,16 +338,16 @@
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="11" style="text-align:center;padding:24px;color:#94a3b8">Nenhum item cadastrado no contrato.</td></tr>
+        <tr><td colspan="11" style="text-align:center;padding:24px;color:#6b7280">Nenhum item cadastrado no contrato.</td></tr>
         {% endfor %}
       </tbody>
       <tfoot>
         <tr class="total-row">
-          <td colspan="2" style="padding:8px 10px;color:#93c5fd;font-size:12px">TOTAIS</td>
+          <td colspan="2" style="padding:8px 10px;color:#1e40af;font-size:12px;font-weight:700">TOTAIS</td>
           <td><div class="cell-num" style="color:#93c5fd !important">{{ total_contrato|moeda }}</div></td>
           <td></td><td></td><td></td><td></td>
-          <td><div class="cell-num tfoot-acum" style="color:#6ee7b7 !important">{{ total_acum|moeda }}</div></td>
-          <td><div class="cell-num tfoot-periodo" style="color:#93c5fd !important">{{ total_periodo|moeda }}</div></td>
+          <td><div class="cell-num tfoot-acum" style="color:#16a34a !important">{{ total_acum|moeda }}</div></td>
+          <td><div class="cell-num tfoot-periodo" style="color:#1e40af !important">{{ total_periodo|moeda }}</div></td>
           <td><div class="cell-num tfoot-saldo" style="color:#fcd34d !important">{{ total_saldo|moeda }}</div></td>
           <td><div class="cell-pct tfoot-pct" style="color:#f59e0b !important">{{ pct_total }}%</div></td>
         </tr>
@@ -357,7 +357,7 @@
   <span id="msg_medicao" style="font-size:13px;color:#6ee7b7;margin-top:10px;display:block"></span>
 
   {% else %}
-  <div style="text-align:center;padding:48px;color:#94a3b8">
+  <div style="text-align:center;padding:48px;color:#6b7280">
     <div style="font-size:48px;margin-bottom:12px">📐</div>
     <div style="font-size:16px;font-weight:600">Nenhum período de medição criado</div>
     <div style="font-size:13px;margin-top:6px">Clique em "+ Novo BM" para criar o primeiro período.</div>
@@ -375,7 +375,7 @@
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Total Medido</div>
-      <div class="kpi-value" style="color:#6ee7b7" id="dash_total_acum">{{ total_acum|moeda }}</div>
+      <div class="kpi-value" style="color:#16a34a" id="dash_total_acum">{{ total_acum|moeda }}</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Saldo a Medir</div>
@@ -394,7 +394,7 @@
   <!-- Barra de progresso geral -->
   <div class="card" style="margin-bottom:20px">
     <div style="display:flex;justify-content:space-between;margin-bottom:8px">
-      <span style="font-size:13px;font-weight:600;color:#94a3b8">Progresso geral</span>
+      <span style="font-size:13px;font-weight:600;color:#374151">Progresso geral</span>
       <span style="font-size:13px;font-weight:700;color:#f59e0b" id="dash_pct_bar">{{ pct_total }}%</span>
     </div>
     <div style="height:10px;background:#334155;border-radius:99px;overflow:hidden">
@@ -404,7 +404,7 @@
 
   <!-- Evolução por período -->
   <div class="card" style="margin-bottom:20px">
-    <div style="font-size:14px;font-weight:700;color:#93c5fd;margin-bottom:14px">Evolução por período</div>
+    <div style="font-size:14px;font-weight:700;color:#1e3a8a;margin-bottom:14px">Evolução por período</div>
     {% if periodos %}
     <div class="table-wrap">
       <table>
@@ -417,7 +417,7 @@
             <td><span class="badge badge-blue">{{ p.label }}</span></td>
             <td>{{ p.data_inicio|date:"d/m/Y" }}</td>
             <td>{{ p.data_fim|date:"d/m/Y" }}</td>
-            <td style="color:#93c5fd;font-weight:600">{{ p.valor_total_periodo|moeda }}</td>
+            <td style="color:#1e40af;font-weight:600">{{ p.valor_total_periodo|moeda }}</td>
             <td>
               {% if total_contrato %}
               {% widthratio p.valor_total_periodo total_contrato 100 %}%
@@ -435,7 +435,7 @@
 
   <!-- Status por item -->
   <div class="card">
-    <div style="font-size:14px;font-weight:700;color:#93c5fd;margin-bottom:14px">Status por item</div>
+    <div style="font-size:14px;font-weight:700;color:#1e3a8a;margin-bottom:14px">Status por item</div>
     <div class="table-wrap">
       <table>
         <thead><tr>
@@ -444,10 +444,10 @@
         <tbody>
           {% for linha in linhas %}
           <tr>
-            <td style="font-size:11px;color:#94a3b8">{{ linha.item.codigo }}</td>
+            <td style="font-size:11px;color:#374151">{{ linha.item.codigo }}</td>
             <td>{{ linha.item.descricao }}</td>
-            <td style="color:#f1f5f9">{{ linha.valor_total_item|moeda }}</td>
-            <td style="color:#6ee7b7;font-weight:600">{{ linha.valor_acum|moeda }}</td>
+            <td style="color:#111827">{{ linha.valor_total_item|moeda }}</td>
+            <td style="color:#16a34a;font-weight:600">{{ linha.valor_acum|moeda }}</td>
             <td style="color:#fcd34d">{{ linha.saldo|moeda }}</td>
             <td>
               <div style="display:flex;align-items:center;gap:6px">
@@ -459,7 +459,7 @@
             </td>
           </tr>
           {% empty %}
-          <tr><td colspan="6" style="text-align:center;padding:24px;color:#94a3b8">Nenhum item.</td></tr>
+          <tr><td colspan="6" style="text-align:center;padding:24px;color:#6b7280">Nenhum item.</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -486,8 +486,8 @@
 <!-- ═══ Modal Novo Período ═══ -->
 <div id="modal_periodo" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.6);align-items:center;justify-content:center">
   <div class="card" style="width:380px;max-width:95vw">
-    <div style="font-size:16px;font-weight:700;color:#93c5fd;margin-bottom:16px">Novo Período de Medição</div>
-    <div id="modal_bm_label" style="font-size:13px;color:#94a3b8;margin-bottom:14px"></div>
+    <div style="font-size:16px;font-weight:700;color:#1e3a8a;margin-bottom:16px">Novo Período de Medição</div>
+    <div id="modal_bm_label" style="font-size:13px;color:#6b7280;margin-bottom:14px"></div>
     <div class="form-group">
       <label class="form-label">Data Início</label>
       <input type="date" class="form-control" id="novo_bm_inicio">
@@ -599,7 +599,7 @@ function adicionarLinhaItem() {
   const tr = document.createElement('tr');
   tr.dataset.itemId = 'novo_' + Date.now();
   tr.innerHTML = `
-    <td><div class="cell-ro" style="color:#94a3b8">${idx}</div></td>
+    <td><div class="cell-ro" style="color:#374151">${idx}</div></td>
     <td>
       <div class="autocomplete-wrap">
         <input class="cell-input ac-servico" type="text" placeholder="Buscar serviço..." data-servico-id=""
