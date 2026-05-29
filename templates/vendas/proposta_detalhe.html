@@ -11,7 +11,7 @@
 <button class="btn" id="btn-salvar-cabecalho" onclick="salvarCabecalho()" style="font-size:13px;">
   💾 Salvar
 </button>
-<button class="btn no-print" onclick="window.print()" style="font-size:13px;background:#fff;border:1px solid #6b7280;color:#374151;">🖨️ Imprimir</button>
+<a href="{% url 'vendas:exportar_word' proposta.pk %}" class="btn no-print" style="font-size:13px;background:#1e3a8a;border:1px solid #1e40af;color:#fff;text-decoration:none;padding:6px 14px;border-radius:4px;display:inline-block;">📄 Exportar Word</a>
 <div id="status-badge" class="badge badge-{{ proposta.status }}" style="font-size:13px;padding:6px 14px;border-radius:6px;">
   {{ proposta.get_status_display }}
 </div>
@@ -152,7 +152,7 @@
 {% block content %}
 <div id="toast"></div>
 
-{# ── Dados JSON injetados pelo Django ── #}
+
 <script>
   const PROPOSTA = {{ proposta_json|safe }};
   const CLIENTES = {{ clientes_json|safe }};
@@ -163,7 +163,7 @@
   const CSRF_TOKEN = "{{ csrf_token }}";
 </script>
 
-{# ── Abas ── #}
+
 <div class="prop-tabs">
   <button class="prop-tab-btn active" data-tab="orcamento" onclick="trocarAba('orcamento')">
     📊 Cálculo do Orçamento
@@ -173,12 +173,10 @@
   </button>
 </div>
 
-{# ════════════════════════════════════════════════════════════════
-   ABA 1 — CÁLCULO DO ORÇAMENTO
-   ════════════════════════════════════════════════════════════════ #}
+
 <div class="prop-tab-panel active" id="tab-orcamento">
 
-  {# Cabeçalho da proposta #}
+  
   <div class="section-card">
     <div class="section-title">📋 Dados da Proposta</div>
     <div class="form-grid">
@@ -229,7 +227,7 @@
     </div>
   </div>
 
-  {# Mão de Obra #}
+  
   <div class="section-card">
     <div class="section-title">👷 Mão de Obra</div>
     <table class="edit-table" id="tab-mob">
@@ -248,7 +246,7 @@
     <button class="btn-add-row" onclick="addMobRow()">+ Adicionar linha</button>
   </div>
 
-  {# Custos Diretos #}
+  
   <div class="section-card">
     <div class="section-title">📦 Custos Diretos</div>
     <table class="edit-table" id="tab-cd">
@@ -267,7 +265,7 @@
     <button class="btn-add-row" onclick="addCdRow()">+ Adicionar linha</button>
   </div>
 
-  {# Custos Percentuais #}
+  
   <div class="section-card">
     <div class="section-title">💸 Custos Percentuais
       <span style="font-size:11px;color:#6b7280;font-weight:400">
@@ -278,7 +276,7 @@
     <button class="btn-add-row" onclick="addPercRow()">+ Adicionar item</button>
   </div>
 
-  {# Botão Calcular #}
+  
   <div style="text-align:center;margin:24px 0;">
     <button class="btn" onclick="calcular()"
       style="font-size:15px;padding:12px 40px;background:#1e40af;color:#fff;border-radius:8px;">
@@ -286,7 +284,7 @@
     </button>
   </div>
 
-  {# Resultado (oculto até calcular) #}
+  
   <div id="resultado-section" style="display:none;">
     <div class="section-card">
       <div class="section-title">📈 Resultado do Cálculo</div>
@@ -318,7 +316,7 @@
         </div>
       </div>
 
-      {# Detalhe dos custos percentuais em R$ #}
+      
       <div style="margin-top:18px;">
         <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:6px;">
           Detalhe dos Custos Percentuais
@@ -336,7 +334,7 @@
       </div>
     </div>
 
-    {# Gráficos #}
+    
     <div class="graficos-row">
       <div class="grafico-card">
         <h4>🥧 Composição dos Custos</h4>
@@ -356,12 +354,10 @@
     </div>
   </div>
 
-</div>{# /tab-orcamento #}
+</div>
 
 
-{# ════════════════════════════════════════════════════════════════
-   ABA 2 — PROPOSTA (itens + exportar Word)
-   ════════════════════════════════════════════════════════════════ #}
+
 <div class="prop-tab-panel" id="tab-proposta">
 
   <div class="section-card">
@@ -400,13 +396,13 @@
     </div>
   </div>
 
-  {# Resumo financeiro (somente leitura — vem do orçamento) #}
+  
   <div class="section-card" id="resumo-financeiro" style="display:none;">
     <div class="section-title">💡 Resumo Financeiro (do Cálculo)</div>
     <div style="font-size:13px;color:#374151;" id="resumo-financeiro-txt"></div>
   </div>
 
-</div>{# /tab-proposta #}
+</div>
 
 {% endblock %}
 
