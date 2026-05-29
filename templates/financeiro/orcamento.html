@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load bk_filters %}
 {% block title %}Orçamento — BK ERP{% endblock %}
 {% block page_title %}Orçamento{% endblock %}
 {% block page_sub %}Planejamento Financeiro Anual{% endblock %}
@@ -126,9 +127,9 @@
             <tr data-cat-id="{{ row.id }}">
                 <td>{{ row.nome }}</td>
                 {% for val in row.meses %}
-                <td class="read-only">{{ val|floatformat:2 }}</td>
+                <td class="read-only">{{ val|moeda }}</td>
                 {% endfor %}
-                <td class="total-col">{{ row.total|floatformat:2 }}</td>
+                <td class="total-col">{{ row.total|moeda }}</td>
             </tr>
             {% endfor %}
             </tbody>
@@ -149,9 +150,9 @@
             <tr data-cat-id="{{ row.id }}">
                 <td>{{ row.nome }}</td>
                 {% for val in row.meses %}
-                <td class="read-only">{{ val|floatformat:2 }}</td>
+                <td class="read-only">{{ val|moeda }}</td>
                 {% endfor %}
-                <td class="total-col">{{ row.total|floatformat:2 }}</td>
+                <td class="total-col">{{ row.total|moeda }}</td>
             </tr>
             {% endfor %}
             </tbody>

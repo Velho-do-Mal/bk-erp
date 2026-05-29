@@ -101,15 +101,15 @@
             <div class="fin-grid">
                 <div class="fin-kpi" style="background:#ecfdf5">
                     <span class="fin-lbl">Receitas</span>
-                    <span class="fin-val" style="color:#059669">R$ {{ fin_receitas|floatformat:2 }}</span>
+                    <span class="fin-val" style="color:#059669">R$ {{ fin_receitas|moeda }}</span>
                 </div>
                 <div class="fin-kpi" style="background:#fef2f2">
                     <span class="fin-lbl">Despesas</span>
-                    <span class="fin-val" style="color:#dc2626">R$ {{ fin_despesas|floatformat:2 }}</span>
+                    <span class="fin-val" style="color:#dc2626">R$ {{ fin_despesas|moeda }}</span>
                 </div>
                 <div class="fin-kpi" style="background:#eff6ff">
                     <span class="fin-lbl">Saldo Final</span>
-                    <span class="fin-val" style="color:#2563eb">R$ {{ fin_saldo|floatformat:2 }}</span>
+                    <span class="fin-val" style="color:#2563eb">R$ {{ fin_saldo|moeda }}</span>
                 </div>
             </div>
             <div style="margin-top:20px; padding:15px; border-radius:8px; background:#f8fafc; border:1px solid #e2e8f0">

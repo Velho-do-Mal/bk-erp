@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load bk_filters %}
 {% block title %}Vendas — BK ERP{% endblock %}
 
 {% block page_title %}Vendas{% endblock %}
@@ -124,7 +125,7 @@
   <div class="kpi-card">
     <div class="kpi-label">Valor Total (R$)</div>
     <div class="kpi-valor laranja" id="kpi-valor">
-      R$ {{ total_valor|floatformat:2 }}
+      R$ {{ total_valor|moeda }}
     </div>
   </div>
   <div class="kpi-card">
@@ -134,7 +135,7 @@
   <div class="kpi-card">
     <div class="kpi-label">Pipeline (Leads)</div>
     <div class="kpi-valor" id="kpi-pipeline">
-      R$ {{ pipeline_valor|floatformat:2 }}
+      R$ {{ pipeline_valor|moeda }}
     </div>
   </div>
 </div>

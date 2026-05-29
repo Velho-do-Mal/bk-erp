@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load bk_filters %}
 {% block title %}Dashboard — BK ERP{% endblock %}
 {% block page_title %}Dashboard Executivo{% endblock %}
 {% block page_sub %}Visão 360º da BK Engenharia{% endblock %}
@@ -31,7 +32,7 @@
   <!-- Financeiro -->
   <div class="kpi-card" style="border-left: 3px solid var(--bk-green);">
     <div class="kpi-label">Saldo Atual</div>
-    <div class="kpi-value" style="color:var(--bk-green)">R$ {{ saldo_atual|floatformat:2 }}</div>
+    <div class="kpi-value" style="color:#16a34a">R$ {{ saldo_atual|moeda }}</div>
     <div class="kpi-sub">Disponível em contas</div>
   </div>
   <!-- Vendas -->
@@ -42,13 +43,13 @@
   </div>
   <div class="kpi-card" style="border-left: 3px solid var(--bk-teal);">
     <div class="kpi-label">Ticket Médio</div>
-    <div class="kpi-value" style="color:var(--bk-teal)">R$ {{ ticket_medio|floatformat:2 }}</div>
+    <div class="kpi-value" style="color:#0f766e">R$ {{ ticket_medio|moeda }}</div>
     <div class="kpi-sub">Valor médio por proposta</div>
   </div>
   <!-- Compras -->
   <div class="kpi-card" style="border-left: 3px solid var(--bk-orange);">
     <div class="kpi-label">Compras no Mês</div>
-    <div class="kpi-value" style="color:var(--bk-orange)">R$ {{ compras_mes|floatformat:2 }}</div>
+    <div class="kpi-value" style="color:#d97706">R$ {{ compras_mes|moeda }}</div>
     <div class="kpi-sub">{{ pedidos_pendentes }} pedidos pendentes</div>
   </div>
 </div>
@@ -78,7 +79,7 @@
   </div>
   <div class="kpi-card" style="border-left: 3px solid var(--bk-green);">
     <div class="kpi-label">Em Andamento</div>
-    <div class="kpi-value" style="color:var(--bk-green)">{{ ativos }}</div>
+    <div class="kpi-value" style="color:#16a34a">{{ ativos }}</div>
     <div class="kpi-sub">projetos ativos</div>
   </div>
   <div class="kpi-card" style="border-left: 3px solid var(--bk-gray);">
