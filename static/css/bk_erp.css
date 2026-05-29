@@ -187,20 +187,20 @@ body {
 .table-wrap { overflow-x: auto; }
 
 table { width: 100%; border-collapse: collapse; }
-thead tr { border-bottom: 1px solid var(--bk-border); }
+thead tr { border-bottom: 1px solid #e5e7eb; }
 thead th {
   padding: 10px 14px;
   font-size: 11px; font-weight: 600;
-  color: var(--bk-text-muted);
+  color: #374151;
   text-transform: uppercase; letter-spacing: 0.5px;
   text-align: left;
 }
 tbody tr {
-  border-bottom: 1px solid rgba(51,65,85,0.5);
+  border-bottom: 1px solid #e5e7eb;
   transition: background 0.1s;
 }
-tbody tr:hover { background: rgba(255,255,255,0.03); }
-tbody td { padding: 12px 14px; font-size: 13px; color: var(--bk-text); }
+tbody tr:hover td { background: #eff6ff; }
+tbody td { padding: 12px 14px; font-size: 13px; color: #111827; }
 
 /* ══════════════════════════════
    BADGES / STATUS
