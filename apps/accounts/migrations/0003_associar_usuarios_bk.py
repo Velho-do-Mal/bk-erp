@@ -12,5 +12,7 @@ def associar_bk(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
+    atomic = False
+
     dependencies = [('accounts', '0002_user_empresa_fk')]
     operations = [migrations.RunPython(associar_bk, migrations.RunPython.noop)]

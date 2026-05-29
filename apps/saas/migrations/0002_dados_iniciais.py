@@ -44,5 +44,7 @@ def reverter(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
+    atomic = False
+
     dependencies = [('saas', '0001_initial')]
     operations = [migrations.RunPython(criar_dados_iniciais, reverter)]
