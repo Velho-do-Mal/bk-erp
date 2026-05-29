@@ -4,6 +4,9 @@
 {% block page_sub %}Classificação de custos e receitas{% endblock %}
 {% block topbar_actions %}<button class="btn btn-primary" onclick="abrirModal()">➕ Novo Centro</button>{% endblock %}
 {% block content %}
+<a href="{% url 'core:dashboard' %}" class="btn btn-secondary btn-sm" style="margin-bottom:16px;display:inline-flex;align-items:center;gap:6px;">← Voltar</a>
+
+<a href="{% url 'core:dashboard' %}" class="btn btn-secondary btn-sm" style="margin-bottom:16px;display:inline-flex;align-items:center;gap:6px;">← Voltar</a>
 <div class="bk-card">
   <div class="table-container">
     <table class="data-table">

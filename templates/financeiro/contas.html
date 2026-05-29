@@ -4,6 +4,9 @@
 {% block page_sub %}Contas bancárias e caixas{% endblock %}
 {% block topbar_actions %}<button class="btn btn-primary" onclick="abrirModal()">➕ Nova Conta</button>{% endblock %}
 {% block content %}
+<a href="{% url 'financeiro:dashboard' %}" class="btn btn-secondary btn-sm" style="margin-bottom:16px;display:inline-flex;align-items:center;gap:6px;">← Voltar</a>
+
+<a href="{% url 'financeiro:dashboard' %}" class="btn btn-secondary btn-sm" style="margin-bottom:16px;display:inline-flex;align-items:center;gap:6px;">← Voltar</a>
 <div class="bk-card">
   <div class="table-container">
     <table class="data-table">

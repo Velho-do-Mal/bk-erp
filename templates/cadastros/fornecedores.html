@@ -7,6 +7,9 @@
   <button class="btn btn-primary" onclick="abrirModal()">➕ Novo Fornecedor</button>
 {% endblock %}
 {% block content %}
+<a href="{% url 'core:dashboard' %}" class="btn btn-secondary btn-sm" style="margin-bottom:16px;display:inline-flex;align-items:center;gap:6px;">← Voltar</a>
+
+<a href="{% url 'core:dashboard' %}" class="btn btn-secondary btn-sm" style="margin-bottom:16px;display:inline-flex;align-items:center;gap:6px;">← Voltar</a>
 <div class="bk-card">
   <div class="table-toolbar">
     <input type="text" id="busca" placeholder="🔍 Buscar por nome, documento..." class="search-input" oninput="filtrar()">

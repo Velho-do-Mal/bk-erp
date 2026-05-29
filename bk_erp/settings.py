@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'apps.medicao',
     'django.contrib.humanize',
     'apps.saas',
+    'apps.rh',
 ]
 
 MIDDLEWARE = [

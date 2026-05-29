@@ -18,4 +18,5 @@ urlpatterns = [
     path('', include('apps.orcamento.urls')),
     path('', include('apps.medicao.urls')),
     path('', include('apps.saas.urls', namespace='saas')),
+    path('', include('apps.rh.urls', namespace='rh')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

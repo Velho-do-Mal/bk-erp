@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}RH{% endblock %}
+{% block content %}
+<a href="{% url 'core:dashboard' %}" class="btn btn-secondary btn-sm" style="margin-bottom:16px;display:inline-flex;align-items:center;gap:6px;">← Voltar</a>
+
+<div style="text-align:center;padding:80px 20px">
+  <div style="font-size:72px;margin-bottom:24px">👥</div>
+  <h1 style="font-size:28px;font-weight:800;color:#1e3a8a;margin-bottom:12px">Módulo RH</h1>
+  <p style="font-size:16px;color:#6b7280;max-width:480px;margin:0 auto 32px">
+    Este módulo está em desenvolvimento. Em breve você terá acesso à gestão completa de colaboradores, folha de pagamento, férias, benefícios e muito mais.
+  </p>
+  <div style="display:flex;flex-wrap:wrap;gap:16px;justify-content:center;max-width:640px;margin:0 auto">
+    {% for item in funcionalidades %}
+    {% endfor %}
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px 20px;min-width:160px;text-align:center">
+      <div style="font-size:28px">📋</div>
+      <div style="font-size:13px;font-weight:600;color:#374151;margin-top:6px">Cadastro de Colaboradores</div>
+    </div>
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px 20px;min-width:160px;text-align:center">
+      <div style="font-size:28px">💰</div>
+      <div style="font-size:13px;font-weight:600;color:#374151;margin-top:6px">Folha de Pagamento</div>
+    </div>
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px 20px;min-width:160px;text-align:center">
+      <div style="font-size:28px">🏖️</div>
+      <div style="font-size:13px;font-weight:600;color:#374151;margin-top:6px">Férias e Afastamentos</div>
+    </div>
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px 20px;min-width:160px;text-align:center">
+      <div style="font-size:28px">📊</div>
+      <div style="font-size:13px;font-weight:600;color:#374151;margin-top:6px">Relatórios de RH</div>
+    </div>
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px 20px;min-width:160px;text-align:center">
+      <div style="font-size:28px">🎯</div>
+      <div style="font-size:13px;font-weight:600;color:#374151;margin-top:6px">Avaliação de Desempenho</div>
+    </div>
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:16px 20px;min-width:160px;text-align:center">
+      <div style="font-size:28px">📁</div>
+      <div style="font-size:13px;font-weight:600;color:#374151;margin-top:6px">Documentos do Colaborador</div>
+    </div>
+  </div>
+  <div style="margin-top:40px">
+    <span style="background:#fef3c7;color:#b45309;padding:8px 20px;border-radius:20px;font-size:13px;font-weight:600">
+      🚧 Em desenvolvimento — disponível em breve
+    </span>
+  </div>
+</div>
+{% endblock %}

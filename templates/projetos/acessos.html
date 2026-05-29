@@ -4,6 +4,9 @@
 {% block page_sub %}{{ projeto.nome }}{% endblock %}
 
 {% block content %}
+<a href="{% url 'projetos:lista' %}" class="btn btn-secondary btn-sm" style="margin-bottom:16px;display:inline-flex;align-items:center;gap:6px;">← Voltar</a>
+
+<a href="{% url 'projetos:lista' %}" class="btn btn-secondary btn-sm" style="margin-bottom:16px;display:inline-flex;align-items:center;gap:6px;">← Voltar</a>
 <div class="card" style="max-width:600px;">
   <h3 style="font-size:14px;font-weight:700;margin-bottom:4px;">👥 Clientes com acesso a este projeto</h3>
   <p style="color:#6b7280;font-size:13px;margin-bottom:20px;">Selecione os clientes que poderão visualizar TAP, EAP, Gantt e Controle.</p>
