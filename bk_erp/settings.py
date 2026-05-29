@@ -113,3 +113,21 @@ CSRF_TRUSTED_ORIGINS = os.environ.get(
     'CSRF_TRUSTED_ORIGINS',
     'https://bk-erp-production.up.railway.app'
 ).split(',')
+
+# ── E-mail (SMTP) ──────────────────────────────────────────────────────────
+# Configure as variáveis no Railway:
+#   EMAIL_HOST=smtp.gmail.com
+#   EMAIL_PORT=587
+#   EMAIL_HOST_USER=seu@gmail.com
+#   EMAIL_HOST_PASSWORD=sua_senha_de_app
+#   DEFAULT_FROM_EMAIL=BK ERP <seu@gmail.com>
+EMAIL_BACKEND = os.environ.get(
+    'EMAIL_BACKEND',
+    'django.core.mail.backends.console.EmailBackend'   # local: imprime no console
+)
+EMAIL_HOST          = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT          = int(os.environ.get('EMAIL_PORT', '587'))
+EMAIL_USE_TLS       = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST_USER     = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL  = os.environ.get('DEFAULT_FROM_EMAIL', 'BK ERP <noreply@bk-engenharia.com>')

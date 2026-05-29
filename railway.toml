@@ -1,5 +1,6 @@
-[build]
-builder = "nixpacks"
-
 [deploy]
-startCommand = "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn bk_erp.wsgi --bind 0.0.0.0:$PORT --workers 2 --log-file -"
+startCommand = "gunicorn bk_erp.wsgi:application --bind 0.0.0.0:$PORT"
+
+[[crons]]
+schedule = "0 7 * * *"
+command  = "python manage.py enviar_alertas"

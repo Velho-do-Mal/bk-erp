@@ -31,6 +31,8 @@ class Documento(models.Model):
     arquivo_tipo = models.CharField(max_length=100, blank=True)
     arquivo_dados = models.BinaryField(null=True, blank=True)
 
+    data_validade = models.DateField(null=True, blank=True, verbose_name='Data de Validade', help_text='Deixe em branco se o documento não vence')
+
     enviado_por = models.CharField(max_length=150, blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)
 

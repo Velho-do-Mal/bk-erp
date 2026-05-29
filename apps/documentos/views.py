@@ -42,6 +42,7 @@ def lista(request):
         doc.arquivo_nome = f.name
         doc.arquivo_tipo = f.content_type or 'application/octet-stream'
         doc.arquivo_dados = f.read()
+        doc.data_validade = request.POST.get('data_validade') or None
         doc.enviado_por = request.user.username
         doc.save()
         return JsonResponse({'ok': True, 'id': doc.id})
@@ -64,7 +65,7 @@ def lista(request):
     docs = list(qs.values(
         'id', 'titulo', 'tipo', 'tags', 'observacoes', 'projeto_nome',
         'cliente__nome', 'fornecedor__nome', 'arquivo_nome',
-        'arquivo_tipo', 'enviado_por', 'criado_em'
+        'arquivo_tipo', 'enviado_por', 'criado_em', 'data_validade'
     ))
 
     ctx = {
