@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load bk_filters %}
 {% block title %}Relatórios Gerenciais{% endblock %}
 
 {% block content %}
@@ -75,10 +76,10 @@
           {% for m in meses %}
           <tr>
             <td class="text-start fw-semibold">{{ m.label }}</td>
-            <td class="text-success">R$ {{ m.receita|floatformat:2 }}</td>
-            <td class="text-danger">R$ {{ m.despesa|floatformat:2 }}</td>
+            <td class="text-success">{{ m.receita|moeda }}</td>
+            <td class="text-danger">{{ m.despesa|moeda }}</td>
             <td class="{% if m.resultado >= 0 %}resultado-pos{% else %}resultado-neg{% endif %} fw-semibold">
-              R$ {{ m.resultado|floatformat:2 }}
+              {{ m.resultado|moeda }}
             </td>
             <td class="text-center">
               {% if m.receita > 0 %}
@@ -95,10 +96,10 @@
         <tfoot>
           <tr class="fw-bold" style="background:#f8fafc">
             <td class="text-start">TOTAL</td>
-            <td class="text-success">R$ {{ totais.receita|floatformat:2 }}</td>
-            <td class="text-danger">R$ {{ totais.despesa|floatformat:2 }}</td>
+            <td class="text-success">{{ totais.receita|moeda }}</td>
+            <td class="text-danger">{{ totais.despesa|moeda }}</td>
             <td class="{% if totais.resultado >= 0 %}resultado-pos{% else %}resultado-neg{% endif %}">
-              R$ {{ totais.resultado|floatformat:2 }}
+              {{ totais.resultado|moeda }}
             </td>
             <td class="text-center">
               {% if totais.receita > 0 %}

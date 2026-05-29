@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load bk_filters %}
 {% block title %}Contas a Receber{% endblock %}
 
 {% block content %}
@@ -14,7 +15,7 @@
   <div class="col-md-3 col-6">
     <a href="?status=atrasado" class="card text-center text-decoration-none {% if status_f == 'atrasado' %}border-danger{% endif %}">
       <div class="card-body">
-        <div class="fs-5 fw-bold text-danger">R$ {{ atrasado|floatformat:2 }}</div>
+        <div class="fs-5 fw-bold text-danger">{{ atrasado|moeda }}</div>
         <div class="text-muted small">Em Atraso</div>
       </div>
     </a>
@@ -22,7 +23,7 @@
   <div class="col-md-3 col-6">
     <a href="?status=hoje" class="card text-center text-decoration-none {% if status_f == 'hoje' %}border-warning{% endif %}">
       <div class="card-body">
-        <div class="fs-5 fw-bold text-warning">R$ {{ vence_hoje|floatformat:2 }}</div>
+        <div class="fs-5 fw-bold text-warning">{{ vence_hoje|moeda }}</div>
         <div class="text-muted small">Vence Hoje</div>
       </div>
     </a>
@@ -30,7 +31,7 @@
   <div class="col-md-3 col-6">
     <a href="?status=futuro" class="card text-center text-decoration-none {% if status_f == 'futuro' %}border-info{% endif %}">
       <div class="card-body">
-        <div class="fs-5 fw-bold text-info">R$ {{ futuro|floatformat:2 }}</div>
+        <div class="fs-5 fw-bold text-info">{{ futuro|moeda }}</div>
         <div class="text-muted small">Futuro</div>
       </div>
     </a>
@@ -38,7 +39,7 @@
   <div class="col-md-3 col-6">
     <a href="?" class="card text-center text-decoration-none {% if not status_f %}border-success{% endif %}">
       <div class="card-body">
-        <div class="fs-5 fw-bold text-success">R$ {{ total|floatformat:2 }}</div>
+        <div class="fs-5 fw-bold text-success">{{ total|moeda }}</div>
         <div class="text-muted small">Total a Receber</div>
       </div>
     </a>
@@ -59,7 +60,7 @@
             </td>
             <td>{{ c.descricao|default:"—" }}</td>
             <td class="text-muted small">{{ c.categoria.nome|default:"—" }}</td>
-            <td class="text-end fw-semibold text-success">R$ {{ c.valor|floatformat:2 }}</td>
+            <td class="text-end fw-semibold text-success">{{ c.valor|moeda }}</td>
             <td class="text-center">
               {% if c.data_vencimento < hoje %}
                 <span class="badge badge-danger">⚠️ Atrasado</span>
