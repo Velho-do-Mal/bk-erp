@@ -29,11 +29,10 @@ def _qs_empresa(qs, request):
 def get_projetos_usuario(request):
     """Retorna queryset de projetos acessíveis ao usuário."""
     user = request.user
-    empresa = _empresa(request)
     if user.is_admin_erp:
-        return Projeto.objects.filter(empresa=empresa)
-    ids = ProjetoAcesso.objects.filter(empresa=empresa, usuario=user).values_list('projeto_id', flat=True)
-    return Projeto.objects.filter(empresa=empresa, id__in=ids)
+        return _qs_empresa(Projeto.objects, request)
+    ids = _qs_empresa(ProjetoAcesso.objects, request).filter(usuario=user).values_list('projeto_id', flat=True)
+    return _qs_empresa(Projeto.objects, request).filter(id__in=ids)
 
 
 def check_acesso(request, projeto):
