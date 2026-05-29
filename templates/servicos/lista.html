@@ -10,7 +10,6 @@
 {% block content %}
 <a href="{% url 'core:dashboard' %}" class="btn btn-secondary btn-sm" style="margin-bottom:16px;display:inline-flex;align-items:center;gap:6px;">← Voltar</a>
 
-<a href="{% url 'core:dashboard' %}" class="btn btn-secondary btn-sm" style="margin-bottom:16px;display:inline-flex;align-items:center;gap:6px;">← Voltar</a>
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px">
   <div class="kpi-card kpi-blue"><div class="kpi-label">📦 Total Cadastros</div><div class="kpi-value">{{ total }}</div></div>
   <div class="kpi-card kpi-green"><div class="kpi-label">✅ Ativos</div><div class="kpi-value">{{ ativos }}</div></div>
