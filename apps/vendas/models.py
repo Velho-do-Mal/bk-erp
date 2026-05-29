@@ -1,28 +1,3 @@
-
-    def save(self, *args, **kwargs):
-        # Conversão automática: Lead -> Cliente quando proposta é aprovada
-        status_anterior = None
-        if self.pk:
-            try:
-                anterior = self.__class__.objects.get(pk=self.pk)
-                status_anterior = anterior.status
-            except self.__class__.DoesNotExist:
-                pass
-        super().save(*args, **kwargs)
-        if self.status == 'aprovada' and status_anterior != 'aprovada':
-            if self.lead and not self.cliente:
-                cliente, _ = Cliente.objects.get_or_create(
-                    nome=self.lead.nome,
-                    defaults={
-                        'email': self.lead.email,
-                        'telefone': self.lead.contato,
-                        'observacoes': self.lead.observacoes,
-                        'ativo': True,
-                    }
-                )
-                self.__class__.objects.filter(pk=self.pk).update(cliente=cliente)
-                self.cliente = cliente
-
 from django.db import models
 from apps.cadastros.models import Cliente
 
@@ -61,6 +36,30 @@ class Proposta(models.Model):
     projeto_ref_id = models.IntegerField(null=True, blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        # Conversão automática: Lead -> Cliente quando proposta é aprovada
+        status_anterior = None
+        if self.pk:
+            try:
+                anterior = self.__class__.objects.get(pk=self.pk)
+                status_anterior = anterior.status
+            except self.__class__.DoesNotExist:
+                pass
+        super().save(*args, **kwargs)
+        if self.status == 'aprovada' and status_anterior != 'aprovada':
+            if self.lead and not self.cliente:
+                cliente, _ = Cliente.objects.get_or_create(
+                    nome=self.lead.nome,
+                    defaults={
+                        'email': self.lead.email,
+                        'telefone': self.lead.contato,
+                        'observacoes': self.lead.observacoes,
+                        'ativo': True,
+                    }
+                )
+                self.__class__.objects.filter(pk=self.pk).update(cliente=cliente)
+                self.cliente = cliente
 
     class Meta:
         verbose_name = 'Proposta'
