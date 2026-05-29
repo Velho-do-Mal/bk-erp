@@ -6,6 +6,7 @@ from datetime import date
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from apps.accounts.decorators import admin_required
+from apps.core.audit import registrar as audit
 from django.http import JsonResponse, HttpResponse
 from django.db.models import Sum
 from django.contrib import messages

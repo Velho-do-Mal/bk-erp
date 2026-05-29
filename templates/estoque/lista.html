@@ -5,7 +5,8 @@
 {% block page_sub %}Controle de compras, utilização e saldo{% endblock %}
 
 {% block topbar_actions %}
-<button class="btn btn-primary" onclick="abrirModal()">➕ Novo Material</button>
+<a href="{% url 'estoque:exportar_estoque' %}" class="btn btn-secondary btn-sm" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;">📊 Exportar CSV</a>
+  <button class="btn btn-primary" onclick="abrirModal()">➕ Novo Material</button>
 <button class="btn btn-secondary" onclick="salvarUtilizado()">💾 Salvar Utilizado</button>
 {% endblock %}
 

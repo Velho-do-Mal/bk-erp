@@ -5,4 +5,5 @@ app_name = 'estoque'
 
 urlpatterns = [
     path('estoque/', views.lista, name='lista'),
+    path('exportar/', views.exportar_estoque, name='exportar_estoque'),
 ]

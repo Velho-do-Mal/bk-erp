@@ -4,7 +4,8 @@
 {% block page_sub %}Entradas e saídas financeiras{% endblock %}
 
 {% block topbar_actions %}
-<button class="btn btn-primary" onclick="abrirModal()">➕ Nova Transação</button>
+<a href="{% url 'financeiro:exportar_transacoes' %}" class="btn btn-secondary btn-sm" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;">📊 Exportar CSV</a>
+  <button class="btn btn-primary" onclick="abrirModal()">➕ Nova Transação</button>
 {% endblock %}
 
 {% block content %}

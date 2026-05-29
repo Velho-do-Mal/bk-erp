@@ -103,7 +103,8 @@
         <div class="user-role">{{ user.get_perfil_display }}</div>
       </div>
     </div>
-    <a href="{% url 'accounts:logout' %}" class="nav-item" style="margin-top:8px;font-size:12px;color:#EF4444;">
+    <a href="{% url 'accounts:usuarios' %}" class="nav-item {% if request.resolver_match.url_name == 'usuarios' %}active{% endif %}">👥 Usuários</a>
+      <a href="{% url 'accounts:logout' %}" class="nav-item" style="margin-top:8px;font-size:12px;color:#EF4444;">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
       🚪 Sair
     </a>
@@ -241,5 +242,6 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 </script>
 {% block extra_js %}{% endblock %}
+  <script src="{% static 'js/bk_masks.js' %}"></script>
 </body>
 </html>

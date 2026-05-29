@@ -1,62 +1,86 @@
-{% load static %}
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BK ERP — Login</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{% static 'css/bk_erp.css' %}">
-  <style>
-    body { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--bk-bg); }
-    .login-box {
-      width: 100%; max-width: 380px;
-      background: var(--bk-surface);
-      border: 1px solid var(--bk-border);
-      border-radius: 16px;
-      padding: 40px 36px;
-    }
-    .login-logo { text-align: center; margin-bottom: 28px; }
-    .login-logo img { width: 64px; height: 64px; border-radius: 14px; }
-    .login-logo h1 { font-size: 22px; font-weight: 800; color: var(--bk-text); margin-top: 12px; }
-    .login-logo p { font-size: 13px; color: var(--bk-text-muted); }
-    .login-btn {
-      width: 100%; padding: 11px;
-      background: var(--bk-blue); color: #fff;
-      border: none; border-radius: 8px;
-      font-size: 14px; font-weight: 700;
-      cursor: pointer; margin-top: 8px;
-      transition: background 0.15s;
-    }
-    .login-btn:hover { background: #2563EB; }
-    .error-msg { color: #FCA5A5; font-size: 12px; margin-top: 6px; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Login — BK ERP</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .login-wrap { display: flex; gap: 0; border-radius: 16px; overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,.5); max-width: 860px; width: 100%; }
+  .login-left { background: linear-gradient(160deg,#1e3a8a,#1e40af); color:#fff; padding: 48px 40px; flex: 1; display: flex; flex-direction: column; justify-content: center; }
+  .login-left .brand { font-size: 28px; font-weight: 900; margin-bottom: 12px; }
+  .login-left .tagline { font-size: 15px; opacity: .85; line-height: 1.6; margin-bottom: 32px; }
+  .login-left .features { list-style: none; }
+  .login-left .features li { font-size: 13px; opacity: .8; padding: 5px 0; display: flex; align-items: center; gap: 8px; }
+  .login-right { background: #fff; padding: 48px 40px; width: 360px; flex-shrink: 0; }
+  .login-right h2 { font-size: 22px; font-weight: 800; color: #1e3a8a; margin-bottom: 6px; }
+  .login-right .sub { font-size: 13px; color: #6b7280; margin-bottom: 28px; }
+  .form-group { margin-bottom: 18px; }
+  label { display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 5px; text-transform: uppercase; letter-spacing: .4px; }
+  input[type=text], input[type=password] { width: 100%; padding: 11px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; color: #111827; outline: none; transition: border .15s; }
+  input:focus { border-color: #1e40af; box-shadow: 0 0 0 3px rgba(30,64,175,.1); }
+  .btn-login { width: 100%; padding: 13px; background: #1e40af; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; transition: background .2s; margin-top: 4px; }
+  .btn-login:hover { background: #1e3a8a; }
+  .error-msg { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 6px; padding: 10px 14px; color: #dc2626; font-size: 13px; margin-bottom: 18px; }
+  .links { margin-top: 20px; text-align: center; font-size: 13px; color: #6b7280; }
+  .links a { color: #1e40af; font-weight: 600; text-decoration: none; }
+  .links a:hover { text-decoration: underline; }
+  .divider { border: none; border-top: 1px solid #e5e7eb; margin: 20px 0; }
+  @media (max-width: 640px) {
+    .login-left { display: none; }
+    .login-right { width: 100%; border-radius: 16px; }
+  }
+</style>
 </head>
 <body>
-  <div class="login-box">
-    <div class="login-logo">
-      <img src="{% static 'assets/bk_icon.jpeg' %}" alt="BK" onerror="this.style.display='none'">
-      <h1>BK ERP</h1>
-      <p>Gestão de Projetos</p>
-    </div>
+<div class="login-wrap">
+  <div class="login-left">
+    <div class="brand">🏗️ BK ERP</div>
+    <p class="tagline">Sistema de gestão empresarial completo para engenharia e tecnologia.</p>
+    <ul class="features">
+      <li>✅ Gestão de Projetos e EAP</li>
+      <li>✅ Financeiro e Fluxo de Caixa</li>
+      <li>✅ Boletim de Medição</li>
+      <li>✅ Orçamentos e Propostas</li>
+      <li>✅ Controle de Estoque e Compras</li>
+      <li>✅ CRM e Gestão de Clientes</li>
+      <li>✅ Documentos e Relatórios</li>
+    </ul>
+  </div>
+  <div class="login-right">
+    <h2>Bem-vindo!</h2>
+    <p class="sub">Acesse sua conta para continuar.</p>
+
+    {% if form.errors %}
+    <div class="error-msg">⚠️ Usuário ou senha incorretos. Tente novamente.</div>
+    {% endif %}
+
+    {% if next and 'bloqueado' not in next %}{% endif %}
 
     <form method="post">
       {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
       <div class="form-group">
-        <label class="form-label">Usuário</label>
-        <input type="text" name="username" class="form-control" placeholder="Digite seu usuário" autofocus required>
+        <label>Usuário</label>
+        <input type="text" name="username" autofocus autocomplete="username" placeholder="seu.usuario">
       </div>
       <div class="form-group">
-        <label class="form-label">Senha</label>
-        <input type="password" name="password" class="form-control" placeholder="Digite sua senha" required>
+        <label>Senha</label>
+        <input type="password" name="password" autocomplete="current-password" placeholder="••••••••">
       </div>
-
-      {% if form.errors %}
-      <div class="error-msg">⚠ Usuário ou senha incorretos.</div>
-      {% endif %}
-
-      <button type="submit" class="login-btn">Entrar</button>
+      <button type="submit" class="btn-login">🔐 Entrar</button>
     </form>
+
+    <hr class="divider">
+    <div class="links">
+      Não tem conta? <a href="/cadastro/">Criar gratuitamente</a><br>
+      <a href="/precos/" style="margin-top:6px;display:inline-block">Ver planos e preços →</a>
+    </div>
+    <div style="margin-top:24px;text-align:center;font-size:11px;color:#9ca3af">
+      <a href="/termos/" style="color:#9ca3af">Termos de Uso</a> · <a href="/privacidade/" style="color:#9ca3af">Privacidade</a>
+    </div>
   </div>
+</div>
 </body>
 </html>

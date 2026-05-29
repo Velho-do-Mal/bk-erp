@@ -11,4 +11,5 @@ urlpatterns = [
     path('financeiro/categorias/', views.categorias, name='categorias'),
     path('financeiro/orcamento/', views.orcamento, name='orcamento'),
     path('financeiro/orcamento/salvar/', views.salvar_orcamento, name='salvar_orcamento'),
+    path('exportar-transacoes/', views.exportar_transacoes, name='exportar_transacoes'),
 ]

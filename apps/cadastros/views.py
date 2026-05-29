@@ -3,6 +3,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from apps.accounts.decorators import admin_required
+from apps.core.audit import registrar as audit
 from .models import Cliente, Fornecedor, CentrosDeCusto
 
 def _empresa(request):

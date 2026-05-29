@@ -4,7 +4,8 @@
 {% block page_sub %}Central de arquivos: contratos, ARTs, medições, notas, propostas{% endblock %}
 
 {% block topbar_actions %}
-<button class="btn btn-primary" onclick="document.getElementById('upload-panel').classList.toggle('open')">📤 Enviar Documento</button>
+<a href="{% url 'documentos:exportar_documentos' %}" class="btn btn-secondary btn-sm" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;">📊 Exportar CSV</a>
+  <button class="btn btn-primary" onclick="document.getElementById('upload-panel').classList.toggle('open')">📤 Enviar Documento</button>
 {% endblock %}
 
 {% block content %}

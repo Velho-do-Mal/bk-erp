@@ -7,4 +7,6 @@ urlpatterns = [
     path('cadastros/clientes/', views.clientes, name='clientes'),
     path('cadastros/fornecedores/', views.fornecedores, name='fornecedores'),
     path('cadastros/centros-custo/', views.centros_custo, name='centros_custo'),
+    path('exportar-clientes/', views.exportar_clientes, name='exportar_clientes'),
+    path('exportar-fornecedores/', views.exportar_fornecedores, name='exportar_fornecedores'),
 ]

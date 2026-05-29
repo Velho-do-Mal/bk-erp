@@ -204,7 +204,8 @@
         <option value="fechado_perdido">Fechado Perdido</option>
       </select>
     </div>
-    <button class="btn" onclick="abrirModalLead()">+ Novo Lead</button>
+    <a href="{% url 'vendas:exportar_propostas' %}" class="btn btn-secondary btn-sm" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;">📊 Exportar CSV</a>
+  <button class="btn" onclick="abrirModalLead()">+ Novo Lead</button>
   </div>
 
   <div style="overflow-x:auto;background:#fff;border:1px solid #e5e7eb;border-radius:10px;">

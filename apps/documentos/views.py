@@ -2,6 +2,7 @@ import json
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from apps.accounts.decorators import admin_required
+from apps.core.exportacao import exportar_csv
 from django.http import HttpResponse, JsonResponse
 from .models import Documento
 from apps.cadastros.models import Cliente, Fornecedor
@@ -75,3 +76,11 @@ def download(request, pk):
     resp = HttpResponse(bytes(doc.arquivo_dados), content_type=doc.arquivo_tipo or 'application/octet-stream')
     resp['Content-Disposition'] = f'attachment; filename="{doc.arquivo_nome}"'
     return resp
+
+
+@admin_required
+def exportar_documentos(request):
+    empresa = _empresa(request)
+    qs = Documento.objects.filter(empresa=empresa).values('id', 'titulo', 'tipo', 'data_documento', 'ativo')
+    rows = [list(r.values()) for r in qs]
+    return exportar_csv('documentos.csv', ['ID', 'Título', 'Tipo', 'Data', 'Ativo'], rows)

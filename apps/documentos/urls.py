@@ -6,4 +6,5 @@ app_name = 'documentos'
 urlpatterns = [
     path('documentos/', views.lista, name='lista'),
     path('documentos/download/<int:pk>/', views.download, name='download'),
+    path('exportar/', views.exportar_documentos, name='exportar_documentos'),
 ]

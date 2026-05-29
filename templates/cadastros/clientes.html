@@ -4,7 +4,8 @@
 {% block page_sub %}Cadastro de clientes{% endblock %}
 
 {% block topbar_actions %}
-<button class="btn btn-primary" onclick="abrirModal()">➕ Novo Cliente</button>
+<a href="{% url 'cadastros:exportar_clientes' %}" class="btn btn-secondary btn-sm" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;">📊 Exportar CSV</a>
+  <button class="btn btn-primary" onclick="abrirModal()">➕ Novo Cliente</button>
 {% endblock %}
 
 {% block content %}

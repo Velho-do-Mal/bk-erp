@@ -6,6 +6,7 @@ from dateutil.relativedelta import relativedelta
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from apps.accounts.decorators import admin_required
+from apps.core.audit import registrar as audit
 from django.http import JsonResponse, HttpResponse
 from django.db.models import Sum, Q          # ← Q adicionado aqui (era só Sum)
 from .models import Conta, Categoria, Transacao, Orcamento

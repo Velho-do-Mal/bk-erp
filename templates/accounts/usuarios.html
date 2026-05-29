@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% block title %}Usuários{% endblock %}
+{% block content %}
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+  <div>
+    <h2 style="font-size:22px;font-weight:800;color:#1e3a8a;margin:0">👥 Usuários</h2>
+    {% if plano_info %}
+    <p style="font-size:13px;color:#6b7280;margin:4px 0 0">
+      Plano {{ plano_info.nome }} — {{ plano_info.total }} usuário(s) ativo(s)
+      {% if plano_info.restante is not None %}· {{ plano_info.restante }} vaga(s) restante(s){% else %}· Ilimitado{% endif %}
+    </p>
+    {% endif %}
+  </div>
+  <button class="btn btn-primary btn-sm" onclick="abrirModal()">➕ Novo Usuário</button>
+</div>
+
+<div class="table-container">
+  <table class="data-table" id="tabela">
+    <thead><tr>
+      <th>Nome</th><th>Usuário</th><th>E-mail</th><th>Perfil</th><th>Ativo</th><th>Ações</th>
+    </tr></thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal" style="display:none">
+  <div class="modal-box" style="max-width:520px" id="modal-form">
+    <div class="modal-title" id="modal-titulo">Novo Usuário</div>
+    <input type="hidden" id="m-id">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+      <div class="form-group">
+        <label class="form-label">Nome Completo *</label>
+        <input type="text" class="form-control" id="m-nome" placeholder="João Silva">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nome de Usuário *</label>
+        <input type="text" class="form-control" id="m-username" placeholder="joaosilva">
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+      <div class="form-group">
+        <label class="form-label">E-mail</label>
+        <input type="email" class="form-control" id="m-email" placeholder="joao@empresa.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Perfil</label>
+        <select class="form-control" id="m-perfil">
+          <option value="cliente">Cliente (visualização)</option>
+          <option value="admin">Administrador</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+      <div class="form-group">
+        <label class="form-label">Senha <span style="color:#6b7280;font-weight:400">(deixe em branco para não alterar)</span></label>
+        <input type="password" class="form-control" id="m-senha" placeholder="••••••">
+      </div>
+      <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:6px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#374151;font-weight:500">
+          <input type="checkbox" id="m-ativo" checked> Usuário ativo
+        </label>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px">
+      <button class="btn btn-secondary btn-sm" onclick="fecharModal()">✖ Cancelar</button>
+      <button class="btn btn-primary btn-sm" onclick="salvar()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CSRF = '{{ csrf_token }}';
+let rows = [];
+
+async function carregar() {
+  const r = await fetch('', {method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({action:'list'})});
+  const d = await r.json();
+  if (!d.ok) return;
+  rows = d.rows;
+  renderizar(rows);
+}
+
+function renderizar(data) {
+  const tb = document.getElementById('tbody');
+  if (!data.length) {
+    tb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:#6b7280">Nenhum usuário cadastrado.</td></tr>';
+    return;
+  }
+  tb.innerHTML = data.map(r => `
+    <tr>
+      <td style="font-weight:600;color:#111827">${r.nome}</td>
+      <td style="font-family:monospace;color:#374151">${r.username}</td>
+      <td style="color:#374151">${r.email}</td>
+      <td><span class="badge ${r.perfil_val==='admin'?'badge-blue':'badge-success'}">${r.perfil}</span></td>
+      <td><span class="badge ${r.ativo?'badge-success':'badge-danger'}">${r.ativo?'Sim':'Não'}</span></td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm primary" onclick="editar(${r.id})">✏️ Editar</button>
+        <button class="btn btn-sm danger" onclick="excluir(${r.id},'${r.nome}')">🗑️ Desativar</button>
+      </td>
+    </tr>`).join('');
+}
+
+function abrirModal(r=null) {
+  document.getElementById('m-id').value       = r ? r.id : '';
+  document.getElementById('m-nome').value     = r ? r.nome : '';
+  document.getElementById('m-username').value = r ? r.username : '';
+  document.getElementById('m-email').value    = r ? (r.email==='—'?'':r.email) : '';
+  document.getElementById('m-perfil').value   = r ? r.perfil_val : 'cliente';
+  document.getElementById('m-senha').value    = '';
+  document.getElementById('m-ativo').checked  = r ? r.ativo : true;
+  document.getElementById('modal-titulo').textContent = r ? '✏️ Editar Usuário' : '➕ Novo Usuário';
+  document.getElementById('modal').style.display = 'flex';
+}
+
+function fecharModal() { document.getElementById('modal').style.display='none'; }
+
+function editar(id) {
+  const r = rows.find(x=>x.id===id);
+  if (r) abrirModal(r);
+}
+
+async function salvar() {
+  const payload = {
+    action:'save',
+    id: document.getElementById('m-id').value || null,
+    nome: document.getElementById('m-nome').value.trim(),
+    username: document.getElementById('m-username').value.trim(),
+    email: document.getElementById('m-email').value.trim(),
+    perfil: document.getElementById('m-perfil').value,
+    senha: document.getElementById('m-senha').value,
+    ativo: document.getElementById('m-ativo').checked,
+  };
+  const r = await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify(payload)});
+  const d = await r.json();
+  if (!d.ok) { bkToast(d.error,'error'); return; }
+  fecharModal();
+  bkToast('Usuário salvo com sucesso!','success');
+  carregar();
+}
+
+async function excluir(id, nome) {
+  const ok = await bkConfirm(`Desativar o usuário "${nome}"?`);
+  if (!ok) return;
+  const r = await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({action:'delete',id})});
+  const d = await r.json();
+  if (!d.ok) { bkToast(d.error,'error'); return; }
+  bkToast('Usuário desativado.','success');
+  carregar();
+}
+
+document.getElementById('modal').addEventListener('click', e => { if(e.target===document.getElementById('modal')) fecharModal(); });
+carregar();
+</script>
+{% endblock %}

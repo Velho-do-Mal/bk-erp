@@ -74,3 +74,11 @@ def cadastro(request):
         return redirect('core:dashboard')
 
     return render(request, 'saas/cadastro.html', {'planos': planos, 'bloqueado': bloqueado})
+
+
+def termos(request):
+    return render(request, 'saas/termos.html')
+
+
+def privacidade(request):
+    return render(request, 'saas/privacidade.html')

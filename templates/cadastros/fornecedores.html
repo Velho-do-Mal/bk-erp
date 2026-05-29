@@ -3,7 +3,8 @@
 {% block page_title %}Fornecedores{% endblock %}
 {% block page_sub %}Cadastro de fornecedores{% endblock %}
 {% block topbar_actions %}
-<button class="btn btn-primary" onclick="abrirModal()">➕ Novo Fornecedor</button>
+<a href="{% url 'cadastros:exportar_fornecedores' %}" class="btn btn-secondary btn-sm" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;">📊 Exportar CSV</a>
+  <button class="btn btn-primary" onclick="abrirModal()">➕ Novo Fornecedor</button>
 {% endblock %}
 {% block content %}
 <div class="bk-card">

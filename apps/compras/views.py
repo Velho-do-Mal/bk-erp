@@ -4,6 +4,7 @@ from datetime import date
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from apps.accounts.decorators import admin_required
+from apps.core.audit import registrar as audit
 from django.http import JsonResponse
 from django.db.models import Sum, Count, Q
 from .models import PedidoCompra, ItemPedidoCompra
