@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block title %}Relatórios Gerenciais{% endblock %}
+
+{% block content %}
+<style>
+  .rel-card { background:#fff; border:1px solid var(--bk-border); border-radius:10px; padding:20px; text-decoration:none; color:inherit; display:block; transition:transform .15s,box-shadow .15s; }
+  .rel-card:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.1); color:inherit; text-decoration:none; }
+  .rel-icon { width:48px; height:48px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:22px; margin-bottom:12px; }
+  .resultado-pos { color:#16a34a; }
+  .resultado-neg { color:#dc2626; }
+</style>
+
+<div class="content-header">
+  <h1 class="content-title">Relatórios Gerenciais</h1>
+  <p class="content-subtitle">Análises consolidadas do desempenho financeiro</p>
+</div>
+
+<!-- Menu de relatórios -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3 col-6">
+    <a href="{% url 'relatorios:dre' %}" class="rel-card">
+      <div class="rel-icon" style="background:#dbeafe;color:#1d4ed8"><i class="fas fa-chart-bar"></i></div>
+      <div class="fw-semibold">DRE</div>
+      <div class="text-muted small mt-1">Demonstrativo de Resultado</div>
+    </a>
+  </div>
+  <div class="col-md-3 col-6">
+    <a href="{% url 'relatorios:fluxo_caixa' %}" class="rel-card">
+      <div class="rel-icon" style="background:#dcfce7;color:#16a34a"><i class="fas fa-stream"></i></div>
+      <div class="fw-semibold">Fluxo de Caixa</div>
+      <div class="text-muted small mt-1">Movimentações por período</div>
+    </a>
+  </div>
+  <div class="col-md-3 col-6">
+    <a href="{% url 'relatorios:contas_pagar' %}" class="rel-card">
+      <div class="rel-icon" style="background:#fee2e2;color:#dc2626"><i class="fas fa-arrow-circle-up"></i></div>
+      <div class="fw-semibold">Contas a Pagar</div>
+      <div class="text-muted small mt-1">Pendentes e atrasadas</div>
+    </a>
+  </div>
+  <div class="col-md-3 col-6">
+    <a href="{% url 'relatorios:contas_receber' %}" class="rel-card">
+      <div class="rel-icon" style="background:#dcfce7;color:#16a34a"><i class="fas fa-arrow-circle-down"></i></div>
+      <div class="fw-semibold">Contas a Receber</div>
+      <div class="text-muted small mt-1">Pendentes e atrasadas</div>
+    </a>
+  </div>
+  <div class="col-md-3 col-6">
+    <a href="{% url 'relatorios:inadimplencia' %}" class="rel-card">
+      <div class="rel-icon" style="background:#fef3c7;color:#92400e"><i class="fas fa-exclamation-triangle"></i></div>
+      <div class="fw-semibold">Inadimplência</div>
+      <div class="text-muted small mt-1">Recebimentos em atraso</div>
+    </a>
+  </div>
+</div>
+
+<!-- Tabela comparativa 12 meses -->
+<div class="card">
+  <div class="card-header">
+    <i class="fas fa-table me-2"></i>Comparativo — Últimos 12 Meses
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 text-end">
+        <thead>
+          <tr>
+            <th class="text-start">Mês</th>
+            <th>Receitas</th>
+            <th>Despesas</th>
+            <th>Resultado</th>
+            <th class="text-center">Margem</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in meses %}
+          <tr>
+            <td class="text-start fw-semibold">{{ m.label }}</td>
+            <td class="text-success">R$ {{ m.receita|floatformat:2 }}</td>
+            <td class="text-danger">R$ {{ m.despesa|floatformat:2 }}</td>
+            <td class="{% if m.resultado >= 0 %}resultado-pos{% else %}resultado-neg{% endif %} fw-semibold">
+              R$ {{ m.resultado|floatformat:2 }}
+            </td>
+            <td class="text-center">
+              {% if m.receita > 0 %}
+                {% with pct=m.resultado|floatformat:1 %}
+                  <span class="badge {% if m.resultado >= 0 %}badge-success{% else %}badge-danger{% endif %}">
+                    {% widthratio m.resultado m.receita 100 %}%
+                  </span>
+                {% endwith %}
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr class="fw-bold" style="background:#f8fafc">
+            <td class="text-start">TOTAL</td>
+            <td class="text-success">R$ {{ totais.receita|floatformat:2 }}</td>
+            <td class="text-danger">R$ {{ totais.despesa|floatformat:2 }}</td>
+            <td class="{% if totais.resultado >= 0 %}resultado-pos{% else %}resultado-neg{% endif %}">
+              R$ {{ totais.resultado|floatformat:2 }}
+            </td>
+            <td class="text-center">
+              {% if totais.receita > 0 %}
+              <span class="badge {% if totais.resultado >= 0 %}badge-success{% else %}badge-danger{% endif %}">
+                {% widthratio totais.resultado totais.receita 100 %}%
+              </span>
+              {% else %}—{% endif %}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

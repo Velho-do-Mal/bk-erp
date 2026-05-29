@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'apps.saas',
     'apps.rh',
+    'apps.relatorios',
 ]
 
 MIDDLEWARE = [

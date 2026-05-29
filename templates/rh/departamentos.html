@@ -1,0 +1,227 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Departamentos — RH{% endblock %}
+
+{% block content %}
+<div class="content-header">
+  <div class="d-flex align-items-center justify-content-between">
+    <div>
+      <h1 class="content-title">Departamentos</h1>
+      <p class="content-subtitle">Gerencie a estrutura organizacional da empresa</p>
+    </div>
+    <button class="btn btn-primary" onclick="abrirModal()">
+      <i class="fas fa-plus me-2"></i>Novo Departamento
+    </button>
+  </div>
+</div>
+
+<!-- Submenu RH -->
+<div class="card mb-4">
+  <div class="card-body py-2">
+    <nav class="d-flex gap-2 flex-wrap">
+      <a href="{% url 'rh:colaboradores' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-users me-1"></i>Colaboradores
+      </a>
+      <a href="{% url 'rh:departamentos' %}" class="btn btn-sm btn-primary">
+        <i class="fas fa-sitemap me-1"></i>Departamentos
+      </a>
+      <a href="{% url 'rh:cargos' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-id-badge me-1"></i>Cargos
+      </a>
+      <a href="{% url 'rh:ferias' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-umbrella-beach me-1"></i>Férias
+      </a>
+    </nav>
+  </div>
+</div>
+
+<!-- KPIs -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3 col-6">
+    <div class="card text-center">
+      <div class="card-body">
+        <div class="fs-2 fw-bold text-primary">{{ total_departamentos }}</div>
+        <div class="text-muted small">Total</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card text-center">
+      <div class="card-body">
+        <div class="fs-2 fw-bold text-success">{{ total_ativos }}</div>
+        <div class="text-muted small">Ativos</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card text-center">
+      <div class="card-body">
+        <div class="fs-2 fw-bold text-info">{{ total_cargos }}</div>
+        <div class="text-muted small">Cargos vinculados</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card text-center">
+      <div class="card-body">
+        <div class="fs-2 fw-bold text-warning">{{ total_colaboradores }}</div>
+        <div class="text-muted small">Colaboradores</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabela -->
+<div class="card">
+  <div class="card-header d-flex align-items-center justify-content-between">
+    <span><i class="fas fa-sitemap me-2"></i>Lista de Departamentos</span>
+    <input type="text" id="filtro" class="form-control form-control-sm w-auto" placeholder="Buscar…" oninput="filtrar()">
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0" id="tabelaDepts">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Descrição</th>
+            <th class="text-center">Cargos</th>
+            <th class="text-center">Colaboradores</th>
+            <th class="text-center">Status</th>
+            <th class="text-end">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          {% for d in departamentos %}
+          <tr data-nome="{{ d.nome|lower }}">
+            <td class="fw-semibold">{{ d.nome }}</td>
+            <td class="text-muted small">{{ d.descricao|default:"—" }}</td>
+            <td class="text-center">{{ d.cargo_set.count }}</td>
+            <td class="text-center">{{ d.colaborador_set.count }}</td>
+            <td class="text-center">
+              {% if d.ativo %}
+                <span class="badge badge-success">Ativo</span>
+              {% else %}
+                <span class="badge badge-danger">Inativo</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-outline-primary me-1"
+                onclick="editarDept({{ d.id }}, '{{ d.nome|escapejs }}', '{{ d.descricao|default:''|escapejs }}', {{ d.ativo|yesno:'true,false' }})">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger"
+                onclick="excluirDept({{ d.id }}, '{{ d.nome|escapejs }}')">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="text-center text-muted py-4">
+              <i class="fas fa-sitemap fa-2x mb-2 d-block opacity-25"></i>
+              Nenhum departamento cadastrado.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Departamento -->
+<div class="modal fade" id="modalDept" tabindex="-1">
+  <div class="modal-dialog">
+    <form method="post" id="formDept">
+      {% csrf_token %}
+      <input type="hidden" name="action" id="action" value="criar">
+      <input type="hidden" name="dept_id" id="dept_id">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalTitulo">Novo Departamento</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
+            <input type="text" name="nome" id="nome" class="form-control" required maxlength="100" placeholder="Ex: Engenharia, Financeiro…">
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Descrição</label>
+            <textarea name="descricao" id="descricao" class="form-control" rows="3" placeholder="Descrição opcional do departamento…"></textarea>
+          </div>
+          <div class="form-check">
+            <input type="checkbox" name="ativo" id="ativo" class="form-check-input" checked>
+            <label class="form-check-label" for="ativo">Departamento ativo</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Salvar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Excluir -->
+<div class="modal fade" id="modalExcluir" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <form method="post" id="formExcluir">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="excluir">
+      <input type="hidden" name="dept_id" id="excluir_id">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirmar exclusão</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>Excluir departamento <strong id="excluir_nome"></strong>?</p>
+          <p class="text-muted small">Cargos e colaboradores vinculados perderão a referência de departamento.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger btn-sm">Excluir</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function abrirModal() {
+  document.getElementById('modalTitulo').textContent = 'Novo Departamento';
+  document.getElementById('action').value = 'criar';
+  document.getElementById('dept_id').value = '';
+  document.getElementById('nome').value = '';
+  document.getElementById('descricao').value = '';
+  document.getElementById('ativo').checked = true;
+  new bootstrap.Modal(document.getElementById('modalDept')).show();
+}
+
+function editarDept(id, nome, descricao, ativo) {
+  document.getElementById('modalTitulo').textContent = 'Editar Departamento';
+  document.getElementById('action').value = 'editar';
+  document.getElementById('dept_id').value = id;
+  document.getElementById('nome').value = nome;
+  document.getElementById('descricao').value = descricao;
+  document.getElementById('ativo').checked = ativo;
+  new bootstrap.Modal(document.getElementById('modalDept')).show();
+}
+
+function excluirDept(id, nome) {
+  document.getElementById('excluir_id').value = id;
+  document.getElementById('excluir_nome').textContent = nome;
+  new bootstrap.Modal(document.getElementById('modalExcluir')).show();
+}
+
+function filtrar() {
+  const q = document.getElementById('filtro').value.toLowerCase();
+  document.querySelectorAll('#tbody tr[data-nome]').forEach(tr => {
+    tr.style.display = tr.dataset.nome.includes(q) ? '' : 'none';
+  });
+}
+</script>
+{% endblock %}

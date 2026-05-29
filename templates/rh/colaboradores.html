@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Colaboradores — RH{% endblock %}
+{% block content %}
+<a href="{% url 'core:dashboard' %}" class="btn btn-secondary btn-sm" style="margin-bottom:16px;display:inline-flex;align-items:center;gap:6px;">← Voltar</a>
+<div class="page-header"><h1 class="page-title">👥 Colaboradores</h1></div>
+
+<!-- KPIs -->
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px">
+  <div class="bk-card" style="text-align:center;padding:16px">
+    <div style="font-size:28px;font-weight:700;color:#1e3a8a">{{ kpi_total }}</div>
+    <div style="color:#64748b;font-size:13px">Total</div>
+  </div>
+  <div class="bk-card" style="text-align:center;padding:16px">
+    <div style="font-size:28px;font-weight:700;color:#16a34a">{{ kpi_ativos }}</div>
+    <div style="color:#64748b;font-size:13px">Ativos</div>
+  </div>
+  <div class="bk-card" style="text-align:center;padding:16px">
+    <div style="font-size:28px;font-weight:700;color:#d97706">{{ kpi_ferias }}</div>
+    <div style="color:#64748b;font-size:13px">Em Férias</div>
+  </div>
+  <div class="bk-card" style="text-align:center;padding:16px">
+    <div style="font-size:28px;font-weight:700;color:#dc2626">{{ kpi_desligados }}</div>
+    <div style="color:#64748b;font-size:13px">Desligados</div>
+  </div>
+</div>
+
+<!-- Submenu RH -->
+<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+  <a href="{% url 'rh:colaboradores' %}" class="btn btn-primary btn-sm">👥 Colaboradores</a>
+  <a href="{% url 'rh:departamentos' %}" class="btn btn-secondary btn-sm">🏢 Departamentos</a>
+  <a href="{% url 'rh:cargos' %}" class="btn btn-secondary btn-sm">💼 Cargos</a>
+  <a href="{% url 'rh:ferias' %}" class="btn btn-secondary btn-sm">🌴 Férias</a>
+</div>
+
+<!-- Filtros -->
+<div class="bk-card" style="padding:12px 16px;margin-bottom:16px">
+  <form method="get" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+    <input type="text" name="q" value="{{ q }}" placeholder="🔍 Buscar nome..." class="search-input">
+    <select name="status" class="filter-select">
+      <option value="">Todos os status</option>
+      <option value="ativo" {% if status_f == 'ativo' %}selected{% endif %}>✅ Ativo</option>
+      <option value="afastado" {% if status_f == 'afastado' %}selected{% endif %}>⚠️ Afastado</option>
+      <option value="ferias" {% if status_f == 'ferias' %}selected{% endif %}>🌴 Férias</option>
+      <option value="desligado" {% if status_f == 'desligado' %}selected{% endif %}>❌ Desligado</option>
+    </select>
+    <select name="depto" class="filter-select">
+      <option value="">Todos os departamentos</option>
+      {% for d in deptos %}<option value="{{ d.id }}" {% if depto_f == d.id|stringformat:"s" %}selected{% endif %}>{{ d.nome }}</option>{% endfor %}
+    </select>
+    <button type="submit" class="btn btn-primary btn-sm">🔍 Filtrar</button>
+    <a href="{% url 'rh:colaboradores' %}" class="btn btn-secondary btn-sm">✕ Limpar</a>
+    <a href="{% url 'rh:exportar_colaboradores' %}" class="btn btn-secondary btn-sm">📥 CSV</a>
+    <button type="button" class="btn btn-primary btn-sm" onclick="abrirModal()" style="margin-left:auto">➕ Novo Colaborador</button>
+  </form>
+</div>
+
+<!-- Tabela -->
+<div class="bk-card">
+  <div class="table-container">
+    <table class="data-table">
+      <thead><tr>
+        <th>Nome</th><th>CPF</th><th>Cargo</th><th>Departamento</th>
+        <th>Regime</th><th>Admissão</th><th>Salário</th><th>Status</th>
+        <th class="col-actions" style="width:100px">Ações</th>
+      </tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Colaborador -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-box" style="max-width:800px">
+    <button class="modal-close-x" onclick="fecharModal()">✕</button>
+    <div class="modal-title" id="modal-titulo">➕ Novo Colaborador</div>
+    <input type="hidden" id="m-id">
+
+    <!-- Abas -->
+    <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid #e2e8f0">
+      <button class="tab-btn active" data-group="colab" data-tab="tab-pessoal" style="padding:8px 16px;border:none;background:none;cursor:pointer;font-weight:600;color:#1e3a8a;border-bottom:2px solid #1e3a8a;margin-bottom:-2px">👤 Pessoal</button>
+      <button class="tab-btn" data-group="colab" data-tab="tab-profissional" style="padding:8px 16px;border:none;background:none;cursor:pointer;color:#64748b">💼 Profissional</button>
+      <button class="tab-btn" data-group="colab" data-tab="tab-bancario" style="padding:8px 16px;border:none;background:none;cursor:pointer;color:#64748b">🏦 Bancário</button>
+    </div>
+
+    <!-- Aba Pessoal -->
+    <div id="tab-pessoal" class="tab-panel active" data-group="colab">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="grid-column:1/-1"><label class="form-label">Nome Completo *</label><input id="m-nome" class="form-control" placeholder="Nome do colaborador"></div>
+        <div><label class="form-label">CPF</label><input id="m-cpf" class="form-control" data-mask="cpf" placeholder="000.000.000-00"></div>
+        <div><label class="form-label">RG</label><input id="m-rg" class="form-control" placeholder="RG"></div>
+        <div><label class="form-label">Data Nascimento</label><input id="m-nasc" class="form-control" type="date"></div>
+        <div><label class="form-label">Sexo</label>
+          <select id="m-sexo" class="form-control">
+            <option value="">—</option><option value="M">Masculino</option>
+            <option value="F">Feminino</option><option value="O">Outro</option>
+          </select>
+        </div>
+        <div><label class="form-label">Estado Civil</label>
+          <select id="m-estcivil" class="form-control">
+            <option value="">—</option><option value="solteiro">Solteiro(a)</option>
+            <option value="casado">Casado(a)</option><option value="divorciado">Divorciado(a)</option>
+            <option value="viuvo">Viúvo(a)</option><option value="uniao_estavel">União Estável</option>
+          </select>
+        </div>
+        <div><label class="form-label">E-mail</label><input id="m-email" class="form-control" type="email" placeholder="email@exemplo.com"></div>
+        <div><label class="form-label">Telefone</label><input id="m-tel" class="form-control" data-mask="telefone" placeholder="(00) 00000-0000"></div>
+        <div style="grid-column:1/-1"><label class="form-label">Endereço</label><input id="m-end" class="form-control" placeholder="Rua, número, bairro"></div>
+        <div><label class="form-label">CEP</label><input id="m-cep" class="form-control" data-mask="cep" placeholder="00000-000"></div>
+        <div><label class="form-label">Cidade</label><input id="m-cidade" class="form-control"></div>
+        <div><label class="form-label">Estado (UF)</label><input id="m-uf" class="form-control" maxlength="2" placeholder="PR"></div>
+      </div>
+    </div>
+
+    <!-- Aba Profissional -->
+    <div id="tab-profissional" class="tab-panel" data-group="colab" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div><label class="form-label">Matrícula</label><input id="m-mat" class="form-control" placeholder="Nº Matrícula"></div>
+        <div><label class="form-label">Regime</label>
+          <select id="m-regime" class="form-control">
+            <option value="clt">CLT</option><option value="pj">PJ</option>
+            <option value="estagio">Estágio</option><option value="autonomo">Autônomo</option>
+            <option value="temporario">Temporário</option>
+          </select>
+        </div>
+        <div><label class="form-label">Departamento</label>
+          <select id="m-depto" class="form-control">
+            <option value="">— Selecione —</option>
+            {% for d in deptos %}<option value="{{ d.id }}">{{ d.nome }}</option>{% endfor %}
+          </select>
+        </div>
+        <div><label class="form-label">Cargo</label>
+          <select id="m-cargo" class="form-control">
+            <option value="">— Selecione —</option>
+            {% for c in cargos %}<option value="{{ c.id }}">{{ c.nome }}</option>{% endfor %}
+          </select>
+        </div>
+        <div><label class="form-label">Data Admissão</label><input id="m-admissao" class="form-control" type="date"></div>
+        <div><label class="form-label">Data Demissão</label><input id="m-demissao" class="form-control" type="date"></div>
+        <div><label class="form-label">Salário (R$)</label><input id="m-salario" class="form-control" type="number" step="0.01" min="0" placeholder="0,00"></div>
+        <div><label class="form-label">Status</label>
+          <select id="m-status" class="form-control">
+            <option value="ativo">✅ Ativo</option><option value="afastado">⚠️ Afastado</option>
+            <option value="ferias">🌴 Férias</option><option value="desligado">❌ Desligado</option>
+          </select>
+        </div>
+        <div style="grid-column:1/-1"><label class="form-label">Observações</label><textarea id="m-obs" class="form-control" rows="3"></textarea></div>
+      </div>
+    </div>
+
+    <!-- Aba Bancária -->
+    <div id="tab-bancario" class="tab-panel" data-group="colab" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div><label class="form-label">Banco</label><input id="m-banco" class="form-control" placeholder="Ex: Bradesco, Itaú"></div>
+        <div><label class="form-label">Agência</label><input id="m-agencia" class="form-control" placeholder="0000-0"></div>
+        <div><label class="form-label">Conta</label><input id="m-conta" class="form-control" placeholder="00000-0"></div>
+        <div><label class="form-label">PIX</label><input id="m-pix" class="form-control" placeholder="CPF, e-mail ou telefone"></div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="btn-del" onclick="excluir()" style="display:none;margin-right:auto">🗑️ Excluir</button>
+      <button class="btn btn-secondary" onclick="fecharModal()">❌ Cancelar</button>
+      <button class="btn btn-primary" onclick="salvar()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const CSRF='{{ csrf_token }}';
+let dados={{ colaboradores_json|safe }};
+const STATUS_MAP={ativo:'<span class="badge badge-success">✅ Ativo</span>',afastado:'<span class="badge" style="background:#fef3c7;color:#92400e">⚠️ Afastado</span>',ferias:'<span class="badge" style="background:#dbeafe;color:#1e40af">🌴 Férias</span>',desligado:'<span class="badge badge-danger">❌ Desligado</span>'};
+const REGIME_MAP={clt:'CLT',pj:'PJ',estagio:'Estágio',autonomo:'Autônomo',temporario:'Temporário'};
+
+function fmtDate(d){if(!d)return'—';return new Date(d+'T00:00:00').toLocaleDateString('pt-BR');}
+function fmtMoeda(v){if(!v&&v!==0)return'—';return'R$ '+parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2});}
+
+function renderTabela(){
+  const tb=document.getElementById('tbody');
+  if(!dados.length){tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:#64748b;padding:24px">Nenhum colaborador cadastrado</td></tr>';return;}
+  tb.innerHTML=dados.map(r=>`<tr>
+    <td><strong>${r.nome}</strong><br><small style="color:#94a3b8">${r.email||''}</small></td>
+    <td style="font-size:12px">${r.cpf||'—'}</td>
+    <td>${r['cargo__nome']||'—'}</td>
+    <td>${r['departamento__nome']||'—'}</td>
+    <td><span class="badge badge-secondary">${REGIME_MAP[r.regime]||r.regime}</span></td>
+    <td style="font-size:12px">${fmtDate(r.data_admissao)}</td>
+    <td style="font-size:12px">${fmtMoeda(r.salario)}</td>
+    <td>${STATUS_MAP[r.status]||r.status}</td>
+    <td><button class="btn-sm primary" onclick="editar(${r.id})">✏️ Editar</button></td>
+  </tr>`).join('');
+}
+
+function abrirModal(r=null){
+  document.getElementById('m-id').value=r?.id||'';
+  document.getElementById('m-nome').value=r?.nome||'';
+  document.getElementById('m-cpf').value=r?.cpf||'';
+  document.getElementById('m-rg').value=r?.rg||'';
+  document.getElementById('m-nasc').value=r?.data_nascimento||'';
+  document.getElementById('m-sexo').value=r?.sexo||'';
+  document.getElementById('m-estcivil').value=r?.estado_civil||'';
+  document.getElementById('m-email').value=r?.email||'';
+  document.getElementById('m-tel').value=r?.telefone||'';
+  document.getElementById('m-end').value=r?.endereco||'';
+  document.getElementById('m-cep').value=r?.cep||'';
+  document.getElementById('m-cidade').value=r?.cidade||'';
+  document.getElementById('m-uf').value=r?.estado||'';
+  document.getElementById('m-mat').value=r?.matricula||'';
+  document.getElementById('m-regime').value=r?.regime||'clt';
+  document.getElementById('m-depto').value=r?.departamento_id||'';
+  document.getElementById('m-cargo').value=r?.cargo_id||'';
+  document.getElementById('m-admissao').value=r?.data_admissao||'';
+  document.getElementById('m-demissao').value=r?.data_demissao||'';
+  document.getElementById('m-salario').value=r?.salario||'';
+  document.getElementById('m-status').value=r?.status||'ativo';
+  document.getElementById('m-obs').value=r?.observacoes||'';
+  document.getElementById('m-banco').value=r?.banco||'';
+  document.getElementById('m-agencia').value=r?.agencia||'';
+  document.getElementById('m-conta').value=r?.conta||'';
+  document.getElementById('m-pix').value=r?.pix||'';
+  document.getElementById('modal-titulo').textContent=r?'✏️ Editar Colaborador':'➕ Novo Colaborador';
+  document.getElementById('btn-del').style.display=r?'inline-flex':'none';
+  document.getElementById('modal').classList.add('open');
+  initMasksIn(document.getElementById('modal'));
+}
+
+function editar(id){abrirModal(dados.find(r=>r.id==id));}
+function fecharModal(){document.getElementById('modal').classList.remove('open');}
+
+async function salvar(){
+  const id=document.getElementById('m-id').value;
+  const payload={
+    action:'save',id:id||null,
+    nome:document.getElementById('m-nome').value,
+    cpf:document.getElementById('m-cpf').value,
+    rg:document.getElementById('m-rg').value,
+    data_nascimento:document.getElementById('m-nasc').value||null,
+    sexo:document.getElementById('m-sexo').value,
+    estado_civil:document.getElementById('m-estcivil').value,
+    email:document.getElementById('m-email').value,
+    telefone:document.getElementById('m-tel').value,
+    endereco:document.getElementById('m-end').value,
+    cep:document.getElementById('m-cep').value,
+    cidade:document.getElementById('m-cidade').value,
+    estado:document.getElementById('m-uf').value,
+    matricula:document.getElementById('m-mat').value,
+    regime:document.getElementById('m-regime').value,
+    departamento_id:document.getElementById('m-depto').value||null,
+    cargo_id:document.getElementById('m-cargo').value||null,
+    data_admissao:document.getElementById('m-admissao').value||null,
+    data_demissao:document.getElementById('m-demissao').value||null,
+    salario:parseFloat(document.getElementById('m-salario').value)||0,
+    status:document.getElementById('m-status').value,
+    observacoes:document.getElementById('m-obs').value,
+    banco:document.getElementById('m-banco').value,
+    agencia:document.getElementById('m-agencia').value,
+    conta:document.getElementById('m-conta').value,
+    pix:document.getElementById('m-pix').value,
+  };
+  const r=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify(payload)});
+  const data=await r.json();
+  if(data.ok){bkToast('Colaborador salvo!','sucesso');fecharModal();setTimeout(()=>location.reload(),800);}
+  else bkToast(data.error||'Erro ao salvar','erro');
+}
+
+async function excluir(){
+  const id=document.getElementById('m-id').value;
+  const ok=await bkConfirm('Excluir este colaborador?','🗑️ Excluir');
+  if(!ok)return;
+  const r=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({action:'delete',id})});
+  const data=await r.json();
+  if(data.ok){bkToast('Excluído','sucesso');fecharModal();setTimeout(()=>location.reload(),800);}
+  else bkToast(data.error||'Erro','erro');
+}
+
+renderTabela();
+</script>
+{% endblock %}

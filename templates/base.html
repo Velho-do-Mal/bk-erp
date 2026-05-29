@@ -59,20 +59,28 @@
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
       Vendas
     </a>
-    <a href="{% url 'medicao:dashboard' %}" class="nav-item {% if 'medicao' in request.path %}active{% endif %}">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-      Boletim de Medição
-    </a>
-    <a href="{% url 'rh:dashboard' %}" class="nav-item {% if 'rh' in request.path %}active{% endif %}">
-      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-      RH <span style="font-size:10px;background:#f59e0b;color:#fff;padding:1px 5px;border-radius:8px;margin-left:4px;">Em breve</span>
-    </a>
-
-    <div class="nav-section" style="margin-top:12px">Cadastros</div>
     <a href="{% url 'servicos:lista' %}" class="nav-item {% if 'servicos' in request.path %}active{% endif %}">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
       Serviços / Produtos
     </a>
+    <a href="{% url 'orcamento:dashboard' %}" class="nav-item {% if 'orcamento' in request.path %}active{% endif %}">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 13h.01M13 13h.01M17 13h.01M17 9h.01M13 9h.01M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2m4 0H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2z"/></svg>
+      Orçamento
+    </a>
+    <a href="{% url 'medicao:dashboard' %}" class="nav-item {% if 'medicao' in request.path %}active{% endif %}">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      Boletim de Medição
+    </a>
+    <a href="{% url 'rh:colaboradores' %}" class="nav-item {% if 'rh' in request.path %}active{% endif %}">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+      Recursos Humanos
+    </a>
+    <a href="{% url 'relatorios:dashboard' %}" class="nav-item {% if 'relatorios' in request.path %}active{% endif %}">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      Relatórios
+    </a>
+
+    <div class="nav-section" style="margin-top:12px">Cadastros</div>
     <a href="{% url 'cadastros:clientes' %}" class="nav-item {% if 'clientes' in request.path %}active{% endif %}">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
       Clientes
@@ -103,8 +111,7 @@
         <div class="user-role">{{ user.get_perfil_display }}</div>
       </div>
     </div>
-    <a href="{% url 'accounts:usuarios' %}" class="nav-item {% if request.resolver_match.url_name == 'usuarios' %}active{% endif %}">👥 Usuários</a>
-      <a href="{% url 'accounts:logout' %}" class="nav-item" style="margin-top:8px;font-size:12px;color:#EF4444;">
+    <a href="{% url 'accounts:logout' %}" class="nav-item" style="margin-top:8px;font-size:12px;color:#EF4444;">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
       🚪 Sair
     </a>
@@ -125,166 +132,69 @@
       </div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
+      <!-- Busca Global -->
+      <div id="bk-search-wrap" style="position:relative;">
+        <div style="display:flex;align-items:center;background:#f1f5f9;border:1px solid var(--bk-border);border-radius:8px;padding:0 10px;gap:6px;transition:box-shadow .2s;" id="bk-search-box">
+          <svg width="14" height="14" fill="none" stroke="#9ca3af" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input type="text" id="bk-search-input" placeholder="Buscar…"
+            autocomplete="off"
+            style="border:none;background:transparent;outline:none;font-size:13px;width:180px;padding:6px 0;color:var(--bk-text);"
+            oninput="bkBusca(this.value)"
+            onfocus="document.getElementById('bk-search-box').style.boxShadow='0 0 0 2px var(--bk-blue)'"
+            onblur="setTimeout(()=>{document.getElementById('bk-search-box').style.boxShadow='none';fecharBusca()},200)">
+          <span id="bk-search-spinner" style="display:none;width:12px;height:12px;border:2px solid #e2e8f0;border-top-color:var(--bk-blue);border-radius:50%;animation:bk-spin .6s linear infinite;flex-shrink:0;"></span>
+        </div>
+        <!-- Dropdown de resultados -->
+        <div id="bk-search-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);right:0;width:360px;background:#fff;border:1px solid var(--bk-border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:9999;max-height:480px;overflow-y:auto;"></div>
+      </div>
       {% block topbar_actions %}{% endblock %}
     </div>
   </div>
+  <script>
+  (function(){
+    let _timer = null;
+    window.bkBusca = function(q){
+      clearTimeout(_timer);
+      const dd = document.getElementById('bk-search-dropdown');
+      const sp = document.getElementById('bk-search-spinner');
+      if(q.length < 2){ dd.style.display='none'; return; }
+      _timer = setTimeout(()=>{
+        sp.style.display='inline-block';
+        fetch(`{% url 'core:busca_global' %}?q=${encodeURIComponent(q)}`, {headers:{'X-Requested-With':'XMLHttpRequest'}})
+          .then(r=>r.json())
+          .then(data=>{
+            sp.style.display='none';
+            renderBusca(data);
+          })
+          .catch(()=>{ sp.style.display='none'; });
+      }, 320);
+    };
 
-  <div class="content">
-    {% if messages %}
-    <div class="messages" style="margin-bottom:16px;">
-      {% for message in messages %}
-      <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
-      {% endfor %}
-    </div>
-    {% endif %}
+    window.fecharBusca = function(){
+      const q = document.getElementById('bk-search-input').value;
+      if(q.length < 2) document.getElementById('bk-search-dropdown').style.display='none';
+    };
 
-    {% block content %}{% endblock %}
-  </div>
-</main>
-
-<!-- ══════════════════════════════
-     TOAST GLOBAL
-══════════════════════════════ -->
-<div id="bk-toast" role="alert" aria-live="polite"></div>
-
-<!-- ══════════════════════════════
-     MODAL DE CONFIRMAÇÃO GLOBAL
-══════════════════════════════ -->
-<div class="modal-overlay" id="bk-confirm-modal">
-  <div class="modal-box" style="max-width:420px;">
-    <div class="modal-title" id="bk-confirm-title">⚠️ Confirmar Exclusão</div>
-    <p id="bk-confirm-msg" style="font-size:14px;color:#374151;margin-bottom:20px;line-height:1.6;"></p>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="bkConfirmCancel()">❌ Cancelar</button>
-      <button class="btn btn-danger"    id="bk-confirm-ok">🗑️ Excluir</button>
-    </div>
-  </div>
-</div>
-
-{% else %}
-{% block full_content %}{% endblock %}
-{% endif %}
-
-<script>
-// ══════════════════════════════
-//  TOAST GLOBAL
-// ══════════════════════════════
-function bkToast(msg, tipo) {
-  const el = document.getElementById('bk-toast');
-  if (!el) return;
-  el.textContent = msg;
-  el.className = 'bk-toast-visible ' + (tipo || 'info');
-  clearTimeout(el._timer);
-  el._timer = setTimeout(() => { el.className = ''; }, 3500);
-}
-
-// ══════════════════════════════
-//  MODAL CONFIRM GLOBAL
-// ══════════════════════════════
-let _bkConfirmResolve = null;
-
-function bkConfirm(msg, titulo) {
-  document.getElementById('bk-confirm-msg').textContent = msg || 'Tem certeza? Esta ação não poderá ser desfeita.';
-  document.getElementById('bk-confirm-title').textContent = titulo || '⚠️ Confirmar Exclusão';
-  document.getElementById('bk-confirm-modal').classList.add('open');
-  return new Promise(resolve => { _bkConfirmResolve = resolve; });
-}
-
-function bkConfirmCancel() {
-  document.getElementById('bk-confirm-modal').classList.remove('open');
-  if (_bkConfirmResolve) { _bkConfirmResolve(false); _bkConfirmResolve = null; }
-}
-
-document.getElementById('bk-confirm-ok').addEventListener('click', function() {
-  document.getElementById('bk-confirm-modal').classList.remove('open');
-  if (_bkConfirmResolve) { _bkConfirmResolve(true); _bkConfirmResolve = null; }
-});
-
-// Fechar modal ao clicar no overlay
-document.getElementById('bk-confirm-modal')?.addEventListener('click', function(e) {
-  if (e.target === this) bkConfirmCancel();
-});
-
-// ══════════════════════════════
-//  HAMBURGER MOBILE
-// ══════════════════════════════
-function toggleSidebar() {
-  const sidebar  = document.getElementById('sidebar');
-  const overlay  = document.getElementById('sidebar-overlay');
-  const hamburger = document.getElementById('hamburger-btn');
-  const isOpen = sidebar.classList.contains('sidebar-open');
-  sidebar.classList.toggle('sidebar-open', !isOpen);
-  overlay.classList.toggle('active', !isOpen);
-  hamburger.classList.toggle('active', !isOpen);
-}
-
-// Fechar sidebar ao redimensionar para desktop
-window.addEventListener('resize', () => {
-  if (window.innerWidth > 768) {
-    document.getElementById('sidebar')?.classList.remove('sidebar-open');
-    document.getElementById('sidebar-overlay')?.classList.remove('active');
-    document.getElementById('hamburger-btn')?.classList.remove('active');
-  }
-});
-
-// ══════════════════════════════
-//  TABS GENÉRICO
-// ══════════════════════════════
-document.querySelectorAll('.tab-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const group = btn.dataset.group || 'default';
-    document.querySelectorAll(`.tab-btn[data-group="${group}"]`).forEach(b => b.classList.remove('active'));
-    document.querySelectorAll(`.tab-panel[data-group="${group}"]`).forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    const target = document.getElementById(btn.dataset.tab);
-    if (target) target.classList.add('active');
-  });
-});
-</script>
-{% block extra_js %}{% endblock %}
-  <script src="{% static 'js/bk_masks.js' %}"></script>
-
-<!-- ══════════════════════════════
-     GLOBAL LOADER
-     Use: bkLoader.show() / bkLoader.hide()
-     Ativa automaticamente em fetch() e XMLHttpRequest
-     ══════════════════════════════ -->
-<div id="bk-global-loader" style="
-  display:none;position:fixed;inset:0;z-index:9999;
-  background:rgba(255,255,255,.55);backdrop-filter:blur(2px);
-  align-items:center;justify-content:center;flex-direction:column;gap:12px;">
-  <div style="
-    width:48px;height:48px;border-radius:50%;
-    border:5px solid #dbeafe;border-top-color:#1e3a8a;
-    animation:bk-spin .7s linear infinite;"></div>
-  <span style="color:#1e3a8a;font-weight:600;font-size:.9rem;letter-spacing:.5px;">Carregando&hellip;</span>
-</div>
-<style>@keyframes bk-spin{to{transform:rotate(360deg)}}</style>
-<script>
-(function(){
-  let _pending = 0;
-  const loader = document.getElementById('bk-global-loader');
-
-  window.bkLoader = {
-    show(){ _pending++; loader.style.display='flex'; },
-    hide(){ _pending=Math.max(0,_pending-1); if(!_pending) loader.style.display='none'; }
-  };
-
-  /* ---- intercepta fetch ---- */
-  const _fetch = window.fetch;
-  window.fetch = function(...args){
-    bkLoader.show();
-    return _fetch.apply(this, args).finally(()=>bkLoader.hide());
-  };
-
-  /* ---- intercepta XHR ---- */
-  const _open = XMLHttpRequest.prototype.open;
-  XMLHttpRequest.prototype.open = function(...args){
-    this.addEventListener('loadstart', ()=>bkLoader.show());
-    this.addEventListener('loadend',  ()=>bkLoader.hide());
-    return _open.apply(this, args);
-  };
-})();
-</script>
-</body>
-</html>
+    function renderBusca(data){
+      const dd = document.getElementById('bk-search-dropdown');
+      if(!data.resultados || !data.resultados.length){
+        dd.innerHTML = `<div style="padding:20px;text-align:center;color:#9ca3af;font-size:13px;">
+          <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display:block;margin:0 auto 8px"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          Nenhum resultado para "<strong>${escHtml(data.query||'')}</strong>"
+        </div>`;
+        dd.style.display='block';
+        return;
+      }
+      // Agrupa por módulo
+      const grupos = {};
+      data.resultados.forEach(r=>{
+        if(!grupos[r.modulo]) grupos[r.modulo]={cor:r.cor,icone:r.icone,itens:[]};
+        grupos[r.modulo].itens.push(r);
+      });
+      let html = `<div style="padding:8px 12px;font-size:11px;color:#9ca3af;border-bottom:1px solid #f1f5f9;font-weight:600;letter-spacing:.5px;">
+        ${data.total} RESULTADO${data.total!==1?'S':''} PARA "${escHtml(data.query||'').toUpperCase()}"
+      </div>`;
+      Object.entries(grupos).forEach(([mod, g])=>{
+        html += `<div style="padding:6px 0;">
+          <div style="padding:4px 14px;font-size:10px;font-weight:700;color:${g.cor};text-transform:uppercase;letter-spacing:.6px;display:flex;align-items:center;gap:5px;">
+            <i class="${g.icone}"

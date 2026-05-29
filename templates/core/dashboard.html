@@ -1,188 +1,385 @@
 {% extends 'base.html' %}
 {% load bk_filters %}
-{% block title %}Dashboard — BK ERP{% endblock %}
-{% block page_title %}Dashboard Executivo{% endblock %}
-{% block page_sub %}Visão 360º da BK Engenharia{% endblock %}
-
-{% block topbar_actions %}
-{% if user.is_admin_erp %}
-<div class="flex gap-2">
-    <a href="{% url 'projetos:novo' %}" class="btn btn-primary btn-sm">
-      <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-      Novo Projeto
-    </a>
-</div>
-{% endif %}
-{% endblock %}
+{% block title %}Dashboard Executivo — BK ERP{% endblock %}
 
 {% block content %}
 <style>
-    .dashboard-section-title { font-size: 16px; font-weight: 700; margin: 24px 0 16px; color: var(--bk-blue); display: flex; align-items: center; gap: 8px; }
-    .kpi-card { transition: transform 0.2s; }
-    .kpi-card:hover { transform: translateY(-2px); }
-    .chart-container { background: #fff; border-radius: 8px; padding: 20px; border: 1px solid var(--bk-border); height: 300px; }
+  .dash-section { font-size:15px; font-weight:700; color:var(--bk-blue); margin:28px 0 14px; display:flex; align-items:center; gap:8px; border-bottom:2px solid var(--bk-blue); padding-bottom:6px; }
+  .kpi-grid-5 { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:20px; }
+  .kpi-grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
+  .kpi-grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:20px; }
+  .kpi-card { background:#fff; border:1px solid var(--bk-border); border-radius:10px; padding:16px 18px; transition:transform .15s,box-shadow .15s; }
+  .kpi-card:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.08); }
+  .kpi-label { font-size:11px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
+  .kpi-value { font-size:22px; font-weight:800; line-height:1.2; }
+  .kpi-sub { font-size:11px; color:#9ca3af; margin-top:4px; }
+  .chart-box { background:#fff; border:1px solid var(--bk-border); border-radius:10px; padding:18px; }
+  .chart-box h4 { font-size:13px; font-weight:700; color:#6b7280; margin-bottom:14px; }
+  .alert-row { display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid #f3f4f6; }
+  .alert-row:last-child { border-bottom:none; }
+  .alert-tag { font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px; }
+  .tag-entrada { background:#dcfce7; color:#16a34a; }
+  .tag-saida { background:#fee2e2; color:#dc2626; }
+  @media(max-width:768px){
+    .kpi-grid-5,.kpi-grid-4 { grid-template-columns:repeat(2,1fr); }
+    .kpi-grid-3 { grid-template-columns:repeat(2,1fr); }
+  }
 </style>
 
-<!-- SEÇÃO 1: KPIs FINANCEIROS E VENDAS -->
-<div class="dashboard-section-title">
-    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m.599-1c.51-.598.81-1.364.81-2.201 0-1.105-.895-2-2-2s-2 .895-2 2c0 .837.3 1.603.81 2.201M12 16c-1.11 0-2.08-.402-2.599-1M12 16v1m0-1V7"/></svg>
-    Indicadores Financeiros e Comerciais
-</div>
-<div class="kpi-grid">
-  <!-- Financeiro -->
-  <div class="kpi-card" style="border-left: 3px solid var(--bk-green);">
-    <div class="kpi-label">Saldo Atual</div>
-    <div class="kpi-value" style="color:#16a34a">{{ saldo_atual|moeda }}</div>
-    <div class="kpi-sub">Disponível em contas</div>
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h1 class="content-title">Dashboard Executivo</h1>
+    <p class="content-subtitle">Visão 360° da empresa — {{ hoje|date:"d/m/Y" }}</p>
   </div>
-  <!-- Vendas -->
-  <div class="kpi-card" style="border-left: 3px solid var(--bk-blue);">
-    <div class="kpi-label">Taxa de Conversão</div>
-    <div class="kpi-value" style="color:var(--bk-blue)">{{ taxa_conversao }}%</div>
-    <div class="kpi-sub">Propostas aprovadas</div>
-  </div>
-  <div class="kpi-card" style="border-left: 3px solid var(--bk-teal);">
-    <div class="kpi-label">Ticket Médio</div>
-    <div class="kpi-value" style="color:#0f766e">{{ ticket_medio|moeda }}</div>
-    <div class="kpi-sub">Valor médio por proposta</div>
-  </div>
-  <!-- Compras -->
-  <div class="kpi-card" style="border-left: 3px solid var(--bk-orange);">
-    <div class="kpi-label">Compras no Mês</div>
-    <div class="kpi-value" style="color:#d97706">{{ compras_mes|moeda }}</div>
-    <div class="kpi-sub">{{ pedidos_pendentes }} pedidos pendentes</div>
-  </div>
-</div>
-
-<!-- SEÇÃO 2: GRÁFICOS ANALÍTICOS -->
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-    <div class="chart-container">
-        <h3 style="font-size:14px;font-weight:700;margin-bottom:16px;color:#6b7280">Composição de Despesas (Top 5)</h3>
-        <canvas id="chartFinanceiro"></canvas>
-    </div>
-    <div class="chart-container">
-        <h3 style="font-size:14px;font-weight:700;margin-bottom:16px;color:#6b7280">Funil de Vendas (Leads por Estágio)</h3>
-        <canvas id="chartVendas"></canvas>
-    </div>
-</div>
-
-<!-- SEÇÃO 3: PROJETOS -->
-<div class="dashboard-section-title">
-    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
-    Gestão de Projetos
-</div>
-<div class="kpi-grid mb-6">
-  <div class="kpi-card" style="border-left: 3px solid var(--bk-blue);">
-    <div class="kpi-label">Total de Projetos</div>
-    <div class="kpi-value">{{ total }}</div>
-    <div class="kpi-sub">na sua carteira</div>
-  </div>
-  <div class="kpi-card" style="border-left: 3px solid var(--bk-green);">
-    <div class="kpi-label">Em Andamento</div>
-    <div class="kpi-value" style="color:#16a34a">{{ ativos }}</div>
-    <div class="kpi-sub">projetos ativos</div>
-  </div>
-  <div class="kpi-card" style="border-left: 3px solid var(--bk-gray);">
-    <div class="kpi-label">Encerrados</div>
-    <div class="kpi-value" style="color:#6b7280">{{ encerrados }}</div>
-    <div class="kpi-sub">concluídos</div>
-  </div>
-</div>
-
-<div class="card">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-    <h2 style="font-size:15px;font-weight:700;">Projetos Ativos Recentes</h2>
-    <a href="{% url 'projetos:lista' %}" class="btn btn-secondary btn-sm">Ver todos</a>
-  </div>
-  {% if projetos_recentes %}
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Nome</th>
-          <th>Status</th>
-          <th>Início</th>
-          <th>Gerente</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for p in projetos_recentes %}
-        <tr>
-          <td style="color:#6b7280">{{ p.id }}</td>
-          <td style="font-weight:600">{{ p.nome }}</td>
-          <td>
-            {% if p.status == 'execucao' %}<span class="badge badge-green">Execução</span>
-            {% elif p.status == 'planejamento' %}<span class="badge badge-blue">Planejamento</span>
-            {% elif p.status == 'monitoramento' %}<span class="badge badge-teal">Monitoramento</span>
-            {% elif p.status == 'suspenso' %}<span class="badge badge-orange">Suspenso</span>
-            {% else %}<span class="badge badge-gray">{{ p.get_status_display }}</span>
-            {% endif %}
-          </td>
-          <td style="color:#6b7280">{{ p.data_inicio|date:"d/m/Y"|default:"—" }}</td>
-          <td style="color:#6b7280">{{ p.gerente|default:"—" }}</td>
-          <td><a href="{% url 'projetos:detalhe' p.pk %}" class="btn btn-secondary btn-sm">Abrir →</a></td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% else %}
-  <div style="text-align:center;padding:40px;color:#6b7280;">
-    <div style="font-size:32px;margin-bottom:8px;">📋</div>
-    <div>Nenhum projeto ativo encontrado.</div>
-  </div>
+  {% if user.is_admin_erp %}
+  <a href="{% url 'projetos:novo' %}" class="btn btn-primary">
+    <i class="fas fa-plus me-2"></i>Novo Projeto
+  </a>
   {% endif %}
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    // Gráfico Financeiro (Rosca)
-    const ctxFin = document.getElementById('chartFinanceiro').getContext('2d');
-    const dataFin = {{ chart_financeiro_json|safe }};
-    new Chart(ctxFin, {
-        type: 'doughnut',
-        data: {
-            labels: dataFin.labels,
-            datasets: [{
-                data: dataFin.values,
-                backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } }
-            }
-        }
-    });
+<!-- ═══════════════════════════════════════════════════
+     SEÇÃO: ALERTAS FINANCEIROS DO DIA
+═══════════════════════════════════════════════════ -->
+<div class="dash-section">
+  <i class="fas fa-bell"></i> Alertas do Dia
+</div>
 
-    // Gráfico de Vendas (Barras Horizontais - Funil)
-    const ctxVen = document.getElementById('chartVendas').getContext('2d');
-    new Chart(ctxVen, {
-        type: 'bar',
-        data: {
-            labels: {{ pipeline_labels_json|safe }},
-            datasets: [{
-                label: 'Leads',
-                data: {{ pipeline_data_json|safe }},
-                backgroundColor: '#3b82f6',
-                borderRadius: 4
-            }]
+<div class="kpi-grid-4 mb-3">
+  <div class="kpi-card" style="border-top:3px solid #dc2626;">
+    <div class="kpi-label">Recebimentos Atrasados</div>
+    <div class="kpi-value" style="color:#dc2626;">R$ {{ recebimentos_atrasados|floatformat:2 }}</div>
+    <div class="kpi-sub">{{ qtd_recebimentos_atrasados }} título(s) vencido(s)</div>
+  </div>
+  <div class="kpi-card" style="border-top:3px solid #f97316;">
+    <div class="kpi-label">Pagamentos Atrasados</div>
+    <div class="kpi-value" style="color:#f97316;">R$ {{ pagamentos_atrasados|floatformat:2 }}</div>
+    <div class="kpi-sub">{{ qtd_pagamentos_atrasados }} conta(s) vencida(s)</div>
+  </div>
+  <div class="kpi-card" style="border-top:3px solid #16a34a;">
+    <div class="kpi-label">Recebimentos Hoje</div>
+    <div class="kpi-value" style="color:#16a34a;">R$ {{ recebimentos_hoje|floatformat:2 }}</div>
+    <div class="kpi-sub">+ R$ {{ recebimentos_amanha|floatformat:2 }} amanhã</div>
+  </div>
+  <div class="kpi-card" style="border-top:3px solid #3b82f6;">
+    <div class="kpi-label">Pagamentos Hoje</div>
+    <div class="kpi-value" style="color:#3b82f6;">R$ {{ pagamentos_hoje|floatformat:2 }}</div>
+    <div class="kpi-sub">+ R$ {{ pagamentos_amanha|floatformat:2 }} amanhã</div>
+  </div>
+</div>
+
+{% if contas_vencendo_hoje or contas_atrasadas_lista %}
+<div class="row g-3 mb-4">
+  {% if contas_vencendo_hoje %}
+  <div class="col-md-6">
+    <div class="chart-box">
+      <h4><i class="fas fa-calendar-day me-2 text-warning"></i>Vencendo Hoje</h4>
+      {% for c in contas_vencendo_hoje %}
+      <div class="alert-row">
+        <div>
+          <span class="alert-tag {% if c.tipo == 'entrada' %}tag-entrada{% else %}tag-saida{% endif %}">
+            {{ c.tipo|upper }}
+          </span>
+          <span class="ms-2 small">{{ c.descricao|truncatechars:35 }}</span>
+        </div>
+        <span class="fw-semibold small">R$ {{ c.valor|floatformat:2 }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+  {% if contas_atrasadas_lista %}
+  <div class="col-md-6">
+    <div class="chart-box">
+      <h4><i class="fas fa-exclamation-triangle me-2 text-danger"></i>Em Atraso (mais antigos)</h4>
+      {% for c in contas_atrasadas_lista %}
+      <div class="alert-row">
+        <div>
+          <span class="alert-tag {% if c.tipo == 'entrada' %}tag-entrada{% else %}tag-saida{% endif %}">
+            {{ c.tipo|upper }}
+          </span>
+          <span class="ms-2 small">{{ c.descricao|truncatechars:30 }}</span>
+          <span class="ms-1 text-muted" style="font-size:10px">{{ c.data|date:"d/m" }}</span>
+        </div>
+        <span class="fw-semibold small text-danger">R$ {{ c.valor|floatformat:2 }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- ═══════════════════════════════════════════════════
+     SEÇÃO: KPIs FINANCEIROS
+═══════════════════════════════════════════════════ -->
+<div class="dash-section">
+  <i class="fas fa-chart-line"></i> Indicadores Financeiros
+</div>
+
+<div class="kpi-grid-4 mb-3">
+  <div class="kpi-card" style="border-top:3px solid #16a34a;">
+    <div class="kpi-label">Saldo Atual</div>
+    <div class="kpi-value" style="color:#16a34a;">R$ {{ saldo_atual|floatformat:2 }}</div>
+    <div class="kpi-sub">Receitas − Despesas realizadas</div>
+  </div>
+  <div class="kpi-card" style="border-top:3px solid #3b82f6;">
+    <div class="kpi-label">Receitas Realizadas</div>
+    <div class="kpi-value" style="color:#3b82f6;">R$ {{ receita_total|floatformat:2 }}</div>
+    <div class="kpi-sub">R$ {{ receita_mes|floatformat:2 }} no mês atual</div>
+  </div>
+  <div class="kpi-card" style="border-top:3px solid #dc2626;">
+    <div class="kpi-label">Despesas Realizadas</div>
+    <div class="kpi-value" style="color:#dc2626;">R$ {{ despesa_total|floatformat:2 }}</div>
+    <div class="kpi-sub">R$ {{ despesa_mes|floatformat:2 }} no mês atual</div>
+  </div>
+  <div class="kpi-card" style="border-top:3px solid #f59e0b;">
+    <div class="kpi-label">Compras no Mês</div>
+    <div class="kpi-value" style="color:#f59e0b;">R$ {{ compras_mes|floatformat:2 }}</div>
+    <div class="kpi-sub">{{ pedidos_pendentes }} pedido(s) pendente(s)</div>
+  </div>
+</div>
+
+<!-- Gráficos Financeiros -->
+<div class="row g-3 mb-4">
+  <div class="col-lg-8">
+    <div class="chart-box">
+      <h4><i class="fas fa-chart-area me-2"></i>Evolução Mensal — Receita × Despesa (6 meses)</h4>
+      <div style="height:260px;"><canvas id="chartEvolucao"></canvas></div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="chart-box">
+      <h4><i class="fas fa-chart-pie me-2"></i>Composição de Despesas</h4>
+      <div style="height:260px;"><canvas id="chartDespesas"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     SEÇÃO: PROJETOS
+═══════════════════════════════════════════════════ -->
+<div class="dash-section">
+  <i class="fas fa-project-diagram"></i> Gestão de Projetos
+</div>
+
+<div class="kpi-grid-4 mb-3">
+  <div class="kpi-card" style="border-top:3px solid #3b82f6;">
+    <div class="kpi-label">Total de Projetos</div>
+    <div class="kpi-value">{{ total }}</div>
+    <div class="kpi-sub">na carteira</div>
+  </div>
+  <div class="kpi-card" style="border-top:3px solid #16a34a;">
+    <div class="kpi-label">Em Andamento</div>
+    <div class="kpi-value" style="color:#16a34a;">{{ ativos }}</div>
+    <div class="kpi-sub">projetos ativos</div>
+  </div>
+  <div class="kpi-card" style="border-top:3px solid #6b7280;">
+    <div class="kpi-label">Encerrados</div>
+    <div class="kpi-value" style="color:#6b7280;">{{ encerrados }}</div>
+    <div class="kpi-sub">concluídos</div>
+  </div>
+  <div class="kpi-card" style="border-top:3px solid #dc2626;">
+    <div class="kpi-label">Com Atraso</div>
+    <div class="kpi-value" style="color:#dc2626;">{{ projetos_atrasados }}</div>
+    <div class="kpi-sub">prazo vencido</div>
+  </div>
+</div>
+
+<div class="card mb-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span><i class="fas fa-list me-2"></i>Projetos Ativos Recentes</span>
+    <a href="{% url 'projetos:lista' %}" class="btn btn-sm btn-outline-primary">Ver todos →</a>
+  </div>
+  <div class="card-body p-0">
+    {% if projetos_recentes %}
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>#</th><th>Nome</th><th>Status</th><th>Início</th><th>Prazo</th><th>Gerente</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in projetos_recentes %}
+          <tr>
+            <td class="text-muted">{{ p.id }}</td>
+            <td class="fw-semibold">{{ p.nome }}</td>
+            <td>
+              {% if p.status == 'execucao' %}<span class="badge badge-success">Execução</span>
+              {% elif p.status == 'planejamento' %}<span class="badge" style="background:#dbeafe;color:#1d4ed8">Planejamento</span>
+              {% elif p.status == 'monitoramento' %}<span class="badge" style="background:#ccfbf1;color:#0f766e">Monitoramento</span>
+              {% elif p.status == 'suspenso' %}<span class="badge badge-warning">Suspenso</span>
+              {% else %}<span class="badge badge-secondary">{{ p.get_status_display }}</span>{% endif %}
+            </td>
+            <td class="text-muted small">{{ p.data_inicio|date:"d/m/Y"|default:"—" }}</td>
+            <td class="small {% if p.data_fim_prevista and p.data_fim_prevista < hoje %}text-danger fw-semibold{% else %}text-muted{% endif %}">
+              {{ p.data_fim_prevista|date:"d/m/Y"|default:"—" }}
+            </td>
+            <td class="text-muted small">{{ p.gerente|default:"—" }}</td>
+            <td><a href="{% url 'projetos:detalhe' p.pk %}" class="btn btn-sm btn-outline-secondary">Abrir →</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center text-muted py-4">
+      <i class="fas fa-project-diagram fa-2x mb-2 d-block opacity-25"></i>
+      Nenhum projeto ativo.
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     SEÇÃO: VENDAS
+═══════════════════════════════════════════════════ -->
+<div class="dash-section">
+  <i class="fas fa-handshake"></i> Comercial e Vendas
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-lg-8">
+    <div class="kpi-grid-4" style="grid-template-columns:repeat(4,1fr)">
+      <div class="kpi-card" style="border-top:3px solid #3b82f6;">
+        <div class="kpi-label">Propostas</div>
+        <div class="kpi-value">{{ total_propostas }}</div>
+        <div class="kpi-sub">total enviadas</div>
+      </div>
+      <div class="kpi-card" style="border-top:3px solid #16a34a;">
+        <div class="kpi-label">Aprovadas</div>
+        <div class="kpi-value" style="color:#16a34a;">{{ propostas_aprovadas }}</div>
+        <div class="kpi-sub">negócios fechados</div>
+      </div>
+      <div class="kpi-card" style="border-top:3px solid #8b5cf6;">
+        <div class="kpi-label">Conversão</div>
+        <div class="kpi-value" style="color:#8b5cf6;">{{ taxa_conversao }}%</div>
+        <div class="kpi-sub">taxa de aprovação</div>
+      </div>
+      <div class="kpi-card" style="border-top:3px solid #f59e0b;">
+        <div class="kpi-label">Ticket Médio</div>
+        <div class="kpi-value" style="color:#f59e0b;font-size:16px;">R$ {{ ticket_medio|floatformat:2 }}</div>
+        <div class="kpi-sub">por proposta</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="chart-box">
+      <h4><i class="fas fa-funnel-dollar me-2"></i>Funil de Leads</h4>
+      <div style="height:160px;"><canvas id="chartFunil"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+const bkColors = {
+  blue: '#3b82f6', green: '#16a34a', red: '#dc2626',
+  orange: '#f59e0b', purple: '#8b5cf6', teal: '#0f766e', gray: '#6b7280'
+};
+
+// 1. Gráfico de Evolução Mensal (linha)
+(function(){
+  const data = {{ chart_evolucao_json|safe }};
+  const ctx = document.getElementById('chartEvolucao').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.labels,
+      datasets: [
+        {
+          label: 'Receita',
+          data: data.receitas,
+          borderColor: bkColors.green,
+          backgroundColor: 'rgba(22,163,74,.08)',
+          borderWidth: 2.5,
+          pointRadius: 4,
+          fill: true,
+          tension: 0.3
         },
-        options: {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                x: { grid: { display: false }, ticks: { stepSize: 1 } },
-                y: { grid: { display: false } }
-            }
+        {
+          label: 'Despesa',
+          data: data.despesas,
+          borderColor: bkColors.red,
+          backgroundColor: 'rgba(220,38,38,.06)',
+          borderWidth: 2.5,
+          pointRadius: 4,
+          fill: true,
+          tension: 0.3
         }
-    });
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: { callbacks: { label: ctx => ' R$ ' + ctx.raw.toLocaleString('pt-BR', {minimumFractionDigits:2}) } }
+      },
+      scales: {
+        y: { ticks: { callback: v => 'R$ ' + (v/1000).toFixed(0) + 'k', font:{size:10} }, grid: { color: '#f3f4f6' } },
+        x: { grid: { display: false }, ticks: { font: {size:10} } }
+      }
+    }
+  });
+})();
+
+// 2. Gráfico Composição de Despesas (rosca)
+(function(){
+  const data = {{ chart_despesas_json|safe }};
+  if (!data.labels.length) return;
+  const ctx = document.getElementById('chartDespesas').getContext('2d');
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: data.labels,
+      datasets: [{
+        data: data.values,
+        backgroundColor: [bkColors.blue, bkColors.green, bkColors.orange, bkColors.red, bkColors.purple],
+        borderWidth: 0,
+        hoverOffset: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 10, font: { size: 10 }, padding: 8 } },
+        tooltip: { callbacks: { label: ctx => ' R$ ' + ctx.raw.toLocaleString('pt-BR', {minimumFractionDigits:2}) } }
+      },
+      cutout: '60%'
+    }
+  });
+})();
+
+// 3. Funil de Leads (barras horizontais)
+(function(){
+  const ctx = document.getElementById('chartFunil').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: {{ pipeline_labels_json|safe }},
+      datasets: [{
+        label: 'Leads',
+        data: {{ pipeline_data_json|safe }},
+        backgroundColor: [bkColors.blue, bkColors.teal, bkColors.orange, bkColors.green],
+        borderRadius: 4,
+        borderSkipped: false
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { stepSize: 1, font:{size:10} } },
+        y: { grid: { display: false }, ticks: { font:{size:10} } }
+      }
+    }
+  });
+})();
 </script>
 {% endblock %}

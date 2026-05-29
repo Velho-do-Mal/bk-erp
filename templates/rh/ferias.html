@@ -1,0 +1,284 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Férias — RH{% endblock %}
+
+{% block content %}
+<div class="content-header">
+  <div class="d-flex align-items-center justify-content-between">
+    <div>
+      <h1 class="content-title">Controle de Férias</h1>
+      <p class="content-subtitle">Gerencie os períodos de férias dos colaboradores</p>
+    </div>
+    <button class="btn btn-primary" onclick="abrirModal()">
+      <i class="fas fa-plus me-2"></i>Agendar Férias
+    </button>
+  </div>
+</div>
+
+<!-- Submenu RH -->
+<div class="card mb-4">
+  <div class="card-body py-2">
+    <nav class="d-flex gap-2 flex-wrap">
+      <a href="{% url 'rh:colaboradores' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-users me-1"></i>Colaboradores
+      </a>
+      <a href="{% url 'rh:departamentos' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-sitemap me-1"></i>Departamentos
+      </a>
+      <a href="{% url 'rh:cargos' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="fas fa-id-badge me-1"></i>Cargos
+      </a>
+      <a href="{% url 'rh:ferias' %}" class="btn btn-sm btn-primary">
+        <i class="fas fa-umbrella-beach me-1"></i>Férias
+      </a>
+    </nav>
+  </div>
+</div>
+
+<!-- KPIs -->
+<div class="row g-3 mb-4">
+  <div class="col-md-3 col-6">
+    <div class="card text-center">
+      <div class="card-body">
+        <div class="fs-2 fw-bold text-primary">{{ total_ferias }}</div>
+        <div class="text-muted small">Registros</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card text-center">
+      <div class="card-body">
+        <div class="fs-2 fw-bold text-warning">{{ em_ferias }}</div>
+        <div class="text-muted small">Em férias agora</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card text-center">
+      <div class="card-body">
+        <div class="fs-2 fw-bold text-info">{{ agendadas }}</div>
+        <div class="text-muted small">Agendadas</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3 col-6">
+    <div class="card text-center">
+      <div class="card-body">
+        <div class="fs-2 fw-bold text-success">{{ concluidas }}</div>
+        <div class="text-muted small">Concluídas</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-3">
+  <div class="card-body py-2">
+    <form method="get" class="d-flex gap-2 flex-wrap align-items-center">
+      <select name="status" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
+        <option value="">Todos os status</option>
+        <option value="agendado" {% if request.GET.status == 'agendado' %}selected{% endif %}>Agendado</option>
+        <option value="em_andamento" {% if request.GET.status == 'em_andamento' %}selected{% endif %}>Em andamento</option>
+        <option value="concluido" {% if request.GET.status == 'concluido' %}selected{% endif %}>Concluído</option>
+        <option value="cancelado" {% if request.GET.status == 'cancelado' %}selected{% endif %}>Cancelado</option>
+      </select>
+      <input type="month" name="mes" class="form-control form-control-sm w-auto" value="{{ request.GET.mes }}" onchange="this.form.submit()">
+      <input type="text" name="q" class="form-control form-control-sm" style="max-width:200px" placeholder="Colaborador…" value="{{ request.GET.q }}">
+      <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-search"></i></button>
+      <a href="{% url 'rh:ferias' %}" class="btn btn-sm btn-outline-secondary">Limpar</a>
+    </form>
+  </div>
+</div>
+
+<!-- Tabela -->
+<div class="card">
+  <div class="card-header">
+    <i class="fas fa-umbrella-beach me-2"></i>Férias dos Colaboradores
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead>
+          <tr>
+            <th>Colaborador</th>
+            <th>Departamento</th>
+            <th>Início</th>
+            <th>Fim</th>
+            <th class="text-center">Dias</th>
+            <th class="text-center">Status</th>
+            <th>Observações</th>
+            <th class="text-end">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in ferias %}
+          <tr>
+            <td class="fw-semibold">{{ f.colaborador.nome }}</td>
+            <td class="text-muted small">{{ f.colaborador.departamento.nome|default:"—" }}</td>
+            <td>{{ f.data_inicio|date:"d/m/Y" }}</td>
+            <td>{{ f.data_fim|date:"d/m/Y" }}</td>
+            <td class="text-center">{{ f.dias }}</td>
+            <td class="text-center">
+              {% if f.status == 'agendado' %}
+                <span class="badge" style="background:#dbeafe;color:#1d4ed8">📅 Agendado</span>
+              {% elif f.status == 'em_andamento' %}
+                <span class="badge badge-warning">🏖️ Em andamento</span>
+              {% elif f.status == 'concluido' %}
+                <span class="badge badge-success">✅ Concluído</span>
+              {% else %}
+                <span class="badge badge-danger">❌ Cancelado</span>
+              {% endif %}
+            </td>
+            <td class="text-muted small">{{ f.observacoes|default:"—"|truncatechars:40 }}</td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-outline-primary me-1"
+                onclick="editarFerias({{ f.id }}, {{ f.colaborador_id }}, '{{ f.data_inicio|date:'Y-m-d' }}', '{{ f.data_fim|date:'Y-m-d' }}', {{ f.dias }}, '{{ f.status }}', '{{ f.observacoes|default:''|escapejs }}')">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="btn btn-sm btn-outline-danger"
+                onclick="excluirFerias({{ f.id }}, '{{ f.colaborador.nome|escapejs }}')">
+                <i class="fas fa-trash"></i>
+              </button>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" class="text-center text-muted py-4">
+              <i class="fas fa-umbrella-beach fa-2x mb-2 d-block opacity-25"></i>
+              Nenhum registro de férias encontrado.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Férias -->
+<div class="modal fade" id="modalFerias" tabindex="-1">
+  <div class="modal-dialog">
+    <form method="post" id="formFerias">
+      {% csrf_token %}
+      <input type="hidden" name="action" id="action" value="criar">
+      <input type="hidden" name="ferias_id" id="ferias_id">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalTitulo">Agendar Férias</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Colaborador <span class="text-danger">*</span></label>
+              <select name="colaborador" id="colaborador" class="form-select" required>
+                <option value="">— Selecione —</option>
+                {% for c in colaboradores %}
+                <option value="{{ c.id }}">{{ c.nome }} — {{ c.cargo.nome|default:"s/ cargo" }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Data Início <span class="text-danger">*</span></label>
+              <input type="date" name="data_inicio" id="data_inicio" class="form-control" required onchange="calcDias()">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Data Fim <span class="text-danger">*</span></label>
+              <input type="date" name="data_fim" id="data_fim" class="form-control" required onchange="calcDias()">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Dias</label>
+              <input type="number" name="dias" id="dias" class="form-control" min="1" placeholder="Auto">
+            </div>
+            <div class="col-md-8">
+              <label class="form-label fw-semibold">Status</label>
+              <select name="status" id="status" class="form-select">
+                <option value="agendado">Agendado</option>
+                <option value="em_andamento">Em andamento</option>
+                <option value="concluido">Concluído</option>
+                <option value="cancelado">Cancelado</option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Observações</label>
+              <textarea name="observacoes" id="observacoes" class="form-control" rows="2" placeholder="Observações opcionais…"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Salvar</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal Excluir -->
+<div class="modal fade" id="modalExcluir" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="excluir">
+      <input type="hidden" name="ferias_id" id="excluir_id">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Confirmar exclusão</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>Excluir férias de <strong id="excluir_nome"></strong>?</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger btn-sm">Excluir</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function abrirModal() {
+  document.getElementById('modalTitulo').textContent = 'Agendar Férias';
+  document.getElementById('action').value = 'criar';
+  document.getElementById('ferias_id').value = '';
+  document.getElementById('colaborador').value = '';
+  document.getElementById('data_inicio').value = '';
+  document.getElementById('data_fim').value = '';
+  document.getElementById('dias').value = '';
+  document.getElementById('status').value = 'agendado';
+  document.getElementById('observacoes').value = '';
+  new bootstrap.Modal(document.getElementById('modalFerias')).show();
+}
+
+function editarFerias(id, colab, inicio, fim, dias, status, obs) {
+  document.getElementById('modalTitulo').textContent = 'Editar Férias';
+  document.getElementById('action').value = 'editar';
+  document.getElementById('ferias_id').value = id;
+  document.getElementById('colaborador').value = colab;
+  document.getElementById('data_inicio').value = inicio;
+  document.getElementById('data_fim').value = fim;
+  document.getElementById('dias').value = dias;
+  document.getElementById('status').value = status;
+  document.getElementById('observacoes').value = obs;
+  new bootstrap.Modal(document.getElementById('modalFerias')).show();
+}
+
+function excluirFerias(id, nome) {
+  document.getElementById('excluir_id').value = id;
+  document.getElementById('excluir_nome').textContent = nome;
+  new bootstrap.Modal(document.getElementById('modalExcluir')).show();
+}
+
+function calcDias() {
+  const ini = document.getElementById('data_inicio').value;
+  const fim = document.getElementById('data_fim').value;
+  if (ini && fim) {
+    const d = Math.round((new Date(fim) - new Date(ini)) / 86400000) + 1;
+    if (d > 0) document.getElementById('dias').value = d;
+  }
+}
+</script>
+{% endblock %}
