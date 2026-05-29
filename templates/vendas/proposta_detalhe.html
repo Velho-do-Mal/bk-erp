@@ -11,6 +11,7 @@
 <button class="btn" id="btn-salvar-cabecalho" onclick="salvarCabecalho()" style="font-size:13px;">
   💾 Salvar
 </button>
+<button class="btn no-print" onclick="window.print()" style="font-size:13px;background:#fff;border:1px solid #6b7280;color:#374151;">🖨️ Imprimir</button>
 <div id="status-badge" class="badge badge-{{ proposta.status }}" style="font-size:13px;padding:6px 14px;border-radius:6px;">
   {{ proposta.get_status_display }}
 </div>
@@ -133,6 +134,18 @@
   }
   #toast.erro { background:#ef4444; }
   #toast.sucesso { background:#16a34a; }
+
+  /* ── Impressão ── */
+  @media print {
+    .sidebar, .topbar, .prop-tabs, .btn, .btn-add-row,
+    #btn-salvar-cabecalho, .col-acao, .no-print { display: none !important; }
+    .prop-tab-panel { display: block !important; }
+    #tab-orcamento { display: none !important; }
+    #tab-proposta  { display: block !important; }
+    body { background: #fff; }
+    .section-card { box-shadow: none; border: 1px solid #ccc; }
+    .edit-table th, .edit-table td { font-size: 11px; }
+  }
 </style>
 {% endblock %}
 
@@ -359,7 +372,7 @@
           style="font-size:13px;background:#1e40af;color:#fff;">
           💾 Salvar Itens
         </button>
-        <a id="btn-exportar-word" href="{{ url_word }}"
+        <a id="btn-exportar-word" href="{% url 'vendas:exportar_word' proposta.pk %}"
           class="btn" style="font-size:13px;background:#fff;border:1px solid #1e40af;color:#1e40af;text-decoration:none;">
           📄 Exportar Word
         </a>
