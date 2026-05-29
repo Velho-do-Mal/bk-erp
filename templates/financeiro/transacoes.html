@@ -84,7 +84,7 @@
         </div>
         <div>
           <label class="form-label">Valor *</label>
-          <input id="m-valor" name="valor" class="form-control" type="number" step="0.01" min="0" required>
+          <input id="m-valor" name="valor" class="form-control" type="text" inputmode="decimal" data-mask="moeda" placeholder="0,00" required>
         </div>
         <div>
           <label class="form-label">Competência *</label>
@@ -256,7 +256,7 @@ function abrirModal(r=null){
   document.getElementById('m-id').value=r?.id||'';
   document.getElementById('m-desc').value=r?.descricao||'';
   document.getElementById('m-tipo').value=r?.tipo||'saida';
-  document.getElementById('m-valor').value=r?.valor||'';
+  document.getElementById('m-valor').value=r?.valor ? maskMoeda(String(parseFloat(r.valor).toFixed(2)).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.')) : '';
   document.getElementById('m-data').value=r?.data_competencia?r.data_competencia.substring(0,10):today;
   document.getElementById('m-venc').value=r?.data_vencimento?r.data_vencimento.substring(0,10):'';
   document.getElementById('m-pago').value=r?.data_pagamento?r.data_pagamento.substring(0,10):'';
@@ -293,7 +293,7 @@ async function salvar(e){
     if(d.ok){bkToast('Transação salva!','sucesso');setTimeout(()=>location.reload(),900);}
     else bkToast(d.error||'Erro ao salvar','erro');
   } else {
-    const payload={action:'save',id:document.getElementById('m-id').value||null,descricao:document.getElementById('m-desc').value,tipo:document.getElementById('m-tipo').value,valor:parseFloat(document.getElementById('m-valor').value),data_competencia:document.getElementById('m-data').value,data_vencimento:document.getElementById('m-venc').value||null,data_pagamento:document.getElementById('m-pago').value||null,status:document.getElementById('m-status').value,recorrencia:document.getElementById('m-rec').value,recorrencia_parcelas:parseInt(document.getElementById('m-parcelas')?.value||0),conta_id:document.getElementById('m-conta').value||null,categoria_id:(document.getElementById('m-subcat').value||document.getElementById('m-cat').value)||null,cliente_id:document.getElementById('m-cli').value||null,fornecedor_id:document.getElementById('m-forn').value||null,centro_custo_id:document.getElementById('m-cc').value||null,referencia:document.getElementById('m-ref').value,observacoes:document.getElementById('m-obs').value};
+    const payload={action:'save',id:document.getElementById('m-id').value||null,descricao:document.getElementById('m-desc').value,tipo:document.getElementById('m-tipo').value,valor:(function(){const v=document.getElementById('m-valor').value.replace(/\./g,'').replace(',','.');return parseFloat(v)||0;})(),data_competencia:document.getElementById('m-data').value,data_vencimento:document.getElementById('m-venc').value||null,data_pagamento:document.getElementById('m-pago').value||null,status:document.getElementById('m-status').value,recorrencia:document.getElementById('m-rec').value,recorrencia_parcelas:parseInt(document.getElementById('m-parcelas')?.value||0),conta_id:document.getElementById('m-conta').value||null,categoria_id:(document.getElementById('m-subcat').value||document.getElementById('m-cat').value)||null,cliente_id:document.getElementById('m-cli').value||null,fornecedor_id:document.getElementById('m-forn').value||null,centro_custo_id:document.getElementById('m-cc').value||null,referencia:document.getElementById('m-ref').value,observacoes:document.getElementById('m-obs').value};
     const r=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify(payload)});
     const d=await r.json();
     if(d.ok){bkToast('Transação salva!','sucesso');setTimeout(()=>location.reload(),900);}

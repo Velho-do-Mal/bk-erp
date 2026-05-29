@@ -28,9 +28,9 @@
     <input type="hidden" id="m-id">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div><label class="form-label">Nome *</label><input id="m-nome" class="form-control"></div>
-      <div><label class="form-label">Documento</label><input id="m-doc" class="form-control"></div>
+      <div><label class="form-label">Documento</label><input id="m-doc" class="form-control" data-mask="cpf_cnpj" placeholder="CPF ou CNPJ"></div>
       <div><label class="form-label">Email</label><input id="m-email" class="form-control" type="email"></div>
-      <div><label class="form-label">Telefone</label><input id="m-tel" class="form-control"></div>
+      <div><label class="form-label">Telefone</label><input id="m-tel" class="form-control" data-mask="telefone" placeholder="(00) 00000-0000"></div>
       <div style="grid-column:1/-1"><label class="form-label">Observações</label><textarea id="m-obs" class="form-control" rows="3"></textarea></div>
       <div><label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:#374151"><input type="checkbox" id="m-ativo" checked> Ativo</label></div>
     </div>
