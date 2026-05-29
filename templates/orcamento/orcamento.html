@@ -153,7 +153,7 @@
     <div class="kpi"><div class="lbl">Obras</div><div class="val">{{ obras|length }}</div></div>
     <div class="kpi"><div class="lbl">Produtos</div><div class="val">{{ produtos|length }}</div></div>
     <div class="kpi"><div class="lbl">Serviços</div><div class="val">{{ servicos|length }}</div></div>
-    <div class="kpi"><div class="lbl">Total geral</div><div class="val" id="kpi-total">R$ {{ totais.total_geral|moeda }}</div></div>
+    <div class="kpi"><div class="lbl">Total geral</div><div class="val" id="kpi-total">{{ totais.total_geral|moeda }}</div></div>
   </div>
 
   <!-- Obra + Totais -->
@@ -197,9 +197,9 @@
     <div class="card">
       <div class="card-title">Totais do orçamento</div>
       <div class="totals-row">
-        <div class="total-box"><div class="t">Materiais</div><div class="v" id="tot-mat">R$ {{ totais.total_materiais|moeda }}</div></div>
-        <div class="total-box"><div class="t">Serviços</div><div class="v" id="tot-svc">R$ {{ totais.total_servicos|moeda }}</div></div>
-        <div class="total-box"><div class="t">Total geral</div><div class="v" id="tot-geral">R$ {{ totais.total_geral|moeda }}</div></div>
+        <div class="total-box"><div class="t">Materiais</div><div class="v" id="tot-mat">{{ totais.total_materiais|moeda }}</div></div>
+        <div class="total-box"><div class="t">Serviços</div><div class="v" id="tot-svc">{{ totais.total_servicos|moeda }}</div></div>
+        <div class="total-box"><div class="t">Total geral</div><div class="v" id="tot-geral">{{ totais.total_geral|moeda }}</div></div>
       </div>
     </div>
   </div>
@@ -225,8 +225,8 @@
             <td>{{ item.produto }}</td>
             <td>{{ item.unidade }}</td>
             <td class="num">{{ item.quantidade }}</td>
-            <td class="num">R$ {{ item.valor_unitario|moeda }}</td>
-            <td class="num green">R$ {{ item.valor_total|moeda }}</td>
+            <td class="num">{{ item.valor_unitario|moeda }}</td>
+            <td class="num green">{{ item.valor_total|moeda }}</td>
             <td style="text-align:center"><button class="btn btn-danger btn-sm" onclick="excluirMat({{ item.id }})">✕</button></td>
           </tr>
           {% empty %}
@@ -307,8 +307,8 @@
             <td>{{ item.servico }}</td>
             <td>{{ item.unidade }}</td>
             <td class="num">{{ item.quantidade }}</td>
-            <td class="num">R$ {{ item.valor_unitario|moeda }}</td>
-            <td class="num green">R$ {{ item.valor_total|moeda }}</td>
+            <td class="num">{{ item.valor_unitario|moeda }}</td>
+            <td class="num green">{{ item.valor_total|moeda }}</td>
             <td style="text-align:center"><button class="btn btn-danger btn-sm" onclick="excluirSvc({{ item.id }})">✕</button></td>
           </tr>
           {% empty %}

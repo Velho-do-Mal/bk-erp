@@ -12,7 +12,7 @@
 {% block content %}
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px">
   <div class="kpi-card kpi-blue"><div class="kpi-label">📦 Total de Itens</div><div class="kpi-value">{{ total_itens }}</div></div>
-  <div class="kpi-card kpi-green"><div class="kpi-label">💰 Total Investido</div><div class="kpi-value">R$ {{ total_investido|moeda }}</div></div>
+  <div class="kpi-card kpi-green"><div class="kpi-label">💰 Total Investido</div><div class="kpi-value">{{ total_investido|moeda }}</div></div>
   <div class="kpi-card {% if itens_criticos > 0 %}kpi-red{% else %}kpi-green{% endif %}">
     <div class="kpi-label">⚠️ Itens Críticos (saldo ≤ 0)</div><div class="kpi-value">{{ itens_criticos }}</div>
   </div>

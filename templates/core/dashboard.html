@@ -32,7 +32,7 @@
   <!-- Financeiro -->
   <div class="kpi-card" style="border-left: 3px solid var(--bk-green);">
     <div class="kpi-label">Saldo Atual</div>
-    <div class="kpi-value" style="color:#16a34a">R$ {{ saldo_atual|moeda }}</div>
+    <div class="kpi-value" style="color:#16a34a">{{ saldo_atual|moeda }}</div>
     <div class="kpi-sub">Disponível em contas</div>
   </div>
   <!-- Vendas -->
@@ -43,13 +43,13 @@
   </div>
   <div class="kpi-card" style="border-left: 3px solid var(--bk-teal);">
     <div class="kpi-label">Ticket Médio</div>
-    <div class="kpi-value" style="color:#0f766e">R$ {{ ticket_medio|moeda }}</div>
+    <div class="kpi-value" style="color:#0f766e">{{ ticket_medio|moeda }}</div>
     <div class="kpi-sub">Valor médio por proposta</div>
   </div>
   <!-- Compras -->
   <div class="kpi-card" style="border-left: 3px solid var(--bk-orange);">
     <div class="kpi-label">Compras no Mês</div>
-    <div class="kpi-value" style="color:#d97706">R$ {{ compras_mes|moeda }}</div>
+    <div class="kpi-value" style="color:#d97706">{{ compras_mes|moeda }}</div>
     <div class="kpi-sub">{{ pedidos_pendentes }} pedidos pendentes</div>
   </div>
 </div>

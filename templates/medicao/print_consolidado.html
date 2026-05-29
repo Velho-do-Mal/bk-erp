@@ -132,7 +132,7 @@
       <tr>
         <td class="td-center" style="color:#9ca3af">{{ forloop.counter }}</td>
         <td>{{ linha.item.descricao }}</td>
-        <td class="td-num">R$ {{ linha.valor_total|floatformat:2 }}</td>
+        <td class="td-num">{{ linha.valor_total|moeda }}</td>
         <td class="td-center">{{ linha.item.unidade }}</td>
         <td class="td-right">{{ linha.item.quantidade_total }}</td>
         {% for qtd in linha.qtds_por_periodo %}
@@ -140,8 +140,8 @@
           {% if qtd > 0 %}{{ qtd|floatformat:3 }}{% else %}—{% endif %}
         </td>
         {% endfor %}
-        <td class="td-num" style="background:#f0fff4;color:#065f46">R$ {{ linha.valor_acum|floatformat:2 }}</td>
-        <td class="td-num" style="background:#fffbeb;color:#b45309">R$ {{ linha.saldo|floatformat:2 }}</td>
+        <td class="td-num" style="background:#f0fff4;color:#065f46">{{ linha.valor_acum|moeda }}</td>
+        <td class="td-num" style="background:#fffbeb;color:#b45309">{{ linha.saldo|moeda }}</td>
         <td class="td-pct {% if linha.pct >= 100 %}ok{% elif linha.pct > 0 %}par{% else %}zero{% endif %}" style="background:#faf5ff">{{ linha.pct }}%</td>
       </tr>
       {% empty %}
@@ -155,7 +155,7 @@
         <td colspan="2" style="color:#93c5fd">TOTAL GERAL</td>
         <td class="td-num">
           R$ {% with total=0 %}
-          {% for l in linhas %}{% if forloop.first %}{{ l.valor_total|floatformat:2 }}{% endif %}{% endfor %}
+          {% for l in linhas %}{% if forloop.first %}{{ l.valor_total|moeda }}{% endif %}{% endfor %}
           {% endwith %}
           {# Calculado no backend via context se necessário; exibimos via JS abaixo #}
         </td>

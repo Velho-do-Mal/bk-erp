@@ -114,9 +114,9 @@
       <div class="card">
         <div class="section-title">Totais</div>
         <div class="totals">
-          <div class="total-box"><div class="t">Materiais</div><div class="v">R$ {{ totais.total_materiais|moeda }}</div></div>
-          <div class="total-box"><div class="t">Serviços</div><div class="v">R$ {{ totais.total_servicos|moeda }}</div></div>
-          <div class="total-box"><div class="t">Total geral</div><div class="v">R$ {{ totais.total_geral|moeda }}</div></div>
+          <div class="total-box"><div class="t">Materiais</div><div class="v">{{ totais.total_materiais|moeda }}</div></div>
+          <div class="total-box"><div class="t">Serviços</div><div class="v">{{ totais.total_servicos|moeda }}</div></div>
+          <div class="total-box"><div class="t">Total geral</div><div class="v">{{ totais.total_geral|moeda }}</div></div>
         </div>
       </div>
     </div>
@@ -205,8 +205,8 @@
                 <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">{{ item.material }}</span></td>
                 <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">{{ item.unidade }}</span></td>
                 <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">{{ item.quantidade }}</span></td>
-                <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">R$ {{ item.valor_unitario|moeda }}</span></td>
-                <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">R$ {{ item.valor_total|moeda }}</span></td>
+                <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">{{ item.valor_unitario|moeda }}</span></td>
+                <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">{{ item.valor_total|moeda }}</span></td>
                 <td><div class="grid-action"><button type="button" class="btn btn-danger" onclick="excluirItemMaterial({{ item.id }}, this)">✕</button></div></td>
               </tr>
               {% empty %}
@@ -239,8 +239,8 @@
                 <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">{{ item.servico }}</span></td>
                 <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">{{ item.unidade }}</span></td>
                 <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">{{ item.quantidade }}</span></td>
-                <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">R$ {{ item.valor_unitario|moeda }}</span></td>
-                <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">R$ {{ item.valor_total|moeda }}</span></td>
+                <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">{{ item.valor_unitario|moeda }}</span></td>
+                <td><span style="padding:8px 10px;display:block;color:var(--grid-text)">{{ item.valor_total|moeda }}</span></td>
                 <td><div class="grid-action"><button type="button" class="btn btn-danger" onclick="excluirItemServico({{ item.id }}, this)">✕</button></div></td>
               </tr>
               {% empty %}
@@ -253,9 +253,9 @@
 
       <div style="height:14px"></div>
       <div class="totals">
-        <div class="total-box"><div class="t">Materiais</div><div class="v" id="total_mat_live">R$ {{ totais.total_materiais|moeda }}</div></div>
-        <div class="total-box"><div class="t">Serviços</div><div class="v" id="total_svc_live">R$ {{ totais.total_servicos|moeda }}</div></div>
-        <div class="total-box"><div class="t">Total geral</div><div class="v" id="total_geral_live">R$ {{ totais.total_geral|moeda }}</div></div>
+        <div class="total-box"><div class="t">Materiais</div><div class="v" id="total_mat_live">{{ totais.total_materiais|moeda }}</div></div>
+        <div class="total-box"><div class="t">Serviços</div><div class="v" id="total_svc_live">{{ totais.total_servicos|moeda }}</div></div>
+        <div class="total-box"><div class="t">Total geral</div><div class="v" id="total_geral_live">{{ totais.total_geral|moeda }}</div></div>
       </div>
     </div>
     {% endif %}

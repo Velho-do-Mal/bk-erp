@@ -9,7 +9,7 @@
 {% block content %}
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px">
   <div class="kpi-card kpi-blue"><div class="kpi-label">🛒 Total de Pedidos</div><div class="kpi-value">{{ total_pedidos }}</div></div>
-  <div class="kpi-card kpi-green"><div class="kpi-label">💰 Valor Total</div><div class="kpi-value" style="font-size:20px">R$ {{ total_valor|moeda }}</div></div>
+  <div class="kpi-card kpi-green"><div class="kpi-label">💰 Valor Total</div><div class="kpi-value" style="font-size:20px">{{ total_valor|moeda }}</div></div>
   <div class="kpi-card kpi-yellow"><div class="kpi-label">📋 Em Aberto</div><div class="kpi-value">{{ em_aberto }}</div></div>
   <div class="kpi-card kpi-red"><div class="kpi-label">❌ Canceladas</div><div class="kpi-value">{{ canceladas }}</div></div>
 </div>

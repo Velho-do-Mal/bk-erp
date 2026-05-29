@@ -106,7 +106,7 @@
   </div>
   <div class="info-cell">
     <div class="label">Valor da Medição</div>
-    <div class="value blue">R$ {{ total_periodo|floatformat:2 }}</div>
+    <div class="value blue">{{ total_periodo|moeda }}</div>
   </div>
 </div>
 
@@ -134,15 +134,15 @@
       <tr>
         <td class="td-center" style="color:#6b7280">{{ forloop.counter }}</td>
         <td>{{ linha.item.descricao }}</td>
-        <td class="td-num">R$ {{ linha.valor_total_item|floatformat:2 }}</td>
+        <td class="td-num">{{ linha.valor_total_item|moeda }}</td>
         <td class="td-center">{{ linha.item.unidade }}</td>
         <td class="td-right">{{ linha.item.quantidade_total }}</td>
         <td class="td-right" style="background:#f0fff4;font-weight:700;color:#065f46">{{ linha.qtd_medida|floatformat:3 }}</td>
-        <td class="td-num">R$ {{ linha.item.preco_unitario|floatformat:2 }}</td>
+        <td class="td-num">{{ linha.item.preco_unitario|moeda }}</td>
         <td class="td-right">{{ linha.qtd_acum|floatformat:3 }}</td>
-        <td class="td-num">R$ {{ linha.valor_acum|floatformat:2 }}</td>
-        <td class="td-num" style="color:#1d4ed8">R$ {{ linha.valor_medido_periodo|floatformat:2 }}</td>
-        <td class="td-num" style="color:#b45309">R$ {{ linha.saldo|floatformat:2 }}</td>
+        <td class="td-num">{{ linha.valor_acum|moeda }}</td>
+        <td class="td-num" style="color:#1d4ed8">{{ linha.valor_medido_periodo|moeda }}</td>
+        <td class="td-num" style="color:#b45309">{{ linha.saldo|moeda }}</td>
         <td class="td-pct {% if linha.pct >= 100 %}ok{% elif linha.pct > 0 %}par{% else %}zero{% endif %}">{{ linha.pct }}%</td>
       </tr>
       {% endfor %}
@@ -150,12 +150,12 @@
     <tfoot>
       <tr>
         <td colspan="2" style="color:#93c5fd">TOTAL GERAL</td>
-        <td class="td-num">R$ {{ total_contrato|floatformat:2 }}</td>
+        <td class="td-num">{{ total_contrato|moeda }}</td>
         <td colspan="4"></td>
         <td></td>
-        <td class="td-num">R$ {{ total_acum|floatformat:2 }}</td>
-        <td class="td-num" style="color:#bfdbfe">R$ {{ total_periodo|floatformat:2 }}</td>
-        <td class="td-num" style="color:#fde68a">R$ {{ total_contrato|floatformat:2 }}</td>
+        <td class="td-num">{{ total_acum|moeda }}</td>
+        <td class="td-num" style="color:#bfdbfe">{{ total_periodo|moeda }}</td>
+        <td class="td-num" style="color:#fde68a">{{ total_contrato|moeda }}</td>
         <td></td>
       </tr>
     </tfoot>

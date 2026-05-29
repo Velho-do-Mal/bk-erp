@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load bk_filters %}
 {% load static %}
 
 {% block title %}BM — {{ boletim.nome }}{% endblock %}
@@ -171,7 +172,7 @@
 <div class="tab-panel" id="tab-itens" data-group="main">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
     <div style="font-size:13px;color:#94a3b8">
-      Total contrato: <strong id="total_contrato" style="color:#93c5fd">{{ total_contrato|floatformat:2 }}</strong>
+      Total contrato: <strong id="total_contrato" style="color:#93c5fd">{{ total_contrato|moeda }}</strong>
     </div>
     <button class="btn btn-primary btn-sm" onclick="adicionarLinhaItem()">+ Adicionar Item</button>
   </div>
@@ -209,7 +210,7 @@
           <td><input class="cell-input cell-qtd" type="number" value="{{ item.quantidade_total|stringformat:'.3f' }}" min="0" step="0.001" style="text-align:right" oninput="recalcItem(this)"></td>
           <td><input class="cell-input cell-un" type="text" value="{{ item.unidade }}" style="text-align:center"></td>
           <td><input class="cell-input cell-pu" type="number" value="{{ item.preco_unitario|stringformat:'.2f' }}" min="0" step="0.01" style="text-align:right" oninput="recalcItem(this)"></td>
-          <td><div class="cell-num cell-pt">{{ item.preco_total|floatformat:2 }}</div></td>
+          <td><div class="cell-num cell-pt">{{ item.preco_total|moeda }}</div></td>
           <td>
             <div class="grid-action">
               <button class="btn btn-danger btn-sm" onclick="excluirItem(this, {{ item.id }})" title="Excluir">✕</button>
@@ -221,7 +222,7 @@
       <tfoot>
         <tr class="total-row">
           <td colspan="6" style="padding:8px 10px;color:#93c5fd;font-size:12px">TOTAL DO CONTRATO</td>
-          <td><div class="cell-num" id="tfoot_total" style="color:#93c5fd !important">{{ total_contrato|floatformat:2 }}</div></td>
+          <td><div class="cell-num" id="tfoot_total" style="color:#93c5fd !important">{{ total_contrato|moeda }}</div></td>
           <td></td>
         </tr>
       </tfoot>
@@ -271,19 +272,19 @@
   <div class="kpi-med">
     <div class="kpi-med-card">
       <div class="kpi-med-label">Total Contrato</div>
-      <div class="kpi-med-value">R$ {{ total_contrato|floatformat:2 }}</div>
+      <div class="kpi-med-value">{{ total_contrato|moeda }}</div>
     </div>
     <div class="kpi-med-card">
       <div class="kpi-med-label">Medido no Período</div>
-      <div class="kpi-med-value blue" id="kpi_periodo">R$ {{ total_periodo|floatformat:2 }}</div>
+      <div class="kpi-med-value blue" id="kpi_periodo">{{ total_periodo|moeda }}</div>
     </div>
     <div class="kpi-med-card">
       <div class="kpi-med-label">Medido Acumulado</div>
-      <div class="kpi-med-value green" id="kpi_acum">R$ {{ total_acum|floatformat:2 }}</div>
+      <div class="kpi-med-value green" id="kpi_acum">{{ total_acum|moeda }}</div>
     </div>
     <div class="kpi-med-card">
       <div class="kpi-med-label">Saldo a Medir</div>
-      <div class="kpi-med-value orange" id="kpi_saldo">R$ {{ total_saldo|floatformat:2 }}</div>
+      <div class="kpi-med-value orange" id="kpi_saldo">{{ total_saldo|moeda }}</div>
     </div>
     <div class="kpi-med-card">
       <div class="kpi-med-label">% Medido</div>
@@ -314,7 +315,7 @@
         <tr data-item-id="{{ linha.item.id }}">
           <td><div class="cell-ro" style="font-size:11px">{{ linha.item.codigo }}</div></td>
           <td><div class="cell-ro">{{ linha.item.descricao }}</div></td>
-          <td><div class="cell-num">R$ {{ linha.valor_total_item|floatformat:2 }}</div></td>
+          <td><div class="cell-num">{{ linha.valor_total_item|moeda }}</div></td>
           <td><div class="cell-ro" style="text-align:center">{{ linha.item.unidade }}</div></td>
           <td>
             <input class="cell-input-med med-qtd"
@@ -325,11 +326,11 @@
               data-item-id="{{ linha.item.id }}"
               oninput="recalcMedicao(this)">
           </td>
-          <td><div class="cell-num">R$ {{ linha.item.preco_unitario|floatformat:2 }}</div></td>
+          <td><div class="cell-num">{{ linha.item.preco_unitario|moeda }}</div></td>
           <td><div class="cell-num med-qtd-acum">{{ linha.qtd_acum|floatformat:3 }}</div></td>
-          <td><div class="cell-num med-val-acum">R$ {{ linha.valor_acum|floatformat:2 }}</div></td>
-          <td><div class="cell-num med-val-periodo">R$ {{ linha.valor_medido_periodo|floatformat:2 }}</div></td>
-          <td><div class="cell-num med-saldo">R$ {{ linha.saldo|floatformat:2 }}</div></td>
+          <td><div class="cell-num med-val-acum">{{ linha.valor_acum|moeda }}</div></td>
+          <td><div class="cell-num med-val-periodo">{{ linha.valor_medido_periodo|moeda }}</div></td>
+          <td><div class="cell-num med-saldo">{{ linha.saldo|moeda }}</div></td>
           <td>
             <div class="cell-pct med-pct {% if linha.pct >= 100 %}pct-ok{% elif linha.pct > 0 %}pct-par{% else %}pct-zero{% endif %}">
               {{ linha.pct }}%
@@ -343,11 +344,11 @@
       <tfoot>
         <tr class="total-row">
           <td colspan="2" style="padding:8px 10px;color:#93c5fd;font-size:12px">TOTAIS</td>
-          <td><div class="cell-num" style="color:#93c5fd !important">R$ {{ total_contrato|floatformat:2 }}</div></td>
+          <td><div class="cell-num" style="color:#93c5fd !important">{{ total_contrato|moeda }}</div></td>
           <td></td><td></td><td></td><td></td>
-          <td><div class="cell-num tfoot-acum" style="color:#6ee7b7 !important">R$ {{ total_acum|floatformat:2 }}</div></td>
-          <td><div class="cell-num tfoot-periodo" style="color:#93c5fd !important">R$ {{ total_periodo|floatformat:2 }}</div></td>
-          <td><div class="cell-num tfoot-saldo" style="color:#fcd34d !important">R$ {{ total_saldo|floatformat:2 }}</div></td>
+          <td><div class="cell-num tfoot-acum" style="color:#6ee7b7 !important">{{ total_acum|moeda }}</div></td>
+          <td><div class="cell-num tfoot-periodo" style="color:#93c5fd !important">{{ total_periodo|moeda }}</div></td>
+          <td><div class="cell-num tfoot-saldo" style="color:#fcd34d !important">{{ total_saldo|moeda }}</div></td>
           <td><div class="cell-pct tfoot-pct" style="color:#f59e0b !important">{{ pct_total }}%</div></td>
         </tr>
       </tfoot>
@@ -370,15 +371,15 @@
   <div class="kpi-grid" id="dash_kpis">
     <div class="kpi-card">
       <div class="kpi-label">Total Contrato</div>
-      <div class="kpi-value" id="dash_total_contrato">R$ {{ total_contrato|floatformat:2 }}</div>
+      <div class="kpi-value" id="dash_total_contrato">{{ total_contrato|moeda }}</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Total Medido</div>
-      <div class="kpi-value" style="color:#6ee7b7" id="dash_total_acum">R$ {{ total_acum|floatformat:2 }}</div>
+      <div class="kpi-value" style="color:#6ee7b7" id="dash_total_acum">{{ total_acum|moeda }}</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Saldo a Medir</div>
-      <div class="kpi-value" style="color:#fcd34d" id="dash_saldo">R$ {{ total_saldo|floatformat:2 }}</div>
+      <div class="kpi-value" style="color:#fcd34d" id="dash_saldo">{{ total_saldo|moeda }}</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Períodos (BMs)</div>
@@ -416,7 +417,7 @@
             <td><span class="badge badge-blue">{{ p.label }}</span></td>
             <td>{{ p.data_inicio|date:"d/m/Y" }}</td>
             <td>{{ p.data_fim|date:"d/m/Y" }}</td>
-            <td style="color:#93c5fd;font-weight:600">R$ {{ p.valor_total_periodo|floatformat:2 }}</td>
+            <td style="color:#93c5fd;font-weight:600">{{ p.valor_total_periodo|moeda }}</td>
             <td>
               {% if total_contrato %}
               {% widthratio p.valor_total_periodo total_contrato 100 %}%
@@ -445,9 +446,9 @@
           <tr>
             <td style="font-size:11px;color:#94a3b8">{{ linha.item.codigo }}</td>
             <td>{{ linha.item.descricao }}</td>
-            <td style="color:#f1f5f9">R$ {{ linha.valor_total_item|floatformat:2 }}</td>
-            <td style="color:#6ee7b7;font-weight:600">R$ {{ linha.valor_acum|floatformat:2 }}</td>
-            <td style="color:#fcd34d">R$ {{ linha.saldo|floatformat:2 }}</td>
+            <td style="color:#f1f5f9">{{ linha.valor_total_item|moeda }}</td>
+            <td style="color:#6ee7b7;font-weight:600">{{ linha.valor_acum|moeda }}</td>
+            <td style="color:#fcd34d">{{ linha.saldo|moeda }}</td>
             <td>
               <div style="display:flex;align-items:center;gap:6px">
                 <div style="flex:1;height:6px;background:#334155;border-radius:99px;min-width:60px">

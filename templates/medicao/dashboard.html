@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load bk_filters %}
 {% load static %}
 
 {% block title %}Boletins de Medição{% endblock %}
@@ -52,7 +53,7 @@
           <td style="color:#94a3b8;font-size:12px">{% if bm.projeto %}{{ bm.projeto.nome }}{% else %}—{% endif %}</td>
           <td style="color:#94a3b8;font-size:12px">{{ bm.contrato|default:"—" }}</td>
           <td style="color:#94a3b8;font-size:12px">{{ bm.codigo_obra|default:"—" }}</td>
-          <td style="color:#93c5fd;font-weight:600">R$ {{ bm.total_contrato|floatformat:2 }}</td>
+          <td style="color:#93c5fd;font-weight:600">{{ bm.total_contrato|moeda }}</td>
           <td>
             {% with n=bm.periodos.count %}
             {% if n %}
