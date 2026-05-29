@@ -34,12 +34,10 @@
 
   /* ── Tabela ── */
   .data-table { width:100%; border-collapse:collapse; font-size:13px; }
-  .data-table th {
-    background:#f8fafc; color:#374151; font-weight:700;
-    padding:10px 12px; text-align:left; border-bottom:2px solid #e5e7eb;
-  }
-  .data-table td { padding:9px 12px; border-bottom:1px solid #f3f4f6; vertical-align:middle; }
-  .data-table tr:hover td { background:#fafafa; }
+  .data-table th { background:#1e3a8a; color:#fff; font-weight:700; padding:11px 12px; text-align:left; border-bottom:2px solid #1e40af; font-size:12px; text-transform:uppercase; letter-spacing:0.4px; }
+  .data-table td { padding:10px 12px; border-bottom:1px solid #e5e7eb; vertical-align:middle; color:#111827; font-size:14px; }
+  .data-table tr:hover td { background:#eff6ff; }
+.data-table tbody tr:nth-child(even) td { background:#f8fafc; }
 
   /* ── Badges status ── */
   .badge { display:inline-block; padding:2px 10px; border-radius:12px; font-size:11px; font-weight:700; }
@@ -81,7 +79,7 @@
     z-index:1000; align-items:center; justify-content:center;
   }
   .modal-overlay.open { display:flex; }
-  .modal-box%{
+  .modal-box {
     background:#fff; border-radius:12px; padding:28px; width:520px; max-width:95vw;
     box-shadow:0 8px 30px rgba(0,0,0,.15);
   }
