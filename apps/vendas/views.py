@@ -364,128 +364,253 @@ def proposta_detalhe(request, pk):
 @login_required
 def exportar_word(request, pk):
     """
-    Gera um arquivo .docx com a proposta comercial formatada.
-    Usa apenas dados do cabecalho e ItemProposta - NAO inclui dados de orcamento.
+    Gera um arquivo .docx com a proposta formatada para envio ao cliente.
     """
     from docx import Document
     from docx.shared import Pt, Cm, RGBColor
     from docx.enum.text import WD_ALIGN_PARAGRAPH
-    from docx.enum.table import WD_TABLE_ALIGNMENT
+    from docx.oxml.ns import qn
+    from docx.oxml import OxmlElement
+    import io
 
     proposta = get_object_or_404(Proposta, pk=pk)
     itens = proposta.itens.all()
 
     doc = Document()
 
-    style = doc.styles['Normal']
-    style.font.name = 'Calibri'
-    style.font.size = Pt(11)
+    for sec in doc.sections:
+        sec.top_margin    = Cm(2.0)
+        sec.bottom_margin = Cm(2.0)
+        sec.left_margin   = Cm(2.5)
+        sec.right_margin  = Cm(2.5)
 
-    for section in doc.sections:
-        section.top_margin = Cm(2)
-        section.bottom_margin = Cm(2)
-        section.left_margin = Cm(2.5)
-        section.right_margin = Cm(2.5)
+    def set_cell_bg(cell, hex_color):
+        tc = cell._tc
+        tcPr = tc.get_or_add_tcPr()
+        shd = OxmlElement('w:shd')
+        shd.set(qn('w:val'), 'clear')
+        shd.set(qn('w:color'), 'auto')
+        shd.set(qn('w:fill'), hex_color)
+        tcPr.append(shd)
 
-    titulo_para = doc.add_paragraph()
-    titulo_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = titulo_para.add_run('BK ENGENHARIA E TECNOLOGIA')
-    run.bold = True
-    run.font.size = Pt(16)
-    run.font.color.rgb = RGBColor(0x1E, 0x40, 0xAF)
+    def fmt_br(valor):
+        try:
+            v = float(valor)
+            partes = f"{v:,.2f}".split('.')
+            inteiro = partes[0].replace(',', '.')
+            return f"R$ {inteiro},{partes[1]}"
+        except Exception:
+            return str(valor)
 
-    sub_para = doc.add_paragraph()
-    sub_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    sub_run = sub_para.add_run('PROPOSTA TECNICA E COMERCIAL')
-    sub_run.bold = True
-    sub_run.font.size = Pt(13)
+    AZUL_ESCURO = (30, 58, 138)
+    AZUL_MEDIO  = (30, 64, 175)
+    AZUL_CLARO  = 'DBEAFE'
+    AZUL_LINHA  = 'EFF6FF'
+    CINZA_TEXTO = (55, 65, 81)
+
+    # Cabeçalho
+    p_empresa = doc.add_paragraph()
+    p_empresa.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    r = p_empresa.add_run('BK ENGENHARIA E TECNOLOGIA')
+    r.bold = True
+    r.font.size = Pt(18)
+    r.font.color.rgb = RGBColor(*AZUL_ESCURO)
+
+    p_titulo = doc.add_paragraph()
+    p_titulo.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    r2 = p_titulo.add_run('PROPOSTA TÉCNICA E COMERCIAL')
+    r2.bold = True
+    r2.font.size = Pt(13)
+    r2.font.color.rgb = RGBColor(*AZUL_MEDIO)
+
+    p_cod = doc.add_paragraph()
+    p_cod.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    r3 = p_cod.add_run(f'Proposta Nº {proposta.codigo}')
+    r3.font.size = Pt(10)
+    r3.font.color.rgb = RGBColor(*CINZA_TEXTO)
+    r3.italic = True
 
     doc.add_paragraph()
 
-    tabela_info = doc.add_table(rows=0, cols=2)
-    tabela_info.style = 'Table Grid'
+    # Tabela de informações
+    tbl_info = doc.add_table(rows=0, cols=2)
+    tbl_info.style = 'Table Grid'
+    tbl_info.columns[0].width = Cm(5)
+    tbl_info.columns[1].width = Cm(11)
 
-    def add_info_row(label, value):
-        row = tabela_info.add_row()
-        cell_label = row.cells[0]
-        cell_value = row.cells[1]
-        cell_label.text = label
-        cell_value.text = str(value) if value else '—'
-        cell_label.paragraphs[0].runs[0].bold = True
-        cell_label.width = Cm(5)
+    campos = [
+        ('Título',              proposta.titulo or '—'),
+        ('Cliente',             proposta.get_cliente_nome() or '—'),
+        ('Projeto',             proposta.projeto_nome or '—'),
+        ('Data de Emissão',     proposta.data_emissao.strftime('%d/%m/%Y') if proposta.data_emissao else '—'),
+        ('Válida Até',          proposta.data_validade.strftime('%d/%m/%Y') if proposta.data_validade else '—'),
+        ('Prazo de Execução',   proposta.prazo_execucao or '—'),
+        ('Condições de Pagto.', proposta.condicoes_pagamento or '—'),
+    ]
 
-    add_info_row('Codigo:', proposta.codigo or '—')
-    add_info_row('Titulo:', proposta.titulo)
-    add_info_row('Cliente:', proposta.get_cliente_nome() or '—')
-    add_info_row('Projeto:', proposta.projeto_nome or '—')
-    add_info_row('Data de Emissao:', proposta.data_emissao.strftime('%d/%m/%Y') if proposta.data_emissao else '—')
-    add_info_row('Validade:', proposta.data_validade.strftime('%d/%m/%Y') if proposta.data_validade else '—')
-    add_info_row('Prazo de Execucao:', proposta.prazo_execucao or '—')
-    add_info_row('Condicoes de Pagamento:', proposta.condicoes_pagamento or '—')
+    for label, valor in campos:
+        row = tbl_info.add_row()
+        c0, c1 = row.cells[0], row.cells[1]
+        set_cell_bg(c0, AZUL_CLARO)
+        p0 = c0.paragraphs[0]
+        r0 = p0.add_run(label)
+        r0.bold = True
+        r0.font.size = Pt(10)
+        r0.font.color.rgb = RGBColor(*AZUL_ESCURO)
+        p1 = c1.paragraphs[0]
+        r1 = p1.add_run(valor)
+        r1.font.size = Pt(10)
 
     doc.add_paragraph()
 
+    # Escopo do serviço
     if proposta.notas_tecnicas:
-        h = doc.add_paragraph('ESCOPO DO SERVICO')
-        h.runs[0].bold = True
-        h.runs[0].font.size = Pt(12)
-        doc.add_paragraph(proposta.notas_tecnicas)
+        p_sec = doc.add_paragraph()
+        r_sec = p_sec.add_run('ESCOPO DO SERVIÇO')
+        r_sec.bold = True
+        r_sec.font.size = Pt(11)
+        r_sec.font.color.rgb = RGBColor(*AZUL_ESCURO)
+        p_sec.paragraph_format.space_after = Pt(4)
+        for linha in proposta.notas_tecnicas.split('\n'):
+            p = doc.add_paragraph(linha.strip())
+            p.paragraph_format.left_indent = Cm(0.5)
+            for run in p.runs:
+                run.font.size = Pt(10)
         doc.add_paragraph()
 
-    h2 = doc.add_paragraph('ITENS DA PROPOSTA')
-    h2.runs[0].bold = True
-    h2.runs[0].font.size = Pt(12)
+    # Tabela de itens
+    p_sec2 = doc.add_paragraph()
+    r_sec2 = p_sec2.add_run('ITENS DA PROPOSTA')
+    r_sec2.bold = True
+    r_sec2.font.size = Pt(11)
+    r_sec2.font.color.rgb = RGBColor(*AZUL_ESCURO)
+    p_sec2.paragraph_format.space_after = Pt(4)
 
-    headers = ['#', 'Descricao', 'Unid.', 'Qtd.', 'Valor Unit. (R$)', 'Total (R$)']
-    tabela_itens = doc.add_table(rows=1, cols=6)
-    tabela_itens.style = 'Table Grid'
+    col_widths = [Cm(1.0), Cm(7.5), Cm(1.5), Cm(1.8), Cm(2.5), Cm(2.7)]
+    headers = ['#', 'Descrição', 'Unid.', 'Qtd.', 'Preço Unit.', 'Total']
 
-    hdr_row = tabela_itens.rows[0]
-    for i, h_text in enumerate(headers):
-        cell = hdr_row.cells[i]
-        cell.text = h_text
-        cell.paragraphs[0].runs[0].bold = True
-        cell.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+    tbl = doc.add_table(rows=1, cols=6)
+    tbl.style = 'Table Grid'
+    for i, w in enumerate(col_widths):
+        tbl.columns[i].width = w
 
-    total_geral = Decimal('0')
-    for idx, item in enumerate(itens, start=1):
-        row = tabela_itens.add_row()
-        row.cells[0].text = str(idx)
-        row.cells[1].text = item.descricao
-        row.cells[2].text = item.unidade or '—'
-        row.cells[3].text = f'{item.quantidade:.2f}'
-        row.cells[4].text = f'R$ {item.preco_unitario:,.2f}'
-        row.cells[5].text = f'R$ {item.preco_total:,.2f}'
-        total_geral += item.preco_total
+    hdr = tbl.rows[0]
+    for i, h in enumerate(headers):
+        cell = hdr.cells[i]
+        set_cell_bg(cell, '1E3A8A')
+        p = cell.paragraphs[0]
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        r = p.add_run(h)
+        r.bold = True
+        r.font.size = Pt(10)
+        r.font.color.rgb = RGBColor(255, 255, 255)
 
-    row_total = tabela_itens.add_row()
-    row_total.cells[4].text = 'TOTAL:'
-    row_total.cells[4].paragraphs[0].runs[0].bold = True
-    row_total.cells[5].text = f'R$ {total_geral:,.2f}'
-    row_total.cells[5].paragraphs[0].runs[0].bold = True
+    total_geral = 0
+    for idx_item, item in enumerate(itens):
+        bg = AZUL_LINHA if idx_item % 2 == 1 else 'FFFFFF'
+        row = tbl.add_row()
+        vals = [
+            str(idx_item + 1),
+            item.descricao or '',
+            item.unidade or '',
+            str(item.quantidade),
+            fmt_br(item.preco_unitario),
+            fmt_br(item.preco_total),
+        ]
+        aligns = [
+            WD_ALIGN_PARAGRAPH.CENTER,
+            WD_ALIGN_PARAGRAPH.LEFT,
+            WD_ALIGN_PARAGRAPH.CENTER,
+            WD_ALIGN_PARAGRAPH.CENTER,
+            WD_ALIGN_PARAGRAPH.RIGHT,
+            WD_ALIGN_PARAGRAPH.RIGHT,
+        ]
+        for i, (v, al) in enumerate(zip(vals, aligns)):
+            cell = row.cells[i]
+            set_cell_bg(cell, bg)
+            p = cell.paragraphs[0]
+            p.alignment = al
+            r = p.add_run(v)
+            r.font.size = Pt(10)
+        try:
+            total_geral += float(item.preco_total)
+        except Exception:
+            pass
+
+    total_row = tbl.add_row()
+    for i in range(6):
+        set_cell_bg(total_row.cells[i], AZUL_CLARO)
+    total_row.cells[0].merge(total_row.cells[4])
+    p_lbl = total_row.cells[0].paragraphs[0]
+    p_lbl.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    r_lbl = p_lbl.add_run('VALOR TOTAL DA PROPOSTA')
+    r_lbl.bold = True
+    r_lbl.font.size = Pt(10)
+    r_lbl.font.color.rgb = RGBColor(*AZUL_ESCURO)
+    p_tot = total_row.cells[5].paragraphs[0]
+    p_tot.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    r_tot = p_tot.add_run(fmt_br(total_geral))
+    r_tot.bold = True
+    r_tot.font.size = Pt(10)
+    r_tot.font.color.rgb = RGBColor(*AZUL_ESCURO)
 
     doc.add_paragraph()
 
+    # Observações
     if proposta.observacoes:
-        h3 = doc.add_paragraph('OBSERVACOES')
-        h3.runs[0].bold = True
-        h3.runs[0].font.size = Pt(12)
-        doc.add_paragraph(proposta.observacoes)
+        p_obs_hd = doc.add_paragraph()
+        r_obs_hd = p_obs_hd.add_run('OBSERVAÇÕES')
+        r_obs_hd.bold = True
+        r_obs_hd.font.size = Pt(11)
+        r_obs_hd.font.color.rgb = RGBColor(*AZUL_ESCURO)
+        p_obs_hd.paragraph_format.space_after = Pt(4)
+        for linha in proposta.observacoes.split('\n'):
+            p = doc.add_paragraph(linha.strip())
+            p.paragraph_format.left_indent = Cm(0.5)
+            for run in p.runs:
+                run.font.size = Pt(10)
         doc.add_paragraph()
 
-    doc.add_paragraph()
-    doc.add_paragraph('_' * 40)
-    doc.add_paragraph('BK Engenharia e Tecnologia')
-    doc.add_paragraph(f'Emitido em: {date.today().strftime("%d/%m/%Y")}')
+    # Validade
+    if proposta.data_validade:
+        p_val = doc.add_paragraph()
+        p_val.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        r_val = p_val.add_run(
+            f'Esta proposta é válida até {proposta.data_validade.strftime("%d/%m/%Y")}.'
+        )
+        r_val.italic = True
+        r_val.font.size = Pt(10)
+        r_val.font.color.rgb = RGBColor(180, 83, 9)
+        doc.add_paragraph()
+
+    # Assinatura
+    p_linha = doc.add_paragraph()
+    p_linha.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    p_linha.add_run('_' * 40)
+
+    p_nome = doc.add_paragraph()
+    p_nome.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    r_nome = p_nome.add_run('BK ENGENHARIA E TECNOLOGIA')
+    r_nome.bold = True
+    r_nome.font.size = Pt(10)
+    r_nome.font.color.rgb = RGBColor(*AZUL_ESCURO)
+
+    p_rodape = doc.add_paragraph()
+    p_rodape.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    r_rod = p_rodape.add_run('Engenharia com Excelência | contato@bk-engenharia.com')
+    r_rod.font.size = Pt(9)
+    r_rod.font.color.rgb = RGBColor(*CINZA_TEXTO)
+    r_rod.italic = True
 
     buffer = io.BytesIO()
     doc.save(buffer)
     buffer.seek(0)
 
-    nome_arquivo = f'Proposta_{proposta.codigo or proposta.pk}.docx'.replace('/', '-').replace(' ', '_')
+    nome_arquivo = f"Proposta_{proposta.codigo}.docx"
     response = HttpResponse(
-        buffer.getvalue(),
+        buffer,
         content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     )
     response['Content-Disposition'] = f'attachment; filename="{nome_arquivo}"'
     return response
+
