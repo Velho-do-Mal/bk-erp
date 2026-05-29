@@ -18,8 +18,8 @@
     <form method="get" class="d-flex gap-2 align-items-center">
       <label class="form-label mb-0 fw-semibold small">Período:</label>
       <select name="mes" class="form-select form-select-sm w-auto">
-        {% for i, nome in meses_nomes|enumerate %}
-        <option value="{{ i|add:1 }}" {% if mes == i|add:1 %}selected{% endif %}>{{ nome }}</option>
+        {% for nome in meses_nomes %}
+        <option value="{{ forloop.counter }}" {% if mes == forloop.counter %}selected{% endif %}>{{ nome }}</option>
         {% endfor %}
       </select>
       <select name="ano" class="form-select form-select-sm w-auto">
