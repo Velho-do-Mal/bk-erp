@@ -3,6 +3,7 @@ from decimal import Decimal
 from datetime import date
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from apps.accounts.decorators import admin_required
 from django.http import JsonResponse
 from django.db.models import Sum, Count, Q
 from .models import PedidoCompra, ItemPedidoCompra
@@ -25,16 +26,25 @@ def _to_date(v):
         return None
 
 
-@login_required
+@admin_required
 def lista(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         action = data.get('action')
 
         if action == 'save':
+            codigo = data.get('codigo', '').strip()
+            if not codigo:
+                return JsonResponse({'ok': False, 'error': 'O campo Código é obrigatório.'})
+            data_pedido_raw = data.get('data_pedido')
+            if not data_pedido_raw:
+                return JsonResponse({'ok': False, 'error': 'O campo Data do Pedido é obrigatório.'})
             rid = data.get('id')
-            obj = PedidoCompra.objects.get(id=rid) if rid else PedidoCompra()
-            obj.codigo = data.get('codigo', '').strip()
+            try:
+                obj = PedidoCompra.objects.get(id=rid) if rid else PedidoCompra()
+            except PedidoCompra.DoesNotExist:
+                return JsonResponse({'ok': False, 'error': 'Registro não encontrado.'})
+            obj.codigo = codigo
             fid = data.get('fornecedor_id')
             obj.fornecedor_id = int(fid) if fid else None
             obj.projeto_nome = data.get('projeto_nome', '').strip()

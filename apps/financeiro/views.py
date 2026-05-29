@@ -5,6 +5,7 @@ from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from apps.accounts.decorators import admin_required
 from django.http import JsonResponse, HttpResponse
 from django.db.models import Sum, Q          # ← Q adicionado aqui (era só Sum)
 from .models import Conta, Categoria, Transacao, Orcamento
@@ -38,7 +39,7 @@ RECORRENCIA_DELTAS = {
 }
 
 
-@login_required
+@admin_required
 def download_anexo(request, pk):
     t = get_object_or_404(Transacao, pk=pk)
     if not t.anexo_dados:
@@ -49,7 +50,7 @@ def download_anexo(request, pk):
     return resp
 
 
-@login_required
+@admin_required
 def dashboard_financeiro(request):
     from django.db.models.functions import TruncMonth
     from apps.cadastros.models import CentrosDeCusto
@@ -178,7 +179,7 @@ def dashboard_financeiro(request):
     return render(request, 'financeiro/dashboard.html', ctx)
 
 
-@login_required
+@admin_required
 def transacoes(request):
     if request.method == 'POST' and request.FILES.get('anexo'):
         f = request.FILES['anexo']
@@ -398,7 +399,7 @@ def _gerar_recorrencia(origem: Transacao):
         )
 
 
-@login_required
+@admin_required
 def contas(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -430,7 +431,7 @@ def contas(request):
     return render(request, 'financeiro/contas.html', {'contas_json': json.dumps(qs)})
 
 
-@login_required
+@admin_required
 def categorias(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -456,7 +457,7 @@ def categorias(request):
     return render(request, 'financeiro/categorias.html', {'categorias_json': json.dumps(qs)})
 
 
-@login_required
+@admin_required
 def orcamento(request):
     from django.db.models.functions import ExtractMonth
 
@@ -553,7 +554,7 @@ def orcamento(request):
     return render(request, 'financeiro/orcamento.html', ctx)
 
 
-@login_required
+@admin_required
 def salvar_orcamento(request):
     if request.method == 'POST':
         try:

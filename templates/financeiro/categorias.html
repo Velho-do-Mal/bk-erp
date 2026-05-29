@@ -2,37 +2,25 @@
 {% block title %}Categorias — BK ERP{% endblock %}
 {% block page_title %}Categorias{% endblock %}
 {% block page_sub %}Categorias e Subcategorias financeiras{% endblock %}
-{% block topbar_actions %}<button class="btn btn-primary" onclick="abrirModal()">+ Nova Categoria</button>{% endblock %}
+{% block topbar_actions %}<button class="btn btn-primary" onclick="abrirModal()">➕ Nova Categoria</button>{% endblock %}
 {% block content %}
-
 <div class="bk-card">
   <div class="table-container">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Categoria / Subcategoria</th>
-          <th>Tipo</th>
-          <th>Nível</th>
-          <th>Ações</th>
-        </tr>
-      </thead>
+    <table class="data-table">
+      <thead><tr><th>Categoria / Subcategoria</th><th>Tipo</th><th>Nível</th><th class="col-actions">Ações</th></tr></thead>
       <tbody id="tbody"></tbody>
     </table>
   </div>
 </div>
 
-<!-- Modal Categoria -->
-<div id="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:999;align-items:center;justify-content:center;">
-  <div class="bk-card" style="width:480px;max-width:95vw;">
-    <h3 id="modal-titulo" style="margin:0 0 16px">Nova Categoria</h3>
+<div class="modal-overlay" id="modal">
+  <div class="modal-box" style="max-width:460px">
+    <button class="modal-close-x" onclick="fecharModal()">✕</button>
+    <div class="modal-title" id="modal-titulo">➕ Nova Categoria</div>
     <input type="hidden" id="m-id">
     <div style="display:flex;flex-direction:column;gap:12px">
-      <div>
-        <label class="form-label">Nome *</label>
-        <input id="m-nome" class="form-control">
-      </div>
-      <div>
-        <label class="form-label">Tipo</label>
+      <div><label class="form-label">Nome *</label><input id="m-nome" class="form-control"></div>
+      <div><label class="form-label">Tipo</label>
         <select id="m-tipo" class="form-control">
           <option value="ambos">Ambos</option>
           <option value="entrada">Entrada</option>
@@ -40,131 +28,86 @@
         </select>
       </div>
       <div>
-        <label class="form-label">
-          Categoria Pai
-          <span style="color:#94A3B8;font-size:11px">(deixe vazio para criar categoria principal)</span>
-        </label>
-        <select id="m-pai" class="form-control">
-          <option value="">— Categoria principal (sem pai) —</option>
-        </select>
+        <label class="form-label">Categoria Pai <span style="color:#94A3B8;font-size:11px">(vazio = categoria principal)</span></label>
+        <select id="m-pai" class="form-control"><option value="">— Categoria principal —</option></select>
       </div>
-      <div>
-        <label class="form-label">Observações</label>
-        <textarea id="m-obs" class="form-control" rows="2"></textarea>
-      </div>
+      <div><label class="form-label">Observações</label><textarea id="m-obs" class="form-control" rows="2"></textarea></div>
     </div>
-    <div style="display:flex;gap:8px;margin-top:16px">
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="btn-del" onclick="excluir()" style="display:none;margin-right:auto">🗑️ Excluir</button>
+      <button class="btn btn-secondary" onclick="fecharModal()">❌ Cancelar</button>
       <button class="btn btn-primary" onclick="salvar()">💾 Salvar</button>
-      <button class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
-      <button class="btn btn-danger" id="btn-del" onclick="excluir()" style="display:none;margin-left:auto">🗑️ Excluir</button>
     </div>
   </div>
 </div>
 {% endblock %}
-
 {% block extra_js %}
 <script>
-const CSRF = '{{ csrf_token }}';
-let dados = {{ categorias_json|safe }};
-const TIPO_LABEL = { ambos:'Ambos', entrada:'Entrada', saida:'Saída' };
-const TIPO_COLOR  = { ambos:'#60A5FA', entrada:'#34D399', saida:'#F87171' };
+const CSRF='{{ csrf_token }}';
+let dados={{ categorias_json|safe }};
+const TIPO_LABEL={ambos:'Ambos',entrada:'Entrada',saida:'Saída'};
+const TIPO_COLOR={ambos:'#60A5FA',entrada:'#34D399',saida:'#F87171'};
 
-function getPais()   { return dados.filter(c => !c.pai_id); }
-function getFilhos(pai_id) { return dados.filter(c => parseInt(c.pai_id) === parseInt(pai_id)); }
-
-function renderTabela() {
-  const tb = document.getElementById('tbody');
-  const pais = getPais();
-  if (!pais.length) {
-    tb.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#64748b">Nenhuma categoria cadastrada</td></tr>';
-    return;
-  }
-
-  let html = '';
-  for (const pai of pais) {
-    // Linha da categoria pai
-    html += `
-      <tr style="background:rgba(30,41,59,0.6)">
-        <td>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:16px">📁</span>
-            <strong style="color:#E2E8F0">${pai.nome}</strong>
-          </div>
-        </td>
-        <td><span style="color:${TIPO_COLOR[pai.tipo]||'#94A3B8'};font-size:12px">${TIPO_LABEL[pai.tipo]||pai.tipo}</span></td>
-        <td><span style="font-size:11px;color:#94A3B8;background:#1E293B;padding:2px 8px;border-radius:12px">Categoria</span></td>
-        <td><button class="btn btn-secondary" style="padding:4px 10px;font-size:11px" onclick="editar(${pai.id})">✏️ Editar</button></td>
+function renderTabela(){
+  const tb=document.getElementById('tbody');
+  const pais=dados.filter(c=>!c.pai_id);
+  if(!pais.length){tb.innerHTML='<tr><td colspan="4" style="text-align:center;color:#64748b;padding:24px">Nenhuma categoria cadastrada</td></tr>';return;}
+  let html='';
+  for(const pai of pais){
+    html+=`<tr style="background:rgba(30,41,59,0.6)">
+      <td><div style="display:flex;align-items:center;gap:8px">📁 <strong style="color:#E2E8F0">${pai.nome}</strong></div></td>
+      <td><span style="color:${TIPO_COLOR[pai.tipo]||'#94A3B8'};font-size:12px">${TIPO_LABEL[pai.tipo]||pai.tipo}</span></td>
+      <td><span style="font-size:11px;color:#94A3B8;background:#1E293B;padding:2px 8px;border-radius:12px">📂 Categoria</span></td>
+      <td class="col-actions"><button class="btn-sm primary" onclick="editar(${pai.id})">✏️ Editar</button></td>
+    </tr>`;
+    for(const f of dados.filter(c=>parseInt(c.pai_id)===parseInt(pai.id))){
+      html+=`<tr style="background:rgba(15,25,40,0.4)">
+        <td><div style="display:flex;align-items:center;gap:8px;padding-left:24px"><span style="color:#475569">└</span> ${f.nome}</div></td>
+        <td><span style="color:${TIPO_COLOR[f.tipo]||'#94A3B8'};font-size:12px">${TIPO_LABEL[f.tipo]||f.tipo}</span></td>
+        <td><span style="font-size:11px;color:#64748B;background:#0F172A;padding:2px 8px;border-radius:12px">Sub</span></td>
+        <td class="col-actions"><button class="btn-sm primary" onclick="editar(${f.id})">✏️ Editar</button></td>
       </tr>`;
-
-    // Linhas das subcategorias filhas
-    const filhos = getFilhos(pai.id);
-    for (const filho of filhos) {
-      html += `
-        <tr style="background:rgba(15,25,40,0.4)">
-          <td>
-            <div style="display:flex;align-items:center;gap:8px;padding-left:24px">
-              <span style="color:#475569;font-size:13px">└</span>
-              <span style="color:#CBD5E1">${filho.nome}</span>
-            </div>
-          </td>
-          <td><span style="color:${TIPO_COLOR[filho.tipo]||'#94A3B8'};font-size:12px">${TIPO_LABEL[filho.tipo]||filho.tipo}</span></td>
-          <td><span style="font-size:11px;color:#64748B;background:#0F172A;padding:2px 8px;border-radius:12px">Subcategoria</span></td>
-          <td><button class="btn btn-secondary" style="padding:4px 10px;font-size:11px" onclick="editar(${filho.id})">✏️ Editar</button></td>
-        </tr>`;
     }
   }
-  tb.innerHTML = html;
+  tb.innerHTML=html;
 }
-
-function abrirModal(r=null) {
-  document.getElementById('m-id').value    = r?.id || '';
-  document.getElementById('m-nome').value  = r?.nome || '';
-  document.getElementById('m-tipo').value  = r?.tipo || 'ambos';
-  document.getElementById('m-obs').value   = r?.observacoes || '';
-
-  // Popula select de pai — só mostra categorias pai (sem pai_id) e exclui a si mesmo
-  const pai = document.getElementById('m-pai');
-  const somentePais = dados.filter(x => !x.pai_id && (!r || x.id !== r.id));
-  pai.innerHTML = '<option value="">— Categoria principal (sem pai) —</option>' +
-    somentePais.map(x => `<option value="${x.id}">${x.nome}</option>`).join('');
-  pai.value = r?.pai_id || '';
-
-  document.getElementById('modal-titulo').textContent = r ? 'Editar Categoria' : 'Nova Categoria';
-  document.getElementById('btn-del').style.display = r ? '' : 'none';
-  document.getElementById('modal').style.display = 'flex';
+function abrirModal(r=null){
+  document.getElementById('m-id').value=r?.id||'';
+  document.getElementById('m-nome').value=r?.nome||'';
+  document.getElementById('m-tipo').value=r?.tipo||'ambos';
+  document.getElementById('m-obs').value=r?.observacoes||'';
+  const pai=document.getElementById('m-pai');
+  const somentePais=dados.filter(x=>!x.pai_id&&(!r||x.id!==r.id));
+  pai.innerHTML='<option value="">— Categoria principal —</option>'+somentePais.map(x=>`<option value="${x.id}">${x.nome}</option>`).join('');
+  pai.value=r?.pai_id||'';
+  document.getElementById('modal-titulo').textContent=r?'✏️ Editar Categoria':'➕ Nova Categoria';
+  document.getElementById('btn-del').style.display=r?'':'none';
+  document.getElementById('modal').classList.add('open');
 }
-
-function editar(id) { abrirModal(dados.find(r => r.id === id)); }
-function fecharModal() { document.getElementById('modal').style.display = 'none'; }
-
-async function salvar() {
-  const nome = document.getElementById('m-nome').value.trim();
-  if (!nome) { alert('Nome obrigatório'); return; }
-  const pai = document.getElementById('m-pai').value;
-  const payload = {
-    action: 'save',
-    id:    document.getElementById('m-id').value || null,
-    nome,
-    tipo:  document.getElementById('m-tipo').value,
-    pai_id: pai || null,
-    observacoes: document.getElementById('m-obs').value,
-  };
-  const r = await fetch('', { method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':CSRF}, body:JSON.stringify(payload) });
-  if ((await r.json()).ok) location.reload();
+function editar(id){abrirModal(dados.find(r=>r.id===id));}
+function fecharModal(){document.getElementById('modal').classList.remove('open');}
+async function salvar(){
+  const nome=document.getElementById('m-nome').value.trim();
+  if(!nome){bkToast('Nome é obrigatório','erro');return;}
+  const payload={action:'save',id:document.getElementById('m-id').value||null,nome,tipo:document.getElementById('m-tipo').value,pai_id:document.getElementById('m-pai').value||null,observacoes:document.getElementById('m-obs').value};
+  const res=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify(payload)});
+  const data=await res.json();
+  if(data.ok){bkToast('Categoria salva!','sucesso');setTimeout(()=>location.reload(),900);}
+  else bkToast(data.error||'Erro ao salvar','erro');
 }
-
-async function excluir() {
-  const id = document.getElementById('m-id').value;
-  if (!id) return;
-  const filho = dados.filter(c => parseInt(c.pai_id) === parseInt(id));
-  const msg = filho.length
-    ? `Excluir esta categoria e suas ${filho.length} subcategoria(s)?\n${filho.map(f=>f.nome).join(', ')}`
-    : 'Excluir esta categoria?';
-  if (!confirm(msg)) return;
-  const r = await fetch('', { method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':CSRF}, body:JSON.stringify({action:'delete', id}) });
-  if ((await r.json()).ok) location.reload();
+async function excluir(){
+  const id=document.getElementById('m-id').value;
+  if(!id)return;
+  const filhos=dados.filter(c=>parseInt(c.pai_id)===parseInt(id));
+  const msg=filhos.length?`Excluir esta categoria e suas ${filhos.length} subcategoria(s)?`:'Excluir esta categoria?';
+  const ok=await bkConfirm(msg,'🗑️ Excluir Categoria');
+  if(!ok)return;
+  const res=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({action:'delete',id})});
+  const data=await res.json();
+  if(data.ok){bkToast('Categoria excluída','sucesso');setTimeout(()=>location.reload(),900);}
+  else bkToast(data.error||'Erro ao excluir','erro');
 }
-
+document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))fecharModal();});
 renderTabela();
 </script>
 {% endblock %}

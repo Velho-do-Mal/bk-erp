@@ -3,6 +3,7 @@ from decimal import Decimal
 from datetime import date
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from apps.accounts.decorators import admin_required
 from django.http import JsonResponse
 from django.db.models import Sum, F, ExpressionWrapper, DecimalField
 from .models import MaterialEstoque
@@ -25,17 +26,23 @@ def _to_date(v):
         return None
 
 
-@login_required
+@admin_required
 def lista(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         action = data.get('action')
 
         if action == 'save':
+            descricao = data.get('descricao', '').strip()
+            if not descricao:
+                return JsonResponse({'ok': False, 'error': 'O campo Descrição é obrigatório.'})
             rid = data.get('id')
-            obj = MaterialEstoque.objects.get(id=rid) if rid else MaterialEstoque()
+            try:
+                obj = MaterialEstoque.objects.get(id=rid) if rid else MaterialEstoque()
+            except MaterialEstoque.DoesNotExist:
+                return JsonResponse({'ok': False, 'error': 'Registro não encontrado.'})
             obj.codigo = data.get('codigo', '').strip()
-            obj.descricao = data.get('descricao', '').strip()
+            obj.descricao = descricao
             fid = data.get('fornecedor_id')
             obj.fornecedor_id = int(fid) if fid else None
             obj.projeto_nome = data.get('projeto_nome', '').strip()
@@ -60,7 +67,10 @@ def lista(request):
             return JsonResponse({'ok': True, 'n': len(updates)})
 
         elif action == 'delete':
-            MaterialEstoque.objects.filter(id=data.get('id')).delete()
+            rid = data.get('id')
+            if not rid:
+                return JsonResponse({'ok': False, 'error': 'ID não informado.'})
+            MaterialEstoque.objects.filter(id=rid).delete()
             return JsonResponse({'ok': True})
 
     qs = MaterialEstoque.objects.select_related('fornecedor')

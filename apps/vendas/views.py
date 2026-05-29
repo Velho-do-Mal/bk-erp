@@ -5,6 +5,7 @@ from datetime import date
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from apps.accounts.decorators import admin_required
 from django.http import JsonResponse, HttpResponse
 from django.db.models import Sum
 from django.contrib import messages
@@ -151,7 +152,7 @@ def _criar_projeto_a_partir_de_proposta(proposta):
 
 # ─── Lista principal ────────────────────────────────────────────
 
-@login_required
+@admin_required
 def lista(request):
     """Lista de propostas e leads com KPIs. POST via JSON para CRUD de leads e delete de proposta."""
     if request.method == 'POST':
@@ -231,7 +232,7 @@ def lista(request):
 
 # ─── Detalhe / Nova Proposta ─────────────────────────────────────────
 
-@login_required
+@admin_required
 def proposta_nova(request):
     """Cria uma nova proposta e redireciona para a pagina de detalhe."""
     from datetime import date as dt
@@ -244,7 +245,7 @@ def proposta_nova(request):
     return redirect('vendas:proposta_detalhe', pk=p.pk)
 
 
-@login_required
+@admin_required
 def proposta_detalhe(request, pk):
     """
     Pagina dedicada da proposta com duas abas:
@@ -361,7 +362,7 @@ def proposta_detalhe(request, pk):
 
 # ─── Exportar Word ────────────────────────────────────────────────────
 
-@login_required
+@admin_required
 def exportar_word(request, pk):
     """
     Gera um arquivo .docx com a proposta formatada para envio ao cliente.

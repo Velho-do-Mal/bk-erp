@@ -13,7 +13,11 @@
 <body>
 
 {% if user.is_authenticated %}
-<!-- SIDEBAR -->
+
+<!-- ── HAMBURGER OVERLAY (mobile) ── -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<!-- ── SIDEBAR ── -->
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-logo">
     <img src="{% static 'assets/bk_icon.jpeg' %}" alt="BK" onerror="this.style.display='none'">
@@ -25,7 +29,7 @@
 
   <nav class="sidebar-nav">
     <div class="nav-section">Principal</div>
-    <a href="{% url 'core:dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+    <a href="{% url 'core:dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'dashboard' and 'financeiro' not in request.path %}active{% endif %}">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h7v7H3zM3 16h7v5H3zM14 3h7v9h-7zM14 15h7v6h-7z"/></svg>
       Dashboard
     </a>
@@ -57,7 +61,7 @@
     </a>
     <a href="{% url 'servicos:lista' %}" class="nav-item {% if 'servicos' in request.path %}active{% endif %}">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
-      Serviços/Produtos
+      Serviços / Produtos
     </a>
     <a href="{% url 'orcamento:dashboard' %}" class="nav-item {% if 'orcamento' in request.path %}active{% endif %}">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 13h.01M13 13h.01M17 13h.01M17 9h.01M13 9h.01M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2m4 0H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2z"/></svg>
@@ -99,19 +103,25 @@
         <div class="user-role">{{ user.get_perfil_display }}</div>
       </div>
     </div>
-    <a href="{% url 'accounts:logout' %}" class="nav-item" style="margin-top:8px; font-size:12px; color:#EF4444;">
+    <a href="{% url 'accounts:logout' %}" class="nav-item" style="margin-top:8px;font-size:12px;color:#EF4444;">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-      Sair
+      🚪 Sair
     </a>
   </div>
 </aside>
 
-<!-- MAIN -->
-<main class="main">
+<!-- ── MAIN ── -->
+<main class="main" id="main-content">
   <div class="topbar">
-    <div>
-      <div class="topbar-title">{% block page_title %}BK ERP{% endblock %}</div>
-      <div class="topbar-sub">{% block page_sub %}{% endblock %}</div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <!-- Hamburger mobile -->
+      <button class="hamburger-btn" id="hamburger-btn" onclick="toggleSidebar()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div>
+        <div class="topbar-title">{% block page_title %}BK ERP{% endblock %}</div>
+        <div class="topbar-sub">{% block page_sub %}{% endblock %}</div>
+      </div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
       {% block topbar_actions %}{% endblock %}
@@ -120,11 +130,9 @@
 
   <div class="content">
     {% if messages %}
-    <div class="messages">
+    <div class="messages" style="margin-bottom:16px;">
       {% for message in messages %}
-      <div class="alert alert-{{ message.tags|default:'info' }}">
-        {{ message }}
-      </div>
+      <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
       {% endfor %}
     </div>
     {% endif %}
@@ -133,19 +141,102 @@
   </div>
 </main>
 
+<!-- ══════════════════════════════
+     TOAST GLOBAL
+══════════════════════════════ -->
+<div id="bk-toast" role="alert" aria-live="polite"></div>
+
+<!-- ══════════════════════════════
+     MODAL DE CONFIRMAÇÃO GLOBAL
+══════════════════════════════ -->
+<div class="modal-overlay" id="bk-confirm-modal">
+  <div class="modal-box" style="max-width:420px;">
+    <div class="modal-title" id="bk-confirm-title">⚠️ Confirmar Exclusão</div>
+    <p id="bk-confirm-msg" style="font-size:14px;color:#374151;margin-bottom:20px;line-height:1.6;"></p>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="bkConfirmCancel()">❌ Cancelar</button>
+      <button class="btn btn-danger"    id="bk-confirm-ok">🗑️ Excluir</button>
+    </div>
+  </div>
+</div>
+
 {% else %}
 {% block full_content %}{% endblock %}
 {% endif %}
 
 <script>
-// Tabs genérico
+// ══════════════════════════════
+//  TOAST GLOBAL
+// ══════════════════════════════
+function bkToast(msg, tipo) {
+  const el = document.getElementById('bk-toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'bk-toast-visible ' + (tipo || 'info');
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => { el.className = ''; }, 3500);
+}
+
+// ══════════════════════════════
+//  MODAL CONFIRM GLOBAL
+// ══════════════════════════════
+let _bkConfirmResolve = null;
+
+function bkConfirm(msg, titulo) {
+  document.getElementById('bk-confirm-msg').textContent = msg || 'Tem certeza? Esta ação não poderá ser desfeita.';
+  document.getElementById('bk-confirm-title').textContent = titulo || '⚠️ Confirmar Exclusão';
+  document.getElementById('bk-confirm-modal').classList.add('open');
+  return new Promise(resolve => { _bkConfirmResolve = resolve; });
+}
+
+function bkConfirmCancel() {
+  document.getElementById('bk-confirm-modal').classList.remove('open');
+  if (_bkConfirmResolve) { _bkConfirmResolve(false); _bkConfirmResolve = null; }
+}
+
+document.getElementById('bk-confirm-ok').addEventListener('click', function() {
+  document.getElementById('bk-confirm-modal').classList.remove('open');
+  if (_bkConfirmResolve) { _bkConfirmResolve(true); _bkConfirmResolve = null; }
+});
+
+// Fechar modal ao clicar no overlay
+document.getElementById('bk-confirm-modal')?.addEventListener('click', function(e) {
+  if (e.target === this) bkConfirmCancel();
+});
+
+// ══════════════════════════════
+//  HAMBURGER MOBILE
+// ══════════════════════════════
+function toggleSidebar() {
+  const sidebar  = document.getElementById('sidebar');
+  const overlay  = document.getElementById('sidebar-overlay');
+  const hamburger = document.getElementById('hamburger-btn');
+  const isOpen = sidebar.classList.contains('sidebar-open');
+  sidebar.classList.toggle('sidebar-open', !isOpen);
+  overlay.classList.toggle('active', !isOpen);
+  hamburger.classList.toggle('active', !isOpen);
+}
+
+// Fechar sidebar ao redimensionar para desktop
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 768) {
+    document.getElementById('sidebar')?.classList.remove('sidebar-open');
+    document.getElementById('sidebar-overlay')?.classList.remove('active');
+    document.getElementById('hamburger-btn')?.classList.remove('active');
+  }
+});
+
+// ══════════════════════════════
+//  TABS GENÉRICO
+// ══════════════════════════════
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     const group = btn.dataset.group || 'default';
     document.querySelectorAll(`.tab-btn[data-group="${group}"]`).forEach(b => b.classList.remove('active'));
     document.querySelectorAll(`.tab-panel[data-group="${group}"]`).forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
-    document.getElementById(btn.dataset.tab).classList.add('active');
+    const target = document.getElementById(btn.dataset.tab);
+    if (target) target.classList.add('active');
   });
 });
 </script>

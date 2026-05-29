@@ -367,3 +367,275 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   outline: none;
   border-color: #3B82F6;
 }
+
+/* ══════════════════════════════
+   HAMBURGER / SIDEBAR MOBILE
+══════════════════════════════ */
+.hamburger-btn {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+}
+.hamburger-btn span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: #94A3B8;
+  border-radius: 2px;
+  transition: all 0.25s;
+}
+.hamburger-btn.active span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger-btn.active span:nth-child(2) { opacity: 0; }
+.hamburger-btn.active span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 99;
+}
+.sidebar-overlay.active { display: block; }
+
+@media (max-width: 768px) {
+  .hamburger-btn { display: flex; }
+  .sidebar { position: fixed; z-index: 100; transform: translateX(-240px); transition: transform 0.25s; }
+  .sidebar.sidebar-open { transform: translateX(0); }
+  .main { margin-left: 0 !important; }
+}
+
+/* ══════════════════════════════
+   TOAST GLOBAL
+══════════════════════════════ */
+#bk-toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  min-width: 220px;
+  max-width: 360px;
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #f1f5f9;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.45);
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.3s, transform 0.3s;
+  pointer-events: none;
+  z-index: 9999;
+  background: #1e293b;
+  border-left: 4px solid #3B82F6;
+}
+#bk-toast.bk-toast-visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+#bk-toast.sucesso { border-left-color: #10B981; background: #0f2922; }
+#bk-toast.erro    { border-left-color: #EF4444; background: #2a1010; }
+#bk-toast.aviso   { border-left-color: #F59E0B; background: #2a200a; }
+#bk-toast.info    { border-left-color: #3B82F6; background: #0d1f3a; }
+
+/* ══════════════════════════════
+   MODAL GLOBAL (padrão Vendas)
+══════════════════════════════ */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: #162032;
+  border: 1px solid #2D4A7A;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 520px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 28px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+  position: relative;
+}
+.modal-box-lg { max-width: 720px; }
+.modal-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #f1f5f9;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #2D4A7A;
+}
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #1e3a5f;
+}
+.modal-close-x {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: #64748B;
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+}
+.modal-close-x:hover { color: #f1f5f9; }
+
+/* ══════════════════════════════
+   DATA TABLE (padrão Vendas)
+══════════════════════════════ */
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.search-input {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #2D4A7A;
+  background: #0d1526;
+  color: #e2e8f0;
+  font-size: 13px;
+  width: 220px;
+}
+.search-input:focus { outline: none; border-color: #3B82F6; }
+.filter-select {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #2D4A7A;
+  background: #0d1526;
+  color: #e2e8f0;
+  font-size: 13px;
+}
+.filter-select:focus { outline: none; border-color: #3B82F6; }
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.data-table thead th {
+  background: #1e3a5f;
+  color: #93C5FD;
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 2px solid #2D4A7A;
+  white-space: nowrap;
+}
+.data-table thead th:first-child { border-radius: 6px 0 0 0; }
+.data-table thead th:last-child  { border-radius: 0 6px 0 0; }
+.data-table tbody td {
+  padding: 10px 14px;
+  border-bottom: 1px solid #1e293b;
+  color: #CBD5E1;
+  vertical-align: middle;
+}
+.data-table tbody tr { background: #ffffff08; }
+.data-table tbody tr:hover { background: #1e3a5f33; }
+.data-table tbody tr:nth-child(even) { background: #ffffff04; }
+.data-table tbody tr:nth-child(even):hover { background: #1e3a5f33; }
+.data-table .col-actions { width: 110px; text-align: center; white-space: nowrap; }
+
+.btn-sm {
+  padding: 5px 10px;
+  font-size: 12px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+.btn-sm:hover { opacity: 0.82; }
+.btn-sm.primary { background: #1D4ED8; color: #fff; }
+.btn-sm.success { background: #059669; color: #fff; }
+.btn-sm.danger  { background: #DC2626; color: #fff; }
+.btn-sm.warning { background: #D97706; color: #fff; }
+.btn-sm.secondary { background: #334155; color: #CBD5E1; }
+
+/* ══════════════════════════════
+   EXCEL GRID (padrão Projetos)
+══════════════════════════════ */
+.excel-grid-wrap {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #1e3a5f;
+}
+.excel-grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 600px;
+}
+.excel-grid thead th {
+  background: #1e3a5f;
+  color: #93C5FD;
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 600;
+  border-right: 1px solid #2D4A7A;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  white-space: nowrap;
+}
+.excel-grid thead th:last-child { border-right: none; }
+.excel-grid tbody td {
+  padding: 2px 2px;
+  border-bottom: 1px solid #1a2a40;
+  border-right: 1px solid #1a2a40;
+  vertical-align: middle;
+}
+.excel-grid tbody td:last-child { border-right: none; }
+.excel-grid tbody tr:hover td { background: rgba(30,58,95,0.25); }
+
+.grid-input,
+.grid-select,
+.grid-textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #e2e8f0;
+  font-size: 13px;
+  padding: 7px 10px;
+  outline: none;
+  font-family: inherit;
+}
+.grid-input:focus,
+.grid-select:focus,
+.grid-textarea:focus {
+  background: rgba(30,58,95,0.5);
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 1px #3B82F6;
+}
+.grid-select { cursor: pointer; }
+.grid-textarea { resize: vertical; min-height: 34px; }
+.grid-delete {
+  background: none;
+  border: none;
+  color: #EF4444;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  display: block;
+  margin: auto;
+}
+.grid-delete:hover { background: rgba(239,68,68,0.12); }
+.excel-grid tfoot td {
+  padding: 8px 12px;
+  border-top: 2px solid #1e3a5f;
+}

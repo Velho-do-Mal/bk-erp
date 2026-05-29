@@ -13,17 +13,17 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='materialcadastro',
             name='codigo_cliente',
-            field=models.CharField(blank=True, max_length=255, verbose_name='Codigo Cliente'),
+            field=models.CharField(blank=True, max_length=255, verbose_name='Código Cliente'),
         ),
         migrations.AlterField(
             model_name='materialcadastro',
             name='codigo_bk',
-            field=models.CharField(blank=True, max_length=255, verbose_name='Codigo BK'),
+            field=models.CharField(blank=True, max_length=255, verbose_name='Código BK'),
         ),
         migrations.AlterField(
             model_name='materialcadastro',
             name='descricao',
-            field=models.CharField(max_length=1000, verbose_name='Descricao'),
+            field=models.CharField(max_length=1000, verbose_name='Descrição'),
         ),
         migrations.AlterField(
             model_name='materialcadastro',

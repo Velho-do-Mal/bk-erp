@@ -1,12 +1,13 @@
 import json
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from apps.accounts.decorators import admin_required
 from django.http import HttpResponse, JsonResponse
 from .models import Documento
 from apps.cadastros.models import Cliente, Fornecedor
 
 
-@login_required
+@admin_required
 def lista(request):
     if request.method == 'POST' and request.FILES.get('arquivo'):
         f = request.FILES['arquivo']

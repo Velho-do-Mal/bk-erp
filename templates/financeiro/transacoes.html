@@ -4,62 +4,54 @@
 {% block page_sub %}Entradas e saídas financeiras{% endblock %}
 
 {% block topbar_actions %}
-<button class="btn btn-primary" onclick="abrirModal()">+ Nova Transação</button>
+<button class="btn btn-primary" onclick="abrirModal()">➕ Nova Transação</button>
 {% endblock %}
 
 {% block content %}
-<!-- Filtros / Extrato -->
+<!-- Filtros -->
 <div class="bk-card" style="padding:14px 16px;margin-bottom:16px">
   <form method="get" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
     <div>
       <label class="form-label" style="font-size:11px">Tipo</label>
-      <select name="tipo" class="form-control" style="width:130px">
-        <option value="">Todos os tipos</option>
-        <option value="entrada" {% if tipo_f == 'entrada' %}selected{% endif %}>Entrada</option>
-        <option value="saida"   {% if tipo_f == 'saida'   %}selected{% endif %}>Saída</option>
+      <select name="tipo" class="filter-select">
+        <option value="">Todos</option>
+        <option value="entrada" {% if tipo_f == 'entrada' %}selected{% endif %}>📥 Entrada</option>
+        <option value="saida"   {% if tipo_f == 'saida'   %}selected{% endif %}>📤 Saída</option>
       </select>
     </div>
     <div>
       <label class="form-label" style="font-size:11px">Status</label>
-      <select name="status" class="form-control" style="width:130px">
-        <option value="">Todos status</option>
-        <option value="pendente"  {% if status_f == 'pendente'  %}selected{% endif %}>Pendente</option>
-        <option value="realizado" {% if status_f == 'realizado' %}selected{% endif %}>Realizado</option>
+      <select name="status" class="filter-select">
+        <option value="">Todos</option>
+        <option value="pendente"  {% if status_f == 'pendente'  %}selected{% endif %}>⏳ Pendente</option>
+        <option value="realizado" {% if status_f == 'realizado' %}selected{% endif %}>✅ Realizado</option>
       </select>
     </div>
     <div>
-      <label class="form-label" style="font-size:11px">Data inicial</label>
+      <label class="form-label" style="font-size:11px">📅 Data inicial</label>
       <input type="date" name="data_ini" class="form-control" style="width:150px" value="{{ ini_f }}">
     </div>
     <div>
-      <label class="form-label" style="font-size:11px">Data final</label>
+      <label class="form-label" style="font-size:11px">📅 Data final</label>
       <input type="date" name="data_fim" class="form-control" style="width:150px" value="{{ fim_f }}">
     </div>
     <div>
-      <label class="form-label" style="font-size:11px">Mês rápido</label>
-      <input type="month" name="mes" class="form-control" style="width:150px" value="{{ mes_f }}"
-             title="Alternativa ao período — use data inicial/final para maior precisão">
+      <label class="form-label" style="font-size:11px">📆 Mês rápido</label>
+      <input type="month" name="mes" class="form-control" style="width:150px" value="{{ mes_f }}">
     </div>
     <button type="submit" class="btn btn-primary">🔍 Filtrar</button>
     <a href="{% url 'financeiro:transacoes' %}" class="btn btn-secondary">✕ Limpar</a>
-    {% if ini_f or fim_f or mes_f or tipo_f or status_f %}
-    <span style="align-self:center;font-size:11px;color:var(--bk-text-muted)">
-      {% if ini_f or fim_f %}📅 {{ ini_f|default:'…' }} → {{ fim_f|default:'…' }}{% elif mes_f %}📅 {{ mes_f }}{% endif %}
-      {% if tipo_f %} · {{ tipo_f }}{% endif %}
-      {% if status_f %} · {{ status_f }}{% endif %}
-    </span>
-    {% endif %}
   </form>
 </div>
 
 <!-- Tabela -->
 <div class="bk-card">
   <div class="table-container">
-    <table class="table">
+    <table class="data-table">
       <thead>
         <tr>
           <th>Descrição</th><th>Tipo</th><th>Valor</th><th>Competência</th>
-          <th>Vencimento</th><th>Categoria</th><th>Recorrência</th><th>Anexo</th><th>Status</th><th>Ações</th>
+          <th>Vencimento</th><th>Categoria</th><th>Recorrência</th><th>Anexo</th><th>Status</th><th class="col-actions">Ações</th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
@@ -67,10 +59,11 @@
   </div>
 </div>
 
-<!-- Modal -->
-<div id="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:999;align-items:center;justify-content:center;overflow-y:auto;">
-  <div class="bk-card" style="width:720px;max-width:95vw;margin:20px auto;max-height:90vh;overflow-y:auto;">
-    <h3 id="modal-titulo" style="margin:0 0 16px">Nova Transação</h3>
+<!-- Modal Transação -->
+<div class="modal-overlay" id="modal" style="overflow-y:auto">
+  <div class="modal-box modal-box-lg" style="margin:20px auto">
+    <button class="modal-close-x" onclick="fecharModal()">✕</button>
+    <div class="modal-title" id="modal-titulo">➕ Nova Transação</div>
     <form id="tx-form" onsubmit="salvar(event)" enctype="multipart/form-data">
       {% csrf_token %}
       <input type="hidden" id="m-id" name="id">
@@ -82,8 +75,8 @@
         <div>
           <label class="form-label">Tipo *</label>
           <select id="m-tipo" name="tipo" class="form-control">
-            <option value="saida">Saída</option>
-            <option value="entrada">Entrada</option>
+            <option value="saida">📤 Saída</option>
+            <option value="entrada">📥 Entrada</option>
           </select>
         </div>
         <div>
@@ -105,67 +98,51 @@
         <div>
           <label class="form-label">Status</label>
           <select id="m-status" name="status" class="form-control">
-            <option value="pendente">Pendente</option>
-            <option value="realizado">Realizado</option>
+            <option value="pendente">⏳ Pendente</option>
+            <option value="realizado">✅ Realizado</option>
           </select>
         </div>
         <div>
           <label class="form-label">Recorrência</label>
           <select id="m-rec" name="recorrencia" class="form-control" onchange="toggleParcelas()">
             <option value="">Sem recorrência</option>
-            <option value="semanal">Semanal</option>
-            <option value="quinzenal">Quinzenal</option>
-            <option value="mensal">Mensal</option>
-            <option value="bimestral">Bimestral</option>
-            <option value="trimestral">Trimestral</option>
-            <option value="semestral">Semestral</option>
-            <option value="anual">Anual</option>
+            <option value="semanal">🔁 Semanal</option>
+            <option value="quinzenal">🔁 Quinzenal</option>
+            <option value="mensal">🔁 Mensal</option>
+            <option value="bimestral">🔁 Bimestral</option>
+            <option value="trimestral">🔁 Trimestral</option>
+            <option value="semestral">🔁 Semestral</option>
+            <option value="anual">🔁 Anual</option>
           </select>
         </div>
         <div id="wrap-parcelas" style="display:none">
-          <label class="form-label">Nº de Parcelas <span style="color:#94A3B8;font-size:11px">(total, incluindo esta)</span></label>
-          <input type="number" id="m-parcelas" name="recorrencia_parcelas"
-            class="form-control" min="2" max="360" step="1" value="2"
-            placeholder="Ex: 12 para 1 ano mensal">
-          <div style="font-size:11px;color:#94A3B8;margin-top:4px">
-            💡 Ex.: 12× mensal = 12 parcelas | 0 = sem limite (gera 12 automático)
-          </div>
+          <label class="form-label">Nº de Parcelas</label>
+          <input type="number" id="m-parcelas" name="recorrencia_parcelas" class="form-control" min="2" max="360" value="2">
+          <div style="font-size:11px;color:#94A3B8;margin-top:4px">💡 Ex.: 12× mensal = 12 parcelas</div>
         </div>
         <div>
           <label class="form-label">Conta</label>
-          <select id="m-conta" name="conta_id" class="form-control">
-            <option value="">— Selecione —</option>
-          </select>
+          <select id="m-conta" name="conta_id" class="form-control"><option value="">— Selecione —</option></select>
         </div>
         <div>
           <label class="form-label">Categoria</label>
-          <select id="m-cat" name="categoria_id" class="form-control" onchange="filtrarSubcategoria()">
-            <option value="">— Selecione —</option>
-          </select>
+          <select id="m-cat" name="categoria_id" class="form-control" onchange="filtrarSubcategoria()"><option value="">— Selecione —</option></select>
         </div>
         <div id="wrap-subcat" style="display:none">
-          <label class="form-label">Subcategoria <span style="color:#94A3B8;font-size:11px">(opcional)</span></label>
-          <select id="m-subcat" class="form-control">
-            <option value="">— Selecione —</option>
-          </select>
+          <label class="form-label">Subcategoria</label>
+          <select id="m-subcat" class="form-control"><option value="">— Selecione —</option></select>
         </div>
         <div>
           <label class="form-label">Cliente</label>
-          <select id="m-cli" name="cliente_id" class="form-control">
-            <option value="">— Selecione —</option>
-          </select>
+          <select id="m-cli" name="cliente_id" class="form-control"><option value="">— Selecione —</option></select>
         </div>
         <div>
           <label class="form-label">Fornecedor</label>
-          <select id="m-forn" name="fornecedor_id" class="form-control">
-            <option value="">— Selecione —</option>
-          </select>
+          <select id="m-forn" name="fornecedor_id" class="form-control"><option value="">— Selecione —</option></select>
         </div>
         <div>
           <label class="form-label">Centro de Custo</label>
-          <select id="m-cc" name="centro_custo_id" class="form-control">
-            <option value="">— Selecione —</option>
-          </select>
+          <select id="m-cc" name="centro_custo_id" class="form-control"><option value="">— Selecione —</option></select>
         </div>
         <div>
           <label class="form-label">Referência</label>
@@ -176,261 +153,179 @@
           <textarea id="m-obs" name="observacoes" class="form-control" rows="2"></textarea>
         </div>
         <div style="grid-column:1/-1">
-          <label class="form-label">Anexo (NF, boleto, contrato…)</label>
+          <label class="form-label">📎 Anexo (NF, boleto, contrato…)</label>
           <input type="file" id="m-anexo" name="anexo" class="form-control">
           <div id="m-anexo-atual" style="font-size:12px;color:#94A3B8;margin-top:4px"></div>
         </div>
       </div>
-      <div style="display:flex;gap:8px;margin-top:16px">
+      <div class="modal-footer">
+        <button type="button" class="btn btn-danger btn-sm" id="btn-del" onclick="excluir()" style="display:none;margin-right:auto">🗑️ Excluir</button>
+        <button type="button" class="btn btn-secondary" onclick="fecharModal()">❌ Cancelar</button>
         <button type="submit" class="btn btn-primary">💾 Salvar</button>
-        <button type="button" class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
-        <button type="button" class="btn btn-danger" id="btn-del" onclick="excluir()" style="display:none;margin-left:auto">🗑️ Excluir</button>
       </div>
     </form>
   </div>
 </div>
 
-<!-- ═══ Modal Excluir Recorrência ═══ -->
-<div id="modal-del-rec" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.65);align-items:center;justify-content:center">
-  <div class="card" style="width:440px;max-width:95vw">
-    <div style="font-size:16px;font-weight:700;color:#fca5a5;margin-bottom:10px">🗑️ Excluir Transação Recorrente</div>
+<!-- Modal Excluir Recorrência -->
+<div class="modal-overlay" id="modal-del-rec">
+  <div class="modal-box" style="max-width:460px">
+    <div class="modal-title" style="color:#fca5a5">🗑️ Excluir Transação Recorrente</div>
     <div id="del-rec-desc" style="font-size:13px;color:#e2e8f0;margin-bottom:16px;line-height:1.6"></div>
     <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:8px">
-      <button class="btn" style="background:#334155;color:#f1f5f9;text-align:left;padding:12px 16px;border-radius:8px;border:1px solid #475569"
-        onclick="executarDelete('somente_esta')">
+      <button class="btn" style="background:#334155;color:#f1f5f9;text-align:left;padding:12px 16px;border-radius:8px;border:1px solid #475569" onclick="executarDelete('somente_esta')">
         <div style="font-weight:600">🔹 Excluir somente esta</div>
-        <div style="font-size:11px;color:#94A3B8;margin-top:3px">Remove apenas este lançamento, os demais permanecem</div>
+        <div style="font-size:11px;color:#94A3B8;margin-top:3px">Remove apenas este lançamento</div>
       </button>
-      <button class="btn" style="background:#422006;color:#fed7aa;text-align:left;padding:12px 16px;border-radius:8px;border:1px solid #92400e"
-        onclick="executarDelete('proximas')">
+      <button class="btn" style="background:#422006;color:#fed7aa;text-align:left;padding:12px 16px;border-radius:8px;border:1px solid #92400e" onclick="executarDelete('proximas')">
         <div style="font-weight:600">🔶 Excluir esta e as próximas</div>
-        <div style="font-size:11px;color:#fdba74;margin-top:3px">Remove este lançamento e todos os futuros do mesmo grupo</div>
+        <div style="font-size:11px;color:#fdba74;margin-top:3px">Remove este e todos os futuros do grupo</div>
       </button>
-      <button class="btn" style="background:#450a0a;color:#fca5a5;text-align:left;padding:12px 16px;border-radius:8px;border:1px solid #991b1b"
-        onclick="executarDelete('todas')">
+      <button class="btn" style="background:#450a0a;color:#fca5a5;text-align:left;padding:12px 16px;border-radius:8px;border:1px solid #991b1b" onclick="executarDelete('todas')">
         <div style="font-weight:600">🔴 Excluir todas (passadas e futuras)</div>
-        <div style="font-size:11px;color:#fca5a5;margin-top:3px">Remove todos os lançamentos do grupo de recorrência</div>
+        <div style="font-size:11px;color:#fca5a5;margin-top:3px">Remove todos os lançamentos do grupo</div>
       </button>
     </div>
-    <button class="btn btn-secondary" style="width:100%;margin-top:4px"
-      onclick="document.getElementById('modal-del-rec').style.display='none'">Cancelar</button>
+    <button class="btn btn-secondary" style="width:100%;margin-top:4px" onclick="document.getElementById('modal-del-rec').classList.remove('open')">❌ Cancelar</button>
   </div>
 </div>
-
 {% endblock %}
 
 {% block extra_js %}
 <script>
-const CSRF = '{{ csrf_token }}';
-const dados = {{ transacoes_json|safe }};
-const contas = {{ contas_json|safe }};
-const categorias = {{ categorias_json|safe }};
-const clientes = {{ clientes_json|safe }};
-const fornecedores = {{ fornecedores_json|safe }};
-const centros = {{ centros_json|safe }};
+const CSRF='{{ csrf_token }}';
+let dados={{ transacoes_json|safe }};
+const contas={{ contas_json|safe }};
+const categorias={{ categorias_json|safe }};
+const clientes={{ clientes_json|safe }};
+const fornecedores={{ fornecedores_json|safe }};
+const centros={{ centros_json|safe }};
+const REC_LABEL={semanal:'🔁 Semanal',quinzenal:'🔁 Quinzenal',mensal:'🔁 Mensal',bimestral:'🔁 Bimestral',trimestral:'🔁 Trimestral',semestral:'🔁 Semestral',anual:'🔁 Anual'};
 
-const REC_LABEL = {semanal:'🔁 Semanal',quinzenal:'🔁 Quinzenal',mensal:'🔁 Mensal',
-  bimestral:'🔁 Bimestral',trimestral:'🔁 Trimestral',semestral:'🔁 Semestral',anual:'🔁 Anual'};
+function fmtVal(v){return'R$ '+parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});}
+function fmtDate(d){if(!d)return'—';const p=d.substring(0,10).split('-');return p[2]+'/'+p[1]+'/'+p[0];}
 
-function fmtDate(d){ return d ? d.substring(0,10) : '—'; }
-function fmtVal(v){ return 'R$ '+parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2}); }
-
-function renderTabela() {
-  const tb = document.getElementById('tbody');
-  if (!dados.length) { tb.innerHTML='<tr><td colspan="10" style="text-align:center;color:#64748b">Nenhuma transação</td></tr>'; return; }
-  tb.innerHTML = dados.map(r => `
+function renderTabela(){
+  const tb=document.getElementById('tbody');
+  if(!dados.length){tb.innerHTML='<tr><td colspan="10" style="text-align:center;color:#64748b;padding:24px">Nenhuma transação encontrada</td></tr>';return;}
+  tb.innerHTML=dados.map(r=>`
     <tr>
       <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.descricao}">${r.descricao}</td>
-      <td><span class="badge ${r.tipo==='entrada'?'badge-success':'badge-danger'}">${r.tipo}</span></td>
+      <td><span class="badge ${r.tipo==='entrada'?'badge-success':'badge-danger'}">${r.tipo==='entrada'?'📥 Entrada':'📤 Saída'}</span></td>
       <td style="font-weight:600;color:${r.tipo==='entrada'?'#10B981':'#EF4444'}">${fmtVal(r.valor)}</td>
       <td>${fmtDate(r.data_competencia)}</td>
       <td>${fmtDate(r.data_vencimento)}</td>
-      <td style="font-size:12px">${
-        r['categoria__pai__nome']
-          ? `<span style='color:#94A3B8'>${r['categoria__pai__nome']}</span> › ${r['categoria__nome']||'—'}`
-          : (r['categoria__nome'] || '—')
-      }</td>
-      <td style="font-size:11px;color:#94A3B8">${r.recorrencia ? (REC_LABEL[r.recorrencia]||r.recorrencia) : '—'}</td>
-      <td>${r.anexo_nome ? `<a href="/financeiro/transacoes/${r.id}/anexo/" style="font-size:11px;color:#3B82F6">📎 ${r.anexo_nome.substring(0,18)}</a>` : '—'}</td>
-      <td>
-        <span class="badge ${r.status==='realizado'?'badge-success':'badge-warning'}" style="cursor:pointer" onclick="toggleStatus(${r.id},this)">${r.status}</span>
-      </td>
-      <td><button class="btn btn-secondary" style="padding:4px 10px;font-size:11px" onclick="editar(${r.id})">✏️</button></td>
+      <td style="font-size:12px">${r['categoria__pai__nome']?`<span style='color:#94A3B8'>${r['categoria__pai__nome']}</span> › ${r['categoria__nome']||'—'}`:(r['categoria__nome']||'—')}</td>
+      <td style="font-size:11px;color:#94A3B8">${r.recorrencia?REC_LABEL[r.recorrencia]||r.recorrencia:'—'}</td>
+      <td>${r.anexo_nome?`<a href="/financeiro/transacoes/${r.id}/anexo/" style="font-size:11px;color:#3B82F6">📎 ${r.anexo_nome.substring(0,18)}</a>`:'—'}</td>
+      <td><span class="badge ${r.status==='realizado'?'badge-success':'badge-warning'}" style="cursor:pointer" onclick="toggleStatus(${r.id},this)">${r.status==='realizado'?'✅ Realizado':'⏳ Pendente'}</span></td>
+      <td class="col-actions"><button class="btn-sm primary" onclick="editar(${r.id})">✏️ Editar</button></td>
     </tr>`).join('');
 }
 
-function populateSelects() {
-  const sel = (id, list, vf='id', tf='nome') => {
-    const el = document.getElementById(id);
-    const cur = el.value;
-    el.innerHTML = '<option value="">— Selecione —</option>' + list.map(r=>`<option value="${r[vf]}">${r[tf]}</option>`).join('');
-    el.value = cur;
-  };
-  sel('m-conta', contas);
-  // Categoria: só mostrar pais (pai_id == null)
-  const cats_pai = categorias.filter(c => !c.pai_id);
-  sel('m-cat', cats_pai);
-  sel('m-cli', clientes);
-  sel('m-forn', fornecedores); sel('m-cc', centros);
+function populateSelects(){
+  const sel=(id,list,vf='id',tf='nome')=>{const el=document.getElementById(id);const cur=el.value;el.innerHTML='<option value="">— Selecione —</option>'+list.map(r=>`<option value="${r[vf]}">${r[tf]}</option>`).join('');el.value=cur;};
+  sel('m-conta',contas);
+  sel('m-cat',categorias.filter(c=>!c.pai_id));
+  sel('m-cli',clientes);sel('m-forn',fornecedores);sel('m-cc',centros);
 }
 
-function filtrarSubcategoria() {
-  const catId = parseInt(document.getElementById('m-cat').value) || null;
-  const wrap  = document.getElementById('wrap-subcat');
-  const sel   = document.getElementById('m-subcat');
-
-  if (!catId) {
-    wrap.style.display = 'none';
-    sel.value = '';
-    return;
-  }
-
-  // pai_id vem como int do Django; parseInt garante segurança de tipo
-  const filhos = categorias.filter(c => c.pai_id != null && parseInt(c.pai_id) === catId);
-  if (!filhos.length) {
-    wrap.style.display = 'none';
-    sel.value = '';
-    return;
-  }
-
-  sel.innerHTML = '<option value="">— Selecione —</option>' +
-    filhos.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
-  wrap.style.display = 'block';
+function filtrarSubcategoria(){
+  const catId=parseInt(document.getElementById('m-cat').value)||null;
+  const wrap=document.getElementById('wrap-subcat');
+  const sel=document.getElementById('m-subcat');
+  if(!catId){wrap.style.display='none';sel.value='';return;}
+  const filhos=categorias.filter(c=>c.pai_id!=null&&parseInt(c.pai_id)===catId);
+  if(!filhos.length){wrap.style.display='none';sel.value='';return;}
+  sel.innerHTML='<option value="">— Selecione —</option>'+filhos.map(c=>`<option value="${c.id}">${c.nome}</option>`).join('');
+  wrap.style.display='block';
 }
 
-function toggleParcelas() {
-  const rec = document.getElementById('m-rec').value;
-  const wrap = document.getElementById('wrap-parcelas');
-  if (rec) {
-    wrap.style.display = 'block';
-  } else {
-    wrap.style.display = 'none';
-    document.getElementById('m-parcelas').value = 2;
-  }
+function toggleParcelas(){
+  const rec=document.getElementById('m-rec').value;
+  document.getElementById('wrap-parcelas').style.display=rec?'block':'none';
+  if(!rec)document.getElementById('m-parcelas').value=2;
 }
 
-function abrirModal(r=null) {
+function abrirModal(r=null){
   populateSelects();
-  const today = new Date().toISOString().substring(0,10);
-  document.getElementById('m-id').value = r?.id||'';
-  document.getElementById('m-desc').value = r?.descricao||'';
-  document.getElementById('m-tipo').value = r?.tipo||'saida';
-  document.getElementById('m-valor').value = r?.valor||'';
-  document.getElementById('m-data').value = r?.data_competencia ? r.data_competencia.substring(0,10) : today;
-  document.getElementById('m-venc').value = r?.data_vencimento ? r.data_vencimento.substring(0,10) : '';
-  document.getElementById('m-pago').value = r?.data_pagamento ? r.data_pagamento.substring(0,10) : '';
-  document.getElementById('m-status').value = r?.status||'pendente';
-  document.getElementById('m-rec').value = r?.recorrencia||'';
-  document.getElementById('m-parcelas').value = r?.recorrencia_parcelas || 2;
+  const today=new Date().toISOString().substring(0,10);
+  document.getElementById('m-id').value=r?.id||'';
+  document.getElementById('m-desc').value=r?.descricao||'';
+  document.getElementById('m-tipo').value=r?.tipo||'saida';
+  document.getElementById('m-valor').value=r?.valor||'';
+  document.getElementById('m-data').value=r?.data_competencia?r.data_competencia.substring(0,10):today;
+  document.getElementById('m-venc').value=r?.data_vencimento?r.data_vencimento.substring(0,10):'';
+  document.getElementById('m-pago').value=r?.data_pagamento?r.data_pagamento.substring(0,10):'';
+  document.getElementById('m-status').value=r?.status||'pendente';
+  document.getElementById('m-rec').value=r?.recorrencia||'';
+  document.getElementById('m-parcelas').value=r?.recorrencia_parcelas||2;
   toggleParcelas();
-  document.getElementById('m-conta').value = r?.conta_id||'';
-  // Ao editar: descobrir se categoria é pai ou filho
-  const catAtual = categorias.find(c => parseInt(c.id) === parseInt(r?.categoria_id || 0));
-  if (catAtual && catAtual.pai_id) {
-    // É subcategoria: selecionar o pai no m-cat e a sub em m-subcat
-    document.getElementById('m-cat').value = parseInt(catAtual.pai_id);
-    filtrarSubcategoria();
-    document.getElementById('m-subcat').value = catAtual.id;
-  } else {
-    // É categoria pai (ou sem categoria)
-    document.getElementById('m-cat').value = r?.categoria_id||'';
-    filtrarSubcategoria();
-  }
-  document.getElementById('m-cli').value = r?.cliente_id||'';
-  document.getElementById('m-forn').value = r?.fornecedor_id||'';
-  document.getElementById('m-cc').value = r?.centro_custo_id||'';
-  document.getElementById('m-ref').value = r?.referencia||'';
-  document.getElementById('m-obs').value = r?.observacoes||'';
-  document.getElementById('m-anexo').value = '';
-  document.getElementById('m-anexo-atual').textContent = r?.anexo_nome ? `Atual: ${r.anexo_nome}` : '';
-  document.getElementById('modal-titulo').textContent = r ? 'Editar Transação' : 'Nova Transação';
-  document.getElementById('btn-del').style.display = r ? '' : 'none';
-  document.getElementById('modal').style.display = 'flex';
+  document.getElementById('m-conta').value=r?.conta_id||'';
+  const catAtual=categorias.find(c=>parseInt(c.id)===parseInt(r?.categoria_id||0));
+  if(catAtual&&catAtual.pai_id){document.getElementById('m-cat').value=parseInt(catAtual.pai_id);filtrarSubcategoria();document.getElementById('m-subcat').value=catAtual.id;}
+  else{document.getElementById('m-cat').value=r?.categoria_id||'';filtrarSubcategoria();}
+  document.getElementById('m-cli').value=r?.cliente_id||'';
+  document.getElementById('m-forn').value=r?.fornecedor_id||'';
+  document.getElementById('m-cc').value=r?.centro_custo_id||'';
+  document.getElementById('m-ref').value=r?.referencia||'';
+  document.getElementById('m-obs').value=r?.observacoes||'';
+  document.getElementById('m-anexo').value='';
+  document.getElementById('m-anexo-atual').textContent=r?.anexo_nome?`📎 Atual: ${r.anexo_nome}`:'';
+  document.getElementById('modal-titulo').textContent=r?'✏️ Editar Transação':'➕ Nova Transação';
+  document.getElementById('btn-del').style.display=r?'':'none';
+  document.getElementById('modal').classList.add('open');
 }
-function editar(id){ abrirModal(dados.find(r=>r.id===id)); }
-function fecharModal(){ document.getElementById('modal').style.display='none'; }
+function editar(id){abrirModal(dados.find(r=>r.id===id));}
+function fecharModal(){document.getElementById('modal').classList.remove('open');}
 
-async function salvar(e) {
+async function salvar(e){
   e.preventDefault();
-  const form = document.getElementById('tx-form');
-  const hasFile = document.getElementById('m-anexo').files.length > 0;
-
-  if (hasFile) {
-    // multipart form (com anexo)
-    const fd = new FormData(form);
-    const r = await fetch('', {method:'POST', headers:{'X-CSRFToken':CSRF}, body:fd});
-    if ((await r.json()).ok) location.reload();
+  const form=document.getElementById('tx-form');
+  const hasFile=document.getElementById('m-anexo').files.length>0;
+  if(hasFile){
+    const fd=new FormData(form);
+    const r=await fetch('',{method:'POST',headers:{'X-CSRFToken':CSRF},body:fd});
+    const d=await r.json();
+    if(d.ok){bkToast('Transação salva!','sucesso');setTimeout(()=>location.reload(),900);}
+    else bkToast(d.error||'Erro ao salvar','erro');
   } else {
-    // JSON (sem anexo)
-    const payload = {
-      action:'save',
-      id: document.getElementById('m-id').value||null,
-      descricao: document.getElementById('m-desc').value,
-      tipo: document.getElementById('m-tipo').value,
-      valor: parseFloat(document.getElementById('m-valor').value),
-      data_competencia: document.getElementById('m-data').value,
-      data_vencimento: document.getElementById('m-venc').value||null,
-      data_pagamento: document.getElementById('m-pago').value||null,
-      status: document.getElementById('m-status').value,
-      recorrencia: document.getElementById('m-rec').value,
-      recorrencia_parcelas: parseInt(document.getElementById('m-parcelas')?.value || 0),
-      conta_id: document.getElementById('m-conta').value||null,
-      // Usar subcategoria se selecionada, senão usar categoria pai
-      categoria_id: (document.getElementById('m-subcat').value ||
-                     document.getElementById('m-cat').value) || null,
-      cliente_id: document.getElementById('m-cli').value||null,
-      fornecedor_id: document.getElementById('m-forn').value||null,
-      centro_custo_id: document.getElementById('m-cc').value||null,
-      referencia: document.getElementById('m-ref').value,
-      observacoes: document.getElementById('m-obs').value,
-    };
-    const r = await fetch('', {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':CSRF}, body:JSON.stringify(payload)});
-    if ((await r.json()).ok) location.reload();
+    const payload={action:'save',id:document.getElementById('m-id').value||null,descricao:document.getElementById('m-desc').value,tipo:document.getElementById('m-tipo').value,valor:parseFloat(document.getElementById('m-valor').value),data_competencia:document.getElementById('m-data').value,data_vencimento:document.getElementById('m-venc').value||null,data_pagamento:document.getElementById('m-pago').value||null,status:document.getElementById('m-status').value,recorrencia:document.getElementById('m-rec').value,recorrencia_parcelas:parseInt(document.getElementById('m-parcelas')?.value||0),conta_id:document.getElementById('m-conta').value||null,categoria_id:(document.getElementById('m-subcat').value||document.getElementById('m-cat').value)||null,cliente_id:document.getElementById('m-cli').value||null,fornecedor_id:document.getElementById('m-forn').value||null,centro_custo_id:document.getElementById('m-cc').value||null,referencia:document.getElementById('m-ref').value,observacoes:document.getElementById('m-obs').value};
+    const r=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify(payload)});
+    const d=await r.json();
+    if(d.ok){bkToast('Transação salva!','sucesso');setTimeout(()=>location.reload(),900);}
+    else bkToast(d.error||'Erro ao salvar','erro');
   }
 }
 
-let _delId = null;
-
-async function excluir() {
-  const id = parseInt(document.getElementById('m-id').value);
-  if (!id) return;
-  _delId = id;
-
-  // Verifica se tem recorrência
-  const t = dados.find(x => parseInt(x.id) === id);
-  if (t && t.recorrencia_grupo) {
-    // Fecha modal de edição e abre modal de escolha de exclusão
+let _delId=null;
+async function excluir(){
+  const id=parseInt(document.getElementById('m-id').value);
+  if(!id)return;
+  _delId=id;
+  const t=dados.find(x=>parseInt(x.id)===id);
+  if(t&&t.recorrencia_grupo){
     fecharModal();
-    document.getElementById('del-rec-desc').innerHTML =
-      `<strong>${t.descricao}</strong><br>` +
-      `Esta transação faz parte de um grupo de recorrência <strong>${REC_LABEL[t.recorrencia] || t.recorrencia}</strong>.<br>` +
-      `Como deseja excluir?`;
-    document.getElementById('modal-del-rec').style.display = 'flex';
+    document.getElementById('del-rec-desc').innerHTML=`<strong>${t.descricao}</strong><br>Esta transação faz parte de um grupo de recorrência <strong>${REC_LABEL[t.recorrencia]||t.recorrencia}</strong>.<br>Como deseja excluir?`;
+    document.getElementById('modal-del-rec').classList.add('open');
   } else {
-    if (!confirm('Excluir esta transação?')) return;
+    const ok=await bkConfirm('Excluir esta transação permanentemente?','🗑️ Excluir Transação');
+    if(!ok)return;
     await executarDelete('somente_esta');
   }
 }
-
-async function executarDelete(modo) {
-  document.getElementById('modal-del-rec').style.display = 'none';
-  const r = await fetch('', {
-    method:'POST',
-    headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},
-    body:JSON.stringify({action:'delete', id:_delId, modo})
-  });
-  if ((await r.json()).ok) location.reload();
+async function executarDelete(modo){
+  document.getElementById('modal-del-rec').classList.remove('open');
+  const r=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({action:'delete',id:_delId,modo})});
+  const d=await r.json();
+  if(d.ok){bkToast('Transação excluída','sucesso');setTimeout(()=>location.reload(),900);}
+  else bkToast(d.error||'Erro ao excluir','erro');
 }
-
-async function toggleStatus(id, el) {
-  const r = await fetch('', {method:'POST', headers:{'Content-Type':'application/json','X-CSRFToken':CSRF}, body:JSON.stringify({action:'toggle_status',id})});
-  const data = await r.json();
-  if (data.ok) {
-    el.textContent = data.status;
-    el.className = 'badge ' + (data.status==='realizado'?'badge-success':'badge-warning');
-  }
+async function toggleStatus(id,el){
+  const r=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({action:'toggle_status',id})});
+  const d=await r.json();
+  if(d.ok){el.textContent=d.status==='realizado'?'✅ Realizado':'⏳ Pendente';el.className='badge '+(d.status==='realizado'?'badge-success':'badge-warning');}
 }
-
 renderTabela();
 </script>
 {% endblock %}
