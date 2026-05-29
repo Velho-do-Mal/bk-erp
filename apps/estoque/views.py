@@ -16,6 +16,17 @@ def _empresa(request):
     return getattr(request, 'empresa', None)
 
 
+def _qs_empresa(qs, request):
+    """
+    Aplica filtro de empresa ao queryset.
+    Se empresa for None (superadmin), retorna o queryset sem filtro.
+    """
+    empresa = _empresa(request)
+    if empresa is None:
+        return qs
+    return qs.filter(empresa=empresa)
+
+
 
 
 def _to_dec(v):
@@ -73,7 +84,7 @@ def lista(request):
             # Atualiza apenas qtd_utilizada (tabela inline)
             updates = data.get('updates', [])
             for u in updates:
-                MaterialEstoque.objects.filter(empresa=_empresa(request), id=u['id']).update(
+                _qs_empresa(MaterialEstoque.objects, request).filter(id=u['id']).update(
                     qtd_utilizada=_to_dec(u['qtd_utilizada'])
                 )
             return JsonResponse({'ok': True, 'n': len(updates)})
@@ -82,7 +93,7 @@ def lista(request):
             rid = data.get('id')
             if not rid:
                 return JsonResponse({'ok': False, 'error': 'ID não informado.'})
-            MaterialEstoque.objects.filter(empresa=_empresa(request), id=rid).delete()
+            _qs_empresa(MaterialEstoque.objects, request).filter(id=rid).delete()
             return JsonResponse({'ok': True})
 
     qs = MaterialEstoque.objects.select_related('fornecedor')
@@ -111,7 +122,7 @@ def lista(request):
 
     ctx = {
         'materiais_json': json.dumps(materiais),
-        'fornecedores': list(Fornecedor.objects.filter(empresa=_empresa(request), ativo=True).values('id', 'nome')),
+        'fornecedores': list(_qs_empresa(Fornecedor.objects, request).filter(ativo=True).values('id', 'nome')),
         'total_investido': total_investido,
         'total_itens': total_itens,
         'itens_criticos': itens_criticos,

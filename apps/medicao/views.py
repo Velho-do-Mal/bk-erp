@@ -19,6 +19,17 @@ def _empresa(request):
     return getattr(request, 'empresa', None)
 
 
+def _qs_empresa(qs, request):
+    """
+    Aplica filtro de empresa ao queryset.
+    Se empresa for None (superadmin), retorna o queryset sem filtro.
+    """
+    empresa = _empresa(request)
+    if empresa is None:
+        return qs
+    return qs.filter(empresa=empresa)
+
+
 
 try:
     from apps.projetos.models import Projeto
@@ -151,8 +162,8 @@ def _montar_linhas(itens, medicoes_dict, acum_dict):
 def dashboard(request):
     """Lista todos os Boletins de Medição."""
     boletins = BoletimMedicao.objects.select_related("cliente", "projeto").all()
-    clientes = Cliente.objects.filter(empresa=_empresa(request), ativo=True).order_by("nome")
-    projetos = Projeto.objects.filter(empresa=_empresa(request)).order_by("nome") if Projeto is not None else []
+    clientes = _qs_empresa(Cliente.objects, request).filter(ativo=True).order_by("nome")
+    projetos = _qs_empresa(Projeto.objects, request).filter().order_by("nome") if Projeto is not None else []
     return render(request, "medicao/dashboard.html", {
         "boletins": boletins,
         "clientes": clientes,
@@ -166,9 +177,9 @@ def detalhe(request, bm_id):
     boletim = get_object_or_404(
         BoletimMedicao.objects.select_related("cliente", "projeto"), id=bm_id
     )
-    clientes = Cliente.objects.filter(empresa=_empresa(request), ativo=True).order_by("nome")
-    projetos = Projeto.objects.filter(empresa=_empresa(request)).order_by("nome") if Projeto is not None else []
-    servicos = ProdutoServico.objects.filter(empresa=_empresa(request), ativo=True).order_by("nome")
+    clientes = _qs_empresa(Cliente.objects, request).filter(ativo=True).order_by("nome")
+    projetos = _qs_empresa(Projeto.objects, request).filter().order_by("nome") if Projeto is not None else []
+    servicos = _qs_empresa(ProdutoServico.objects, request).filter(ativo=True).order_by("nome")
     itens = list(boletim.itens.select_related("servico").order_by("ordem", "id"))
     periodos = list(boletim.periodos.order_by("numero"))
 
@@ -568,7 +579,7 @@ def api_dados_consolidado(request, bm_id):
 @require_GET
 def api_autocomplete_servico(request):
     termo = (request.GET.get("q") or "").strip()
-    qs = ProdutoServico.objects.filter(empresa=_empresa(request), ativo=True)
+    qs = _qs_empresa(ProdutoServico.objects, request).filter(ativo=True)
     if termo:
         qs = qs.filter(Q(nome__icontains=termo) | Q(codigo__icontains=termo))
     resultados = [

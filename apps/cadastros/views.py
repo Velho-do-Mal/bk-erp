@@ -12,6 +12,17 @@ def _empresa(request):
     return getattr(request, 'empresa', None)
 
 
+def _qs_empresa(qs, request):
+    """
+    Aplica filtro de empresa ao queryset.
+    Se empresa for None (superadmin), retorna o queryset sem filtro.
+    """
+    empresa = _empresa(request)
+    if empresa is None:
+        return qs
+    return qs.filter(empresa=empresa)
+
+
 
 
 @admin_required
@@ -44,10 +55,10 @@ def clientes(request):
             rid = data.get('id')
             if not rid:
                 return JsonResponse({'ok': False, 'error': 'ID não informado.'})
-            Cliente.objects.filter(empresa=_empresa(request), id=rid).delete()
+            _qs_empresa(Cliente.objects, request).filter(id=rid).delete()
             return JsonResponse({'ok': True})
         return JsonResponse({'ok': False, 'error': 'Ação inválida.'})
-    qs = list(Cliente.objects.filter(empresa=_empresa(request)).values('id', 'nome', 'documento', 'email', 'telefone', 'observacoes', 'ativo'))
+    qs = list(_qs_empresa(Cliente.objects, request).filter().values('id', 'nome', 'documento', 'email', 'telefone', 'observacoes', 'ativo'))
     return render(request, 'cadastros/clientes.html', {'clientes_json': json.dumps(qs, ensure_ascii=False)})
 
 
@@ -81,10 +92,10 @@ def fornecedores(request):
             rid = data.get('id')
             if not rid:
                 return JsonResponse({'ok': False, 'error': 'ID não informado.'})
-            Fornecedor.objects.filter(empresa=_empresa(request), id=rid).delete()
+            _qs_empresa(Fornecedor.objects, request).filter(id=rid).delete()
             return JsonResponse({'ok': True})
         return JsonResponse({'ok': False, 'error': 'Ação inválida.'})
-    qs = list(Fornecedor.objects.filter(empresa=_empresa(request)).values('id', 'nome', 'documento', 'email', 'telefone', 'observacoes', 'ativo'))
+    qs = list(_qs_empresa(Fornecedor.objects, request).filter().values('id', 'nome', 'documento', 'email', 'telefone', 'observacoes', 'ativo'))
     return render(request, 'cadastros/fornecedores.html', {'fornecedores_json': json.dumps(qs, ensure_ascii=False)})
 
 
@@ -115,10 +126,10 @@ def centros_custo(request):
             rid = data.get('id')
             if not rid:
                 return JsonResponse({'ok': False, 'error': 'ID não informado.'})
-            CentrosDeCusto.objects.filter(empresa=_empresa(request), id=rid).delete()
+            _qs_empresa(CentrosDeCusto.objects, request).filter(id=rid).delete()
             return JsonResponse({'ok': True})
         return JsonResponse({'ok': False, 'error': 'Ação inválida.'})
-    qs = list(CentrosDeCusto.objects.filter(empresa=_empresa(request)).values('id', 'nome', 'observacoes', 'ativo'))
+    qs = list(_qs_empresa(CentrosDeCusto.objects, request).filter().values('id', 'nome', 'observacoes', 'ativo'))
     return render(request, 'cadastros/centros_custo.html', {'centros_json': json.dumps(qs, ensure_ascii=False)})
 
 

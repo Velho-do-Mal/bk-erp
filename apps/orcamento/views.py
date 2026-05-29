@@ -20,6 +20,17 @@ def _empresa(request):
     return getattr(request, 'empresa', None)
 
 
+def _qs_empresa(qs, request):
+    """
+    Aplica filtro de empresa ao queryset.
+    Se empresa for None (superadmin), retorna o queryset sem filtro.
+    """
+    empresa = _empresa(request)
+    if empresa is None:
+        return qs
+    return qs.filter(empresa=empresa)
+
+
 
 try:
     from apps.projetos.models import Projeto
@@ -125,11 +136,11 @@ def _totais_orcamento(orcamento: Orcamento | None) -> dict:
 @require_GET
 def dashboard(request):
     obras = Obra.objects.select_related("cliente", "projeto").all()
-    clientes = Cliente.objects.filter(empresa=_empresa(request), ativo=True).order_by("nome")
-    projetos = Projeto.objects.filter(empresa=_empresa(request)).order_by("nome") if Projeto is not None else []
+    clientes = _qs_empresa(Cliente.objects, request).filter(ativo=True).order_by("nome")
+    projetos = _qs_empresa(Projeto.objects, request).filter().order_by("nome") if Projeto is not None else []
 
-    produtos_qs = ProdutoServico.objects.filter(empresa=_empresa(request), tipo__in=["produto", "ambos"]).order_by("nome")
-    servicos_qs = ProdutoServico.objects.filter(empresa=_empresa(request), tipo__in=["servico", "ambos"]).order_by("nome")
+    produtos_qs = _qs_empresa(ProdutoServico.objects, request).filter(tipo__in=["produto", "ambos"]).order_by("nome")
+    servicos_qs = _qs_empresa(ProdutoServico.objects, request).filter(tipo__in=["servico", "ambos"]).order_by("nome")
 
     def _qs_to_list(qs):
         return [
@@ -232,7 +243,7 @@ def salvar_obra(request):
 
     # ← CORRIGIDO: get_or_create pode lançar MultipleObjectsReturned se houver
     #   mais de um orçamento para a mesma obra. Usa filter().first() no lugar.
-    orcamento = Orcamento.objects.filter(empresa=_empresa(request), obra=obra).order_by("-criado_em").first()
+    orcamento = _qs_empresa(Orcamento.objects, request).filter(obra=obra).order_by("-criado_em").first()
     if not orcamento:
         orcamento = Orcamento.objects.create(obra=obra, nome=nome_orcamento)
     elif orcamento.nome != nome_orcamento:
@@ -259,7 +270,7 @@ def salvar_obra(request):
 def autocomplete_produto(request):
     """Autocomplete para produtos/materiais (tipo produto ou ambos)."""
     termo = (request.GET.get("q") or request.POST.get("q") or "").strip()
-    qs = ProdutoServico.objects.filter(empresa=_empresa(request), ativo=True, tipo__in=["produto", "ambos"])
+    qs = _qs_empresa(ProdutoServico.objects, request).filter(ativo=True, tipo__in=["produto", "ambos"])
 
     if termo:
         qs = qs.filter(Q(nome__icontains=termo) | Q(codigo__icontains=termo))
@@ -272,7 +283,7 @@ def autocomplete_produto(request):
 def autocomplete_servico(request):
     """Autocomplete para serviços (tipo servico ou ambos)."""
     termo = (request.GET.get("q") or request.POST.get("q") or "").strip()
-    qs = ProdutoServico.objects.filter(empresa=_empresa(request), ativo=True, tipo__in=["servico", "ambos"])
+    qs = _qs_empresa(ProdutoServico.objects, request).filter(ativo=True, tipo__in=["servico", "ambos"])
 
     if termo:
         qs = qs.filter(Q(nome__icontains=termo) | Q(codigo__icontains=termo))

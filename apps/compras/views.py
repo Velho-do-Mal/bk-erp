@@ -15,6 +15,17 @@ def _empresa(request):
     return getattr(request, 'empresa', None)
 
 
+def _qs_empresa(qs, request):
+    """
+    Aplica filtro de empresa ao queryset.
+    Se empresa for None (superadmin), retorna o queryset sem filtro.
+    """
+    empresa = _empresa(request)
+    if empresa is None:
+        return qs
+    return qs.filter(empresa=empresa)
+
+
 
 
 def _to_dec(v):
@@ -89,7 +100,7 @@ def lista(request):
             return JsonResponse({'ok': True, 'id': obj.id})
 
         elif action == 'delete':
-            PedidoCompra.objects.filter(empresa=_empresa(request), id=data.get('id')).delete()
+            _qs_empresa(PedidoCompra.objects, request).filter(id=data.get('id')).delete()
             return JsonResponse({'ok': True})
 
         elif action == 'gerar_financeiro':
@@ -98,7 +109,7 @@ def lista(request):
             ref = f"PC:{po.id}"
             try:
                 from apps.financeiro.models import Transacao
-                if Transacao.objects.filter(empresa=_empresa(request), referencia=ref).exists():
+                if _qs_empresa(Transacao.objects, request).filter(referencia=ref).exists():
                     return JsonResponse({'ok': False, 'msg': 'Já existe lançamento para este pedido.'})
                 t = Transacao.objects.create(
                     descricao=f"Pedido de Compra {po.codigo}",
@@ -155,7 +166,7 @@ def lista(request):
 
     ctx = {
         'pedidos_json': json.dumps(pedidos_data),
-        'fornecedores': list(Fornecedor.objects.filter(empresa=_empresa(request), ativo=True).values('id', 'nome')),
+        'fornecedores': list(_qs_empresa(Fornecedor.objects, request).filter(ativo=True).values('id', 'nome')),
         'total_pedidos': qs.count(),
         'total_valor': float(total_valor),
         'em_aberto': em_aberto,

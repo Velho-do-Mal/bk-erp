@@ -10,6 +10,17 @@ def _empresa(request):
     return getattr(request, 'empresa', None)
 
 
+def _qs_empresa(qs, request):
+    """
+    Aplica filtro de empresa ao queryset.
+    Se empresa for None (superadmin), retorna o queryset sem filtro.
+    """
+    empresa = _empresa(request)
+    if empresa is None:
+        return qs
+    return qs.filter(empresa=empresa)
+
+
 
 
 @admin_required
@@ -48,7 +59,7 @@ def lista(request):
             rid = data.get('id')
             if not rid:
                 return JsonResponse({'ok': False, 'error': 'ID não informado.'})
-            ProdutoServico.objects.filter(empresa=_empresa(request), id=rid).delete()
+            _qs_empresa(ProdutoServico.objects, request).filter(id=rid).delete()
             return JsonResponse({'ok': True})
 
         elif action == 'toggle_ativo':
@@ -66,7 +77,7 @@ def lista(request):
 
         return JsonResponse({'ok': False, 'error': 'Ação inválida.'})
 
-    items = list(ProdutoServico.objects.filter(empresa=_empresa(request)).values(
+    items = list(_qs_empresa(ProdutoServico.objects, request).filter().values(
         'id', 'codigo', 'tipo', 'nome', 'descricao', 'unidade', 'preco_unitario', 'ativo'
     ))
     for i in items:
@@ -75,5 +86,5 @@ def lista(request):
     return render(request, 'servicos/lista.html', {
         'items_json': json.dumps(items, ensure_ascii=False),
         'total': ProdutoServico.objects.count(),
-        'ativos': ProdutoServico.objects.filter(empresa=_empresa(request), ativo=True).count(),
+        'ativos': _qs_empresa(ProdutoServico.objects, request).filter(ativo=True).count(),
     })

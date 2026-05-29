@@ -18,6 +18,17 @@ def _empresa(request):
     return getattr(request, 'empresa', None)
 
 
+def _qs_empresa(qs, request):
+    """
+    Aplica filtro de empresa ao queryset.
+    Se empresa for None (superadmin), retorna o queryset sem filtro.
+    """
+    empresa = _empresa(request)
+    if empresa is None:
+        return qs
+    return qs.filter(empresa=empresa)
+
+
 
 
 def _to_dec(v):
@@ -80,23 +91,23 @@ def dashboard_financeiro(request):
         d_fim = hoje
 
     def _qs_base():
-        qs = Transacao.objects.filter(empresa=_empresa(request), data_competencia__gte=d_ini, data_competencia__lte=d_fim)
+        qs = _qs_empresa(Transacao.objects, request).filter(data_competencia__gte=d_ini, data_competencia__lte=d_fim)
         if modo == 'realizado':
             qs = qs.filter(status='realizado')
         elif modo == 'previsto':
             qs = qs.filter(status='pendente')
         return qs
 
-    total_entrada = Transacao.objects.filter(empresa=_empresa(request), tipo='entrada', status='realizado').aggregate(s=Sum('valor'))['s'] or Decimal('0')
-    total_saida = Transacao.objects.filter(empresa=_empresa(request), tipo='saida', status='realizado').aggregate(s=Sum('valor'))['s'] or Decimal('0')
+    total_entrada = _qs_empresa(Transacao.objects, request).filter(tipo='entrada', status='realizado').aggregate(s=Sum('valor'))['s'] or Decimal('0')
+    total_saida = _qs_empresa(Transacao.objects, request).filter(tipo='saida', status='realizado').aggregate(s=Sum('valor'))['s'] or Decimal('0')
     saldo = total_entrada - total_saida
-    pendentes_receber = Transacao.objects.filter(empresa=_empresa(request), tipo='entrada', status='pendente').aggregate(s=Sum('valor'))['s'] or Decimal('0')
-    pendentes_pagar = Transacao.objects.filter(empresa=_empresa(request), tipo='saida', status='pendente').aggregate(s=Sum('valor'))['s'] or Decimal('0')
+    pendentes_receber = _qs_empresa(Transacao.objects, request).filter(tipo='entrada', status='pendente').aggregate(s=Sum('valor'))['s'] or Decimal('0')
+    pendentes_pagar = _qs_empresa(Transacao.objects, request).filter(tipo='saida', status='pendente').aggregate(s=Sum('valor'))['s'] or Decimal('0')
 
     ent_periodo = _qs_base().filter(tipo='entrada').aggregate(s=Sum('valor'))['s'] or Decimal('0')
     said_periodo = _qs_base().filter(tipo='saida').aggregate(s=Sum('valor'))['s'] or Decimal('0')
 
-    ultimas = list(Transacao.objects.filter(empresa=_empresa(request)).select_related('categoria', 'conta').order_by('-criado_em')[:10].values(
+    ultimas = list(_qs_empresa(Transacao.objects, request).filter().select_related('categoria', 'conta').order_by('-criado_em')[:10].values(
         'id', 'descricao', 'tipo', 'valor', 'status', 'data_competencia', 'categoria__nome', 'conta__nome'
     ))
 
@@ -274,12 +285,11 @@ def transacoes(request):
                 obj.delete()
             elif modo == 'proximas':
                 # Exclui esta e todas do mesmo grupo com data >= data desta
-                Transacao.objects.filter(empresa=_empresa(request), 
-                    recorrencia_grupo=grupo,
+                _qs_empresa(Transacao.objects, request).filter(recorrencia_grupo=grupo,
                     data_competencia__gte=obj.data_competencia
                 ).delete()
             elif modo == 'todas':
-                Transacao.objects.filter(empresa=_empresa(request), recorrencia_grupo=grupo).delete()
+                _qs_empresa(Transacao.objects, request).filter(recorrencia_grupo=grupo).delete()
             else:
                 obj.delete()
 
@@ -345,11 +355,11 @@ def transacoes(request):
         'anexo_nome', 'anexo_tipo',
     ))
 
-    contas = list(Conta.objects.filter(empresa=_empresa(request), ativa=True).values('id', 'nome'))
-    categorias = list(Categoria.objects.filter(empresa=_empresa(request)).values('id', 'nome', 'tipo', 'pai_id'))
-    clientes = list(Cliente.objects.filter(empresa=_empresa(request), ativo=True).values('id', 'nome'))
-    fornecedores_list = list(Fornecedor.objects.filter(empresa=_empresa(request), ativo=True).values('id', 'nome'))
-    centros = list(CentrosDeCusto.objects.filter(empresa=_empresa(request), ativo=True).values('id', 'nome'))
+    contas = list(_qs_empresa(Conta.objects, request).filter(ativa=True).values('id', 'nome'))
+    categorias = list(_qs_empresa(Categoria.objects, request).filter().values('id', 'nome', 'tipo', 'pai_id'))
+    clientes = list(_qs_empresa(Cliente.objects, request).filter(ativo=True).values('id', 'nome'))
+    fornecedores_list = list(_qs_empresa(Fornecedor.objects, request).filter(ativo=True).values('id', 'nome'))
+    centros = list(_qs_empresa(CentrosDeCusto.objects, request).filter(ativo=True).values('id', 'nome'))
 
     ctx = {
         'transacoes_json': json.dumps(transacoes_list, default=str),
@@ -441,14 +451,14 @@ def contas(request):
             return JsonResponse({'ok': True, 'id': obj.id})
 
         elif action == 'delete':
-            Conta.objects.filter(empresa=_empresa(request), id=data.get('id')).delete()
+            _qs_empresa(Conta.objects, request).filter(id=data.get('id')).delete()
             return JsonResponse({'ok': True})
 
-    qs = list(Conta.objects.filter(empresa=_empresa(request)).values('id', 'nome', 'banco', 'saldo_inicial', 'ativa', 'observacoes'))
+    qs = list(_qs_empresa(Conta.objects, request).filter().values('id', 'nome', 'banco', 'saldo_inicial', 'ativa', 'observacoes'))
 
     for c in qs:
-        entrada = Transacao.objects.filter(empresa=_empresa(request), conta_id=c['id'], tipo='entrada', status='realizado').aggregate(s=Sum('valor'))['s'] or Decimal('0')
-        saida = Transacao.objects.filter(empresa=_empresa(request), conta_id=c['id'], tipo='saida', status='realizado').aggregate(s=Sum('valor'))['s'] or Decimal('0')
+        entrada = _qs_empresa(Transacao.objects, request).filter(conta_id=c['id'], tipo='entrada', status='realizado').aggregate(s=Sum('valor'))['s'] or Decimal('0')
+        saida = _qs_empresa(Transacao.objects, request).filter(conta_id=c['id'], tipo='saida', status='realizado').aggregate(s=Sum('valor'))['s'] or Decimal('0')
         c['saldo_atual'] = float(Decimal(str(c['saldo_inicial'])) + entrada - saida)
         c['saldo_inicial'] = float(c['saldo_inicial'])
 
@@ -477,10 +487,10 @@ def categorias(request):
             return JsonResponse({'ok': True, 'id': obj.id})
 
         elif action == 'delete':
-            Categoria.objects.filter(empresa=_empresa(request), id=data.get('id')).delete()
+            _qs_empresa(Categoria.objects, request).filter(id=data.get('id')).delete()
             return JsonResponse({'ok': True})
 
-    qs = list(Categoria.objects.filter(empresa=_empresa(request)).values('id', 'nome', 'tipo', 'pai_id', 'observacoes'))
+    qs = list(_qs_empresa(Categoria.objects, request).filter().values('id', 'nome', 'tipo', 'pai_id', 'observacoes'))
 
     return render(request, 'financeiro/categorias.html', {'categorias_json': json.dumps(qs)})
 
@@ -497,7 +507,7 @@ def orcamento(request):
     categorias_entrada = Categoria.objects.filter(Q(tipo='entrada') | Q(tipo='ambos'), empresa=_empresa(request), pai__isnull=True).prefetch_related('subcategorias').order_by('nome')
     categorias_saida = Categoria.objects.filter(Q(tipo='saida') | Q(tipo='ambos'), empresa=_empresa(request), pai__isnull=True).prefetch_related('subcategorias').order_by('nome')
 
-    orcamentos_raw = Orcamento.objects.filter(empresa=_empresa(request), ano=ano_selecionado).values('categoria_id', 'mes', 'valor')
+    orcamentos_raw = _qs_empresa(Orcamento.objects, request).filter(ano=ano_selecionado).values('categoria_id', 'mes', 'valor')
 
     orc_map = {}
     for o in orcamentos_raw:
@@ -508,7 +518,7 @@ def orcamento(request):
         orc_map[cat_id][mes] = float(o['valor'])
 
     reais_raw = (
-        Transacao.objects.filter(empresa=_empresa(request), data_competencia__year=ano_selecionado, status='realizado')
+        _qs_empresa(Transacao.objects, request).filter(data_competencia__year=ano_selecionado, status='realizado')
         .annotate(mes_num=ExtractMonth('data_competencia'))
         .values('categoria_id', 'mes_num')
         .annotate(total=Sum('valor'))

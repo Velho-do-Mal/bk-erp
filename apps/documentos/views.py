@@ -12,6 +12,17 @@ def _empresa(request):
     return getattr(request, 'empresa', None)
 
 
+def _qs_empresa(qs, request):
+    """
+    Aplica filtro de empresa ao queryset.
+    Se empresa for None (superadmin), retorna o queryset sem filtro.
+    """
+    empresa = _empresa(request)
+    if empresa is None:
+        return qs
+    return qs.filter(empresa=empresa)
+
+
 
 
 @admin_required
@@ -38,7 +49,7 @@ def lista(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         if data.get('action') == 'delete':
-            Documento.objects.filter(empresa=_empresa(request), id=data.get('id')).delete()
+            _qs_empresa(Documento.objects, request).filter(id=data.get('id')).delete()
             return JsonResponse({'ok': True})
 
     # Filtros
@@ -58,8 +69,8 @@ def lista(request):
 
     ctx = {
         'docs_json': json.dumps(docs, default=str),
-        'clientes': Cliente.objects.filter(empresa=_empresa(request), ativo=True).values('id', 'nome'),
-        'fornecedores': Fornecedor.objects.filter(empresa=_empresa(request), ativo=True).values('id', 'nome'),
+        'clientes': _qs_empresa(Cliente.objects, request).filter(ativo=True).values('id', 'nome'),
+        'fornecedores': _qs_empresa(Fornecedor.objects, request).filter(ativo=True).values('id', 'nome'),
         'tipo_f': tipo_f,
         'q': q,
         'tipos': Documento.TIPO_CHOICES,

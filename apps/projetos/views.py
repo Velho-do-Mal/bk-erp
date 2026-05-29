@@ -13,6 +13,17 @@ def _empresa(request):
     return getattr(request, 'empresa', None)
 
 
+def _qs_empresa(qs, request):
+    """
+    Aplica filtro de empresa ao queryset.
+    Se empresa for None (superadmin), retorna o queryset sem filtro.
+    """
+    empresa = _empresa(request)
+    if empresa is None:
+        return qs
+    return qs.filter(empresa=empresa)
+
+
 
 
 def get_projetos_usuario(request):
@@ -30,7 +41,7 @@ def check_acesso(request, projeto):
     user = request.user
     if user.is_admin_erp:
         return True
-    if not ProjetoAcesso.objects.filter(empresa=_empresa(request), usuario=user, projeto=projeto).exists():
+    if not _qs_empresa(ProjetoAcesso.objects, request).filter(usuario=user, projeto=projeto).exists():
         raise Http404
 
 
@@ -145,7 +156,7 @@ def detalhe(request, pk):
 
     acesso = None
     if not request.user.is_admin_erp:
-        acesso = ProjetoAcesso.objects.filter(empresa=_empresa(request), usuario=request.user, projeto=projeto).first()
+        acesso = _qs_empresa(ProjetoAcesso.objects, request).filter(usuario=request.user, projeto=projeto).first()
 
     return render(request, 'projetos/detalhe.html', {
         'projeto': projeto,
@@ -266,13 +277,13 @@ def gerenciar_acessos(request, pk):
         raise Http404
     from apps.accounts.models import User
     projeto = get_object_or_404(Projeto, pk=pk)
-    clientes = User.objects.filter(empresa=_empresa(request), perfil='cliente', is_active=True)
-    acessos = {a.usuario_id: a for a in ProjetoAcesso.objects.filter(empresa=_empresa(request), projeto=projeto)}
+    clientes = _qs_empresa(User.objects, request).filter(perfil='cliente', is_active=True)
+    acessos = {a.usuario_id: a for a in _qs_empresa(ProjetoAcesso.objects, request).filter(projeto=projeto)}
 
     if request.method == 'POST':
         usuarios_ids = request.POST.getlist('usuarios')
         # Remove acessos não selecionados
-        ProjetoAcesso.objects.filter(empresa=_empresa(request), projeto=projeto).exclude(usuario_id__in=usuarios_ids).delete()
+        _qs_empresa(ProjetoAcesso.objects, request).filter(projeto=projeto).exclude(usuario_id__in=usuarios_ids).delete()
         # Cria novos acessos
         for uid in usuarios_ids:
             ProjetoAcesso.objects.get_or_create(projeto=projeto, usuario_id=uid)
@@ -313,7 +324,7 @@ def controle_docs(request, pk):
 
     def _calcular_dias(doc):
         """Calcula dias BK e dias CLIENTE via histórico de eventos."""
-        eventos = list(StatusEventoDocumento.objects.filter(empresa=_empresa(request), documento=doc).order_by('data_evento', 'id').values(
+        eventos = list(_qs_empresa(StatusEventoDocumento.objects, request).filter(documento=doc).order_by('data_evento', 'id').values(
             'data_evento', 'status', 'responsavel'
         ))
         if not eventos:
@@ -414,7 +425,7 @@ def controle_docs(request, pk):
             return JsonResponse({'ok': True, 'saved': saved})
 
         elif action == 'delete_doc':
-            DocumentoControle.objects.filter(empresa=_empresa(request), id=data.get('id'), projeto=projeto).delete()
+            _qs_empresa(DocumentoControle.objects, request).filter(id=data.get('id'), projeto=projeto).delete()
             return JsonResponse({'ok': True})
 
     # ── GET ─────────────────────────────────────────────────────────────────
@@ -440,7 +451,7 @@ def controle_docs(request, pk):
         meta = {'cliente_nome': '', 'projeto_numero': '', 'revisao': '',
                 'projeto_status': '', 'logo_bk_uri': '', 'logo_cliente_uri': ''}
 
-    docs_qs = DocumentoControle.objects.filter(empresa=_empresa(request), projeto=projeto).order_by('id')
+    docs_qs = _qs_empresa(DocumentoControle.objects, request).filter(projeto=projeto).order_by('id')
     docs = []
     for doc in docs_qs:
         dias_bk, dias_cli = _calcular_dias(doc)
@@ -501,7 +512,7 @@ def api_anexos(request, pk, doc_id):
         })
 
     # GET — retorna lista
-    anexos = AnexoDocumento.objects.filter(empresa=_empresa(request), documento=doc)
+    anexos = _qs_empresa(AnexoDocumento.objects, request).filter(documento=doc)
     return JsonResponse({
         'ok': True,
         'anexos': [
