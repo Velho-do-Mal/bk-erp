@@ -43,7 +43,7 @@ def dashboard(request):
     # Projetos com prazo vencendo (próximos 7 dias)
     projetos_atrasados = qs_projetos.filter(
         encerrado=False,
-        data_fim_prevista__lt=hoje
+        data_conclusao__lt=hoje
     ).count()
 
     # --- FINANCEIRO ---
@@ -53,22 +53,22 @@ def dashboard(request):
     despesa_total = qs_trans.filter(tipo='saida', status='realizado').aggregate(Sum('valor'))['valor__sum'] or 0
     saldo_atual = receita_total - despesa_total
 
-    receita_mes = qs_trans.filter(tipo='entrada', status='realizado', data__gte=inicio_mes).aggregate(Sum('valor'))['valor__sum'] or 0
-    despesa_mes = qs_trans.filter(tipo='saida', status='realizado', data__gte=inicio_mes).aggregate(Sum('valor'))['valor__sum'] or 0
+    receita_mes = qs_trans.filter(tipo='entrada', status='realizado', data_pagamento__gte=inicio_mes).aggregate(Sum('valor'))['valor__sum'] or 0
+    despesa_mes = qs_trans.filter(tipo='saida', status='realizado', data_pagamento__gte=inicio_mes).aggregate(Sum('valor'))['valor__sum'] or 0
 
     # Contas a pagar / receber HOJE
-    recebimentos_hoje = qs_trans.filter(tipo='entrada', status='pendente', data=hoje).aggregate(Sum('valor'))['valor__sum'] or 0
-    pagamentos_hoje = qs_trans.filter(tipo='saida', status='pendente', data=hoje).aggregate(Sum('valor'))['valor__sum'] or 0
+    recebimentos_hoje = qs_trans.filter(tipo='entrada', status='pendente', data_vencimento=hoje).aggregate(Sum('valor'))['valor__sum'] or 0
+    pagamentos_hoje = qs_trans.filter(tipo='saida', status='pendente', data_vencimento=hoje).aggregate(Sum('valor'))['valor__sum'] or 0
 
     # Contas ATRASADAS (vencidas, ainda pendentes)
-    recebimentos_atrasados = qs_trans.filter(tipo='entrada', status='pendente', data__lt=hoje).aggregate(Sum('valor'))['valor__sum'] or 0
-    pagamentos_atrasados = qs_trans.filter(tipo='saida', status='pendente', data__lt=hoje).aggregate(Sum('valor'))['valor__sum'] or 0
-    qtd_recebimentos_atrasados = qs_trans.filter(tipo='entrada', status='pendente', data__lt=hoje).count()
-    qtd_pagamentos_atrasados = qs_trans.filter(tipo='saida', status='pendente', data__lt=hoje).count()
+    recebimentos_atrasados = qs_trans.filter(tipo='entrada', status='pendente', data_vencimento__lt=hoje).aggregate(Sum('valor'))['valor__sum'] or 0
+    pagamentos_atrasados = qs_trans.filter(tipo='saida', status='pendente', data_vencimento__lt=hoje).aggregate(Sum('valor'))['valor__sum'] or 0
+    qtd_recebimentos_atrasados = qs_trans.filter(tipo='entrada', status='pendente', data_vencimento__lt=hoje).count()
+    qtd_pagamentos_atrasados = qs_trans.filter(tipo='saida', status='pendente', data_vencimento__lt=hoje).count()
 
     # Contas vencendo AMANHÃ
-    recebimentos_amanha = qs_trans.filter(tipo='entrada', status='pendente', data=amanha).aggregate(Sum('valor'))['valor__sum'] or 0
-    pagamentos_amanha = qs_trans.filter(tipo='saida', status='pendente', data=amanha).aggregate(Sum('valor'))['valor__sum'] or 0
+    recebimentos_amanha = qs_trans.filter(tipo='entrada', status='pendente', data_vencimento=amanha).aggregate(Sum('valor'))['valor__sum'] or 0
+    pagamentos_amanha = qs_trans.filter(tipo='saida', status='pendente', data_vencimento=amanha).aggregate(Sum('valor'))['valor__sum'] or 0
 
     # --- GRÁFICO: Evolução Mensal (últimos 6 meses) ---
     meses_labels = []
@@ -80,8 +80,8 @@ def dashboard(request):
         _, ultimo_dia = monthrange(mes_ref.year, mes_ref.month)
         fim_mes = mes_ref.replace(day=ultimo_dia)
         meses_labels.append(mes_ref.strftime('%b/%y'))
-        rec = qs_trans.filter(tipo='entrada', status='realizado', data__gte=mes_ref, data__lte=fim_mes).aggregate(Sum('valor'))['valor__sum'] or 0
-        desp = qs_trans.filter(tipo='saida', status='realizado', data__gte=mes_ref, data__lte=fim_mes).aggregate(Sum('valor'))['valor__sum'] or 0
+        rec = qs_trans.filter(tipo='entrada', status='realizado', data_pagamento__gte=mes_ref, data_pagamento__lte=fim_mes).aggregate(Sum('valor'))['valor__sum'] or 0
+        desp = qs_trans.filter(tipo='saida', status='realizado', data_pagamento__gte=mes_ref, data_pagamento__lte=fim_mes).aggregate(Sum('valor'))['valor__sum'] or 0
         receitas_mensal.append(float(rec))
         despesas_mensal.append(float(desp))
 
@@ -131,15 +131,15 @@ def dashboard(request):
 
     # --- ALERTAS DO DIA (lista para exibir na tela) ---
     contas_vencendo_hoje = list(
-        qs_trans.filter(status='pendente', data=hoje)
+        qs_trans.filter(status='pendente', data_vencimento=hoje)
         .select_related('categoria')
-        .values('descricao', 'tipo', 'valor', 'data')[:10]
+        .values('descricao', 'tipo', 'valor', 'data_vencimento')[:10]
     )
     contas_atrasadas_lista = list(
-        qs_trans.filter(status='pendente', data__lt=hoje)
+        qs_trans.filter(status='pendente', data_vencimento__lt=hoje)
         .select_related('categoria')
-        .order_by('data')
-        .values('descricao', 'tipo', 'valor', 'data')[:10]
+        .order_by('data_vencimento')
+        .values('descricao', 'tipo', 'valor', 'data_vencimento')[:10]
     )
 
     return render(request, 'core/dashboard.html', {

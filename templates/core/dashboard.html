@@ -99,7 +99,7 @@
             {{ c.tipo|upper }}
           </span>
           <span class="ms-2 small">{{ c.descricao|truncatechars:30 }}</span>
-          <span class="ms-1 text-muted" style="font-size:10px">{{ c.data|date:"d/m" }}</span>
+          <span class="ms-1 text-muted" style="font-size:10px">{{ c.data_vencimento|date:"d/m" }}</span>
         </div>
         <span class="fw-semibold small text-danger">R$ {{ c.valor|floatformat:2 }}</span>
       </div>
@@ -213,8 +213,8 @@
               {% else %}<span class="badge badge-secondary">{{ p.get_status_display }}</span>{% endif %}
             </td>
             <td class="text-muted small">{{ p.data_inicio|date:"d/m/Y"|default:"—" }}</td>
-            <td class="small {% if p.data_fim_prevista and p.data_fim_prevista < hoje %}text-danger fw-semibold{% else %}text-muted{% endif %}">
-              {{ p.data_fim_prevista|date:"d/m/Y"|default:"—" }}
+            <td class="small {% if p.data_conclusao and p.data_conclusao < hoje %}text-danger fw-semibold{% else %}text-muted{% endif %}">
+              {{ p.data_conclusao|date:"d/m/Y"|default:"—" }}
             </td>
             <td class="text-muted small">{{ p.gerente|default:"—" }}</td>
             <td><a href="{% url 'projetos:detalhe' p.pk %}" class="btn btn-sm btn-outline-secondary">Abrir →</a></td>

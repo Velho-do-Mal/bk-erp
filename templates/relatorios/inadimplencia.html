@@ -66,12 +66,12 @@
         <tbody>
           {% for c in contas %}
           <tr>
-            <td class="text-danger fw-semibold">{{ c.data|date:"d/m/Y" }}</td>
+            <td class="text-danger fw-semibold">{{ c.data_vencimento|date:"d/m/Y" }}</td>
             <td>{{ c.descricao|default:"—"|truncatechars:50 }}</td>
             <td class="text-muted small">{{ c.categoria.nome|default:"—" }}</td>
             <td class="text-end text-danger fw-semibold">R$ {{ c.valor|floatformat:2 }}</td>
             <td class="text-center">
-              <span class="badge badge-danger">{{ hoje|timeuntil:c.data|cut:" atrás" }}</span>
+              <span class="badge badge-danger">{{ hoje|timeuntil:c.data_vencimento|cut:" atrás" }}</span>
             </td>
           </tr>
           {% empty %}

@@ -54,16 +54,16 @@
         <tbody>
           {% for c in contas %}
           <tr>
-            <td class="fw-semibold {% if c.data < hoje %}text-danger{% elif c.data == hoje %}text-warning{% endif %}">
-              {{ c.data|date:"d/m/Y" }}
+            <td class="fw-semibold {% if c.data_vencimento < hoje %}text-danger{% elif c.data_vencimento == hoje %}text-warning{% endif %}">
+              {{ c.data_vencimento|date:"d/m/Y" }}
             </td>
             <td>{{ c.descricao|default:"—" }}</td>
             <td class="text-muted small">{{ c.categoria.nome|default:"—" }}</td>
             <td class="text-end fw-semibold">R$ {{ c.valor|floatformat:2 }}</td>
             <td class="text-center">
-              {% if c.data < hoje %}
+              {% if c.data_vencimento < hoje %}
                 <span class="badge badge-danger">⚠️ Atrasado</span>
-              {% elif c.data == hoje %}
+              {% elif c.data_vencimento == hoje %}
                 <span class="badge badge-warning">🔔 Hoje</span>
               {% else %}
                 <span class="badge" style="background:#dbeafe;color:#1d4ed8">📅 Futuro</span>

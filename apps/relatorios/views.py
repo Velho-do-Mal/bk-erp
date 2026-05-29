@@ -51,8 +51,8 @@ def dashboard_relatorios(request):
         ref = hoje.replace(day=1) - timedelta(days=i * 28)
         ref = ref.replace(day=1)
         ini, fim = _periodo_range(ref.year, ref.month)
-        rec = qs.filter(tipo='entrada', status='realizado', data__gte=ini, data__lte=fim).aggregate(Sum('valor'))['valor__sum'] or 0
-        desp = qs.filter(tipo='saida', status='realizado', data__gte=ini, data__lte=fim).aggregate(Sum('valor'))['valor__sum'] or 0
+        rec = qs.filter(tipo='entrada', status='realizado', data_pagamento__gte=ini, data_pagamento__lte=fim).aggregate(Sum('valor'))['valor__sum'] or 0
+        desp = qs.filter(tipo='saida', status='realizado', data_pagamento__gte=ini, data_pagamento__lte=fim).aggregate(Sum('valor'))['valor__sum'] or 0
         meses.append({
             'label': ref.strftime('%b/%y'),
             'receita': float(rec),
@@ -82,7 +82,7 @@ def dre(request):
 
     # Receitas por categoria
     receitas = list(
-        qs.filter(tipo='entrada', status='realizado', data__gte=ini, data__lte=fim)
+        qs.filter(tipo='entrada', status='realizado', data_pagamento__gte=ini, data_pagamento__lte=fim)
         .values('categoria__nome')
         .annotate(total=Sum('valor'))
         .order_by('-total')
@@ -91,7 +91,7 @@ def dre(request):
 
     # Despesas por categoria
     despesas = list(
-        qs.filter(tipo='saida', status='realizado', data__gte=ini, data__lte=fim)
+        qs.filter(tipo='saida', status='realizado', data_pagamento__gte=ini, data_pagamento__lte=fim)
         .values('categoria__nome')
         .annotate(total=Sum('valor'))
         .order_by('-total')
@@ -128,25 +128,25 @@ def fluxo_caixa(request):
     qs = _qs_empresa(Transacao.objects, request)
 
     transacoes = list(
-        qs.filter(data__gte=ini, data__lte=fim)
+        qs.filter(data_vencimento__gte=ini, data_vencimento__lte=fim)
         .select_related('categoria')
-        .order_by('data', 'tipo')
+        .order_by('data_vencimento', 'tipo')
     )
 
     saldo_acumulado = 0
     saldo_anterior = qs.filter(
-        status='realizado', data__lt=ini
+        status='realizado', data_pagamento__lt=ini
     ).annotate_saldo = None
 
     # Calcula saldo anterior ao período
-    rec_ant = qs.filter(tipo='entrada', status='realizado', data__lt=ini).aggregate(Sum('valor'))['valor__sum'] or 0
-    desp_ant = qs.filter(tipo='saida', status='realizado', data__lt=ini).aggregate(Sum('valor'))['valor__sum'] or 0
+    rec_ant = qs.filter(tipo='entrada', status='realizado', data_pagamento__lt=ini).aggregate(Sum('valor'))['valor__sum'] or 0
+    desp_ant = qs.filter(tipo='saida', status='realizado', data_pagamento__lt=ini).aggregate(Sum('valor'))['valor__sum'] or 0
     saldo_anterior = rec_ant - desp_ant
 
     # Monta fluxo diário
     fluxo = {}
     for t in transacoes:
-        dia = t.data
+        dia = t.data_vencimento
         if dia not in fluxo:
             fluxo[dia] = {'entradas': [], 'saidas': [], 'total_entrada': 0, 'total_saida': 0}
         if t.tipo == 'entrada':
@@ -201,16 +201,16 @@ def contas_pagar(request):
     if status_f == 'atrasado':
         qs = qs.filter(data__lt=hoje)
     elif status_f == 'hoje':
-        qs = qs.filter(data=hoje)
+        qs = qs.filter(data_vencimento=hoje)
     elif status_f == 'futuro':
         qs = qs.filter(data__gt=hoje)
 
-    contas = qs.select_related('categoria').order_by('data')
+    contas = qs.select_related('categoria').order_by('data_vencimento')
 
     total = qs.aggregate(Sum('valor'))['valor__sum'] or 0
-    atrasado = _qs_empresa(Transacao.objects, request).filter(tipo='saida', status='pendente', data__lt=hoje).aggregate(Sum('valor'))['valor__sum'] or 0
-    vence_hoje = _qs_empresa(Transacao.objects, request).filter(tipo='saida', status='pendente', data=hoje).aggregate(Sum('valor'))['valor__sum'] or 0
-    futuro = _qs_empresa(Transacao.objects, request).filter(tipo='saida', status='pendente', data__gt=hoje).aggregate(Sum('valor'))['valor__sum'] or 0
+    atrasado = _qs_empresa(Transacao.objects, request).filter(tipo='saida', status='pendente', data_vencimento__lt=hoje).aggregate(Sum('valor'))['valor__sum'] or 0
+    vence_hoje = _qs_empresa(Transacao.objects, request).filter(tipo='saida', status='pendente', data_vencimento=hoje).aggregate(Sum('valor'))['valor__sum'] or 0
+    futuro = _qs_empresa(Transacao.objects, request).filter(tipo='saida', status='pendente', data_vencimento__gt=hoje).aggregate(Sum('valor'))['valor__sum'] or 0
 
     return render(request, 'relatorios/contas_pagar.html', {
         'contas': contas,
@@ -233,16 +233,16 @@ def contas_receber(request):
     if status_f == 'atrasado':
         qs = qs.filter(data__lt=hoje)
     elif status_f == 'hoje':
-        qs = qs.filter(data=hoje)
+        qs = qs.filter(data_vencimento=hoje)
     elif status_f == 'futuro':
         qs = qs.filter(data__gt=hoje)
 
-    contas = qs.select_related('categoria').order_by('data')
+    contas = qs.select_related('categoria').order_by('data_vencimento')
 
     total = qs.aggregate(Sum('valor'))['valor__sum'] or 0
-    atrasado = _qs_empresa(Transacao.objects, request).filter(tipo='entrada', status='pendente', data__lt=hoje).aggregate(Sum('valor'))['valor__sum'] or 0
-    vence_hoje = _qs_empresa(Transacao.objects, request).filter(tipo='entrada', status='pendente', data=hoje).aggregate(Sum('valor'))['valor__sum'] or 0
-    futuro = _qs_empresa(Transacao.objects, request).filter(tipo='entrada', status='pendente', data__gt=hoje).aggregate(Sum('valor'))['valor__sum'] or 0
+    atrasado = _qs_empresa(Transacao.objects, request).filter(tipo='entrada', status='pendente', data_vencimento__lt=hoje).aggregate(Sum('valor'))['valor__sum'] or 0
+    vence_hoje = _qs_empresa(Transacao.objects, request).filter(tipo='entrada', status='pendente', data_vencimento=hoje).aggregate(Sum('valor'))['valor__sum'] or 0
+    futuro = _qs_empresa(Transacao.objects, request).filter(tipo='entrada', status='pendente', data_vencimento__gt=hoje).aggregate(Sum('valor'))['valor__sum'] or 0
 
     return render(request, 'relatorios/contas_receber.html', {
         'contas': contas,
@@ -260,8 +260,8 @@ def inadimplencia(request):
     """Relatório de inadimplência — recebimentos atrasados por cliente."""
     hoje = timezone.now().date()
     qs = _qs_empresa(Transacao.objects, request).filter(
-        tipo='entrada', status='pendente', data__lt=hoje
-    ).select_related('categoria').order_by('data')
+        tipo='entrada', status='pendente', data_vencimento__lt=hoje
+    ).select_related('categoria').order_by('data_vencimento')
 
     total = qs.aggregate(Sum('valor'))['valor__sum'] or 0
     count = qs.count()
@@ -300,7 +300,7 @@ def exportar_dre(request):
     writer.writerow(['RECEITAS'])
     writer.writerow(['Categoria', 'Valor (R$)'])
 
-    receitas = qs.filter(tipo='entrada', status='realizado', data__gte=ini, data__lte=fim) \
+    receitas = qs.filter(tipo='entrada', status='realizado', data_pagamento__gte=ini, data_pagamento__lte=fim) \
         .values('categoria__nome').annotate(total=Sum('valor')).order_by('-total')
     total_rec = 0
     for r in receitas:
@@ -311,7 +311,7 @@ def exportar_dre(request):
 
     writer.writerow(['DESPESAS'])
     writer.writerow(['Categoria', 'Valor (R$)'])
-    despesas = qs.filter(tipo='saida', status='realizado', data__gte=ini, data__lte=fim) \
+    despesas = qs.filter(tipo='saida', status='realizado', data_pagamento__gte=ini, data_pagamento__lte=fim) \
         .values('categoria__nome').annotate(total=Sum('valor')).order_by('-total')
     total_desp = 0
     for d in despesas:
@@ -340,11 +340,11 @@ def exportar_fluxo(request):
     writer = csv.writer(response, delimiter=';')
     writer.writerow(['Data', 'Descrição', 'Tipo', 'Categoria', 'Status', 'Valor (R$)'])
 
-    transacoes = qs.filter(data__gte=ini, data__lte=fim).select_related('categoria').order_by('data', 'tipo')
+    transacoes = qs.filter(data_vencimento__gte=ini, data_vencimento__lte=fim).select_related('categoria').order_by('data_vencimento', 'tipo')
     for t in transacoes:
         sinal = '' if t.tipo == 'entrada' else '-'
         writer.writerow([
-            t.data.strftime('%d/%m/%Y'),
+            t.data_vencimento.strftime('%d/%m/%Y'),
             t.descricao or '',
             'Entrada' if t.tipo == 'entrada' else 'Saída',
             t.categoria.nome if t.categoria else '',
