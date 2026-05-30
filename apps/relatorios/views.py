@@ -134,10 +134,6 @@ def fluxo_caixa(request):
     )
 
     saldo_acumulado = 0
-    saldo_anterior = qs.filter(
-        status='realizado', data_pagamento__lt=ini
-    ).annotate_saldo = None
-
     # Calcula saldo anterior ao período
     rec_ant = qs.filter(tipo='entrada', status='realizado', data_pagamento__lt=ini).aggregate(Sum('valor'))['valor__sum'] or 0
     desp_ant = qs.filter(tipo='saida', status='realizado', data_pagamento__lt=ini).aggregate(Sum('valor'))['valor__sum'] or 0
@@ -199,11 +195,11 @@ def contas_pagar(request):
     # Filtros
     status_f = request.GET.get('status', '')  # 'atrasado', 'hoje', 'futuro'
     if status_f == 'atrasado':
-        qs = qs.filter(data__lt=hoje)
+        qs = qs.filter(data_vencimento__lt=hoje)
     elif status_f == 'hoje':
         qs = qs.filter(data_vencimento=hoje)
     elif status_f == 'futuro':
-        qs = qs.filter(data__gt=hoje)
+        qs = qs.filter(data_vencimento__gt=hoje)
 
     contas = qs.select_related('categoria').order_by('data_vencimento')
 
@@ -231,11 +227,11 @@ def contas_receber(request):
 
     status_f = request.GET.get('status', '')
     if status_f == 'atrasado':
-        qs = qs.filter(data__lt=hoje)
+        qs = qs.filter(data_vencimento__lt=hoje)
     elif status_f == 'hoje':
         qs = qs.filter(data_vencimento=hoje)
     elif status_f == 'futuro':
-        qs = qs.filter(data__gt=hoje)
+        qs = qs.filter(data_vencimento__gt=hoje)
 
     contas = qs.select_related('categoria').order_by('data_vencimento')
 
