@@ -2,7 +2,7 @@
 {% load bk_filters %}
 {% block title %}Compras — BK ERP{% endblock %}
 {% block page_title %}Pedidos de Compra{% endblock %}
-{% block page_sub %}Integrado com Fornecedores e Financeiro{% endblock %}
+{% block page_sub %}Integrado com Fornecedores, Financeiro e Estoque{% endblock %}
 {% block topbar_actions %}
 <button class="btn btn-primary" onclick="abrirModal()">➕ Novo Pedido</button>
 {% endblock %}
@@ -19,7 +19,7 @@
 <div class="bk-card">
   <div class="table-container">
     <table class="data-table">
-      <thead><tr><th>Código</th><th>Fornecedor</th><th>Projeto</th><th>Data</th><th>Entrega Prev.</th><th>Valor</th><th>Status</th><th>Fin.</th><th class="col-actions">Ações</th></tr></thead>
+      <thead><tr><th>Código</th><th>Fornecedor</th><th>Centro de Custos</th><th>Data</th><th>Entrega Prev.</th><th>Valor</th><th>Status</th><th>Fin.</th><th class="col-actions">Ações</th></tr></thead>
       <tbody id="tbody"></tbody>
     </table>
   </div>
@@ -38,7 +38,11 @@
           {% for f in fornecedores %}<option value="{{ f.id }}">{{ f.nome }}</option>{% endfor %}
         </select>
       </div>
-      <div><label class="form-label">Projeto</label><input id="m-proj" class="form-control" placeholder="Nome do projeto"></div>
+      <div><label class="form-label">Centro de Custos</label>
+        <select id="m-cc" class="form-control"><option value="">— Selecione —</option>
+          {% for cc in centros_custo %}<option value="{{ cc.id }}">{{ cc.nome }}</option>{% endfor %}
+        </select>
+      </div>
       <div><label class="form-label">Data do Pedido</label><input id="m-data" class="form-control" type="date"></div>
       <div><label class="form-label">Entrega Prevista</label><input id="m-entrega" class="form-control" type="date"></div>
       <div><label class="form-label">Entrega Real</label><input id="m-entrega-r" class="form-control" type="date"></div>
@@ -47,7 +51,8 @@
           <option value="aberta">📋 Aberta</option>
           <option value="aprovacao">⏳ Aguardando Aprovação</option>
           <option value="aprovada">✅ Aprovada</option>
-          <option value="recebida">📦 Recebida</option>
+          <option value="entregue">📦 Entregue</option>
+          <option value="recebida">✔️ Recebida</option>
           <option value="encerrada">🔒 Encerrada</option>
           <option value="cancelada">❌ Cancelada</option>
         </select>
@@ -75,6 +80,7 @@
     <div class="modal-footer">
       <button class="btn btn-danger btn-sm" id="btn-del" onclick="excluir()" style="display:none;margin-right:auto">🗑️ Excluir</button>
       <button class="btn-sm success" id="btn-fin" onclick="gerarFinanceiro()" style="display:none">💰 Gerar conta a pagar</button>
+      <button class="btn-sm warning" id="btn-entregue" onclick="marcarEntregue()" style="display:none">📦 Marcar como Entregue → Estoque</button>
       <button class="btn btn-secondary" onclick="fecharModal()">❌ Cancelar</button>
       <button class="btn btn-primary" onclick="salvar()">💾 Salvar</button>
     </div>
@@ -87,36 +93,36 @@
 const CSRF='{{ csrf_token }}';
 let dados={{ pedidos_json|safe }};
 let itens=[];
-const STATUS_BADGE={aberta:'badge-blue',aprovacao:'badge-warning',aprovada:'badge-success',recebida:'badge-teal',encerrada:'badge-secondary',cancelada:'badge-danger'};
-const STATUS_LABEL={aberta:'📋 Aberta',aprovacao:'⏳ Aprovação',aprovada:'✅ Aprovada',recebida:'📦 Recebida',encerrada:'🔒 Encerrada',cancelada:'❌ Cancelada'};
+const STATUS_BADGE={aberta:'badge-blue',aprovacao:'badge-warning',aprovada:'badge-success',entregue:'badge-teal',recebida:'badge-teal',encerrada:'badge-secondary',cancelada:'badge-danger'};
+const STATUS_LABEL={aberta:'📋 Aberta',aprovacao:'⏳ Aprovação',aprovada:'✅ Aprovada',entregue:'📦 Entregue',recebida:'✔️ Recebida',encerrada:'🔒 Encerrada',cancelada:'❌ Cancelada'};
 function fmtDate(d){return d?d.substring(0,10):'—';}
 function fmtR(v){return'R$ '+parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});}
 
 function renderTabela(){
   const tb=document.getElementById('tbody');
   if(!dados.length){tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:#64748b;padding:24px">Nenhum pedido cadastrado</td></tr>';return;}
-  tb.innerHTML=dados.map(r=>`
+  tb.innerHTML=dados.map(function(r){return `
     <tr>
       <td><strong>${r.codigo}</strong></td>
       <td>${r.fornecedor_nome||'—'}</td>
-      <td>${r.projeto_nome||'—'}</td>
+      <td>${r.centro_custo_nome||'—'}</td>
       <td>${fmtDate(r.data_pedido)}</td>
       <td>${fmtDate(r.data_entrega_prevista)}</td>
       <td style="font-weight:600">${fmtR(r.valor_total)}</td>
       <td><span class="badge ${STATUS_BADGE[r.status]||'badge-secondary'}">${STATUS_LABEL[r.status]||r.status}</span></td>
       <td>${r.tem_financeiro?'<span class="badge badge-success">✅ Gerado</span>':'—'}</td>
       <td class="col-actions"><button class="btn-sm primary" onclick="editar(${r.id})">✏️ Editar</button></td>
-    </tr>`).join('');
+    </tr>`;}).join('');
 }
 
-function addItem(it=null){
+function addItem(it){
   itens.push(it||{descricao:'',codigo_material:'',unidade:'un',quantidade:1,preco_unitario:0,preco_total:0});
   renderItens();
 }
 
 function renderItens(){
   const tb=document.getElementById('itens-tbody');
-  tb.innerHTML=itens.map((it,i)=>`
+  tb.innerHTML=itens.map(function(it,i){return `
     <tr>
       <td><input class="grid-input" style="min-width:160px" value="${it.descricao||''}" oninput="itens[${i}].descricao=this.value"></td>
       <td><input class="grid-input" style="width:80px" value="${it.codigo_material||''}" oninput="itens[${i}].codigo_material=this.value"></td>
@@ -125,73 +131,87 @@ function renderItens(){
       <td><input class="grid-input" style="width:90px;text-align:right" type="number" step="0.01" min="0" value="${it.preco_unitario||0}" oninput="itens[${i}].preco_unitario=parseFloat(this.value)||0;recalc(${i})"></td>
       <td style="font-weight:600;white-space:nowrap;padding:0 10px" id="it-total-${i}">${fmtR(it.preco_total||0)}</td>
       <td><button type="button" class="grid-delete" onclick="itens.splice(${i},1);renderItens()">🗑️</button></td>
-    </tr>`).join('');
+    </tr>`;}).join('');
   calcTotal();
 }
 
 function recalc(i){
   itens[i].preco_total=(itens[i].quantidade||0)*(itens[i].preco_unitario||0);
-  const el=document.getElementById(`it-total-${i}`);
+  var el=document.getElementById('it-total-'+i);
   if(el)el.textContent=fmtR(itens[i].preco_total);
   calcTotal();
 }
 function calcTotal(){
-  const t=itens.reduce((s,it)=>s+(it.preco_total||0),0);
+  var t=itens.reduce(function(s,it){return s+(it.preco_total||0);},0);
   document.getElementById('total-display').textContent=t.toLocaleString('pt-BR',{minimumFractionDigits:2});
 }
 
-function abrirModal(r=null){
-  const today=new Date().toISOString().substring(0,10);
-  document.getElementById('m-id').value=r?.id||'';
-  document.getElementById('m-cod').value=r?.codigo||`PC-${new Date().getFullYear()}-${String(dados.length+1).padStart(3,'0')}`;
-  document.getElementById('m-forn').value=r?.fornecedor_id||'';
-  document.getElementById('m-proj').value=r?.projeto_nome||'';
-  document.getElementById('m-data').value=r?.data_pedido||today;
-  document.getElementById('m-entrega').value=r?.data_entrega_prevista||'';
-  document.getElementById('m-entrega-r').value=r?.data_entrega_real||'';
-  document.getElementById('m-status').value=r?.status||'aberta';
-  document.getElementById('m-obs').value=r?.observacoes||'';
+function abrirModal(r){
+  var today=new Date().toISOString().substring(0,10);
+  document.getElementById('m-id').value=r?r.id:'';
+  document.getElementById('m-cod').value=r?r.codigo:('PC-'+new Date().getFullYear()+'-'+String(dados.length+1).padStart(3,'0'));
+  document.getElementById('m-forn').value=r?r.fornecedor_id:'';
+  document.getElementById('m-cc').value=r?r.centro_custo_id:'';
+  document.getElementById('m-data').value=r?r.data_pedido:today;
+  document.getElementById('m-entrega').value=r?r.data_entrega_prevista:'';
+  document.getElementById('m-entrega-r').value=r?r.data_entrega_real:'';
+  document.getElementById('m-status').value=r?r.status:'aberta';
+  document.getElementById('m-obs').value=r?r.observacoes:'';
   itens=r?JSON.parse(JSON.stringify(r.itens||[])):[];
   renderItens();
   document.getElementById('modal-titulo').textContent=r?'✏️ Editar Pedido':'➕ Novo Pedido de Compra';
   document.getElementById('btn-del').style.display=r?'':'none';
   document.getElementById('btn-fin').style.display=(r&&!r.tem_financeiro)?'':'none';
+  // Botão "Marcar Entregue" só aparece para pedidos aprovados/abertos (não entregues ainda)
+  var podeEntregar=r&&r.status!='entregue'&&r.status!='encerrada'&&r.status!='cancelada';
+  document.getElementById('btn-entregue').style.display=podeEntregar?'':'none';
   document.getElementById('modal').classList.add('open');
 }
-function editar(id){abrirModal(dados.find(r=>r.id===id));}
+function editar(id){abrirModal(dados.find(function(r){return r.id===id;}));}
 function fecharModal(){document.getElementById('modal').classList.remove('open');}
 
 async function salvar(){
-  const cod=document.getElementById('m-cod').value.trim();
+  var cod=document.getElementById('m-cod').value.trim();
   if(!cod){bkToast('Código é obrigatório','erro');return;}
-  const payload={action:'save',id:document.getElementById('m-id').value||null,codigo:cod,fornecedor_id:document.getElementById('m-forn').value||null,projeto_nome:document.getElementById('m-proj').value,data_pedido:document.getElementById('m-data').value,data_entrega_prevista:document.getElementById('m-entrega').value||null,data_entrega_real:document.getElementById('m-entrega-r').value||null,status:document.getElementById('m-status').value,observacoes:document.getElementById('m-obs').value,itens};
-  const res=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify(payload)});
-  const data=await res.json();
-  if(data.ok){bkToast('Pedido salvo!','sucesso');setTimeout(()=>location.reload(),900);}
+  var payload={action:'save',id:document.getElementById('m-id').value||null,codigo:cod,fornecedor_id:document.getElementById('m-forn').value||null,centro_custo_id:document.getElementById('m-cc').value||null,data_pedido:document.getElementById('m-data').value,data_entrega_prevista:document.getElementById('m-entrega').value||null,data_entrega_real:document.getElementById('m-entrega-r').value||null,status:document.getElementById('m-status').value,observacoes:document.getElementById('m-obs').value,itens:itens};
+  var res=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify(payload)});
+  var data=await res.json();
+  if(data.ok){bkToast('Pedido salvo!','sucesso');setTimeout(function(){location.reload();},900);}
   else bkToast(data.error||'Erro ao salvar','erro');
 }
 
 async function excluir(){
-  const id=document.getElementById('m-id').value;
+  var id=document.getElementById('m-id').value;
   if(!id)return;
-  const ok=await bkConfirm('Excluir este pedido permanentemente?','🗑️ Excluir Pedido');
+  var ok=await bkConfirm('Excluir este pedido permanentemente?','🗑️ Excluir Pedido');
   if(!ok)return;
-  const res=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({action:'delete',id})});
-  const data=await res.json();
-  if(data.ok){bkToast('Pedido excluído','sucesso');setTimeout(()=>location.reload(),900);}
+  var res=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({action:'delete',id:id})});
+  var data=await res.json();
+  if(data.ok){bkToast('Pedido excluído','sucesso');setTimeout(function(){location.reload();},900);}
   else bkToast(data.error||'Erro ao excluir','erro');
 }
 
 async function gerarFinanceiro(){
-  const id=document.getElementById('m-id').value;
+  var id=document.getElementById('m-id').value;
   if(!id)return;
-  const res=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({action:'gerar_financeiro',id})});
-  const d=await res.json();
-  bkToast(d.msg||(d.ok?'✅ Conta a pagar gerada!':'❌ Erro'),'sucesso');
-  if(d.ok)setTimeout(()=>location.reload(),900);
+  var res=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({action:'gerar_financeiro',id:id})});
+  var d=await res.json();
+  bkToast(d.msg||(d.ok?'✅ Conta a pagar gerada!':'❌ Erro'),d.ok?'sucesso':'erro');
+  if(d.ok)setTimeout(function(){location.reload();},900);
 }
 
-document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))fecharModal();});
+async function marcarEntregue(){
+  var id=document.getElementById('m-id').value;
+  if(!id)return;
+  var ok=await bkConfirm('Marcar como ENTREGUE?\n\nTodos os itens deste pedido serão lançados automaticamente no Estoque com o Centro de Custos selecionado.','📦 Confirmar Entrega');
+  if(!ok)return;
+  var res=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({action:'marcar_entregue',id:id})});
+  var d=await res.json();
+  bkToast(d.msg||(d.ok?'✅ Entregue!':'❌ Erro'),d.ok?'sucesso':'erro');
+  if(d.ok)setTimeout(function(){location.reload();},1200);
+}
+
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===document.getElementById('modal'))fecharModal();});
 renderTabela();
 </script>
 {% endblock %}

@@ -1,6 +1,6 @@
 from django.db import models
 from django.db.models import ForeignKey, CASCADE
-from apps.cadastros.models import Fornecedor
+from apps.cadastros.models import Fornecedor, CentrosDeCusto
 
 
 class PedidoCompra(models.Model):
@@ -9,6 +9,7 @@ class PedidoCompra(models.Model):
         ('aberta', 'Aberta'),
         ('aprovacao', 'Aguardando Aprovação'),
         ('aprovada', 'Aprovada'),
+        ('entregue', 'Entregue'),
         ('recebida', 'Recebida'),
         ('encerrada', 'Encerrada'),
         ('cancelada', 'Cancelada'),
@@ -17,6 +18,12 @@ class PedidoCompra(models.Model):
     codigo = models.CharField(max_length=100)
     fornecedor = models.ForeignKey(Fornecedor, on_delete=models.SET_NULL, null=True, blank=True,
                                    related_name='pedidos_compra')
+    centro_custo = models.ForeignKey(
+        CentrosDeCusto, on_delete=models.SET_NULL,
+        null=True, blank=True, verbose_name='Centro de Custos',
+        related_name='pedidos_compra'
+    )
+    # Legacy: mantido para compatibilidade
     projeto_nome = models.CharField(max_length=200, blank=True)
     data_pedido = models.DateField()
     data_entrega_prevista = models.DateField(null=True, blank=True)

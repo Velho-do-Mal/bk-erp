@@ -10,7 +10,7 @@ from apps.core.audit import registrar as audit
 from django.http import JsonResponse
 from django.db.models import Sum, F, ExpressionWrapper, DecimalField
 from .models import MaterialEstoque
-from apps.cadastros.models import Fornecedor
+from apps.cadastros.models import Fornecedor, CentrosDeCusto
 
 def _empresa(request):
     """Retorna a empresa do usuário ou None para superadmin."""
@@ -65,7 +65,8 @@ def lista(request):
             obj.descricao = descricao
             fid = data.get('fornecedor_id')
             obj.fornecedor_id = int(fid) if fid else None
-            obj.projeto_nome = data.get('projeto_nome', '').strip()
+            ccid = data.get('centro_custo_id')
+            obj.centro_custo_id = int(ccid) if ccid else None
             obj.qtd_comprada = _to_dec(data.get('qtd_comprada', 0))
             obj.preco_total = _to_dec(data.get('preco_total', 0))
             # Calcula preço unitário
@@ -97,7 +98,7 @@ def lista(request):
             _qs_empresa(MaterialEstoque.objects, request).filter(id=rid).delete()
             return JsonResponse({'ok': True})
 
-    qs = MaterialEstoque.objects.select_related('fornecedor')
+    qs = _qs_empresa(MaterialEstoque.objects, request).select_related('fornecedor', 'centro_custo', 'pedido_origem')
     materiais = []
     for m in qs:
         materiais.append({
@@ -106,6 +107,8 @@ def lista(request):
             'descricao': m.descricao,
             'fornecedor_id': m.fornecedor_id,
             'fornecedor_nome': m.fornecedor.nome if m.fornecedor else '',
+            'centro_custo_id': m.centro_custo_id,
+            'centro_custo_nome': m.centro_custo.nome if m.centro_custo else '',
             'projeto_nome': m.projeto_nome,
             'qtd_comprada': float(m.qtd_comprada),
             'qtd_utilizada': float(m.qtd_utilizada),
@@ -115,6 +118,7 @@ def lista(request):
             'data_compra': m.data_compra.isoformat() if m.data_compra else '',
             'data_validade': m.data_validade.isoformat() if m.data_validade else '',
             'observacoes': m.observacoes,
+            'pedido_origem_id': m.pedido_origem_id,
         })
 
     total_investido = sum(m['preco_total'] for m in materiais)
@@ -124,6 +128,7 @@ def lista(request):
     ctx = {
         'materiais_json': json.dumps(materiais),
         'fornecedores': list(_qs_empresa(Fornecedor.objects, request).filter(ativo=True).values('id', 'nome')),
+        'centros_custo': list(_qs_empresa(CentrosDeCusto.objects, request).filter(ativo=True).values('id', 'nome')),
         'total_investido': total_investido,
         'total_itens': total_itens,
         'itens_criticos': itens_criticos,

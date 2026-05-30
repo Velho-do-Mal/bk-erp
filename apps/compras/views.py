@@ -9,7 +9,7 @@ from apps.core.audit import registrar as audit
 from django.http import JsonResponse
 from django.db.models import Sum, Count, Q
 from .models import PedidoCompra, ItemPedidoCompra
-from apps.cadastros.models import Fornecedor
+from apps.cadastros.models import Fornecedor, CentrosDeCusto
 
 def _empresa(request):
     """Retorna a empresa do usuário ou None para superadmin."""
@@ -66,7 +66,8 @@ def lista(request):
             obj.codigo = codigo
             fid = data.get('fornecedor_id')
             obj.fornecedor_id = int(fid) if fid else None
-            obj.projeto_nome = data.get('projeto_nome', '').strip()
+            ccid = data.get('centro_custo_id')
+            obj.centro_custo_id = int(ccid) if ccid else None
             obj.data_pedido = _to_date(data.get('data_pedido')) or date.today()
             obj.data_entrega_prevista = _to_date(data.get('data_entrega_prevista'))
             obj.data_entrega_real = _to_date(data.get('data_entrega_real'))
@@ -104,6 +105,43 @@ def lista(request):
             _qs_empresa(PedidoCompra.objects, request).filter(id=data.get('id')).delete()
             return JsonResponse({'ok': True})
 
+        elif action == 'marcar_entregue':
+            # Muda status para entregue e lança itens no estoque
+            po = tenant_get_or_404(PedidoCompra, request, pk=data.get('id'))
+            if po.status == 'entregue':
+                return JsonResponse({'ok': False, 'msg': 'Pedido já está marcado como Entregue.'})
+            
+            status_anterior = po.status
+            po.status = 'entregue'
+            po.data_entrega_real = date.today()
+            po.save(update_fields=['status', 'data_entrega_real'])
+            
+            # Lança itens no estoque automaticamente
+            from apps.estoque.models import MaterialEstoque
+            criados = 0
+            for item in po.itens.all():
+                mat = MaterialEstoque(
+                    empresa=po.empresa,
+                    codigo=item.codigo_material or f'PC{po.id}-{item.id}',
+                    descricao=item.descricao,
+                    fornecedor_id=po.fornecedor_id,
+                    centro_custo_id=po.centro_custo_id,
+                    qtd_comprada=item.quantidade,
+                    preco_unitario=item.preco_unitario,
+                    preco_total=item.preco_total,
+                    data_compra=po.data_entrega_real,
+                    pedido_origem=po,
+                    observacoes=f'Entrada automática — Pedido {po.codigo}',
+                )
+                mat.save()
+                criados += 1
+            
+            return JsonResponse({
+                'ok': True,
+                'msg': f'Pedido marcado como Entregue. {criados} item(ns) lançado(s) no Estoque.',
+                'criados': criados,
+            })
+
         elif action == 'gerar_financeiro':
             # Cria conta a pagar no Financeiro
             po = tenant_get_or_404(PedidoCompra, request, pk=data.get('id'))
@@ -130,7 +168,7 @@ def lista(request):
                 return JsonResponse({'ok': False, 'msg': str(e)})
 
     # GET - lista pedidos
-    pedidos = PedidoCompra.objects.select_related('fornecedor').prefetch_related('itens')
+    pedidos = _qs_empresa(PedidoCompra.objects, request).select_related('fornecedor', 'centro_custo').prefetch_related('itens')
     pedidos_data = []
     for p in pedidos:
         pedidos_data.append({
@@ -138,6 +176,8 @@ def lista(request):
             'codigo': p.codigo,
             'fornecedor_id': p.fornecedor_id,
             'fornecedor_nome': p.fornecedor.nome if p.fornecedor else '',
+            'centro_custo_id': p.centro_custo_id,
+            'centro_custo_nome': p.centro_custo.nome if p.centro_custo else '',
             'projeto_nome': p.projeto_nome,
             'data_pedido': p.data_pedido.isoformat() if p.data_pedido else '',
             'data_entrega_prevista': p.data_entrega_prevista.isoformat() if p.data_entrega_prevista else '',
@@ -168,6 +208,7 @@ def lista(request):
     ctx = {
         'pedidos_json': json.dumps(pedidos_data),
         'fornecedores': list(_qs_empresa(Fornecedor.objects, request).filter(ativo=True).values('id', 'nome')),
+        'centros_custo': list(_qs_empresa(CentrosDeCusto.objects, request).filter(ativo=True).values('id', 'nome')),
         'total_pedidos': qs.count(),
         'total_valor': float(total_valor),
         'em_aberto': em_aberto,

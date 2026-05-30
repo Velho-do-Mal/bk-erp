@@ -6,7 +6,7 @@
 
 {% block topbar_actions %}
 <a href="{% url 'estoque:exportar_estoque' %}" class="btn btn-secondary btn-sm" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;">📊 Exportar CSV</a>
-  <button class="btn btn-primary" onclick="abrirModal()">➕ Novo Material</button>
+<button class="btn btn-primary" onclick="abrirModal()">➕ Novo Material</button>
 <button class="btn btn-secondary" onclick="salvarUtilizado()">💾 Salvar Utilizado</button>
 {% endblock %}
 
@@ -23,17 +23,17 @@
 
 <div class="bk-card">
   <div style="font-size:12px;color:#6b7280;margin-bottom:12px">
-    💡 Edite a coluna <strong>Utilizado</strong> diretamente na tabela e clique em <strong>💾 Salvar Utilizado</strong>.
+    💡 Edite a coluna <strong>Utilizado</strong> diretamente na tabela e clique em <strong>💾 Salvar Utilizado</strong>. Itens marcados como <em>Entregue</em> em Compras entram automaticamente aqui.
   </div>
   <div class="excel-grid-wrap">
     <table class="excel-grid">
       <thead>
         <tr>
-          <th>Código</th><th>Descrição</th><th>Fornecedor</th><th>Projeto</th>
+          <th>Código</th><th>Descrição</th><th>Fornecedor</th><th>Centro de Custos</th>
           <th>Qtd. Comprada</th>
           <th>✏️ Utilizado</th>
           <th>Saldo</th>
-          <th>Valor Total</th><th>Data Compra</th><th>Validade</th><th style="width:80px">Ações</th>
+          <th>Valor Total</th><th>Data Compra</th><th>Validade</th><th>Origem</th><th style="width:80px">Ações</th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
@@ -57,7 +57,13 @@
           {% for f in fornecedores %}<option value="{{ f.id }}">{{ f.nome }}</option>{% endfor %}
         </select>
       </div>
-      <div><label class="form-label">Projeto</label><input id="m-proj" class="form-control" placeholder="Nome do projeto"></div>
+      <div>
+        <label class="form-label">Centro de Custos</label>
+        <select id="m-cc" class="form-control">
+          <option value="">— Selecione —</option>
+          {% for cc in centros_custo %}<option value="{{ cc.id }}">{{ cc.nome }}</option>{% endfor %}
+        </select>
+      </div>
       <div><label class="form-label">Qtd. Comprada *</label><input id="m-qtd" class="form-control" type="number" step="0.001" min="0"></div>
       <div><label class="form-label">Valor Total (R$)</label><input id="m-valor" class="form-control" type="number" step="0.01" min="0"></div>
       <div><label class="form-label">Data da Compra</label><input id="m-data" class="form-control" type="date"></div>
@@ -76,86 +82,91 @@
 {% block extra_js %}
 <script>
 const CSRF='{{ csrf_token }}';
-let dados={{ materiais_json|safe }};
+var dados={{ materiais_json|safe }};
 function fmt(v){return parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:3});}
 function fmtR(v){return'R$ '+parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});}
 
 function renderTabela(){
-  const tb=document.getElementById('tbody');
-  if(!dados.length){tb.innerHTML='<tr><td colspan="11" style="text-align:center;color:#64748b;padding:24px">Nenhum material cadastrado</td></tr>';return;}
-  tb.innerHTML=dados.map(r=>`
-    <tr>
-      <td><input class="grid-input" value="${r.codigo}" readonly style="font-family:monospace;color:#374151"></td>
-      <td><input class="grid-input" value="${r.descricao}" readonly style="font-weight:600"></td>
-      <td><input class="grid-input" value="${r.fornecedor_nome||'—'}" readonly></td>
-      <td><input class="grid-input" value="${r.projeto_nome||'—'}" readonly></td>
-      <td><input class="grid-input" value="${fmt(r.qtd_comprada)}" readonly style="text-align:right"></td>
-      <td><input type="number" class="grid-input utilizado-input" data-id="${r.id}" value="${r.qtd_utilizada}" min="0" max="${r.qtd_comprada}" step="0.001" style="text-align:right;color:#374151"></td>
-      <td><input class="grid-input" value="${fmt(r.saldo)}" readonly style="text-align:right;color:${r.saldo>0?'#10B981':r.saldo===0?'#F59E0B':'#EF4444'};font-weight:600"></td>
-      <td><input class="grid-input" value="${fmtR(r.preco_total)}" readonly style="text-align:right"></td>
-      <td><input class="grid-input" value="${r.data_compra||'—'}" readonly style="font-size:12px"></td>
-      <td><input class="grid-input" value="${r.data_validade||'—'}" readonly style="font-size:12px;color:${r.data_validade&&new Date(r.data_validade)<new Date()?'#EF4444':'inherit'}"></td>
-      <td><button class="grid-delete" onclick="editar(${r.id})" title="Editar" style="color:#3B82F6">✏️</button></td>
-    </tr>`).join('');
+  var tb=document.getElementById('tbody');
+  if(!dados.length){tb.innerHTML='<tr><td colspan="12" style="text-align:center;color:#64748b;padding:24px">Nenhum material cadastrado</td></tr>';return;}
+  tb.innerHTML=dados.map(function(r){
+    var saldoColor=r.saldo>0?'#10B981':(r.saldo===0?'#F59E0B':'#EF4444');
+    var valColor=r.data_validade&&new Date(r.data_validade)<new Date()?'#EF4444':'inherit';
+    var origemLabel=r.pedido_origem_id?('<span class="badge badge-teal" title="Entrada automática via pedido">📦 PC</span>'):'—';
+    return '<tr>'+
+      '<td><input class="grid-input" value="'+(r.codigo||'')+'" readonly style="font-family:monospace;color:#374151"></td>'+
+      '<td><input class="grid-input" value="'+(r.descricao||'')+'" readonly style="font-weight:600"></td>'+
+      '<td><input class="grid-input" value="'+(r.fornecedor_nome||'—')+'" readonly></td>'+
+      '<td><input class="grid-input" value="'+(r.centro_custo_nome||'—')+'" readonly style="color:#6d28d9;font-weight:500"></td>'+
+      '<td><input class="grid-input" value="'+fmt(r.qtd_comprada)+'" readonly style="text-align:right"></td>'+
+      '<td><input type="number" class="grid-input utilizado-input" data-id="'+r.id+'" value="'+r.qtd_utilizada+'" min="0" max="'+r.qtd_comprada+'" step="0.001" style="text-align:right;color:#374151"></td>'+
+      '<td><input class="grid-input" value="'+fmt(r.saldo)+'" readonly style="text-align:right;color:'+saldoColor+';font-weight:600"></td>'+
+      '<td><input class="grid-input" value="'+fmtR(r.preco_total)+'" readonly style="text-align:right"></td>'+
+      '<td><input class="grid-input" value="'+(r.data_compra||'—')+'" readonly style="font-size:12px"></td>'+
+      '<td><input class="grid-input" value="'+(r.data_validade||'—')+'" readonly style="font-size:12px;color:'+valColor+'"></td>'+
+      '<td style="text-align:center">'+origemLabel+'</td>'+
+      '<td><button class="grid-delete" onclick="editar('+r.id+')" title="Editar" style="color:#3B82F6">✏️</button></td>'+
+    '</tr>';
+  }).join('');
 }
 
-function abrirModal(r=null){
-  document.getElementById('m-id').value=r?.id||'';
-  document.getElementById('m-cod').value=r?.codigo||'';
-  document.getElementById('m-desc').value=r?.descricao||'';
-  document.getElementById('m-forn').value=r?.fornecedor_id||'';
-  document.getElementById('m-proj').value=r?.projeto_nome||'';
-  document.getElementById('m-qtd').value=r?.qtd_comprada||'';
-  document.getElementById('m-valor').value=r?.preco_total||'';
-  document.getElementById('m-data').value=r?.data_compra||'';
-  document.getElementById('m-val').value=r?.data_validade||'';
-  document.getElementById('m-obs').value=r?.observacoes||'';
+function abrirModal(r){
+  document.getElementById('m-id').value=r?r.id:'';
+  document.getElementById('m-cod').value=r?r.codigo:'';
+  document.getElementById('m-desc').value=r?r.descricao:'';
+  document.getElementById('m-forn').value=r?r.fornecedor_id:'';
+  document.getElementById('m-cc').value=r?r.centro_custo_id:'';
+  document.getElementById('m-qtd').value=r?r.qtd_comprada:'';
+  document.getElementById('m-valor').value=r?r.preco_total:'';
+  document.getElementById('m-data').value=r?r.data_compra:'';
+  document.getElementById('m-val').value=r?r.data_validade:'';
+  document.getElementById('m-obs').value=r?r.observacoes:'';
   document.getElementById('modal-titulo').textContent=r?'✏️ Editar Material':'➕ Novo Material';
   document.getElementById('btn-del').style.display=r?'':'none';
   document.getElementById('modal').classList.add('open');
 }
-function editar(id){abrirModal(dados.find(r=>r.id===id));}
+function editar(id){abrirModal(dados.find(function(r){return r.id===id;}));}
 function fecharModal(){document.getElementById('modal').classList.remove('open');}
 
 async function salvar(){
-  const cod=document.getElementById('m-cod').value.trim();
-  const desc=document.getElementById('m-desc').value.trim();
+  var cod=document.getElementById('m-cod').value.trim();
+  var desc=document.getElementById('m-desc').value.trim();
   if(!cod||!desc){bkToast('Código e descrição são obrigatórios','erro');return;}
-  const payload={action:'save',id:document.getElementById('m-id').value||null,codigo:cod,descricao:desc,fornecedor_id:document.getElementById('m-forn').value||null,projeto_nome:document.getElementById('m-proj').value,qtd_comprada:parseFloat(document.getElementById('m-qtd').value)||0,preco_total:parseFloat(document.getElementById('m-valor').value)||0,data_compra:document.getElementById('m-data').value||null,data_validade:document.getElementById('m-val').value||null,observacoes:document.getElementById('m-obs').value};
-  const res=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify(payload)});
-  const data=await res.json();
-  if(data.ok){bkToast('Material salvo!','sucesso');setTimeout(()=>location.reload(),900);}
+  var payload={action:'save',id:document.getElementById('m-id').value||null,codigo:cod,descricao:desc,fornecedor_id:document.getElementById('m-forn').value||null,centro_custo_id:document.getElementById('m-cc').value||null,qtd_comprada:parseFloat(document.getElementById('m-qtd').value)||0,preco_total:parseFloat(document.getElementById('m-valor').value)||0,data_compra:document.getElementById('m-data').value||null,data_validade:document.getElementById('m-val').value||null,observacoes:document.getElementById('m-obs').value};
+  var res=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify(payload)});
+  var data=await res.json();
+  if(data.ok){bkToast('Material salvo!','sucesso');setTimeout(function(){location.reload();},900);}
   else bkToast(data.error||'Erro ao salvar','erro');
 }
 
 async function excluir(){
-  const id=document.getElementById('m-id').value;
+  var id=document.getElementById('m-id').value;
   if(!id)return;
-  const ok=await bkConfirm('Excluir este material permanentemente?','🗑️ Excluir Material');
+  var ok=await bkConfirm('Excluir este material permanentemente?','🗑️ Excluir Material');
   if(!ok)return;
-  const res=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({action:'delete',id})});
-  const data=await res.json();
-  if(data.ok){bkToast('Material excluído','sucesso');setTimeout(()=>location.reload(),900);}
+  var res=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({action:'delete',id:id})});
+  var data=await res.json();
+  if(data.ok){bkToast('Material excluído','sucesso');setTimeout(function(){location.reload();},900);}
   else bkToast(data.error||'Erro ao excluir','erro');
 }
 
 async function salvarUtilizado(){
-  const inputs=document.querySelectorAll('.utilizado-input');
-  const updates=[];
-  inputs.forEach(inp=>{
-    const id=inp.dataset.id;
-    const qtd=parseFloat(inp.value)||0;
-    const original=dados.find(r=>r.id==id)?.qtd_utilizada||0;
-    if(Math.abs(qtd-original)>0.0001)updates.push({id:parseInt(id),qtd_utilizada:qtd});
+  var inputs=document.querySelectorAll('.utilizado-input');
+  var updates=[];
+  inputs.forEach(function(inp){
+    var id=inp.dataset.id;
+    var qtd=parseFloat(inp.value)||0;
+    var original=dados.find(function(r){return r.id==id;})||{};
+    if(Math.abs(qtd-(original.qtd_utilizada||0))>0.0001)updates.push({id:parseInt(id),qtd_utilizada:qtd});
   });
   if(!updates.length){bkToast('Nenhuma alteração detectada','aviso');return;}
-  const res=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({action:'save_utilizado',updates})});
-  const data=await res.json();
-  if(data.ok){bkToast(`✅ ${data.n} item(ns) atualizado(s)`,'sucesso');setTimeout(()=>location.reload(),900);}
+  var res=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({action:'save_utilizado',updates:updates})});
+  var data=await res.json();
+  if(data.ok){bkToast('✅ '+data.n+' item(ns) atualizado(s)','sucesso');setTimeout(function(){location.reload();},900);}
   else bkToast(data.error||'Erro ao salvar','erro');
 }
 
-document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))fecharModal();});
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===document.getElementById('modal'))fecharModal();});
 renderTabela();
 </script>
 {% endblock %}
