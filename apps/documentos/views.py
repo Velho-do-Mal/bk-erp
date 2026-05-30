@@ -93,9 +93,15 @@ def download(request, pk):
     if empresa:
         kwargs['empresa'] = empresa
     doc = get_object_or_404(Documento, **kwargs)
-    if not doc.arquivo:
+    if doc.arquivo:
+        # Upload novo — FileField
+        data = doc.arquivo.read()
+    elif doc.arquivo_dados:
+        # Upload legado — BinaryField
+        data = bytes(doc.arquivo_dados)
+    else:
         raise Http404
-    resp = HttpResponse(doc.arquivo.read(), content_type=doc.arquivo_tipo or 'application/octet-stream')
+    resp = HttpResponse(data, content_type=doc.arquivo_tipo or 'application/octet-stream')
     resp['Content-Disposition'] = f'attachment; filename="{doc.arquivo_nome}"'
     return resp
 

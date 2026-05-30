@@ -3,20 +3,11 @@ import apps.core.storage
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ('projetos', '0006_add_empresa_fk'),
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='projeto',
-            name='logo_bk_dados',
-        ),
-        migrations.RemoveField(
-            model_name='projeto',
-            name='logo_cliente_dados',
-        ),
         migrations.AddField(
             model_name='projeto',
             name='logo_bk',

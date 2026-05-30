@@ -63,9 +63,15 @@ RECORRENCIA_DELTAS = {
 def download_anexo(request, pk):
     from django.http import Http404
     t = get_object_or_404(Transacao, pk=pk)
-    if not t.anexo_arquivo:
+    if t.anexo_arquivo:
+        # Upload novo — FileField
+        data = t.anexo_arquivo.read()
+    elif t.anexo_dados:
+        # Upload legado — BinaryField
+        data = bytes(t.anexo_dados)
+    else:
         raise Http404
-    resp = HttpResponse(t.anexo_arquivo.read(), content_type=t.anexo_tipo or 'application/octet-stream')
+    resp = HttpResponse(data, content_type=t.anexo_tipo or 'application/octet-stream')
     resp['Content-Disposition'] = f'attachment; filename="{t.anexo_nome}"'
     return resp
 

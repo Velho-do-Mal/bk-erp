@@ -3,16 +3,16 @@ import apps.core.storage
 
 
 class Migration(migrations.Migration):
-
+    """
+    Adiciona FileField sem remover BinaryField.
+    Dados antigos (anexo_dados) permanecem intactos.
+    Novos uploads vão para anexo_arquivo.
+    """
     dependencies = [
         ('financeiro', '0003_add_empresa_fk'),
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='transacao',
-            name='anexo_dados',
-        ),
         migrations.AddField(
             model_name='transacao',
             name='anexo_arquivo',
