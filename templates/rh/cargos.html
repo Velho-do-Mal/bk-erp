@@ -101,7 +101,7 @@
                 R$ {{ c.salario_base|floatformat:2 }}
               {% else %}—{% endif %}
             </td>
-            <td class="text-center">{{ c.colaborador_set.count }}</td>
+            <td class="text-center">{{ c.colaboradores.count }}</td>
             <td class="text-center">
               {% if c.ativo %}
                 <span class="badge badge-success">Ativo</span>

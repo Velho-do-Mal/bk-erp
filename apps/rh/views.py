@@ -1,7 +1,7 @@
 import json
 import csv
 from datetime import date
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required
 from apps.accounts.decorators import admin_required
@@ -24,14 +24,16 @@ def _qs_empresa(qs, request):
 @admin_required
 def colaboradores(request):
     if request.method == 'POST':
+        # Tenta JSON primeiro (API), depois form data (template)
         try:
             data = json.loads(request.body)
         except Exception:
-            data = {}
+            data = request.POST
+
         action = data.get('action')
 
-        if action in ('save', 'create'):
-            rid = data.get('id')
+        if action in ('save', 'create', 'criar', 'editar'):
+            rid = data.get('id') or data.get('colab_id') or None
             obj = _qs_empresa(Colaborador.objects, request).filter(id=rid).first() if rid else Colaborador()
             if obj is None:
                 return JsonResponse({'ok': False, 'error': 'Não encontrado'}, status=404)
@@ -66,11 +68,16 @@ def colaboradores(request):
             if obj.pk is None and _empresa(request):
                 obj.empresa = _empresa(request)
             obj.save()
-            return JsonResponse({'ok': True, 'id': obj.id})
+            if request.content_type and 'json' in request.content_type:
+                return JsonResponse({'ok': True, 'id': obj.id})
+            return redirect('rh:colaboradores')
 
-        elif action == 'delete':
-            _qs_empresa(Colaborador.objects, request).filter(id=data.get('id')).delete()
-            return JsonResponse({'ok': True})
+        elif action in ('delete', 'excluir'):
+            rid = data.get('id') or data.get('colab_id')
+            _qs_empresa(Colaborador.objects, request).filter(id=rid).delete()
+            if request.content_type and 'json' in request.content_type:
+                return JsonResponse({'ok': True})
+            return redirect('rh:colaboradores')
 
     # GET
     status_f = request.GET.get('status', '')
@@ -96,7 +103,6 @@ def colaboradores(request):
     deptos = list(_qs_empresa(Departamento.objects, request).filter(ativo=True).values('id', 'nome'))
     cargos = list(_qs_empresa(Cargo.objects, request).filter(ativo=True).values('id', 'nome', 'departamento_id'))
 
-    # KPIs
     total = _qs_empresa(Colaborador.objects, request).count()
     ativos = _qs_empresa(Colaborador.objects, request).filter(status='ativo').count()
     em_ferias = _qs_empresa(Colaborador.objects, request).filter(status='ferias').count()
@@ -136,30 +142,64 @@ def exportar_colaboradores(request):
 @admin_required
 def departamentos(request):
     if request.method == 'POST':
-        data = json.loads(request.body)
-        action = data.get('action')
-        if action == 'save':
-            rid = data.get('id')
+        # Aceita form data (template) OU JSON (API)
+        try:
+            data = json.loads(request.body)
+            is_json = True
+        except Exception:
+            data = request.POST
+            is_json = False
+
+        action = data.get('action', '')
+
+        if action in ('save', 'criar', 'editar'):
+            rid = data.get('id') or data.get('dept_id') or None
             obj = _qs_empresa(Departamento.objects, request).filter(id=rid).first() if rid else Departamento()
             if obj is None:
-                return JsonResponse({'ok': False, 'error': 'Não encontrado'}, status=404)
+                obj = Departamento()  # segurança: cria novo se não achar
+
             obj.nome = data.get('nome', '').strip()
             obj.descricao = data.get('descricao', '').strip()
-            obj.ativo = data.get('ativo', True)
+            # checkbox envia 'on' quando marcado, form data não envia nada quando desmarcado
+            if is_json:
+                obj.ativo = data.get('ativo', True)
+            else:
+                obj.ativo = data.get('ativo') == 'on' or data.get('ativo') == 'true' or data.get('ativo') == True
+
             if obj.pk is None and _empresa(request):
                 obj.empresa = _empresa(request)
             obj.save()
-            return JsonResponse({'ok': True, 'id': obj.id})
-        elif action == 'delete':
-            _qs_empresa(Departamento.objects, request).filter(id=data.get('id')).delete()
-            return JsonResponse({'ok': True})
 
-    lista = list(_qs_empresa(Departamento.objects, request).values('id', 'nome', 'descricao', 'ativo'))
-    for d in lista:
-        d['total_colaboradores'] = Colaborador.objects.filter(departamento_id=d['id'], status='ativo').count()
+            if is_json:
+                return JsonResponse({'ok': True, 'id': obj.id})
+            return redirect('rh:departamentos')
+
+        elif action in ('delete', 'excluir'):
+            rid = data.get('id') or data.get('dept_id')
+            _qs_empresa(Departamento.objects, request).filter(id=rid).delete()
+            if is_json:
+                return JsonResponse({'ok': True})
+            return redirect('rh:departamentos')
+
+    # GET — passar contexto compatível com o template
+    qs = _qs_empresa(Departamento.objects, request).prefetch_related('cargos', 'colaboradores')
+    lista = list(qs)
+
+    total_departamentos = len(lista)
+    total_ativos = sum(1 for d in lista if d.ativo)
+    total_cargos = _qs_empresa(Cargo.objects, request).count()
+    total_colaboradores = _qs_empresa(Colaborador.objects, request).filter(status='ativo').count()
 
     return render(request, 'rh/departamentos.html', {
-        'deptos_json': json.dumps(lista, default=str),
+        'departamentos': lista,
+        'deptos_json': json.dumps(
+            [{'id': d.id, 'nome': d.nome, 'descricao': d.descricao, 'ativo': d.ativo} for d in lista],
+            default=str
+        ),
+        'total_departamentos': total_departamentos,
+        'total_ativos': total_ativos,
+        'total_cargos': total_cargos,
+        'total_colaboradores': total_colaboradores,
     })
 
 
@@ -168,33 +208,58 @@ def departamentos(request):
 @admin_required
 def cargos(request):
     if request.method == 'POST':
-        data = json.loads(request.body)
-        action = data.get('action')
-        if action == 'save':
-            rid = data.get('id')
+        try:
+            data = json.loads(request.body)
+            is_json = True
+        except Exception:
+            data = request.POST
+            is_json = False
+
+        action = data.get('action', '')
+
+        if action in ('save', 'criar', 'editar'):
+            rid = data.get('id') or data.get('cargo_id') or None
             obj = _qs_empresa(Cargo.objects, request).filter(id=rid).first() if rid else Cargo()
             if obj is None:
-                return JsonResponse({'ok': False, 'error': 'Não encontrado'}, status=404)
+                obj = Cargo()
+
             obj.nome = data.get('nome', '').strip()
             obj.descricao = data.get('descricao', '').strip()
             obj.salario_base = data.get('salario_base') or 0
             depto_id = data.get('departamento_id')
             obj.departamento_id = int(depto_id) if depto_id else None
-            obj.ativo = data.get('ativo', True)
+            if is_json:
+                obj.ativo = data.get('ativo', True)
+            else:
+                obj.ativo = data.get('ativo') == 'on' or data.get('ativo') == 'true'
+
             if obj.pk is None and _empresa(request):
                 obj.empresa = _empresa(request)
             obj.save()
-            return JsonResponse({'ok': True, 'id': obj.id})
-        elif action == 'delete':
-            _qs_empresa(Cargo.objects, request).filter(id=data.get('id')).delete()
-            return JsonResponse({'ok': True})
 
-    lista = list(_qs_empresa(Cargo.objects, request).select_related('departamento').values(
-        'id', 'nome', 'descricao', 'salario_base', 'departamento__nome', 'departamento_id', 'ativo'
-    ))
+            if is_json:
+                return JsonResponse({'ok': True, 'id': obj.id})
+            return redirect('rh:cargos')
+
+        elif action in ('delete', 'excluir'):
+            rid = data.get('id') or data.get('cargo_id')
+            _qs_empresa(Cargo.objects, request).filter(id=rid).delete()
+            if is_json:
+                return JsonResponse({'ok': True})
+            return redirect('rh:cargos')
+
+    lista = list(_qs_empresa(Cargo.objects, request).select_related('departamento'))
     deptos = list(_qs_empresa(Departamento.objects, request).filter(ativo=True).values('id', 'nome'))
+
     return render(request, 'rh/cargos.html', {
-        'cargos_json': json.dumps(lista, default=str),
+        'cargos': lista,
+        'cargos_json': json.dumps(
+            [{'id': c.id, 'nome': c.nome, 'descricao': c.descricao,
+              'salario_base': float(c.salario_base), 'departamento_id': c.departamento_id,
+              'departamento__nome': c.departamento.nome if c.departamento else '',
+              'ativo': c.ativo} for c in lista],
+            default=str
+        ),
         'deptos': deptos,
     })
 
@@ -204,27 +269,42 @@ def cargos(request):
 @admin_required
 def ferias(request):
     if request.method == 'POST':
-        data = json.loads(request.body)
-        action = data.get('action')
-        if action == 'save':
-            rid = data.get('id')
+        try:
+            data = json.loads(request.body)
+            is_json = True
+        except Exception:
+            data = request.POST
+            is_json = False
+
+        action = data.get('action', '')
+
+        if action in ('save', 'criar', 'editar'):
+            rid = data.get('id') or data.get('ferias_id') or None
             obj = _qs_empresa(Ferias.objects, request).filter(id=rid).first() if rid else Ferias()
             if obj is None:
-                return JsonResponse({'ok': False, 'error': 'Não encontrado'}, status=404)
+                obj = Ferias()
+
             colab_id = data.get('colaborador_id')
             obj.colaborador_id = int(colab_id) if colab_id else None
-            obj.data_inicio = data.get('data_inicio')
-            obj.data_fim = data.get('data_fim')
-            obj.dias = data.get('dias', 30)
+            obj.data_inicio = data.get('data_inicio') or None
+            obj.data_fim = data.get('data_fim') or None
+            obj.dias = data.get('dias', 30) or 30
             obj.status = data.get('status', 'agendada')
             obj.observacoes = data.get('observacoes', '').strip()
             if obj.pk is None and _empresa(request):
                 obj.empresa = _empresa(request)
             obj.save()
-            return JsonResponse({'ok': True, 'id': obj.id})
-        elif action == 'delete':
-            _qs_empresa(Ferias.objects, request).filter(id=data.get('id')).delete()
-            return JsonResponse({'ok': True})
+
+            if is_json:
+                return JsonResponse({'ok': True, 'id': obj.id})
+            return redirect('rh:ferias')
+
+        elif action in ('delete', 'excluir'):
+            rid = data.get('id') or data.get('ferias_id')
+            _qs_empresa(Ferias.objects, request).filter(id=rid).delete()
+            if is_json:
+                return JsonResponse({'ok': True})
+            return redirect('rh:ferias')
 
     lista = list(_qs_empresa(Ferias.objects, request).select_related('colaborador').values(
         'id', 'colaborador__nome', 'colaborador_id', 'data_inicio', 'data_fim', 'dias', 'status', 'observacoes'

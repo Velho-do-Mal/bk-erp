@@ -96,8 +96,8 @@
           <tr data-nome="{{ d.nome|lower }}">
             <td class="fw-semibold">{{ d.nome }}</td>
             <td class="text-muted small">{{ d.descricao|default:"—" }}</td>
-            <td class="text-center">{{ d.cargo_set.count }}</td>
-            <td class="text-center">{{ d.colaborador_set.count }}</td>
+            <td class="text-center">{{ d.cargos.count }}</td>
+            <td class="text-center">{{ d.colaboradores.count }}</td>
             <td class="text-center">
               {% if d.ativo %}
                 <span class="badge badge-success">Ativo</span>
