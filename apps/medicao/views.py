@@ -210,8 +210,8 @@ def detalhe(request, bm_id):
     total_saldo = total_contrato - total_acum
     pct_total = round((total_acum / total_contrato * 100) if total_contrato else 0, 2)
 
-    logo_bk_b64 = base64.b64encode(bytes(boletim.logo_bk_dados)).decode() if boletim.logo_bk_dados else ""
-    logo_cliente_b64 = base64.b64encode(bytes(boletim.logo_cliente_dados)).decode() if boletim.logo_cliente_dados else ""
+    logo_bk_b64 = base64.b64encode(boletim.logo_bk.read()).decode() if boletim.logo_bk else ""
+    logo_cliente_b64 = base64.b64encode(boletim.logo_cliente.read()).decode() if boletim.logo_cliente else ""
 
     return render(request, "medicao/detalhe.html", {
         "boletim": boletim,
@@ -251,8 +251,8 @@ def print_periodo(request, bm_id, periodo_id):
     total_periodo = sum(l["valor_medido_periodo"] for l in linhas)
     total_acum = sum(l["valor_acum"] for l in linhas)
 
-    logo_bk_b64 = base64.b64encode(bytes(boletim.logo_bk_dados)).decode() if boletim.logo_bk_dados else ""
-    logo_cliente_b64 = base64.b64encode(bytes(boletim.logo_cliente_dados)).decode() if boletim.logo_cliente_dados else ""
+    logo_bk_b64 = base64.b64encode(boletim.logo_bk.read()).decode() if boletim.logo_bk else ""
+    logo_cliente_b64 = base64.b64encode(boletim.logo_cliente.read()).decode() if boletim.logo_cliente else ""
 
     return render(request, "medicao/print_periodo.html", {
         "boletim": boletim,
@@ -300,8 +300,8 @@ def print_consolidado(request, bm_id):
             "pct": pct,
         })
 
-    logo_bk_b64 = base64.b64encode(bytes(boletim.logo_bk_dados)).decode() if boletim.logo_bk_dados else ""
-    logo_cliente_b64 = base64.b64encode(bytes(boletim.logo_cliente_dados)).decode() if boletim.logo_cliente_dados else ""
+    logo_bk_b64 = base64.b64encode(boletim.logo_bk.read()).decode() if boletim.logo_bk else ""
+    logo_cliente_b64 = base64.b64encode(boletim.logo_cliente.read()).decode() if boletim.logo_cliente else ""
 
     return render(request, "medicao/print_consolidado.html", {
         "boletim": boletim,
@@ -347,14 +347,17 @@ def api_salvar_boletim(request):
     bm.contrato = (data.get("contrato") or "").strip()
     bm.codigo_obra = (data.get("codigo_obra") or "").strip()
 
-    for campo_b64, campo_tipo, campo_nome, campo_dados in [
-        ("logo_bk_b64", "logo_bk_tipo", "logo_bk_nome", "logo_bk_dados"),
-        ("logo_cliente_b64", "logo_cliente_tipo", "logo_cliente_nome", "logo_cliente_dados"),
+    for campo_b64, campo_tipo, campo_nome, campo_file in [
+        ("logo_bk_b64", "logo_bk_tipo", "logo_bk_nome", "logo_bk"),
+        ("logo_cliente_b64", "logo_cliente_tipo", "logo_cliente_nome", "logo_cliente"),
     ]:
         raw = data.get(campo_b64) or ""
         if raw:
             try:
-                setattr(bm, campo_dados, base64.b64decode(raw))
+                from django.core.files.base import ContentFile
+                file_bytes = base64.b64decode(raw)
+                nome_arquivo = data.get(campo_nome) or f"{campo_file}.bin"
+                getattr(bm, campo_file).save(nome_arquivo, ContentFile(file_bytes), save=False)
                 setattr(bm, campo_tipo, data.get(campo_tipo) or "")
                 setattr(bm, campo_nome, data.get(campo_nome) or "")
             except Exception:

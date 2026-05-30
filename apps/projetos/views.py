@@ -362,12 +362,12 @@ def controle_docs(request, pk):
                 f = request.FILES['logo_bk']
                 cfg.logo_bk_nome = f.name
                 cfg.logo_bk_tipo = f.content_type or 'image/jpeg'
-                cfg.logo_bk_dados = f.read()
+                cfg.logo_bk.save(f.name, f, save=False)
             if request.FILES.get('logo_cliente'):
                 f = request.FILES['logo_cliente']
                 cfg.logo_cliente_nome = f.name
                 cfg.logo_cliente_tipo = f.content_type or 'image/jpeg'
-                cfg.logo_cliente_dados = f.read()
+                cfg.logo_cliente.save(f.name, f, save=False)
             cfg.save()
             return JsonResponse({'ok': True})
 
@@ -431,14 +431,9 @@ def controle_docs(request, pk):
     # ── GET ─────────────────────────────────────────────────────────────────
     try:
         cfg = ControleDocConfig.objects.get(projeto=projeto)
-        logo_bk_uri = ''
-        logo_cli_uri = ''
-        if cfg.logo_bk_dados:
-            b64 = base64.b64encode(bytes(cfg.logo_bk_dados)).decode()
-            logo_bk_uri = f"data:{cfg.logo_bk_tipo or 'image/jpeg'};base64,{b64}"
-        if cfg.logo_cliente_dados:
-            b64 = base64.b64encode(bytes(cfg.logo_cliente_dados)).decode()
-            logo_cli_uri = f"data:{cfg.logo_cliente_tipo or 'image/jpeg'};base64,{b64}"
+        logo_bk_uri = cfg.logo_bk.url if cfg.logo_bk else ''
+        logo_cli_uri = cfg.logo_cliente.url if cfg.logo_cliente else ''
+
         meta = {
             'cliente_nome': cfg.cliente_nome,
             'projeto_numero': cfg.projeto_numero,

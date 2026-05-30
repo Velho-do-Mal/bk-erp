@@ -64,11 +64,7 @@ def download_anexo(request, pk):
     from django.http import Http404
     t = get_object_or_404(Transacao, pk=pk)
     if t.anexo_arquivo:
-        # Upload novo — FileField
         data = t.anexo_arquivo.read()
-    elif t.anexo_dados:
-        # Upload legado — BinaryField
-        data = bytes(t.anexo_dados)
     else:
         raise Http404
     resp = HttpResponse(data, content_type=t.anexo_tipo or 'application/octet-stream')
