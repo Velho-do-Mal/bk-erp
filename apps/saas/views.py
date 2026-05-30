@@ -1,4 +1,5 @@
 import json
+from django_ratelimit.decorators import ratelimit
 from django.shortcuts import render, redirect
 from django.contrib.auth import login
 from django.contrib import messages
@@ -16,6 +17,7 @@ def precos(request):
     return render(request, 'saas/precos.html', {'planos': planos})
 
 
+@ratelimit(key='ip', rate='5/m', method='POST', block=True)
 def cadastro(request):
     bloqueado = request.GET.get('bloqueado')
     planos = Plano.objects.filter(ativo=True).exclude(nome='enterprise').order_by('preco_mensal')

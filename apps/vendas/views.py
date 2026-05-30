@@ -3,6 +3,7 @@ import json
 from decimal import Decimal
 from datetime import date
 
+from apps.core.tenant import tenant_get_or_404
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from apps.accounts.decorators import admin_required
@@ -180,7 +181,7 @@ def lista(request):
 
         if action == 'save_lead':
             rid = data.get('id')
-            obj = Lead.objects.get(id=rid) if rid else Lead()
+            obj = tenant_get_or_404(Lead, request, pk=int(rid)) if rid else Lead()
             obj.nome = data.get('nome', '').strip()
             obj.empresa = data.get('empresa', '').strip()
             obj.contato = data.get('contato', '').strip()
@@ -204,7 +205,7 @@ def lista(request):
             return JsonResponse({'ok': True})
 
         elif action == 'gerar_financeiro':
-            prop = get_object_or_404(Proposta, id=data.get('id'))
+            prop = tenant_get_or_404(Proposta, request, pk=data.get('id'))
             ref = f"PROP:{prop.id}"
             try:
                 from apps.financeiro.models import Transacao
@@ -280,7 +281,7 @@ def proposta_detalhe(request, pk):
     - save_itens
     - mudar_status
     """
-    proposta = get_object_or_404(Proposta, pk=pk)
+    proposta = tenant_get_or_404(Proposta, request, pk=pk)
 
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -396,7 +397,7 @@ def exportar_word(request, pk):
     from docx.oxml import OxmlElement
     import io
 
-    proposta = get_object_or_404(Proposta, pk=pk)
+    proposta = tenant_get_or_404(Proposta, request, pk=pk)
     itens = proposta.itens.all()
 
     doc = Document()

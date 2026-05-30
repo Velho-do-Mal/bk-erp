@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'apps.saas',
     'apps.rh',
     'apps.relatorios',
+    'storages',
 ]
 
 MIDDLEWARE = [
@@ -132,3 +133,25 @@ EMAIL_USE_TLS       = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
 EMAIL_HOST_USER     = os.environ.get('EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL  = os.environ.get('DEFAULT_FROM_EMAIL', 'BK ERP <noreply@bk-engenharia.com>')
+
+# ── Armazenamento de Mídia ─────────────────────────────────────────────────
+import os as _os
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+USE_S3 = _os.environ.get('USE_S3', 'False') == 'True'
+
+if USE_S3:
+    AWS_ACCESS_KEY_ID = _os.environ.get('AWS_ACCESS_KEY_ID', '')
+    AWS_SECRET_ACCESS_KEY = _os.environ.get('AWS_SECRET_ACCESS_KEY', '')
+    AWS_STORAGE_BUCKET_NAME = _os.environ.get('AWS_STORAGE_BUCKET_NAME', '')
+    AWS_S3_REGION_NAME = _os.environ.get('AWS_S3_REGION_NAME', 'us-east-1')
+    AWS_S3_FILE_OVERWRITE = False
+    AWS_DEFAULT_ACL = None
+    AWS_S3_VERIFY = True
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
+# ── Rate Limiting ─────────────────────────────────────────────────────────
+RATELIMIT_USE_CACHE = 'default'
+RATELIMIT_ENABLE = True

@@ -1,6 +1,7 @@
 import json
 from decimal import Decimal
 from datetime import date
+from apps.core.tenant import tenant_get_or_404
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from apps.accounts.decorators import admin_required
@@ -57,7 +58,7 @@ def lista(request):
                 return JsonResponse({'ok': False, 'error': 'O campo Descrição é obrigatório.'})
             rid = data.get('id')
             try:
-                obj = MaterialEstoque.objects.get(id=rid) if rid else MaterialEstoque()
+                obj = tenant_get_or_404(MaterialEstoque, request, pk=int(rid)) if rid else MaterialEstoque()
             except MaterialEstoque.DoesNotExist:
                 return JsonResponse({'ok': False, 'error': 'Registro não encontrado.'})
             obj.codigo = data.get('codigo', '').strip()

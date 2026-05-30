@@ -1,4 +1,5 @@
 import json
+from apps.core.tenant import tenant_get_or_404
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
@@ -36,7 +37,7 @@ def clientes(request):
                 return JsonResponse({'ok': False, 'error': 'O campo Nome é obrigatório.'})
             rid = data.get('id')
             try:
-                obj = Cliente.objects.get(id=rid) if rid else Cliente()
+                obj = tenant_get_or_404(Cliente, request, pk=int(rid)) if rid else Cliente()
             except Cliente.DoesNotExist:
                 return JsonResponse({'ok': False, 'error': 'Registro não encontrado.'})
             obj.nome = nome
@@ -73,7 +74,7 @@ def fornecedores(request):
                 return JsonResponse({'ok': False, 'error': 'O campo Nome é obrigatório.'})
             rid = data.get('id')
             try:
-                obj = Fornecedor.objects.get(id=rid) if rid else Fornecedor()
+                obj = tenant_get_or_404(Fornecedor, request, pk=int(rid)) if rid else Fornecedor()
             except Fornecedor.DoesNotExist:
                 return JsonResponse({'ok': False, 'error': 'Registro não encontrado.'})
             obj.nome = nome
@@ -110,7 +111,7 @@ def centros_custo(request):
                 return JsonResponse({'ok': False, 'error': 'O campo Nome é obrigatório.'})
             rid = data.get('id')
             try:
-                obj = CentrosDeCusto.objects.get(id=rid) if rid else CentrosDeCusto()
+                obj = tenant_get_or_404(CentrosDeCusto, request, pk=int(rid)) if rid else CentrosDeCusto()
             except CentrosDeCusto.DoesNotExist:
                 return JsonResponse({'ok': False, 'error': 'Registro não encontrado.'})
             obj.nome = nome

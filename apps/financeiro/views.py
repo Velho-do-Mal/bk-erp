@@ -3,6 +3,7 @@ import uuid
 from decimal import Decimal
 from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
+from apps.core.tenant import tenant_get_or_404
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from apps.accounts.decorators import admin_required
@@ -60,11 +61,11 @@ RECORRENCIA_DELTAS = {
 
 @admin_required
 def download_anexo(request, pk):
+    from django.http import Http404
     t = get_object_or_404(Transacao, pk=pk)
-    if not t.anexo_dados:
-        from django.http import Http404
+    if not t.anexo_arquivo:
         raise Http404
-    resp = HttpResponse(bytes(t.anexo_dados), content_type=t.anexo_tipo or 'application/octet-stream')
+    resp = HttpResponse(t.anexo_arquivo.read(), content_type=t.anexo_tipo or 'application/octet-stream')
     resp['Content-Disposition'] = f'attachment; filename="{t.anexo_nome}"'
     return resp
 
@@ -201,9 +202,21 @@ def dashboard_financeiro(request):
 @admin_required
 def transacoes(request):
     if request.method == 'POST' and request.FILES.get('anexo'):
+        from apps.core.validators import validate_upload_view
         f = request.FILES['anexo']
+        err = validate_upload_view(f, 'Anexo')
+        if err:
+            return JsonResponse({'ok': False, 'erro': err}, status=400)
+
         rid = request.POST.get('id') or None
-        obj = Transacao.objects.get(id=int(rid)) if rid else Transacao()
+        empresa = _empresa(request)
+        if rid:
+            qs = Transacao.objects.filter(id=int(rid))
+            if empresa:
+                qs = qs.filter(empresa=empresa)
+            obj = get_object_or_404(qs.model, pk=int(rid), **({'empresa': empresa} if empresa else {}))
+        else:
+            obj = Transacao()
         obj.descricao = request.POST.get('descricao', '').strip()
         obj.tipo = request.POST.get('tipo', 'saida')
         obj.valor = _to_dec(request.POST.get('valor', 0))
@@ -227,11 +240,9 @@ def transacoes(request):
         obj.centro_custo_id = int(ccid) if ccid else None
         obj.anexo_nome = f.name
         obj.anexo_tipo = f.content_type or 'application/octet-stream'
-        obj.anexo_dados = f.read()
-        if obj.pk is None and _empresa(request):
-
-            obj.empresa = _empresa(request)
-
+        obj.anexo_arquivo = f
+        if obj.pk is None and empresa:
+            obj.empresa = empresa
         obj.save()
         _gerar_recorrencia(obj)
         return JsonResponse({'ok': True, 'id': obj.id})
@@ -242,7 +253,7 @@ def transacoes(request):
 
         if action == 'save':
             rid = data.get('id')
-            obj = Transacao.objects.get(id=rid) if rid else Transacao()
+            obj = tenant_get_or_404(Transacao, request, pk=int(rid)) if rid else Transacao()
             obj.descricao = data.get('descricao', '').strip()
             obj.tipo = data.get('tipo', 'saida')
             obj.valor = _to_dec(data.get('valor', 0))
@@ -278,7 +289,7 @@ def transacoes(request):
             tid  = data.get('id')
             modo = data.get('modo', 'somente_esta')  # somente_esta | proximas | todas
 
-            obj = get_object_or_404(Transacao, id=tid)
+            obj = tenant_get_or_404(Transacao, request, pk=tid)
             grupo = obj.recorrencia_grupo
 
             if modo == 'somente_esta' or not grupo:
@@ -296,7 +307,7 @@ def transacoes(request):
             return JsonResponse({'ok': True})
 
         elif action == 'toggle_status':
-            obj = get_object_or_404(Transacao, id=data.get('id'))
+            obj = tenant_get_or_404(Transacao, request, pk=data.get('id'))
             obj.status = 'realizado' if obj.status == 'pendente' else 'pendente'
             if obj.status == 'realizado' and not obj.data_pagamento:
                 obj.data_pagamento = date.today()
@@ -437,7 +448,7 @@ def contas(request):
 
         if action == 'save':
             rid = data.get('id')
-            obj = Conta.objects.get(id=rid) if rid else Conta()
+            obj = get_object_or_404(Conta, pk=int(rid)) if rid else Conta()
             obj.nome = data.get('nome', '').strip()
             obj.banco = data.get('banco', '').strip()
             obj.saldo_inicial = _to_dec(data.get('saldo_inicial', 0))
@@ -473,7 +484,7 @@ def categorias(request):
 
         if action == 'save':
             rid = data.get('id')
-            obj = Categoria.objects.get(id=rid) if rid else Categoria()
+            obj = get_object_or_404(Categoria, pk=int(rid)) if rid else Categoria()
             obj.nome = data.get('nome', '').strip()
             obj.tipo = data.get('tipo', 'ambos')
             pid = data.get('pai_id')

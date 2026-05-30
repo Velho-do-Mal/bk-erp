@@ -1,4 +1,5 @@
 from django.db import models
+from apps.core.storage import media_upload_to
 from django.db.models import ForeignKey, CASCADE
 from apps.cadastros.models import Cliente, Fornecedor
 
@@ -29,7 +30,7 @@ class Documento(models.Model):
 
     arquivo_nome = models.CharField(max_length=300, blank=True)
     arquivo_tipo = models.CharField(max_length=100, blank=True)
-    arquivo_dados = models.BinaryField(null=True, blank=True)
+    arquivo = models.FileField(upload_to=media_upload_to, null=True, blank=True)
 
     data_validade = models.DateField(null=True, blank=True, verbose_name='Data de Validade', help_text='Deixe em branco se o documento não vence')
 

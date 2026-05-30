@@ -1,4 +1,5 @@
 from django.db import models
+from apps.core.storage import media_upload_to
 from django.db.models import ForeignKey, CASCADE
 from apps.cadastros.models import Cliente, Fornecedor, CentrosDeCusto
 
@@ -77,7 +78,7 @@ class Transacao(models.Model):
     # Anexo
     anexo_nome = models.CharField(max_length=300, blank=True)
     anexo_tipo = models.CharField(max_length=100, blank=True)
-    anexo_dados = models.BinaryField(null=True, blank=True)
+    anexo_arquivo = models.FileField(upload_to=media_upload_to, null=True, blank=True)
 
     criado_em = models.DateTimeField(auto_now_add=True)
 

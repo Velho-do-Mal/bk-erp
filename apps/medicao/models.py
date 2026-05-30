@@ -1,4 +1,5 @@
 from django.db import models
+from apps.core.storage import media_upload_to
 from django.db.models import ForeignKey, CASCADE
 from decimal import Decimal
 
@@ -13,10 +14,14 @@ except Exception:
 
 class BoletimMedicao(models.Model):
     """
-    empresa = models.ForeignKey('saas.Empresa', on_delete=models.CASCADE, null=True, blank=True, related_name='+', verbose_name='Empresa', db_index=True)
     Cabeçalho do Boletim de Medição (BM).
     Agrupa as informações do contrato e do projeto medido.
     """
+    empresa = models.ForeignKey(
+        'saas.Empresa', on_delete=models.CASCADE,
+        null=True, blank=True, related_name='+',
+        verbose_name='Empresa', db_index=True
+    )
     cliente = models.ForeignKey(
         Cliente, on_delete=models.PROTECT,
         null=True, blank=True, verbose_name="Cliente"
@@ -31,13 +36,13 @@ class BoletimMedicao(models.Model):
     contrato = models.CharField(max_length=200, blank=True, verbose_name="Contrato")
     codigo_obra = models.CharField(max_length=100, blank=True, verbose_name="Código de Obra")
 
-    # Logotipos armazenados em binário (base64 via JS → BinaryField no backend)
+    # Logotipos armazenados como arquivo (FileField)
     logo_bk_nome = models.CharField(max_length=200, blank=True)
     logo_bk_tipo = models.CharField(max_length=100, blank=True)
-    logo_bk_dados = models.BinaryField(null=True, blank=True)
+    logo_bk = models.FileField(upload_to=media_upload_to, null=True, blank=True)
     logo_cliente_nome = models.CharField(max_length=200, blank=True)
     logo_cliente_tipo = models.CharField(max_length=100, blank=True)
-    logo_cliente_dados = models.BinaryField(null=True, blank=True)
+    logo_cliente = models.FileField(upload_to=media_upload_to, null=True, blank=True)
 
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)

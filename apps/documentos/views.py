@@ -28,7 +28,11 @@ def _qs_empresa(qs, request):
 @admin_required
 def lista(request):
     if request.method == 'POST' and request.FILES.get('arquivo'):
+        from apps.core.validators import validate_upload_view
         f = request.FILES['arquivo']
+        err = validate_upload_view(f, 'Arquivo')
+        if err:
+            return JsonResponse({'ok': False, 'erro': err}, status=400)
         doc = Documento()
         doc.titulo = request.POST.get('titulo', '').strip() or f.name
         doc.tipo = request.POST.get('tipo', 'outro')
@@ -41,9 +45,11 @@ def lista(request):
         doc.fornecedor_id = int(fid) if fid else None
         doc.arquivo_nome = f.name
         doc.arquivo_tipo = f.content_type or 'application/octet-stream'
-        doc.arquivo_dados = f.read()
+        doc.arquivo = f
         doc.data_validade = request.POST.get('data_validade') or None
         doc.enviado_por = request.user.username
+        if _empresa(request):
+            doc.empresa = _empresa(request)
         doc.save()
         return JsonResponse({'ok': True, 'id': doc.id})
 
@@ -56,7 +62,7 @@ def lista(request):
     # Filtros
     tipo_f = request.GET.get('tipo', '')
     q = request.GET.get('q', '')
-    qs = Documento.objects.select_related('cliente', 'fornecedor').defer('arquivo_dados')
+    qs = Documento.objects.select_related('cliente', 'fornecedor')
     if tipo_f:
         qs = qs.filter(tipo=tipo_f)
     if q:
@@ -81,11 +87,15 @@ def lista(request):
 
 @login_required
 def download(request, pk):
-    doc = get_object_or_404(Documento, pk=pk)
-    if not doc.arquivo_dados:
-        from django.http import Http404
+    from django.http import Http404
+    empresa = _empresa(request)
+    kwargs = {'pk': pk}
+    if empresa:
+        kwargs['empresa'] = empresa
+    doc = get_object_or_404(Documento, **kwargs)
+    if not doc.arquivo:
         raise Http404
-    resp = HttpResponse(bytes(doc.arquivo_dados), content_type=doc.arquivo_tipo or 'application/octet-stream')
+    resp = HttpResponse(doc.arquivo.read(), content_type=doc.arquivo_tipo or 'application/octet-stream')
     resp['Content-Disposition'] = f'attachment; filename="{doc.arquivo_nome}"'
     return resp
 

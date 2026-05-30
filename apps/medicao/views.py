@@ -6,6 +6,7 @@ from decimal import Decimal, InvalidOperation
 
 from django.db.models import Q
 from django.http import JsonResponse
+from apps.core.tenant import tenant_get_or_404
 from django.shortcuts import get_object_or_404, render
 from django.views.decorators.http import require_GET, require_http_methods, require_POST
 from django.contrib.auth.decorators import login_required
@@ -161,7 +162,7 @@ def _montar_linhas(itens, medicoes_dict, acum_dict):
 @require_GET
 def dashboard(request):
     """Lista todos os Boletins de Medição."""
-    boletins = BoletimMedicao.objects.select_related("cliente", "projeto").all()
+    boletins = _qs_empresa(BoletimMedicao.objects, request).select_related("cliente", "projeto")
     clientes = _qs_empresa(Cliente.objects, request).filter(ativo=True).order_by("nome")
     projetos = _qs_empresa(Projeto.objects, request).filter().order_by("nome") if Projeto is not None else []
     return render(request, "medicao/dashboard.html", {
@@ -175,7 +176,7 @@ def dashboard(request):
 def detalhe(request, bm_id):
     """Página principal do BM com as 4 abas."""
     boletim = get_object_or_404(
-        BoletimMedicao.objects.select_related("cliente", "projeto"), id=bm_id
+        _qs_empresa(BoletimMedicao.objects, request).select_related("cliente", "projeto"), id=bm_id
     )
     clientes = _qs_empresa(Cliente.objects, request).filter(ativo=True).order_by("nome")
     projetos = _qs_empresa(Projeto.objects, request).filter().order_by("nome") if Projeto is not None else []
@@ -237,7 +238,7 @@ def detalhe(request, bm_id):
 @require_GET
 def print_periodo(request, bm_id, periodo_id):
     """Página de impressão do período."""
-    boletim = get_object_or_404(BoletimMedicao.objects.select_related("cliente", "projeto"), id=bm_id)
+    boletim = get_object_or_404(_qs_empresa(BoletimMedicao.objects, request).select_related("cliente", "projeto"), id=bm_id)
     periodo = get_object_or_404(PeriodoMedicao, id=periodo_id, boletim=boletim)
     itens = list(boletim.itens.select_related("servico").order_by("ordem", "id"))
 
@@ -271,7 +272,7 @@ def print_periodo(request, bm_id, periodo_id):
 @require_GET
 def print_consolidado(request, bm_id):
     """Página de impressão consolidada (todas as BMs lado a lado)."""
-    boletim = get_object_or_404(BoletimMedicao.objects.select_related("cliente", "projeto"), id=bm_id)
+    boletim = get_object_or_404(_qs_empresa(BoletimMedicao.objects, request).select_related("cliente", "projeto"), id=bm_id)
     itens = list(boletim.itens.select_related("servico").order_by("ordem", "id"))
     periodos = list(boletim.periodos.order_by("numero"))
 

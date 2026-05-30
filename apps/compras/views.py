@@ -1,6 +1,7 @@
 import json
 from decimal import Decimal
 from datetime import date
+from apps.core.tenant import tenant_get_or_404
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from apps.accounts.decorators import admin_required
@@ -59,7 +60,7 @@ def lista(request):
                 return JsonResponse({'ok': False, 'error': 'O campo Data do Pedido é obrigatório.'})
             rid = data.get('id')
             try:
-                obj = PedidoCompra.objects.get(id=rid) if rid else PedidoCompra()
+                obj = tenant_get_or_404(PedidoCompra, request, pk=int(rid)) if rid else PedidoCompra()
             except PedidoCompra.DoesNotExist:
                 return JsonResponse({'ok': False, 'error': 'Registro não encontrado.'})
             obj.codigo = codigo
@@ -105,7 +106,7 @@ def lista(request):
 
         elif action == 'gerar_financeiro':
             # Cria conta a pagar no Financeiro
-            po = get_object_or_404(PedidoCompra, id=data.get('id'))
+            po = tenant_get_or_404(PedidoCompra, request, pk=data.get('id'))
             ref = f"PC:{po.id}"
             try:
                 from apps.financeiro.models import Transacao

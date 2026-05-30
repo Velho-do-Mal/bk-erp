@@ -1,6 +1,7 @@
 import json
 import json
 from datetime import date
+from apps.core.tenant import tenant_get_or_404
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, Http404, FileResponse
@@ -150,7 +151,7 @@ def relatorio_executivo(request):
 
 @login_required
 def detalhe(request, pk):
-    projeto = get_object_or_404(Projeto, pk=pk)
+    projeto = tenant_get_or_404(Projeto, request, pk=pk)
     check_acesso(request, projeto)
 
     acesso = None
@@ -206,7 +207,7 @@ def salvar_dados(request, pk):
     """API para salvar JSON completo do projeto (AJAX)."""
     if not request.user.is_admin_erp:
         return JsonResponse({'erro': 'Sem permissão'}, status=403)
-    projeto = get_object_or_404(Projeto, pk=pk)
+    projeto = tenant_get_or_404(Projeto, request, pk=pk)
     try:
         dados = json.loads(request.body)
         projeto.dados = dados
@@ -238,7 +239,7 @@ def salvar_dados(request, pk):
 def encerrar(request, pk):
     if not request.user.is_admin_erp:
         raise Http404
-    projeto = get_object_or_404(Projeto, pk=pk)
+    projeto = tenant_get_or_404(Projeto, request, pk=pk)
     projeto.encerrado = True
     projeto.status = 'encerrado'
     projeto.save()
@@ -250,7 +251,7 @@ def encerrar(request, pk):
 def reabrir(request, pk):
     if not request.user.is_admin_erp:
         raise Http404
-    projeto = get_object_or_404(Projeto, pk=pk)
+    projeto = tenant_get_or_404(Projeto, request, pk=pk)
     projeto.encerrado = False
     projeto.status = 'execucao'
     projeto.save()
@@ -262,7 +263,7 @@ def reabrir(request, pk):
 def excluir(request, pk):
     if not request.user.is_admin_erp:
         raise Http404
-    projeto = get_object_or_404(Projeto, pk=pk)
+    projeto = tenant_get_or_404(Projeto, request, pk=pk)
     nome = projeto.nome
     projeto.delete()
     messages.success(request, f'Projeto "{nome}" excluído.')
@@ -275,7 +276,7 @@ def gerenciar_acessos(request, pk):
     if not request.user.is_admin_erp:
         raise Http404
     from apps.accounts.models import User
-    projeto = get_object_or_404(Projeto, pk=pk)
+    projeto = tenant_get_or_404(Projeto, request, pk=pk)
     clientes = _qs_empresa(User.objects, request).filter(perfil='cliente', is_active=True)
     acessos = {a.usuario_id: a for a in _qs_empresa(ProjetoAcesso.objects, request).filter(projeto=projeto)}
 
@@ -306,7 +307,7 @@ def controle_docs(request, pk):
     import base64
     from .models import ControleDocConfig, DocumentoControle, StatusEventoDocumento
 
-    projeto = get_object_or_404(Projeto, pk=pk)
+    projeto = tenant_get_or_404(Projeto, request, pk=pk)
     check_acesso(request, projeto)
 
     def _to_date(v):
@@ -480,7 +481,7 @@ def api_anexos(request, pk, doc_id):
     """GET: lista anexos do documento. POST (multipart): faz upload de um arquivo."""
     from .models import DocumentoControle, AnexoDocumento
 
-    projeto = get_object_or_404(Projeto, pk=pk)
+    projeto = tenant_get_or_404(Projeto, request, pk=pk)
     check_acesso(request, projeto)
     doc = get_object_or_404(DocumentoControle, id=doc_id, projeto=projeto)
 
@@ -538,7 +539,7 @@ def excluir_anexo(request, pk, anexo_id):
     if not request.user.is_admin_erp:
         return JsonResponse({'erro': 'Sem permissão'}, status=403)
 
-    projeto = get_object_or_404(Projeto, pk=pk)
+    projeto = tenant_get_or_404(Projeto, request, pk=pk)
     check_acesso(request, projeto)
     anexo = get_object_or_404(AnexoDocumento, id=anexo_id, documento__projeto=projeto)
     # Remove arquivo físico e registro
@@ -555,7 +556,7 @@ def download_anexo(request, pk, anexo_id):
     """Faz download de um anexo."""
     from .models import AnexoDocumento
 
-    projeto = get_object_or_404(Projeto, pk=pk)
+    projeto = tenant_get_or_404(Projeto, request, pk=pk)
     check_acesso(request, projeto)
     anexo = get_object_or_404(AnexoDocumento, id=anexo_id, documento__projeto=projeto)
     try:
