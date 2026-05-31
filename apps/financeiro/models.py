@@ -78,9 +78,7 @@ class Transacao(models.Model):
     # Anexo
     anexo_nome = models.CharField(max_length=300, blank=True)
     anexo_tipo = models.CharField(max_length=100, blank=True)
-    # Legacy: dados binários (mantidos para não perder histórico)
-    anexo_dados = models.BinaryField(null=True, blank=True)
-    # Novo: arquivo em disco/S3 (uploads novos)
+    # Arquivo (FileField)
     anexo_arquivo = models.FileField(upload_to=media_upload_to, null=True, blank=True)
 
     criado_em = models.DateTimeField(auto_now_add=True)

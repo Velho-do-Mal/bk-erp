@@ -92,11 +92,9 @@ class ControleDocConfig(models.Model):
     revisao = models.CharField(max_length=50, blank=True, default='')
     logo_bk_nome = models.CharField(max_length=200, blank=True)
     logo_bk_tipo = models.CharField(max_length=100, blank=True)
-    logo_bk_dados = models.BinaryField(null=True, blank=True)  # legacy
     logo_bk = models.FileField(upload_to=media_upload_to, null=True, blank=True)
     logo_cliente_nome = models.CharField(max_length=200, blank=True)
     logo_cliente_tipo = models.CharField(max_length=100, blank=True)
-    logo_cliente_dados = models.BinaryField(null=True, blank=True)  # legacy
     logo_cliente = models.FileField(upload_to=media_upload_to, null=True, blank=True)
     atualizado_em = models.DateTimeField(auto_now=True)
 

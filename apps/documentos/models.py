@@ -30,9 +30,7 @@ class Documento(models.Model):
 
     arquivo_nome = models.CharField(max_length=300, blank=True)
     arquivo_tipo = models.CharField(max_length=100, blank=True)
-    # Legacy: dados binários (mantidos para não perder histórico)
-    arquivo_dados = models.BinaryField(null=True, blank=True)
-    # Novo: arquivo em disco/S3 (uploads novos)
+    # Arquivo (FileField)
     arquivo = models.FileField(upload_to=media_upload_to, null=True, blank=True)
 
     data_validade = models.DateField(null=True, blank=True, verbose_name='Data de Validade', help_text='Deixe em branco se o documento não vence')

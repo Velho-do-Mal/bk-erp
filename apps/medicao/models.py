@@ -36,14 +36,12 @@ class BoletimMedicao(models.Model):
     contrato = models.CharField(max_length=200, blank=True, verbose_name="Contrato")
     codigo_obra = models.CharField(max_length=100, blank=True, verbose_name="Código de Obra")
 
-    # Logotipos — legacy binary + novo FileField
+    # Logotipos (FileField)
     logo_bk_nome = models.CharField(max_length=200, blank=True)
     logo_bk_tipo = models.CharField(max_length=100, blank=True)
-    logo_bk_dados = models.BinaryField(null=True, blank=True)  # legacy
     logo_bk = models.FileField(upload_to=media_upload_to, null=True, blank=True)
     logo_cliente_nome = models.CharField(max_length=200, blank=True)
     logo_cliente_tipo = models.CharField(max_length=100, blank=True)
-    logo_cliente_dados = models.BinaryField(null=True, blank=True)  # legacy
     logo_cliente = models.FileField(upload_to=media_upload_to, null=True, blank=True)
 
     criado_em = models.DateTimeField(auto_now_add=True)
