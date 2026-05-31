@@ -469,8 +469,40 @@ def controle_docs(request, pk):
         meta = {'cliente_nome': '', 'projeto_numero': '', 'revisao': '',
                 'projeto_status': '', 'logo_bk_uri': '', 'logo_cliente_uri': ''}
 
-    docs_qs = _qs_empresa(DocumentoControle.objects, request).filter(projeto=projeto).order_by('id')
-    docs = []
+docs_qs = _qs_empresa(DocumentoControle.objects, request).filter(projeto=projeto).order_by('id')
+docs = []
+
+# ---------------------------------------------------------------------
+# COMPATIBILIDADE URGENTE:
+# Se a nova tabela DocumentoControle estiver vazia, tenta carregar
+# os documentos antigos salvos no JSON projeto.dados["docs"].
+# ---------------------------------------------------------------------
+legacy_docs = []
+try:
+    legacy_docs = (projeto.dados or {}).get('docs', []) or []
+except Exception:
+    legacy_docs = []
+
+if not docs_qs.exists() and legacy_docs:
+    for idx, d in enumerate(legacy_docs):
+        docs.append({
+            'id': d.get('id') or f'legacy-{idx}',
+            'codigo': d.get('codigo') or d.get('servico_nome') or d.get('servico') or '',
+            'atividade': d.get('atividade') or d.get('doc_nome') or d.get('nome') or d.get('descricao') or '',
+            'doc_numero': d.get('doc_numero') or d.get('numero') or d.get('documento') or '',
+            'revisao': d.get('revisao') or d.get('rev') or '',
+            'responsavel': d.get('responsavel') or d.get('responsavel_bk') or '',
+            'data_inicio': d.get('data_inicio') or d.get('dataInicio') or '',
+            'data_conclusao': d.get('data_conclusao') or d.get('dataConclusao') or '',
+            'percentual': d.get('percentual') or d.get('percentual_concluido') or d.get('progresso') or 0,
+            'status': d.get('status') or 'nao_iniciado',
+            'observacao': d.get('observacao') or d.get('obs') or '',
+            'dias_bk': d.get('dias_bk') or 0,
+            'dias_cli': d.get('dias_cli') or 0,
+        })
+
+    return JsonResponse({'meta': meta, 'docs': docs})
+
     for doc in docs_qs:
         dias_bk, dias_cli = _calcular_dias(doc)
         docs.append({
@@ -488,9 +520,8 @@ def controle_docs(request, pk):
             'dias_bk': dias_bk,
             'dias_cli': dias_cli,
         })
-
+    
     return JsonResponse({'meta': meta, 'docs': docs})
-
 
 # ─── Anexos por documento ────────────────────────────────────────────────────
 
