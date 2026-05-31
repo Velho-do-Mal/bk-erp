@@ -431,10 +431,6 @@ def controle_docs(request, pk):
                 obj.percentual_concluido = int(d.get('percentual', 0) or 0)
                 obj.status = d.get('status', 'nao_iniciado')
                 obj.observacao = d.get('observacao', '').strip()
-                if obj.pk is None and _empresa(request):
-
-                    obj.empresa = _empresa(request)
-
                 obj.save()
 
                 # Registrar evento se status mudou
