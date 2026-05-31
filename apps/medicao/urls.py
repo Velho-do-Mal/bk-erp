@@ -27,4 +27,5 @@ urlpatterns = [
     path("medicao/<int:bm_id>/api/consolidado/", views.api_dados_consolidado, name="api_dados_consolidado"),
 
     path("medicao/api/servicos/", views.api_autocomplete_servico, name="api_autocomplete_servico"),
+    path("medicao/debug/", views.debug_medicao, name="debug_medicao"),
 ]
