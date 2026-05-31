@@ -137,7 +137,7 @@ def fluxo_caixa(request):
     # Calcula saldo anterior ao período
     rec_ant = qs.filter(tipo='entrada', status='realizado', data_pagamento__lt=ini).aggregate(Sum('valor'))['valor__sum'] or 0
     desp_ant = qs.filter(tipo='saida', status='realizado', data_pagamento__lt=ini).aggregate(Sum('valor'))['valor__sum'] or 0
-    saldo_anterior = rec_ant - desp_ant
+    saldo_anterior = float(rec_ant) - float(desp_ant)
 
     # Monta fluxo diário
     fluxo = {}
