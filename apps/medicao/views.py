@@ -733,29 +733,3 @@ def api_autocomplete_servico(request):
 # ─── DEBUG TEMPORÁRIO — remover após diagnóstico ─────────────────────────────
 from django.http import HttpResponse
 
-@login_required
-def debug_medicao(request):
-    import traceback as tb
-    lines = []
-    try:
-        from django.db import connection
-        with connection.cursor() as cur:
-            cur.execute("""
-                SELECT column_name, data_type
-                FROM information_schema.columns
-                WHERE table_name = 'medicao_boletimmedicao'
-                ORDER BY ordinal_position
-            """)
-            cols = cur.fetchall()
-        lines.append("<h3>Colunas medicao_boletimmedicao:</h3><ul>")
-        for c in cols:
-            lines.append(f"<li>{c[0]} ({c[1]})</li>")
-        lines.append("</ul>")
-    except Exception as e:
-        lines.append(f"<b>Erro ao listar colunas:</b> {e}<pre>{tb.format_exc()}</pre>")
-    try:
-        bms = list(BoletimMedicao.objects.all()[:3])
-        lines.append(f"<p>BoletimMedicao.objects.all()[:3] = {bms}</p>")
-    except Exception as e:
-        lines.append(f"<b>Erro ao consultar BoletimMedicao:</b> {e}<pre>{tb.format_exc()}</pre>")
-    return HttpResponse("<br>".join(lines))
