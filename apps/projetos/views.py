@@ -233,8 +233,12 @@ def salvar_dados(request, pk):
     projeto = tenant_get_or_404(Projeto, request, pk=pk)
     try:
         dados = json.loads(request.body)
-        projeto.dados = dados
-        tap = dados.get('tap', {})
+        
+        dados_atuais = projeto.dados or {}
+        dados_atuais.update(dados)
+        
+        projeto.dados = dados_atuais
+        tap = projeto.dados.get('tap', {})
         projeto.nome = tap.get('nome', projeto.nome) or projeto.nome
         projeto.status = tap.get('status', projeto.status)
         projeto.gerente = tap.get('gerente', '')
