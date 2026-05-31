@@ -24,7 +24,11 @@ urlpatterns = [
     path("medicao/<int:bm_id>/api/periodos/excluir/", views.api_excluir_periodo, name="api_excluir_periodo"),
 
     # APIs — Medição
-    path("medicao/<int:bm_id>/api/medicao/<int:periodo_id>/salvar/", views.api_salvar_medicao, name="api_salvar_medicao"),
+    path(
+        "medicao/<int:bm_id>/api/medicao/<int:periodo_id>/salvar/",
+        views.api_salvar_medicao,
+        name="api_salvar_medicao",
+    ),
     path("medicao/<int:bm_id>/api/consolidado/", views.api_dados_consolidado, name="api_dados_consolidado"),
 
     # Autocomplete
