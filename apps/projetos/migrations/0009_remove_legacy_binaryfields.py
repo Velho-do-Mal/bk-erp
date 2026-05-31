@@ -3,7 +3,8 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     """
-    Remove logo_bk_dados e logo_cliente_dados do ConfiguracaoProjeto (state-only).
+    Remove logo_bk_dados e logo_cliente_dados do ControleDocConfig (state-only).
+    Colunas já não existem no DB.
     """
 
     dependencies = [
@@ -15,11 +16,11 @@ class Migration(migrations.Migration):
             database_operations=[],
             state_operations=[
                 migrations.RemoveField(
-                    model_name='configuracaoprojeto',
+                    model_name='controledocconfig',
                     name='logo_bk_dados',
                 ),
                 migrations.RemoveField(
-                    model_name='configuracaoprojeto',
+                    model_name='controledocconfig',
                     name='logo_cliente_dados',
                 ),
             ],
