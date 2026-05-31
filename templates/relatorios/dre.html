@@ -3,152 +3,122 @@
 {% block title %}DRE — {{ ini|date:"M/Y" }}{% endblock %}
 
 {% block content %}
-<div class="content-header d-flex align-items-center justify-content-between">
-  <div>
-    <h1 class="content-title">DRE — Demonstrativo de Resultado</h1>
-    <p class="content-subtitle">{{ ini|date:"d/m/Y" }} a {{ fim|date:"d/m/Y" }}</p>
-  </div>
-  <a href="{% url 'relatorios:exportar_dre' %}?ano={{ ano }}&mes={{ mes }}" class="btn btn-outline-success">
-    <i class="fas fa-file-csv me-2"></i>Exportar CSV
-  </a>
-</div>
+<a href="{% url 'relatorios:dashboard' %}" class="btn btn-secondary btn-sm" style="margin-bottom:16px;display:inline-flex;align-items:center;gap:6px;">← Relatórios</a>
 
 <!-- Filtro período -->
-<div class="card mb-4">
-  <div class="card-body py-2">
-    <form method="get" class="d-flex gap-2 align-items-center">
-      <label class="form-label mb-0 fw-semibold small">Período:</label>
-      <select name="mes" class="form-select form-select-sm w-auto">
+<div class="bk-card" style="padding:12px 16px;margin-bottom:18px">
+  <form method="get" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+    <div>
+      <label class="form-label" style="font-size:11px">Mês</label>
+      <select name="mes" class="form-control" style="width:120px">
         {% for nome in meses_nomes %}
         <option value="{{ forloop.counter }}" {% if mes == forloop.counter %}selected{% endif %}>{{ nome }}</option>
         {% endfor %}
       </select>
-      <select name="ano" class="form-select form-select-sm w-auto">
+    </div>
+    <div>
+      <label class="form-label" style="font-size:11px">Ano</label>
+      <select name="ano" class="form-control" style="width:100px">
         {% for a in anos %}
         <option value="{{ a }}" {% if ano == a %}selected{% endif %}>{{ a }}</option>
         {% endfor %}
       </select>
-      <button type="submit" class="btn btn-sm btn-primary">Filtrar</button>
-      <a href="{% url 'relatorios:dashboard' %}" class="btn btn-sm btn-outline-secondary">← Relatórios</a>
-    </form>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm">🔍 Filtrar</button>
+    <a href="{% url 'relatorios:exportar_dre' %}?ano={{ ano }}&mes={{ mes }}" class="btn btn-secondary btn-sm">📄 Exportar CSV</a>
+  </form>
+</div>
+
+<!-- KPIs -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px">
+  <div class="kpi-card kpi-green">
+    <div class="kpi-label">Receita Total</div>
+    <div class="kpi-value" style="color:#16a34a">{{ total_receita|moeda }}</div>
+  </div>
+  <div class="kpi-card kpi-red">
+    <div class="kpi-label">Despesa Total</div>
+    <div class="kpi-value" style="color:#ef4444">{{ total_despesa|moeda }}</div>
+  </div>
+  <div class="kpi-card {% if resultado >= 0 %}kpi-blue{% else %}kpi-red{% endif %}">
+    <div class="kpi-label">Resultado Líquido</div>
+    <div class="kpi-value" style="color:{% if resultado >= 0 %}#1e40af{% else %}#ef4444{% endif %}">{{ resultado|moeda }}</div>
+  </div>
+  <div class="kpi-card kpi-yellow">
+    <div class="kpi-label">Margem Líquida</div>
+    <div class="kpi-value" style="color:{% if margem >= 0 %}#d97706{% else %}#ef4444{% endif %}">{{ margem }}%</div>
   </div>
 </div>
 
-<!-- KPIs do período -->
-<div class="row g-3 mb-4">
-  <div class="col-md-3">
-    <div class="card text-center">
-      <div class="card-body">
-        <div class="fs-5 fw-bold text-success">{{ total_receita|moeda }}</div>
-        <div class="text-muted small">Receita Total</div>
-      </div>
+<!-- Tabelas -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+  <div class="card" style="overflow:hidden">
+    <div class="card-header" style="background:#f0fdf4;color:#16a34a;font-weight:600;padding:12px 16px;border-bottom:1px solid #bbf7d0">
+      ➕ Receitas por Categoria — {{ ini|date:"d/m/Y" }} a {{ fim|date:"d/m/Y" }}
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Categoria</th><th style="text-align:right">Valor</th><th style="text-align:right">%</th></tr></thead>
+        <tbody>
+          {% for r in receitas %}
+          <tr>
+            <td>{{ r.categoria__nome|default:"Sem Categoria" }}</td>
+            <td style="text-align:right">{{ r.total|moeda }}</td>
+            <td style="text-align:right;color:#6b7280;font-size:12px">
+              {% if total_receita %}{% widthratio r.total total_receita 100 %}%{% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" style="text-align:center;color:#6b7280;padding:20px">Sem receitas no período</td></tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr style="background:#f0fdf4;font-weight:700">
+            <td>TOTAL</td>
+            <td style="text-align:right;color:#16a34a">{{ total_receita|moeda }}</td>
+            <td style="text-align:right">100%</td>
+          </tr>
+        </tfoot>
+      </table>
     </div>
   </div>
-  <div class="col-md-3">
-    <div class="card text-center">
-      <div class="card-body">
-        <div class="fs-5 fw-bold text-danger">{{ total_despesa|moeda }}</div>
-        <div class="text-muted small">Despesa Total</div>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-3">
-    <div class="card text-center">
-      <div class="card-body">
-        <div class="fs-5 fw-bold {% if resultado >= 0 %}text-success{% else %}text-danger{% endif %}">
-          {{ resultado|moeda }}
-        </div>
-        <div class="text-muted small">Resultado Líquido</div>
-      </div>
-    </div>
-  </div>
-  <div class="col-md-3">
-    <div class="card text-center">
-      <div class="card-body">
-        <div class="fs-5 fw-bold {% if margem >= 0 %}text-success{% else %}text-danger{% endif %}">
-          {{ margem }}%
-        </div>
-        <div class="text-muted small">Margem Líquida</div>
-      </div>
-    </div>
-  </div>
-</div>
 
-<!-- Tabelas DRE -->
-<div class="row g-3">
-  <div class="col-md-6">
-    <div class="card">
-      <div class="card-header" style="background:#f0fdf4;color:#16a34a;border-color:#bbf7d0;">
-        <i class="fas fa-plus-circle me-2"></i>Receitas por Categoria
-      </div>
-      <div class="card-body p-0">
-        <table class="table table-sm mb-0">
-          <thead><tr><th>Categoria</th><th class="text-end">Valor</th><th class="text-end">%</th></tr></thead>
-          <tbody>
-            {% for r in receitas %}
-            <tr>
-              <td>{{ r.categoria__nome|default:"Sem Categoria" }}</td>
-              <td class="text-end">{{ r.total|moeda }}</td>
-              <td class="text-end text-muted small">
-                {% if total_receita %}{% widthratio r.total total_receita 100 %}%{% endif %}
-              </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="3" class="text-center text-muted py-3">Sem receitas no período</td></tr>
-            {% endfor %}
-          </tbody>
-          <tfoot>
-            <tr class="fw-bold" style="background:#f0fdf4">
-              <td>TOTAL</td>
-              <td class="text-end text-success">{{ total_receita|moeda }}</td>
-              <td class="text-end">100%</td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
+  <div class="card" style="overflow:hidden">
+    <div class="card-header" style="background:#fef2f2;color:#dc2626;font-weight:600;padding:12px 16px;border-bottom:1px solid #fecaca">
+      ➖ Despesas por Categoria
     </div>
-  </div>
-  <div class="col-md-6">
-    <div class="card">
-      <div class="card-header" style="background:#fef2f2;color:#dc2626;border-color:#fecaca;">
-        <i class="fas fa-minus-circle me-2"></i>Despesas por Categoria
-      </div>
-      <div class="card-body p-0">
-        <table class="table table-sm mb-0">
-          <thead><tr><th>Categoria</th><th class="text-end">Valor</th><th class="text-end">%</th></tr></thead>
-          <tbody>
-            {% for d in despesas %}
-            <tr>
-              <td>{{ d.categoria__nome|default:"Sem Categoria" }}</td>
-              <td class="text-end">{{ d.total|moeda }}</td>
-              <td class="text-end text-muted small">
-                {% if total_despesa %}{% widthratio d.total total_despesa 100 %}%{% endif %}
-              </td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="3" class="text-center text-muted py-3">Sem despesas no período</td></tr>
-            {% endfor %}
-          </tbody>
-          <tfoot>
-            <tr class="fw-bold" style="background:#fef2f2">
-              <td>TOTAL</td>
-              <td class="text-end text-danger">{{ total_despesa|moeda }}</td>
-              <td class="text-end">100%</td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Categoria</th><th style="text-align:right">Valor</th><th style="text-align:right">%</th></tr></thead>
+        <tbody>
+          {% for d in despesas %}
+          <tr>
+            <td>{{ d.categoria__nome|default:"Sem Categoria" }}</td>
+            <td style="text-align:right">{{ d.total|moeda }}</td>
+            <td style="text-align:right;color:#6b7280;font-size:12px">
+              {% if total_despesa %}{% widthratio d.total total_despesa 100 %}%{% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" style="text-align:center;color:#6b7280;padding:20px">Sem despesas no período</td></tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr style="background:#fef2f2;font-weight:700">
+            <td>TOTAL</td>
+            <td style="text-align:right;color:#dc2626">{{ total_despesa|moeda }}</td>
+            <td style="text-align:right">100%</td>
+          </tr>
+        </tfoot>
+      </table>
     </div>
   </div>
 </div>
 
 <!-- Resultado final -->
-<div class="card mt-3" style="border:2px solid {% if resultado >= 0 %}#16a34a{% else %}#dc2626{% endif %}">
-  <div class="card-body d-flex justify-content-between align-items-center">
-    <div class="fw-bold fs-5">RESULTADO DO PERÍODO</div>
-    <div class="fw-bold fs-4 {% if resultado >= 0 %}text-success{% else %}text-danger{% endif %}">
-      {{ resultado|moeda }} ({{ margem }}%)
-    </div>
+<div class="card" style="border:2px solid {% if resultado >= 0 %}#16a34a{% else %}#dc2626{% endif %};padding:16px;display:flex;justify-content:space-between;align-items:center">
+  <div style="font-weight:700;font-size:16px">RESULTADO DO PERÍODO</div>
+  <div style="font-weight:800;font-size:22px;color:{% if resultado >= 0 %}#16a34a{% else %}#dc2626{% endif %}">
+    {{ resultado|moeda }} ({{ margem }}%)
   </div>
 </div>
 {% endblock %}

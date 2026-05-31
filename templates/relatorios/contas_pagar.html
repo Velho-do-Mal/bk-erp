@@ -3,80 +3,89 @@
 {% block title %}Contas a Pagar{% endblock %}
 
 {% block content %}
-<div class="content-header d-flex align-items-center justify-content-between">
-  <div>
-    <h1 class="content-title">Contas a Pagar</h1>
-    <p class="content-subtitle">Obrigações pendentes e em atraso</p>
-  </div>
-  <a href="{% url 'relatorios:dashboard' %}" class="btn btn-outline-secondary">← Relatórios</a>
-</div>
+<a href="{% url 'relatorios:dashboard' %}" class="btn btn-secondary btn-sm" style="margin-bottom:16px;display:inline-flex;align-items:center;gap:6px;">← Relatórios</a>
 
-<div class="row g-3 mb-4">
-  <div class="col-md-3 col-6">
-    <a href="?status=atrasado" class="card text-center text-decoration-none {% if status_f == 'atrasado' %}border-danger{% endif %}">
-      <div class="card-body">
-        <div class="fs-5 fw-bold text-danger">{{ atrasado|moeda }}</div>
-        <div class="text-muted small">Em Atraso</div>
-      </div>
-    </a>
-  </div>
-  <div class="col-md-3 col-6">
-    <a href="?status=hoje" class="card text-center text-decoration-none {% if status_f == 'hoje' %}border-warning{% endif %}">
-      <div class="card-body">
-        <div class="fs-5 fw-bold text-warning">{{ vence_hoje|moeda }}</div>
-        <div class="text-muted small">Vence Hoje</div>
-      </div>
-    </a>
-  </div>
-  <div class="col-md-3 col-6">
-    <a href="?status=futuro" class="card text-center text-decoration-none {% if status_f == 'futuro' %}border-info{% endif %}">
-      <div class="card-body">
-        <div class="fs-5 fw-bold text-info">{{ futuro|moeda }}</div>
-        <div class="text-muted small">Futuro</div>
-      </div>
-    </a>
-  </div>
-  <div class="col-md-3 col-6">
-    <a href="?" class="card text-center text-decoration-none {% if not status_f %}border-primary{% endif %}">
-      <div class="card-body">
-        <div class="fs-5 fw-bold text-primary">{{ total|moeda }}</div>
-        <div class="text-muted small">Total Pendente</div>
-      </div>
-    </a>
-  </div>
-</div>
-
-<div class="card">
-  <div class="card-header"><i class="fas fa-arrow-circle-up me-2 text-danger"></i>Contas a Pagar Pendentes</div>
-  <div class="card-body p-0">
-    <div class="table-responsive">
-      <table class="table table-hover mb-0">
-        <thead><tr><th>Vencimento</th><th>Descrição</th><th>Categoria</th><th class="text-end">Valor</th><th class="text-center">Situação</th></tr></thead>
-        <tbody>
-          {% for c in contas %}
-          <tr>
-            <td class="fw-semibold {% if c.data_vencimento < hoje %}text-danger{% elif c.data_vencimento == hoje %}text-warning{% endif %}">
-              {{ c.data_vencimento|date:"d/m/Y" }}
-            </td>
-            <td>{{ c.descricao|default:"—" }}</td>
-            <td class="text-muted small">{{ c.categoria.nome|default:"—" }}</td>
-            <td class="text-end fw-semibold">{{ c.valor|moeda }}</td>
-            <td class="text-center">
-              {% if c.data_vencimento < hoje %}
-                <span class="badge badge-danger">⚠️ Atrasado</span>
-              {% elif c.data_vencimento == hoje %}
-                <span class="badge badge-warning">🔔 Hoje</span>
-              {% else %}
-                <span class="badge" style="background:#dbeafe;color:#1d4ed8">📅 Futuro</span>
-              {% endif %}
-            </td>
-          </tr>
-          {% empty %}
-          <tr><td colspan="5" class="text-center text-muted py-4">Nenhuma conta encontrada.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+<!-- Filtro status -->
+<div class="bk-card" style="padding:12px 16px;margin-bottom:18px">
+  <form method="get" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+    <div>
+      <label class="form-label" style="font-size:11px">Situação</label>
+      <select name="status" class="form-control" style="width:160px">
+        <option value="" {% if not status_f %}selected{% endif %}>Todas</option>
+        <option value="atrasado" {% if status_f == 'atrasado' %}selected{% endif %}>⚠️ Atrasadas</option>
+        <option value="hoje" {% if status_f == 'hoje' %}selected{% endif %}>🔔 Vencem Hoje</option>
+        <option value="futuro" {% if status_f == 'futuro' %}selected{% endif %}>📅 Futuras</option>
+      </select>
     </div>
+    <button type="submit" class="btn btn-primary btn-sm">🔍 Filtrar</button>
+    <a href="?" class="btn btn-secondary btn-sm">✕ Limpar</a>
+  </form>
+</div>
+
+<!-- KPIs -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px">
+  <div class="kpi-card kpi-red">
+    <div class="kpi-label">Em Atraso</div>
+    <div class="kpi-value" style="color:#ef4444">{{ atrasado|moeda }}</div>
+  </div>
+  <div class="kpi-card kpi-orange">
+    <div class="kpi-label">Vence Hoje</div>
+    <div class="kpi-value" style="color:#d97706">{{ vence_hoje|moeda }}</div>
+  </div>
+  <div class="kpi-card kpi-blue">
+    <div class="kpi-label">Futuras</div>
+    <div class="kpi-value" style="color:#1e40af">{{ futuro|moeda }}</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Total Pendente</div>
+    <div class="kpi-value">{{ total|moeda }}</div>
+  </div>
+</div>
+
+<!-- Lista -->
+<div class="card" style="overflow:hidden">
+  <div class="card-header" style="padding:12px 16px;font-weight:600;border-bottom:1px solid #e5e7eb">
+    📤 Contas a Pagar Pendentes
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Vencimento</th>
+          <th>Descrição</th>
+          <th>Categoria</th>
+          <th style="text-align:right">Valor</th>
+          <th style="text-align:center">Situação</th>
+          <th class="col-actions">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in contas %}
+        <tr>
+          <td style="font-weight:600;color:{% if c.data_vencimento < hoje %}#ef4444{% elif c.data_vencimento == hoje %}#d97706{% else %}#374151{% endif %}">
+            {{ c.data_vencimento|date:"d/m/Y" }}
+          </td>
+          <td>{{ c.descricao|default:"—" }}</td>
+          <td style="color:#6b7280;font-size:13px">{{ c.categoria.nome|default:"—" }}</td>
+          <td style="text-align:right;font-weight:600">{{ c.valor|moeda }}</td>
+          <td style="text-align:center">
+            {% if c.data_vencimento < hoje %}
+              <span class="badge badge-danger">⚠️ Atrasado</span>
+            {% elif c.data_vencimento == hoje %}
+              <span class="badge badge-warning">🔔 Hoje</span>
+            {% else %}
+              <span class="badge badge-blue">📅 Futuro</span>
+            {% endif %}
+          </td>
+          <td class="col-actions">
+            <a href="{% url 'financeiro:transacoes' %}" class="btn btn-sm btn-secondary" title="Ver no Financeiro">✏️ Editar</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" style="text-align:center;color:#6b7280;padding:32px">Nenhuma conta encontrada.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 </div>
 {% endblock %}

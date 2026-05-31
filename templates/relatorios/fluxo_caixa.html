@@ -3,115 +3,89 @@
 {% block title %}Fluxo de Caixa — {{ ini|date:"M/Y" }}{% endblock %}
 
 {% block content %}
-<div class="content-header d-flex align-items-center justify-content-between">
-  <div>
-    <h1 class="content-title">Fluxo de Caixa</h1>
-    <p class="content-subtitle">{{ ini|date:"d/m/Y" }} a {{ fim|date:"d/m/Y" }}</p>
-  </div>
-  <a href="{% url 'relatorios:exportar_fluxo' %}?ano={{ ano }}&mes={{ mes }}" class="btn btn-outline-success">
-    <i class="fas fa-file-csv me-2"></i>Exportar CSV
-  </a>
-</div>
+<a href="{% url 'relatorios:dashboard' %}" class="btn btn-secondary btn-sm" style="margin-bottom:16px;display:inline-flex;align-items:center;gap:6px;">← Relatórios</a>
 
-<!-- Filtro -->
-<div class="card mb-4">
-  <div class="card-body py-2">
-    <form method="get" class="d-flex gap-2 align-items-center flex-wrap">
-      <label class="form-label mb-0 fw-semibold small">Período:</label>
-      <select name="mes" class="form-select form-select-sm w-auto">
-        {% for nome in meses_nomes %}{% with forloop.counter as i %}
-        <option value="{{ i }}" {% if mes == i %}selected{% endif %}>{{ nome }}</option>
-        {% endwith %}{% endfor %}
+<!-- Filtro período -->
+<div class="bk-card" style="padding:12px 16px;margin-bottom:18px">
+  <form method="get" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+    <div>
+      <label class="form-label" style="font-size:11px">Mês</label>
+      <select name="mes" class="form-control" style="width:120px">
+        {% for nome in meses_nomes %}
+        <option value="{{ forloop.counter }}" {% if mes == forloop.counter %}selected{% endif %}>{{ nome }}</option>
+        {% endfor %}
       </select>
-      <select name="ano" class="form-select form-select-sm w-auto">
-        {% for a in anos %}<option value="{{ a }}" {% if ano == a %}selected{% endif %}>{{ a }}</option>{% endfor %}
+    </div>
+    <div>
+      <label class="form-label" style="font-size:11px">Ano</label>
+      <select name="ano" class="form-control" style="width:100px">
+        {% for a in anos %}
+        <option value="{{ a }}" {% if ano == a %}selected{% endif %}>{{ a }}</option>
+        {% endfor %}
       </select>
-      <button type="submit" class="btn btn-sm btn-primary">Filtrar</button>
-      <a href="{% url 'relatorios:dashboard' %}" class="btn btn-sm btn-outline-secondary">← Relatórios</a>
-    </form>
-  </div>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm">🔍 Filtrar</button>
+    <a href="{% url 'relatorios:exportar_fluxo' %}?ano={{ ano }}&mes={{ mes }}" class="btn btn-secondary btn-sm">📄 Exportar CSV</a>
+  </form>
 </div>
 
 <!-- KPIs -->
-<div class="row g-3 mb-4">
-  <div class="col-md-3">
-    <div class="card text-center">
-      <div class="card-body">
-        <div class="fs-6 fw-semibold text-muted">Saldo Anterior</div>
-        <div class="fs-5 fw-bold">{{ saldo_anterior|moeda }}</div>
-      </div>
-    </div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px">
+  <div class="kpi-card">
+    <div class="kpi-label">Saldo Anterior</div>
+    <div class="kpi-value" style="color:#374151">{{ saldo_anterior|moeda }}</div>
   </div>
-  <div class="col-md-3">
-    <div class="card text-center">
-      <div class="card-body">
-        <div class="fs-6 fw-semibold text-success">Entradas</div>
-        <div class="fs-5 fw-bold text-success">{{ total_entradas|moeda }}</div>
-      </div>
-    </div>
+  <div class="kpi-card kpi-green">
+    <div class="kpi-label">Total Entradas</div>
+    <div class="kpi-value" style="color:#16a34a">{{ total_entradas|moeda }}</div>
   </div>
-  <div class="col-md-3">
-    <div class="card text-center">
-      <div class="card-body">
-        <div class="fs-6 fw-semibold text-danger">Saídas</div>
-        <div class="fs-5 fw-bold text-danger">{{ total_saidas|moeda }}</div>
-      </div>
-    </div>
+  <div class="kpi-card kpi-red">
+    <div class="kpi-label">Total Saídas</div>
+    <div class="kpi-value" style="color:#ef4444">{{ total_saidas|moeda }}</div>
   </div>
-  <div class="col-md-3">
-    <div class="card text-center">
-      <div class="card-body">
-        <div class="fs-6 fw-semibold {% if saldo_final >= 0 %}text-success{% else %}text-danger{% endif %}">Saldo Final</div>
-        <div class="fs-5 fw-bold {% if saldo_final >= 0 %}text-success{% else %}text-danger{% endif %}">{{ saldo_final|moeda }}</div>
-      </div>
-    </div>
+  <div class="kpi-card {% if saldo_final >= 0 %}kpi-blue{% else %}kpi-red{% endif %}">
+    <div class="kpi-label">Saldo Final</div>
+    <div class="kpi-value" style="color:{% if saldo_final >= 0 %}#1e40af{% else %}#ef4444{% endif %}">{{ saldo_final|moeda }}</div>
   </div>
 </div>
 
 <!-- Fluxo diário -->
-<div class="card">
-  <div class="card-header"><i class="fas fa-stream me-2"></i>Movimentações Diárias</div>
-  <div class="card-body p-0">
-    {% if fluxo_lista %}
-    <div class="table-responsive">
-      <table class="table table-sm mb-0">
-        <thead>
-          <tr>
-            <th>Data</th>
-            <th class="text-end text-success">Entradas</th>
-            <th class="text-end text-danger">Saídas</th>
-            <th class="text-end">Saldo do Dia</th>
-            <th class="text-end fw-semibold">Saldo Acumulado</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for d in fluxo_lista %}
-          <tr>
-            <td class="fw-semibold">{{ d.dia|date:"d/m/Y" }}</td>
-            <td class="text-end text-success">
-              {% if d.total_entrada %}{{ d.total_entrada|moeda }}{% else %}—{% endif %}
-            </td>
-            <td class="text-end text-danger">
-              {% if d.total_saida %}{{ d.total_saida|moeda }}{% else %}—{% endif %}
-            </td>
-            <td class="text-end {% if d.total_entrada >= d.total_saida %}text-success{% else %}text-danger{% endif %}">
-              {{ d.total_entrada|add:"-"|moeda }}
-              {# simplificado — JS poderia calcular #}
-            </td>
-            <td class="text-end fw-semibold {% if d.saldo >= 0 %}text-success{% else %}text-danger{% endif %}">
-              {{ d.saldo|moeda }}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    {% else %}
-    <div class="text-center text-muted py-4">
-      <i class="fas fa-stream fa-2x mb-2 d-block opacity-25"></i>
-      Sem movimentações no período selecionado.
-    </div>
-    {% endif %}
+{% if fluxo_lista %}
+{% for dia in fluxo_lista %}
+<div class="card" style="margin-bottom:12px;overflow:hidden">
+  <div style="padding:10px 16px;background:#f8fafc;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center">
+    <span style="font-weight:600;color:#374151">{{ dia.dia|date:"d/m/Y" }}</span>
+    <span style="font-size:13px;color:{% if dia.saldo >= 0 %}#16a34a{% else %}#ef4444{% endif %};font-weight:600">
+      Saldo acum.: {{ dia.saldo|moeda }}
+    </span>
   </div>
+  {% if dia.entradas %}
+  <div style="padding:8px 16px">
+    <div style="font-size:11px;font-weight:600;color:#16a34a;text-transform:uppercase;margin-bottom:4px">Entradas</div>
+    {% for t in dia.entradas %}
+    <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f1f5f9;font-size:13px">
+      <span style="color:#374151">{{ t.descricao|default:"—" }} <span style="color:#6b7280">({{ t.categoria.nome|default:"—" }})</span></span>
+      <span style="color:#16a34a;font-weight:600">+{{ t.valor|moeda }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% if dia.saidas %}
+  <div style="padding:8px 16px">
+    <div style="font-size:11px;font-weight:600;color:#ef4444;text-transform:uppercase;margin-bottom:4px">Saídas</div>
+    {% for t in dia.saidas %}
+    <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f1f5f9;font-size:13px">
+      <span style="color:#374151">{{ t.descricao|default:"—" }} <span style="color:#6b7280">({{ t.categoria.nome|default:"—" }})</span></span>
+      <span style="color:#ef4444;font-weight:600">-{{ t.valor|moeda }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
 </div>
+{% endfor %}
+{% else %}
+<div class="card" style="text-align:center;color:#6b7280;padding:40px">
+  Nenhuma movimentação no período selecionado.
+</div>
+{% endif %}
 {% endblock %}
