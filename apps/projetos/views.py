@@ -211,8 +211,14 @@ def novo(request):
             'risks': [], 'lessons': [], 'close': {}, 'actionPlan': [],
         }
         p = Projeto.objects.create(
-            nome=nome, status=status, data_inicio=data_inicio, data_conclusao=data_conclusao,
-            gerente=gerente, patrocinador=patrocinador, dados=dados_iniciais,
+            empresa=_empresa(request),
+            nome=nome,
+            status=status,
+            data_inicio=data_inicio,
+            data_conclusao=data_conclusao,
+            gerente=gerente,
+            patrocinador=patrocinador,
+            dados=dados_iniciais,
         )
         messages.success(request, f'Projeto "{nome}" criado com sucesso!')
         return redirect('projetos:detalhe', pk=p.pk)
