@@ -5,207 +5,166 @@
 
 {% block content %}
 <div class="content-header">
-  <div class="d-flex align-items-center justify-content-between">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
     <div>
-      <h1 class="content-title">Cargos</h1>
+      <h1 class="content-title">🪪 Cargos</h1>
       <p class="content-subtitle">Defina os cargos e salários base da empresa</p>
     </div>
-    <button class="btn btn-primary" onclick="abrirModal()">
-      <i class="fas fa-plus me-2"></i>Novo Cargo
-    </button>
+    <button class="btn btn-primary" onclick="abrirModal()">+ Novo Cargo</button>
   </div>
 </div>
 
 <!-- Submenu RH -->
-<div class="card mb-4">
-  <div class="card-body py-2">
-    <nav class="d-flex gap-2 flex-wrap">
-      <a href="{% url 'rh:colaboradores' %}" class="btn btn-sm btn-outline-secondary">
-        <i class="fas fa-users me-1"></i>Colaboradores
-      </a>
-      <a href="{% url 'rh:departamentos' %}" class="btn btn-sm btn-outline-secondary">
-        <i class="fas fa-sitemap me-1"></i>Departamentos
-      </a>
-      <a href="{% url 'rh:cargos' %}" class="btn btn-sm btn-primary">
-        <i class="fas fa-id-badge me-1"></i>Cargos
-      </a>
-      <a href="{% url 'rh:ferias' %}" class="btn btn-sm btn-outline-secondary">
-        <i class="fas fa-umbrella-beach me-1"></i>Férias
-      </a>
-    </nav>
-  </div>
+<div class="bk-card" style="margin-bottom:16px;padding:10px 16px">
+  <nav style="display:flex;gap:8px;flex-wrap:wrap">
+    <a href="{% url 'rh:colaboradores' %}" class="btn btn-sm btn-secondary">👥 Colaboradores</a>
+    <a href="{% url 'rh:departamentos' %}" class="btn btn-sm btn-secondary">🏢 Departamentos</a>
+    <a href="{% url 'rh:cargos' %}" class="btn btn-sm btn-primary">🪪 Cargos</a>
+    <a href="{% url 'rh:ferias' %}" class="btn btn-sm btn-secondary">🏖️ Férias</a>
+  </nav>
 </div>
 
 <!-- KPIs -->
-<div class="row g-3 mb-4">
-  <div class="col-md-3 col-6">
-    <div class="card text-center">
-      <div class="card-body">
-        <div class="fs-2 fw-bold text-primary">{{ total_cargos }}</div>
-        <div class="text-muted small">Total</div>
-      </div>
-    </div>
+<div class="kpi-grid" style="margin-bottom:20px">
+  <div class="kpi-card kpi-blue">
+    <div style="font-size:2rem;font-weight:700">{{ total_cargos }}</div>
+    <div style="font-size:0.85rem;opacity:0.8">Total</div>
   </div>
-  <div class="col-md-3 col-6">
-    <div class="card text-center">
-      <div class="card-body">
-        <div class="fs-2 fw-bold text-success">{{ total_ativos }}</div>
-        <div class="text-muted small">Ativos</div>
-      </div>
-    </div>
+  <div class="kpi-card kpi-green">
+    <div style="font-size:2rem;font-weight:700">{{ total_ativos }}</div>
+    <div style="font-size:0.85rem;opacity:0.8">Ativos</div>
   </div>
-  <div class="col-md-3 col-6">
-    <div class="card text-center">
-      <div class="card-body">
-        <div class="fs-2 fw-bold text-info">{{ total_colaboradores }}</div>
-        <div class="text-muted small">Colaboradores</div>
-      </div>
-    </div>
+  <div class="kpi-card kpi-blue">
+    <div style="font-size:2rem;font-weight:700">{{ total_colaboradores }}</div>
+    <div style="font-size:0.85rem;opacity:0.8">Colaboradores</div>
   </div>
-  <div class="col-md-3 col-6">
-    <div class="card text-center">
-      <div class="card-body">
-        <div class="fs-2 fw-bold text-warning">R$ {{ media_salario|floatformat:0 }}</div>
-        <div class="text-muted small">Salário médio</div>
-      </div>
-    </div>
+  <div class="kpi-card" style="background:#f59e0b;color:#fff">
+    <div style="font-size:2rem;font-weight:700">R$ {{ media_salario|floatformat:0 }}</div>
+    <div style="font-size:0.85rem;opacity:0.8">Salário médio</div>
   </div>
 </div>
 
 <!-- Tabela -->
-<div class="card">
-  <div class="card-header d-flex align-items-center justify-content-between">
-    <span><i class="fas fa-id-badge me-2"></i>Lista de Cargos</span>
-    <input type="text" id="filtro" class="form-control form-control-sm w-auto" placeholder="Buscar…" oninput="filtrar()">
+<div class="bk-card">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e2e8f0;flex-wrap:wrap;gap:8px">
+    <span style="font-weight:600">🪪 Lista de Cargos</span>
+    <input type="text" id="filtro" class="form-control" style="width:200px" placeholder="Buscar…" oninput="filtrar()">
   </div>
-  <div class="card-body p-0">
-    <div class="table-responsive">
-      <table class="table table-hover mb-0" id="tabelaCargos">
-        <thead>
-          <tr>
-            <th>Cargo</th>
-            <th>Departamento</th>
-            <th class="text-end">Salário Base</th>
-            <th class="text-center">Colaboradores</th>
-            <th class="text-center">Status</th>
-            <th class="text-end">Ações</th>
-          </tr>
-        </thead>
-        <tbody id="tbody">
-          {% for c in cargos %}
-          <tr data-nome="{{ c.nome|lower }}">
-            <td class="fw-semibold">{{ c.nome }}</td>
-            <td>{{ c.departamento.nome|default:"—" }}</td>
-            <td class="text-end">
-              {% if c.salario_base %}
-                R$ {{ c.salario_base|floatformat:2 }}
-              {% else %}—{% endif %}
-            </td>
-            <td class="text-center">{{ c.colaboradores.count }}</td>
-            <td class="text-center">
-              {% if c.ativo %}
-                <span class="badge badge-success">Ativo</span>
-              {% else %}
-                <span class="badge badge-danger">Inativo</span>
-              {% endif %}
-            </td>
-            <td class="text-end">
-              <button class="btn btn-sm btn-outline-primary me-1"
-                onclick="editarCargo({{ c.id }}, '{{ c.nome|escapejs }}', {{ c.departamento_id|default:'null' }}, '{{ c.salario_base|default:'' }}', '{{ c.descricao|default:''|escapejs }}', {{ c.ativo|yesno:'true,false' }})">
-                <i class="fas fa-edit"></i>
-              </button>
-              <button class="btn btn-sm btn-outline-danger"
-                onclick="excluirCargo({{ c.id }}, '{{ c.nome|escapejs }}')">
-                <i class="fas fa-trash"></i>
-              </button>
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="6" class="text-center text-muted py-4">
-              <i class="fas fa-id-badge fa-2x mb-2 d-block opacity-25"></i>
-              Nenhum cargo cadastrado.
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+  <div style="overflow-x:auto">
+    <table class="data-table" id="tabelaCargos">
+      <thead>
+        <tr>
+          <th>Cargo</th>
+          <th>Departamento</th>
+          <th style="text-align:right">Salário Base</th>
+          <th style="text-align:center">Colaboradores</th>
+          <th style="text-align:center">Status</th>
+          <th class="col-actions">Ações</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        {% for c in cargos %}
+        <tr data-nome="{{ c.nome|lower }}">
+          <td style="font-weight:600">{{ c.nome }}</td>
+          <td>{{ c.departamento.nome|default:"—" }}</td>
+          <td style="text-align:right">
+            {% if c.salario_base %}R$ {{ c.salario_base|floatformat:2 }}{% else %}—{% endif %}
+          </td>
+          <td style="text-align:center">{{ c.colaboradores.count }}</td>
+          <td style="text-align:center">
+            {% if c.ativo %}
+              <span class="badge badge-blue">Ativo</span>
+            {% else %}
+              <span class="badge badge-danger">Inativo</span>
+            {% endif %}
+          </td>
+          <td class="col-actions">
+            <button class="btn btn-sm btn-secondary"
+              onclick="editarCargo({{ c.id }}, '{{ c.nome|escapejs }}', {{ c.departamento_id|default:'null' }}, '{{ c.salario_base|default:'' }}', '{{ c.descricao|default:''|escapejs }}', {{ c.ativo|yesno:'true,false' }})">
+              ✏️ Editar
+            </button>
+            <button class="btn btn-sm" style="background:#ef4444;color:#fff"
+              onclick="excluirCargo({{ c.id }}, '{{ c.nome|escapejs }}')">
+              🗑️ Excluir
+            </button>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" style="text-align:center;color:#94a3b8;padding:32px">
+            🪪 Nenhum cargo cadastrado.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 </div>
 
 <!-- Modal Cargo -->
-<div class="modal fade" id="modalCargo" tabindex="-1">
-  <div class="modal-dialog">
+<div class="modal-overlay" id="modalCargo">
+  <div class="modal-box">
     <form method="post" id="formCargo">
       {% csrf_token %}
       <input type="hidden" name="action" id="action" value="criar">
       <input type="hidden" name="cargo_id" id="cargo_id">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="modalTitulo">Novo Cargo</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <h3 id="modalTitulo" style="margin:0;font-size:1.1rem;font-weight:700">Novo Cargo</h3>
+        <button type="button" class="btn btn-sm btn-secondary" onclick="fecharModal('modalCargo')">✕</button>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-weight:600;margin-bottom:4px">Nome do Cargo <span style="color:#ef4444">*</span></label>
+        <input type="text" name="nome" id="nome" class="form-control" required maxlength="100" placeholder="Ex: Engenheiro Pleno, Analista Jr…">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div>
+          <label style="display:block;font-weight:600;margin-bottom:4px">Departamento</label>
+          <select name="departamento" id="departamento" class="form-control">
+            <option value="">— Selecione —</option>
+            {% for d in departamentos %}
+            <option value="{{ d.id }}">{{ d.nome }}</option>
+            {% endfor %}
+          </select>
         </div>
-        <div class="modal-body">
-          <div class="row g-3">
-            <div class="col-12">
-              <label class="form-label fw-semibold">Nome do Cargo <span class="text-danger">*</span></label>
-              <input type="text" name="nome" id="nome" class="form-control" required maxlength="100" placeholder="Ex: Engenheiro Pleno, Analista Jr…">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">Departamento</label>
-              <select name="departamento" id="departamento" class="form-select">
-                <option value="">— Selecione —</option>
-                {% for d in departamentos %}
-                <option value="{{ d.id }}">{{ d.nome }}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-semibold">Salário Base (R$)</label>
-              <input type="text" name="salario_base" id="salario_base" class="form-control" placeholder="0,00" data-mask="moeda">
-            </div>
-            <div class="col-12">
-              <label class="form-label fw-semibold">Descrição</label>
-              <textarea name="descricao" id="descricao" class="form-control" rows="3" placeholder="Responsabilidades e requisitos do cargo…"></textarea>
-            </div>
-            <div class="col-12">
-              <div class="form-check">
-                <input type="checkbox" name="ativo" id="ativo" class="form-check-input" checked>
-                <label class="form-check-label" for="ativo">Cargo ativo</label>
-              </div>
-            </div>
-          </div>
+        <div>
+          <label style="display:block;font-weight:600;margin-bottom:4px">Salário Base (R$)</label>
+          <input type="text" name="salario_base" id="salario_base" class="form-control" placeholder="0,00" data-mask="moeda">
         </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Salvar</button>
-        </div>
+      </div>
+      <div style="margin-bottom:12px">
+        <label style="display:block;font-weight:600;margin-bottom:4px">Descrição</label>
+        <textarea name="descricao" id="descricao" class="form-control" rows="3" placeholder="Responsabilidades e requisitos do cargo…"></textarea>
+      </div>
+      <div style="margin-bottom:20px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" name="ativo" id="ativo" checked>
+          <span>Cargo ativo</span>
+        </label>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button type="button" class="btn btn-secondary" onclick="fecharModal('modalCargo')">Cancelar</button>
+        <button type="submit" class="btn btn-primary">💾 Salvar</button>
       </div>
     </form>
   </div>
 </div>
 
 <!-- Modal Excluir -->
-<div class="modal fade" id="modalExcluir" tabindex="-1">
-  <div class="modal-dialog modal-sm">
+<div class="modal-overlay" id="modalExcluir">
+  <div class="modal-box" style="max-width:400px">
     <form method="post" id="formExcluir">
       {% csrf_token %}
       <input type="hidden" name="action" value="excluir">
       <input type="hidden" name="cargo_id" id="excluir_id">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title">Confirmar exclusão</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-        </div>
-        <div class="modal-body">
-          <p>Excluir cargo <strong id="excluir_nome"></strong>?</p>
-          <p class="text-muted small">Colaboradores vinculados perderão a referência de cargo.</p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-danger btn-sm">Excluir</button>
-        </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <h3 style="margin:0;font-size:1.1rem;font-weight:700">Confirmar exclusão</h3>
+        <button type="button" class="btn btn-sm btn-secondary" onclick="fecharModal('modalExcluir')">✕</button>
+      </div>
+      <p>Excluir cargo <strong id="excluir_nome"></strong>?</p>
+      <p style="color:#64748b;font-size:0.875rem">Colaboradores vinculados perderão a referência de cargo.</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="fecharModal('modalExcluir')">Cancelar</button>
+        <button type="submit" class="btn btn-sm" style="background:#ef4444;color:#fff">🗑️ Excluir</button>
       </div>
     </form>
   </div>
@@ -221,7 +180,7 @@ function abrirModal() {
   document.getElementById('salario_base').value = '';
   document.getElementById('descricao').value = '';
   document.getElementById('ativo').checked = true;
-  new bootstrap.Modal(document.getElementById('modalCargo')).show();
+  document.getElementById('modalCargo').classList.add('open');
 }
 
 function editarCargo(id, nome, dept, salario, descricao, ativo) {
@@ -233,13 +192,17 @@ function editarCargo(id, nome, dept, salario, descricao, ativo) {
   document.getElementById('salario_base').value = salario || '';
   document.getElementById('descricao').value = descricao;
   document.getElementById('ativo').checked = ativo;
-  new bootstrap.Modal(document.getElementById('modalCargo')).show();
+  document.getElementById('modalCargo').classList.add('open');
 }
 
 function excluirCargo(id, nome) {
   document.getElementById('excluir_id').value = id;
   document.getElementById('excluir_nome').textContent = nome;
-  new bootstrap.Modal(document.getElementById('modalExcluir')).show();
+  document.getElementById('modalExcluir').classList.add('open');
+}
+
+function fecharModal(id) {
+  document.getElementById(id).classList.remove('open');
 }
 
 function filtrar() {
