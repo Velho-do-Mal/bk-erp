@@ -16,13 +16,30 @@ def _empresa(request):
 
 def _qs_empresa(qs, request):
     """
-    Aplica filtro de empresa ao queryset.
-    Se empresa for None (superadmin), retorna o queryset sem filtro.
+    Aplica filtro multiempresa de forma segura.
+
+    - Se o model tem campo empresa: filtra empresa=empresa.
+    - Se o model tem campo projeto: filtra projeto__empresa=empresa.
+    - Se o model tem campo documento: filtra documento__projeto__empresa=empresa.
     """
     empresa = _empresa(request)
+
     if empresa is None:
         return qs
-    return qs.filter(empresa=empresa)
+
+    model = qs.model
+    field_names = {f.name for f in model._meta.get_fields()}
+
+    if 'empresa' in field_names:
+        return qs.filter(empresa=empresa)
+
+    if 'projeto' in field_names:
+        return qs.filter(projeto__empresa=empresa)
+
+    if 'documento' in field_names:
+        return qs.filter(documento__projeto__empresa=empresa)
+
+    return qs
 
 
 
