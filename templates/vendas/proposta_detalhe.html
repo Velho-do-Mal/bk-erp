@@ -267,13 +267,32 @@
 
   
   <div class="section-card">
-    <div class="section-title">💸 Custos Percentuais
+    <div class="section-title">💸 Impostos e Taxas
       <span style="font-size:11px;color:#6b7280;font-weight:400">
         (calculados sobre o valor de venda)
       </span>
     </div>
     <div id="perc-list"></div>
     <button class="btn-add-row" onclick="addPercRow()">+ Adicionar item</button>
+  </div>
+
+  <div class="section-card">
+    <div class="section-title">📈 Markup / Lucro Desejado
+      <span style="font-size:11px;color:#6b7280;font-weight:400">
+        (% sobre o valor de venda — gera o lucro real)
+      </span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:8px 0">
+      <label style="font-weight:600;color:#374151;min-width:120px">Markup %</label>
+      <input type="number" id="input-markup" step="0.5" min="0" max="80"
+        style="width:100px;padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:14px"
+        onchange="dadosOrcamento.markup_percentual=+this.value"
+        placeholder="10">
+      <span style="color:#6b7280;font-size:13px">%</span>
+      <span style="color:#6b7280;font-size:12px;margin-left:8px">
+        → Define o lucro como percentual do preço de venda (diferente de impostos)
+      </span>
+    </div>
   </div>
 
   
@@ -302,8 +321,12 @@
           <div class="rc-valor laranja" id="rc-custos">R$ 0,00</div>
         </div>
         <div class="resultado-card">
-          <div class="rc-label">Total Custos %</div>
+          <div class="rc-label">Total Impostos/Taxas</div>
           <div class="rc-valor laranja" id="rc-perc-total">R$ 0,00</div>
+        </div>
+        <div class="resultado-card">
+          <div class="rc-label">📈 Markup</div>
+          <div class="rc-valor" style="color:#7c3aed" id="rc-markup-pct">0,0%</div>
         </div>
         <div class="resultado-card" style="border:2px solid #1e40af;">
           <div class="rc-label">💰 Valor de Venda</div>
@@ -319,7 +342,7 @@
       
       <div style="margin-top:18px;">
         <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:6px;">
-          Detalhe dos Custos Percentuais
+          Detalhe dos Impostos e Taxas (sobre o PV)
         </div>
         <table class="perc-resultado-table">
           <thead>
@@ -419,8 +442,8 @@ let dadosOrcamento = Object.assign({
     {nome: 'PIS/COFINS', percentual: 3.65},
     {nome: 'IRPJ/CSLL', percentual: 8.0},
     {nome: 'Comissão', percentual: 5.0},
-    {nome: 'Markup / ROI', percentual: 10.0},
   ],
+  markup_percentual: 10.0,
   resultado: {}
 }, PROPOSTA.dados_orcamento || {});
 
@@ -435,6 +458,10 @@ document.addEventListener('DOMContentLoaded', () => {
   renderCd();
   renderPerc();
   renderItens();
+  // Inicializa campo markup
+  const mkEl = document.getElementById('input-markup');
+  if (mkEl) mkEl.value = dadosOrcamento.markup_percentual || 10;
+
   if (dadosOrcamento.resultado && dadosOrcamento.resultado.valor_venda) {
     mostrarResultado(dadosOrcamento.resultado);
   }
@@ -628,27 +655,39 @@ function calcular() {
   const custo_direto = (dadosOrcamento.custos_diretos || []).reduce((s,r) => s + (r.valor_total||0), 0);
   const custo_base = custo_mob + custo_direto;
 
-  const soma_pct = (dadosOrcamento.custos_percentuais || []).reduce((s,p) => s + (p.percentual||0), 0);
+  // Impostos/taxas — calculados sobre o valor de venda
+  const soma_impostos = (dadosOrcamento.custos_percentuais || []).reduce((s,p) => s + (p.percentual||0), 0);
 
-  if (soma_pct >= 100) {
-    toast('A soma dos percentuais não pode ser ≥ 100%.', 'erro');
+  // Markup — separado dos impostos, representa o lucro desejado como % do PV
+  const markup_pct = parseFloat(dadosOrcamento.markup_percentual) || 0;
+
+  // Soma total no denominador: impostos + markup (ambos sobre o PV)
+  const soma_total = soma_impostos + markup_pct;
+
+  if (soma_total >= 100) {
+    toast('A soma de impostos + markup não pode ser ≥ 100%.', 'erro');
     return;
   }
 
-  // PV = Custo Base / (1 - soma_percentuais/100)
-  const valor_venda = custo_base / (1 - soma_pct / 100);
+  // PV = Custo Base / (1 - impostos% - markup%)
+  // Garante que: PV × markup% = lucro real (≠ 0)
+  const valor_venda = custo_base > 0 ? custo_base / (1 - soma_total / 100) : 0;
+
   const custos_percentuais_calculados = (dadosOrcamento.custos_percentuais || []).map(p => ({
     nome: p.nome,
     percentual: p.percentual,
     valor: valor_venda * (p.percentual / 100),
   }));
-  const total_percentuais = custos_percentuais_calculados.reduce((s, p) => s + p.valor, 0);
-  const margem_lucro = valor_venda - custo_base - total_percentuais;
-  const margem_percentual = valor_venda > 0 ? (margem_lucro / valor_venda) * 100 : 0;
+  const total_impostos = custos_percentuais_calculados.reduce((s, p) => s + p.valor, 0);
+
+  // Lucro = PV × markup% (fórmula correta — NÃO zero)
+  const margem_lucro = valor_venda * markup_pct / 100;
+  const margem_percentual = markup_pct;
 
   const resultado = {
     custo_mob, custo_direto, custo_base,
-    soma_pct, total_percentuais,
+    soma_impostos, markup_pct, total_impostos,
+    soma_pct: soma_impostos, total_percentuais: total_impostos,
     valor_venda, margem_lucro, margem_percentual,
     custos_percentuais_calculados,
   };
@@ -666,6 +705,8 @@ function coletarPercInputs() {
       dadosOrcamento.custos_percentuais[i].percentual = parseFloat(inputs[1].value) || 0;
     }
   });
+  const mkInput = document.getElementById('input-markup');
+  if (mkInput) dadosOrcamento.markup_percentual = parseFloat(mkInput.value) || 0;
 }
 
 function mostrarResultado(r) {
@@ -673,7 +714,8 @@ function mostrarResultado(r) {
   document.getElementById('rc-mob').textContent     = 'R$ ' + fmtBr(r.custo_mob||0);
   document.getElementById('rc-cd').textContent      = 'R$ ' + fmtBr(r.custo_direto||0);
   document.getElementById('rc-custos').textContent  = 'R$ ' + fmtBr(r.custo_base||0);
-  document.getElementById('rc-perc-total').textContent = 'R$ ' + fmtBr(r.total_percentuais||0);
+  document.getElementById('rc-perc-total').textContent = 'R$ ' + fmtBr(r.total_impostos||r.total_percentuais||0);
+  document.getElementById('rc-markup-pct').textContent  = fmtBr(r.markup_pct||0) + '%';
   document.getElementById('rc-venda').textContent   = 'R$ ' + fmtBr(r.valor_venda||0);
   document.getElementById('rc-margem').textContent  = 'R$ ' + fmtBr(r.margem_lucro||0);
   document.getElementById('rc-margem-pct').textContent = fmtBr(r.margem_percentual||0) + '%';
