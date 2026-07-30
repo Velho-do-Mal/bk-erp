@@ -263,6 +263,7 @@
       <button class="btn btn-secondary btn-sm" onclick="abrirImpressaoPeriodo()">🖨 Imprimir BM</button>
       <button class="btn btn-secondary btn-sm" onclick="abrirConsolidado()">📊 Consolidado</button>
       {% if periodos|length > 0 %}
+      <button class="btn btn-secondary btn-sm" onclick="abrirEditarPeriodo()" title="Alterar datas deste período">✏️ Editar Período</button>
       <button class="btn btn-danger btn-sm" onclick="confirmarExcluirPeriodo()" title="Exclui este período e retorna ao anterior">🗑️ Excluir Período</button>
       {% endif %}
     </div>
@@ -464,6 +465,28 @@
         </tbody>
       </table>
     </div>
+  </div>
+</div>
+
+<!-- ═══ Modal Editar Período ═══ -->
+<div id="modal_editar_periodo" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.6);align-items:center;justify-content:center">
+  <div class="card" style="width:420px;max-width:95vw">
+    <div style="font-size:16px;font-weight:700;color:#1e3a8a;margin-bottom:16px">✏️ Editar Período</div>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      <div>
+        <label style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:4px;display:block">Data Início</label>
+        <input type="date" id="edit-periodo-ini" style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;font-size:14px">
+      </div>
+      <div>
+        <label style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:4px;display:block">Data Fim</label>
+        <input type="date" id="edit-periodo-fim" style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;font-size:14px">
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:18px">
+      <button class="btn btn-primary" onclick="salvarEdicaoPeriodo()">💾 Salvar Alteração</button>
+      <button class="btn btn-secondary" onclick="fecharModal('modal_editar_periodo')">Cancelar</button>
+    </div>
+    <span id="msg_editar_periodo" style="font-size:13px;color:#fca5a5;margin-top:8px;display:block"></span>
   </div>
 </div>
 
@@ -803,10 +826,50 @@ function criarPeriodo() {
   });
 }
 
+// ── Editar Período ───────────────────────────────────────────
+function abrirEditarPeriodo() {
+  const periodo = TODOS_PERIODOS.find(p => p.id === PERIODO_ATIVO_ID);
+  if (!periodo) return;
+  document.getElementById('edit-periodo-ini').value = periodo.data_inicio || '';
+  document.getElementById('edit-periodo-fim').value = periodo.data_fim    || '';
+  document.getElementById('msg_editar_periodo').textContent = '';
+  document.getElementById('modal_editar_periodo').style.display = 'flex';
+}
+
+function salvarEdicaoPeriodo() {
+  const ini = document.getElementById('edit-periodo-ini').value;
+  const fim = document.getElementById('edit-periodo-fim').value;
+  if (!ini || !fim) { showMsg('msg_editar_periodo', '⚠ Preencha as duas datas.'); return; }
+  if (fim < ini)    { showMsg('msg_editar_periodo', '⚠ Data fim não pode ser anterior à data início.'); return; }
+
+  post(`/medicao/${BM_ID}/api/periodos/editar/`, {
+    periodo_id: PERIODO_ATIVO_ID,
+    data_inicio: ini,
+    data_fim:    fim,
+  }).then(res => {
+    if (res.ok) {
+      showMsg('msg_editar_periodo', '✔ ' + res.mensagem);
+      // Atualiza o array local e a exibição na tela
+      const idx = TODOS_PERIODOS.findIndex(p => p.id === PERIODO_ATIVO_ID);
+      if (idx >= 0) {
+        TODOS_PERIODOS[idx].data_inicio = ini;
+        TODOS_PERIODOS[idx].data_fim    = fim;
+      }
+      setTimeout(() => {
+        fecharModal('modal_editar_periodo');
+        location.reload();
+      }, 700);
+    } else {
+      showMsg('msg_editar_periodo', '✘ ' + (res.erro || 'Erro ao salvar'), '#fca5a5');
+    }
+  });
+}
+
 // ── Excluir Período ──────────────────────────────────────────
 const TODOS_PERIODOS = [
   {% for p in periodos %}
-  {id: {{ p.id }}, numero: {{ p.numero }}, label: "{{ p.label }}"},
+  {id: {{ p.id }}, numero: {{ p.numero }}, label: "{{ p.label }}",
+   data_inicio: "{{ p.data_inicio|date:'Y-m-d' }}", data_fim: "{{ p.data_fim|date:'Y-m-d' }}"},
   {% endfor %}
 ];
 

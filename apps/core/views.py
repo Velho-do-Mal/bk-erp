@@ -141,6 +141,17 @@ def dashboard(request):
         .order_by('data_vencimento')
         .values('descricao', 'tipo', 'valor', 'data_vencimento')[:10]
     )
+    # Listas separadas por tipo para o dashboard (só nome da conta)
+    vencidas_saida = list(
+        qs_trans.filter(tipo='saida', status='pendente', data_vencimento__lt=hoje)
+        .order_by('data_vencimento')
+        .values('descricao', 'data_vencimento', 'valor')[:10]
+    )
+    vencidas_entrada = list(
+        qs_trans.filter(tipo='entrada', status='pendente', data_vencimento__lt=hoje)
+        .order_by('data_vencimento')
+        .values('descricao', 'data_vencimento', 'valor')[:10]
+    )
 
     return render(request, 'core/dashboard.html', {
         # Projetos
@@ -172,6 +183,8 @@ def dashboard(request):
         # Alertas lista
         'contas_vencendo_hoje': contas_vencendo_hoje,
         'contas_atrasadas_lista': contas_atrasadas_lista,
+        'vencidas_saida': vencidas_saida,
+        'vencidas_entrada': vencidas_entrada,
 
         # Charts
         'chart_evolucao_json': json.dumps(chart_evolucao),

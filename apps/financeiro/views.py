@@ -180,6 +180,22 @@ def dashboard_financeiro(request):
 
     cc_data.sort(key=lambda x: x['saldo'], reverse=True)
 
+    # Contas vencidas detalhadas para o dashboard financeiro
+    vencidas_receber = list(
+        _qs_empresa(Transacao.objects, request)
+        .filter(tipo='entrada', status='pendente', data_vencimento__lt=hoje)
+        .order_by('data_vencimento')
+        .values('id', 'descricao', 'valor', 'data_vencimento', 'categoria__nome', 'cliente__nome')[:50]
+    )
+    vencidas_pagar = list(
+        _qs_empresa(Transacao.objects, request)
+        .filter(tipo='saida', status='pendente', data_vencimento__lt=hoje)
+        .order_by('data_vencimento')
+        .values('id', 'descricao', 'valor', 'data_vencimento', 'categoria__nome', 'fornecedor__nome')[:50]
+    )
+    total_vencidas_receber = sum(float(v['valor'] or 0) for v in vencidas_receber)
+    total_vencidas_pagar   = sum(float(v['valor'] or 0) for v in vencidas_pagar)
+
     ctx = {
         'total_entrada': total_entrada,
         'total_saida': total_saida,
@@ -189,6 +205,10 @@ def dashboard_financeiro(request):
         'ent_periodo': ent_periodo,
         'said_periodo': said_periodo,
         'saldo_periodo': ent_periodo - said_periodo,
+        'vencidas_receber_json': json.dumps(vencidas_receber, default=str),
+        'vencidas_pagar_json':   json.dumps(vencidas_pagar,   default=str),
+        'total_vencidas_receber': total_vencidas_receber,
+        'total_vencidas_pagar':   total_vencidas_pagar,
         'ultimas_json': json.dumps(ultimas, default=str),
         'meses_json': json.dumps(meses_data),
         'cat_saida_json': json.dumps(cat_saida_data),

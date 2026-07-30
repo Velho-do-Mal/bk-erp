@@ -18,6 +18,7 @@ urlpatterns = [
 
     path("medicao/<int:bm_id>/api/periodos/criar/", views.api_criar_periodo, name="api_criar_periodo"),
     path("medicao/<int:bm_id>/api/periodos/excluir/", views.api_excluir_periodo, name="api_excluir_periodo"),
+    path("medicao/<int:bm_id>/api/periodos/editar/",  views.api_editar_periodo,  name="api_editar_periodo"),
 
     path(
         "medicao/<int:bm_id>/api/medicao/<int:periodo_id>/salvar/",

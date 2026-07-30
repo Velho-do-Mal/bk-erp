@@ -730,6 +730,40 @@ def api_autocomplete_servico(request):
     return JsonResponse({"ok": True, "resultados": resultados})
 
 
+@login_required
+@require_POST
+def api_editar_periodo(request, bm_id):
+    """Atualiza as datas de início e fim de um período de medição."""
+    bm     = get_object_or_404(_qs_empresa(BoletimMedicao.objects, request), id=bm_id)
+    data   = _req_data(request)
+    periodo = get_object_or_404(PeriodoMedicao, id=data.get("periodo_id"), boletim=bm)
+
+    data_inicio = data.get("data_inicio")
+    data_fim    = data.get("data_fim")
+
+    if not data_inicio or not data_fim:
+        return JsonResponse({"ok": False, "erro": "Datas de início e fim são obrigatórias."}, status=400)
+
+    try:
+        from datetime import date as _date
+        d_ini = _date.fromisoformat(data_inicio)
+        d_fim = _date.fromisoformat(data_fim)
+        if d_fim < d_ini:
+            return JsonResponse({"ok": False, "erro": "Data fim não pode ser anterior à data início."}, status=400)
+    except ValueError:
+        return JsonResponse({"ok": False, "erro": "Formato de data inválido."}, status=400)
+
+    periodo.data_inicio = d_ini
+    periodo.data_fim    = d_fim
+    periodo.save(update_fields=["data_inicio", "data_fim"])
+
+    return JsonResponse({
+        "ok": True,
+        "mensagem": f"{periodo.label} atualizado.",
+        "periodo": _periodo_to_dict(periodo),
+    })
+
+
 # ─── DEBUG TEMPORÁRIO — remover após diagnóstico ─────────────────────────────
 from django.http import HttpResponse
 

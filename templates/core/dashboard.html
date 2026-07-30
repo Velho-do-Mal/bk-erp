@@ -47,14 +47,14 @@
 
 <div class="kpi-grid-4 mb-3">
   <div class="kpi-card" style="border-top:3px solid #dc2626;">
-    <div class="kpi-label">Recebimentos Atrasados</div>
+    <div class="kpi-label">Recebimentos Vencidos</div>
     <div class="kpi-value" style="color:#dc2626;">{{ recebimentos_atrasados|moeda }}</div>
-    <div class="kpi-sub">{{ qtd_recebimentos_atrasados }} título(s) vencido(s)</div>
+    <div class="kpi-sub">{{ qtd_recebimentos_atrasados }} título(s) em atraso</div>
   </div>
   <div class="kpi-card" style="border-top:3px solid #f97316;">
-    <div class="kpi-label">Pagamentos Atrasados</div>
+    <div class="kpi-label">Pagamentos Vencidos</div>
     <div class="kpi-value" style="color:#f97316;">{{ pagamentos_atrasados|moeda }}</div>
-    <div class="kpi-sub">{{ qtd_pagamentos_atrasados }} conta(s) vencida(s)</div>
+    <div class="kpi-sub">{{ qtd_pagamentos_atrasados }} conta(s) em atraso</div>
   </div>
   <div class="kpi-card" style="border-top:3px solid #16a34a;">
     <div class="kpi-label">Recebimentos Hoje</div>
@@ -67,6 +67,44 @@
     <div class="kpi-sub">+ {{ pagamentos_amanha|moeda }} amanhã</div>
   </div>
 </div>
+
+<!-- Listas compactas: só nome da conta (sem valor) -->
+{% if vencidas_entrada or vencidas_saida %}
+<div class="row g-3 mb-3">
+  {% if vencidas_entrada %}
+  <div class="col-md-6">
+    <div class="chart-box">
+      <h4><i class="fas fa-arrow-down me-2 text-danger"></i>Recebimentos Vencidos — Contas</h4>
+      {% for c in vencidas_entrada %}
+      <div class="alert-row">
+        <span class="small" style="color:#e2e8f0">{{ c.descricao|truncatechars:40 }}</span>
+        <span class="text-muted" style="font-size:10px">{{ c.data_vencimento|date:"d/m" }}</span>
+      </div>
+      {% endfor %}
+      {% if qtd_recebimentos_atrasados > 10 %}
+      <div style="font-size:11px;color:#64748b;padding-top:6px">+ {{ qtd_recebimentos_atrasados|add:"-10" }} outros</div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+  {% if vencidas_saida %}
+  <div class="col-md-6">
+    <div class="chart-box">
+      <h4><i class="fas fa-arrow-up me-2 text-warning"></i>Pagamentos Vencidos — Contas</h4>
+      {% for c in vencidas_saida %}
+      <div class="alert-row">
+        <span class="small" style="color:#e2e8f0">{{ c.descricao|truncatechars:40 }}</span>
+        <span class="text-muted" style="font-size:10px">{{ c.data_vencimento|date:"d/m" }}</span>
+      </div>
+      {% endfor %}
+      {% if qtd_pagamentos_atrasados > 10 %}
+      <div style="font-size:11px;color:#64748b;padding-top:6px">+ {{ qtd_pagamentos_atrasados|add:"-10" }} outros</div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
 
 {% if contas_vencendo_hoje or contas_atrasadas_lista %}
 <div class="row g-3 mb-4">

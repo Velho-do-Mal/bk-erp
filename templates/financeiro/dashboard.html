@@ -108,6 +108,56 @@
   </div>
 </div>
 
+<!-- Contas Vencidas Detalhadas -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px" id="section-vencidas">
+  <!-- Recebimentos Vencidos -->
+  <div class="bk-card" id="card-venc-receber" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div class="bk-title" style="font-size:13px;margin:0;color:#dc2626">
+        📥 Recebimentos Vencidos
+      </div>
+      <div style="font-size:16px;font-weight:800;color:#dc2626" id="total-venc-receber"></div>
+    </div>
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Descrição</th>
+            <th>Cliente</th>
+            <th>Categoria</th>
+            <th style="text-align:right">Valor</th>
+            <th>Vencimento</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-venc-receber"></tbody>
+      </table>
+    </div>
+  </div>
+  <!-- Pagamentos Vencidos -->
+  <div class="bk-card" id="card-venc-pagar" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+      <div class="bk-title" style="font-size:13px;margin:0;color:#f97316">
+        📤 Pagamentos Vencidos
+      </div>
+      <div style="font-size:16px;font-weight:800;color:#f97316" id="total-venc-pagar"></div>
+    </div>
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Descrição</th>
+            <th>Fornecedor</th>
+            <th>Categoria</th>
+            <th style="text-align:right">Valor</th>
+            <th>Vencimento</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-venc-pagar"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <!-- Últimas Transações -->
 <div class="bk-card">
   <div class="bk-title" style="font-size:13px;margin-bottom:12px">🕐 Últimas Transações</div>
@@ -269,5 +319,45 @@ if (!ultimas.length) {
     yaxis:  {gridcolor:'#1E293B', tickfont:{color:'#94A3B8', size:11}},
   }), CFG);
 })();
+
+// ── Contas Vencidas Detalhadas ──────────────────────────
+const vencidasReceber = {{ vencidas_receber_json|safe }};
+const vencidasPagar   = {{ vencidas_pagar_json|safe }};
+const fmtMoeda = v => 'R$ ' + parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});
+const fmtData  = s => s ? s.substring(5,10).split('-').reverse().join('/') + '/' + s.substring(0,4) : '—';
+
+function renderVencidas(lista, tbodyId, cardId, totalId, campoTerceiro) {
+  if (!lista.length) return;
+  document.getElementById(cardId).style.display = 'block';
+  const total = lista.reduce((s,r) => s + parseFloat(r.valor||0), 0);
+  document.getElementById(totalId).textContent = fmtMoeda(total);
+  const hoje = new Date().toISOString().substring(0,10);
+  document.getElementById(tbodyId).innerHTML = lista.map(r => {
+    const venc = r.data_vencimento ? r.data_vencimento.substring(0,10) : '';
+    const atraso = venc && venc < hoje;
+    const diasAtraso = venc ? Math.floor((new Date(hoje) - new Date(venc)) / 86400000) : 0;
+    return `<tr>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500">${r.descricao||'—'}</td>
+      <td style="font-size:11px;color:#94A3B8">${(r[campoTerceiro]||'—').substring(0,20)}</td>
+      <td style="font-size:11px;color:#94A3B8">${(r['categoria__nome']||'—').substring(0,18)}</td>
+      <td style="text-align:right;font-weight:600;color:${atraso?'#EF4444':'#e2e8f0'}">${fmtMoeda(r.valor)}</td>
+      <td style="font-size:11px;white-space:nowrap">
+        <span style="color:#EF4444">${fmtData(r.data_vencimento)}</span>
+        ${diasAtraso > 0 ? `<span style="font-size:10px;color:#94A3B8;margin-left:4px">${diasAtraso}d</span>` : ''}
+      </td>
+    </tr>`;
+  }).join('');
+  // Ajustar grid: se só um lado tem dados, ocupar tudo
+  const sr = document.getElementById('card-venc-receber');
+  const sp = document.getElementById('card-venc-pagar');
+  if (sr.style.display !== 'none' && sp.style.display === 'none')
+    document.getElementById('section-vencidas').style.gridTemplateColumns = '1fr';
+  if (sp.style.display !== 'none' && sr.style.display === 'none')
+    document.getElementById('section-vencidas').style.gridTemplateColumns = '1fr';
+}
+
+renderVencidas(vencidasReceber, 'tbody-venc-receber', 'card-venc-receber', 'total-venc-receber', 'cliente__nome');
+renderVencidas(vencidasPagar,   'tbody-venc-pagar',   'card-venc-pagar',   'total-venc-pagar',   'fornecedor__nome');
+
 </script>
 {% endblock %}
