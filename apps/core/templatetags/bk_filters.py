@@ -4,6 +4,13 @@ from decimal import Decimal, InvalidOperation
 register = template.Library()
 
 @register.filter
+def tem_modulo(user, chave):
+    """Uso no template: {% if user|tem_modulo:'financeiro' %}...{% endif %}"""
+    if not getattr(user, 'is_authenticated', False):
+        return False
+    return user.tem_modulo(chave)
+
+@register.filter
 def moeda(value):
     """Formata número como moeda pt-BR: R$ 1.234,56"""
     try:

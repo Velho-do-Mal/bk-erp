@@ -4,6 +4,7 @@ from django.http import JsonResponse
 from django.contrib.auth.hashers import make_password
 from apps.accounts.decorators import admin_required
 from apps.accounts.models import User
+from apps.core.modulos import MODULOS, MODULOS_KEYS
 
 
 @admin_required
@@ -22,6 +23,10 @@ def usuarios(request):
             senha   = data.get('senha', '').strip()
             ativo   = data.get('ativo', True)
             uid     = data.get('id')
+            modulos_raw = data.get('modulos_permitidos') or []
+            # Só valida/salva módulos para perfil 'cliente' — admin/superadmin
+            # sempre têm acesso total e não usam essa lista.
+            modulos = [m for m in modulos_raw if m in MODULOS_KEYS] if perfil == 'cliente' else []
 
             if not nome:     return JsonResponse({'ok': False, 'error': 'Nome é obrigatório.'})
             if not username: return JsonResponse({'ok': False, 'error': 'Usuário é obrigatório.'})
@@ -49,6 +54,7 @@ def usuarios(request):
             obj.email      = email
             obj.perfil     = perfil
             obj.is_active  = ativo
+            obj.modulos_permitidos = modulos
             if senha:
                 obj.set_password(senha)
             obj.save()
@@ -76,6 +82,7 @@ def usuarios(request):
                 'perfil': u.get_perfil_display(),
                 'perfil_val': u.perfil,
                 'ativo': u.is_active,
+                'modulos_permitidos': u.modulos_permitidos or [],
             } for u in qs]
             return JsonResponse({'ok': True, 'rows': rows})
 
@@ -90,4 +97,4 @@ def usuarios(request):
             'restante': (limite - total) if limite > 0 else None,
         }
 
-    return render(request, 'accounts/usuarios.html', {'plano_info': plano_info})
+    return render(request, 'accounts/usuarios.html', {'plano_info': plano_info, 'modulos': MODULOS})

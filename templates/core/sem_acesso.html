@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Sem acesso — BK ERP{% endblock %}
+{% block content %}
+<div class="card" style="max-width:520px;margin:60px auto;text-align:center;padding:36px 28px">
+  <div style="font-size:40px;margin-bottom:12px">🔒</div>
+  <h2 style="font-size:18px;font-weight:800;color:#1e3a8a;margin-bottom:8px">Nenhum módulo liberado</h2>
+  <p style="color:#6b7280;font-size:14px;margin-bottom:20px">
+    Seu usuário ainda não tem acesso a nenhum módulo do sistema.
+    Fale com um administrador para liberar os módulos que você vai utilizar.
+  </p>
+  <a href="{% url 'accounts:logout' %}" class="btn btn-secondary btn-sm">🚪 Sair</a>
+</div>
+{% endblock %}

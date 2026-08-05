@@ -9,6 +9,7 @@ from apps.projetos.models import Projeto, ProjetoAcesso
 from apps.financeiro.models import Transacao
 from apps.vendas.models import Proposta, Lead
 from apps.compras.models import PedidoCompra
+from apps.core.modulos import primeiro_modulo_url
 
 
 def _empresa(request):
@@ -25,6 +26,16 @@ def _qs_empresa(qs, request):
 @login_required
 def dashboard(request):
     user = request.user
+
+    # A Home (Dashboard executivo) é exclusiva de administradores.
+    # Funcionários sem esse acesso são levados automaticamente para o
+    # primeiro módulo liberado a eles (ver apps/core/modulos.py).
+    if not user.is_admin_erp:
+        destino = primeiro_modulo_url(user)
+        if destino:
+            return redirect(destino)
+        return render(request, 'core/sem_acesso.html')
+
     hoje = timezone.now().date()
     inicio_mes = hoje.replace(day=1)
     amanha = hoje + timedelta(days=1)

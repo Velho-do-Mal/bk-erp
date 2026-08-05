@@ -64,6 +64,21 @@
         </label>
       </div>
     </div>
+
+    <div class="form-group" id="grupo-modulos" style="margin-bottom:6px">
+      <label class="form-label">Módulos que este usuário pode utilizar</label>
+      <p style="font-size:12px;color:#6b7280;margin:0 0 8px">
+        A Home (Dashboard) é exclusiva de administradores. O funcionário entra direto no primeiro módulo marcado abaixo.
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;border:1px solid #e5e7eb;border-radius:8px;padding:12px 14px;max-height:220px;overflow-y:auto">
+        {% for chave, rotulo in modulos %}
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#374151;font-weight:400">
+          <input type="checkbox" class="m-modulo" value="{{ chave }}" checked> {{ rotulo }}
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
     <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px">
       <button class="btn btn-secondary btn-sm" onclick="fecharModal()">✖ Cancelar</button>
       <button class="btn btn-primary btn-sm" onclick="salvar()">💾 Salvar</button>
@@ -103,6 +118,11 @@ function renderizar(data) {
     </tr>`).join('');
 }
 
+function toggleGrupoModulos() {
+  const ehAdmin = document.getElementById('m-perfil').value !== 'cliente';
+  document.getElementById('grupo-modulos').style.display = ehAdmin ? 'none' : 'block';
+}
+
 function abrirModal(r=null) {
   document.getElementById('m-id').value       = r ? r.id : '';
   document.getElementById('m-nome').value     = r ? r.nome : '';
@@ -111,11 +131,21 @@ function abrirModal(r=null) {
   document.getElementById('m-perfil').value   = r ? r.perfil_val : 'cliente';
   document.getElementById('m-senha').value    = '';
   document.getElementById('m-ativo').checked  = r ? r.ativo : true;
+
+  // Módulos: usuário novo já vem com tudo marcado (admin ajusta se quiser
+  // restringir); ao editar, marca só os que o usuário já tem.
+  const modulosDoUsuario = r ? (r.modulos_permitidos || []) : null;
+  document.querySelectorAll('.m-modulo').forEach(cb => {
+    cb.checked = modulosDoUsuario ? modulosDoUsuario.includes(cb.value) : true;
+  });
+  toggleGrupoModulos();
+
   document.getElementById('modal-titulo').textContent = r ? '✏️ Editar Usuário' : '➕ Novo Usuário';
   document.getElementById('modal').style.display = 'flex';
 }
 
 function fecharModal() { document.getElementById('modal').style.display='none'; }
+document.getElementById('m-perfil').addEventListener('change', toggleGrupoModulos);
 
 function editar(id) {
   const r = rows.find(x=>x.id===id);
@@ -123,6 +153,7 @@ function editar(id) {
 }
 
 async function salvar() {
+  const modulosMarcados = Array.from(document.querySelectorAll('.m-modulo:checked')).map(cb => cb.value);
   const payload = {
     action:'save',
     id: document.getElementById('m-id').value || null,
@@ -132,6 +163,7 @@ async function salvar() {
     perfil: document.getElementById('m-perfil').value,
     senha: document.getElementById('m-senha').value,
     ativo: document.getElementById('m-ativo').checked,
+    modulos_permitidos: modulosMarcados,
   };
   const r = await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify(payload)});
   const d = await r.json();

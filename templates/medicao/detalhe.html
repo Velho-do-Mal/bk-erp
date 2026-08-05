@@ -241,7 +241,7 @@
   <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px">
     <span style="font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.5px">Períodos:</span>
     {% for p in periodos %}
-    <a href="?periodo_id={{ p.id }}" class="periodo-pill {% if periodo_ativo and periodo_ativo.id == p.id %}ativo{% else %}inativo{% endif %}">
+    <a href="?periodo_id={{ p.id }}&tab=tab-medicao" class="periodo-pill {% if periodo_ativo and periodo_ativo.id == p.id %}ativo{% else %}inativo{% endif %}">
       {{ p.label }}
       <span style="font-size:10px;opacity:.75">{{ p.data_inicio|date:"d/m" }}–{{ p.data_fim|date:"d/m/Y" }}</span>
     </a>
@@ -819,7 +819,9 @@ function criarPeriodo() {
   post(`/medicao/${BM_ID}/api/periodos/criar/`, {data_inicio: inicio, data_fim: fim}).then(res => {
     if (res.ok) {
       showMsg('msg_periodo', '✔ ' + res.mensagem);
-      setTimeout(() => { window.location.href = res.redirect; }, 800);
+      // Mantém a aba de Medição ativa após o redirect (evita voltar para a 1ª aba)
+      const destino = res.redirect + (res.redirect.includes('?') ? '&' : '?') + 'tab=tab-medicao';
+      setTimeout(() => { window.location.href = destino; }, 800);
     } else {
       showMsg('msg_periodo', '✘ ' + (res.erro || 'Erro'), '#fca5a5');
     }
@@ -857,7 +859,10 @@ function salvarEdicaoPeriodo() {
       }
       setTimeout(() => {
         fecharModal('modal_editar_periodo');
-        location.reload();
+        // Recarrega mantendo a aba de Medição ativa (evita voltar para a 1ª aba)
+        const url = new URL(window.location.href);
+        url.searchParams.set('tab', 'tab-medicao');
+        window.location.href = url.toString();
       }, 700);
     } else {
       showMsg('msg_editar_periodo', '✘ ' + (res.erro || 'Erro ao salvar'), '#fca5a5');
@@ -896,9 +901,9 @@ function executarExcluirPeriodo() {
         showMsg('msg_excluir_periodo', '✔ ' + res.mensagem);
         setTimeout(() => {
           if (anterior) {
-            window.location.href = `/medicao/${BM_ID}/?periodo_id=${anterior.id}`;
+            window.location.href = `/medicao/${BM_ID}/?periodo_id=${anterior.id}&tab=tab-medicao`;
           } else {
-            window.location.href = `/medicao/${BM_ID}/`;
+            window.location.href = `/medicao/${BM_ID}/?tab=tab-medicao`;
           }
         }, 600);
       } else {
