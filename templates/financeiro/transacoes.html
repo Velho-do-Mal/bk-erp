@@ -9,7 +9,7 @@
 {% endblock %}
 
 {% block content %}
-<a href="{% url 'financeiro:dashboard' %}" class="btn btn-secondary btn-sm" style="margin-bottom:16px;display:inline-flex;align-items:center;gap:6px;">← Voltar</a>
+<a href="{% url 'financeiro:dashboard' %}" class="btn btn-secondary btn-sm btn-voltar">← Voltar</a>
 
 <!-- Filtros -->
 <div class="bk-card" style="padding:14px 16px;margin-bottom:16px">
@@ -173,8 +173,8 @@
 <!-- Modal Excluir Recorrência -->
 <div class="modal-overlay" id="modal-del-rec">
   <div class="modal-box" style="max-width:460px">
-    <div class="modal-title" style="color:#fca5a5">🗑️ Excluir Transação Recorrente</div>
-    <div id="del-rec-desc" style="font-size:13px;color:#e2e8f0;margin-bottom:16px;line-height:1.6"></div>
+    <div class="modal-title" style="color:#b91c1c">🗑️ Excluir Transação Recorrente</div>
+    <div id="del-rec-desc" style="font-size:13px;color:#374151;margin-bottom:16px;line-height:1.6"></div>
     <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:8px">
       <button class="btn" style="background:#334155;color:#f1f5f9;text-align:left;padding:12px 16px;border-radius:8px;border:1px solid #475569" onclick="executarDelete('somente_esta')">
         <div style="font-weight:600">🔹 Excluir somente esta</div>

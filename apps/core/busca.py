@@ -68,7 +68,7 @@ def busca_global(request):
     try:
         from apps.projetos.models import Projeto
         projetos = _qs_empresa(Projeto.objects, request).filter(
-            Q(nome__icontains=q) | Q(descricao__icontains=q) | Q(gerente__icontains=q)
+            Q(nome__icontains=q) | Q(gerente__icontains=q)
         )[:5]
         for p in projetos:
             resultados.append({
@@ -86,15 +86,15 @@ def busca_global(request):
     try:
         from apps.documentos.models import Documento
         docs = _qs_empresa(Documento.objects, request).filter(
-            Q(nome__icontains=q) | Q(descricao__icontains=q) | Q(tipo__icontains=q)
+            Q(titulo__icontains=q) | Q(observacoes__icontains=q) | Q(tags__icontains=q)
         )[:5]
         for d in docs:
             resultados.append({
                 'modulo': 'Documentos',
                 'icone': 'fas fa-file-alt',
                 'cor': '#0f766e',
-                'titulo': d.nome,
-                'sub': d.tipo or '',
+                'titulo': d.titulo,
+                'sub': d.get_tipo_display() if hasattr(d, 'get_tipo_display') else (d.tipo or ''),
                 'url': reverse('documentos:lista'),
             })
     except Exception:
@@ -112,7 +112,7 @@ def busca_global(request):
                 'icone': 'fas fa-dollar-sign',
                 'cor': '#16a34a' if t.tipo == 'entrada' else '#dc2626',
                 'titulo': t.descricao or '—',
-                'sub': f'R$ {t.valor} — {t.data}',
+                'sub': f'R$ {t.valor} — {t.data_competencia}',
                 'url': reverse('financeiro:transacoes'),
             })
     except Exception:
@@ -140,14 +140,14 @@ def busca_global(request):
     try:
         from apps.compras.models import PedidoCompra
         compras = _qs_empresa(PedidoCompra.objects, request).filter(
-            Q(numero__icontains=q) | Q(fornecedor__nome__icontains=q)
+            Q(codigo__icontains=q) | Q(fornecedor__nome__icontains=q)
         )[:3]
         for c in compras:
             resultados.append({
                 'modulo': 'Compras',
                 'icone': 'fas fa-shopping-cart',
                 'cor': '#f97316',
-                'titulo': f'Pedido #{c.numero or c.pk}',
+                'titulo': f'Pedido #{c.codigo or c.pk}',
                 'sub': c.fornecedor.nome if c.fornecedor else '',
                 'url': reverse('compras:lista'),
             })
@@ -156,16 +156,16 @@ def busca_global(request):
 
     # --- Estoque ---
     try:
-        from apps.estoque.models import Produto
-        produtos = _qs_empresa(Produto.objects, request).filter(
-            Q(nome__icontains=q) | Q(codigo__icontains=q)
+        from apps.estoque.models import MaterialEstoque
+        produtos = _qs_empresa(MaterialEstoque.objects, request).filter(
+            Q(descricao__icontains=q) | Q(codigo__icontains=q)
         )[:3]
         for p in produtos:
             resultados.append({
                 'modulo': 'Estoque',
                 'icone': 'fas fa-boxes',
                 'cor': '#6b7280',
-                'titulo': p.nome,
+                'titulo': p.descricao,
                 'sub': f'Código: {p.codigo or "—"}',
                 'url': reverse('estoque:lista'),
             })

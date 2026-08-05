@@ -4,7 +4,7 @@
 {% block page_sub %}Categorias e Subcategorias financeiras{% endblock %}
 {% block topbar_actions %}<button class="btn btn-primary" onclick="abrirModal()">➕ Nova Categoria</button>{% endblock %}
 {% block content %}
-<a href="{% url 'financeiro:dashboard' %}" class="btn btn-secondary btn-sm" style="margin-bottom:16px;display:inline-flex;align-items:center;gap:6px;">← Voltar</a>
+<a href="{% url 'financeiro:dashboard' %}" class="btn btn-secondary btn-sm btn-voltar">← Voltar</a>
 
 <div class="bk-card">
   <div class="table-container">

@@ -1,4 +1,5 @@
 import os
+import warnings
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -6,8 +7,30 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'bk-erp-dev-key-change-in-production')
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+# DEBUG: o padrão (quando a variável de ambiente não está definida) é SEMPRE
+# False — o modo verboso deve ser uma escolha explícita do ambiente local
+# (.env com DEBUG=True), nunca o comportamento acidental de produção.
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
+
+# SECRET_KEY: nunca usar uma string fixa como fallback (ficaria exposta a
+# qualquer pessoa com acesso ao código-fonte, permitindo forjar sessões,
+# tokens CSRF e links de redefinição de senha). Em produção (DEBUG=False)
+# a variável é obrigatória. Em desenvolvimento, gera uma chave aleatória
+# a cada início de processo (não persiste — suficiente para uso local).
+SECRET_KEY = os.environ.get('SECRET_KEY', '').strip()
+if not SECRET_KEY:
+    if not DEBUG:
+        raise RuntimeError(
+            'SECRET_KEY não configurada. Defina a variável de ambiente SECRET_KEY '
+            '(ex.: no Railway, em Settings → Variables) antes de rodar em produção.'
+        )
+    from django.core.management.utils import get_random_secret_key
+    SECRET_KEY = get_random_secret_key()
+    warnings.warn(
+        'SECRET_KEY não definida — usando chave temporária apenas para desenvolvimento local.',
+        RuntimeWarning,
+    )
+
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
 INSTALLED_APPS = [
@@ -83,7 +106,15 @@ else:
     }
 
 AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {'min_length': 8},
+    },
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
 LANGUAGE_CODE = 'pt-br'

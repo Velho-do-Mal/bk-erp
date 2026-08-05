@@ -2,6 +2,7 @@ import json
 from datetime import date
 
 from apps.core.tenant import tenant_get_or_404
+from apps.core.validators import validate_upload_view
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, Http404, FileResponse
@@ -477,6 +478,13 @@ def controle_docs(request, pk):
 
         # Logo upload (multipart)
         if request.FILES.get('logo_bk') or request.FILES.get('logo_cliente'):
+            for campo in ('logo_bk', 'logo_cliente'):
+                arq = request.FILES.get(campo)
+                if arq:
+                    erro = validate_upload_view(arq, field_label=campo.replace('_', ' ').title())
+                    if erro:
+                        return JsonResponse({'erro': erro}, status=400)
+
             cfg, _ = ControleDocConfig.objects.get_or_create(projeto=projeto)
 
             if request.FILES.get('logo_bk'):
@@ -679,6 +687,10 @@ def api_anexos(request, pk, doc_id):
         f = request.FILES.get('arquivo')
         if not f:
             return JsonResponse({'erro': 'Nenhum arquivo enviado.'}, status=400)
+
+        erro = validate_upload_view(f, field_label='Anexo')
+        if erro:
+            return JsonResponse({'erro': erro}, status=400)
 
         anexo = AnexoDocumento.objects.create(
             documento=doc,

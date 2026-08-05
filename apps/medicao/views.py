@@ -12,6 +12,7 @@ from django.views.decorators.http import require_GET, require_http_methods, requ
 
 from apps.cadastros.models import Cliente
 from apps.core.tenant import tenant_get_or_404
+from apps.core.validators import validate_upload_view
 from apps.servicos.models import ProdutoServico
 
 from .models import BoletimMedicao, ItemContrato, MedicaoItem, PeriodoMedicao
@@ -450,16 +451,23 @@ def api_salvar_boletim(request):
 
         if raw:
             try:
-                from django.core.files.base import ContentFile
+                from django.core.files.uploadedfile import SimpleUploadedFile
 
                 # Aceita data URI: data:image/png;base64,xxxxx
                 if "," in raw and raw.strip().lower().startswith("data:"):
                     raw = raw.split(",", 1)[1]
 
                 file_bytes = base64.b64decode(raw)
-                nome_arquivo = data.get(campo_nome) or f"{campo_file}.bin"
+                nome_arquivo = data.get(campo_nome) or f"{campo_file}.png"
 
-                getattr(bm, campo_file).save(nome_arquivo, ContentFile(file_bytes), save=False)
+                # Valida extensão/tamanho/assinatura (magic bytes) antes de salvar —
+                # evita que um arquivo malicioso disfarçado de imagem seja aceito.
+                upload = SimpleUploadedFile(nome_arquivo, file_bytes)
+                erro_upload = validate_upload_view(upload, field_label='Logo')
+                if erro_upload:
+                    continue
+
+                getattr(bm, campo_file).save(nome_arquivo, upload, save=False)
                 setattr(bm, campo_tipo, data.get(campo_tipo) or "")
                 setattr(bm, campo_nome, data.get(campo_nome) or "")
             except Exception:

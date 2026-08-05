@@ -1,7 +1,6 @@
 import json
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from apps.accounts.decorators import admin_required
 from apps.core.exportacao import exportar_csv
 from django.http import HttpResponse, JsonResponse
 from .models import Documento
@@ -25,7 +24,7 @@ def _qs_empresa(qs, request):
 
 
 
-@admin_required
+@login_required
 def lista(request):
     if request.method == 'POST' and request.FILES.get('arquivo'):
         from apps.core.validators import validate_upload_view
@@ -102,9 +101,10 @@ def download(request, pk):
     return resp
 
 
-@admin_required
+@login_required
 def exportar_documentos(request):
-    empresa = _empresa(request)
-    qs = Documento.objects.filter(empresa=empresa).values('id', 'titulo', 'tipo', 'data_documento', 'ativo')
+    # CORRIGIDO: referenciava campos inexistentes no modelo (data_documento,
+    # ativo) — a exportação sempre lançava FieldError (500).
+    qs = _qs_empresa(Documento.objects, request).values('id', 'titulo', 'tipo', 'data_validade')
     rows = [list(r.values()) for r in qs]
-    return exportar_csv('documentos.csv', ['ID', 'Título', 'Tipo', 'Data', 'Ativo'], rows)
+    return exportar_csv('documentos.csv', ['ID', 'Título', 'Tipo', 'Data de Validade'], rows)

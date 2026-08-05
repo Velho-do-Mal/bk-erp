@@ -2,7 +2,7 @@ import json
 from decimal import Decimal
 from django.shortcuts import render
 from django.http import JsonResponse
-from apps.accounts.decorators import admin_required
+from django.contrib.auth.decorators import login_required
 from .models import ProdutoServico
 
 def _empresa(request):
@@ -23,7 +23,7 @@ def _qs_empresa(qs, request):
 
 
 
-@admin_required
+@login_required
 def lista(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -35,7 +35,7 @@ def lista(request):
                 return JsonResponse({'ok': False, 'error': 'O campo Nome é obrigatório.'})
             rid = data.get('id')
             try:
-                obj = ProdutoServico.objects.get(id=rid) if rid else ProdutoServico()
+                obj = _qs_empresa(ProdutoServico.objects, request).get(id=rid) if rid else ProdutoServico()
             except ProdutoServico.DoesNotExist:
                 return JsonResponse({'ok': False, 'error': 'Registro não encontrado.'})
             obj.codigo = data.get('codigo', '').strip()
@@ -64,7 +64,7 @@ def lista(request):
 
         elif action == 'toggle_ativo':
             try:
-                obj = ProdutoServico.objects.get(id=data.get('id'))
+                obj = _qs_empresa(ProdutoServico.objects, request).get(id=data.get('id'))
             except ProdutoServico.DoesNotExist:
                 return JsonResponse({'ok': False, 'error': 'Registro não encontrado.'})
             obj.ativo = not obj.ativo
@@ -85,6 +85,6 @@ def lista(request):
 
     return render(request, 'servicos/lista.html', {
         'items_json': json.dumps(items, ensure_ascii=False),
-        'total': ProdutoServico.objects.count(),
+        'total': _qs_empresa(ProdutoServico.objects, request).count(),
         'ativos': _qs_empresa(ProdutoServico.objects, request).filter(ativo=True).count(),
     })

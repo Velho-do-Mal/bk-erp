@@ -7,7 +7,7 @@
 {% block page_sub %}{{ boletim.nome }}{% if boletim.cliente %} · {{ boletim.cliente.nome }}{% endif %}{% endblock %}
 
 {% block topbar_actions %}
-<a href="{% url 'medicao:dashboard' %}" class="btn btn-secondary btn-sm">← Voltar</a>
+<a href="{% url 'medicao:dashboard' %}" class="btn btn-secondary btn-sm btn-voltar">← Voltar</a>
 {% if periodo_ativo %}
 <button class="btn btn-secondary btn-sm" onclick="abrirImpressaoPeriodo()">🖨 Imprimir Período</button>
 <button class="btn btn-primary btn-sm" onclick="abrirConsolidado()">📊 Consolidado</button>
@@ -67,7 +67,7 @@
     border-bottom: 1px solid #334155;
   }
   .autocomplete-item:hover { background: #2563eb; }
-  .autocomplete-item .ac-code { font-size: 11px; color: #374151; margin-right: 6px; }
+  .autocomplete-item .ac-code { font-size: 11px; color: #93c5fd; margin-right: 6px; }
 
   /* Períodos lista */
   .periodo-pill {
@@ -164,7 +164,7 @@
     </div>
 
     <button class="btn btn-primary" onclick="salvarBoletim()" style="margin-top:8px">💾 Salvar</button>
-    <span id="msg_projeto" style="margin-left:12px;font-size:13px;color:#6ee7b7"></span>
+    <span id="msg_projeto" style="margin-left:12px;font-size:13px;color:#16a34a"></span>
   </div>
 </div>
 
@@ -230,7 +230,7 @@
   </div>
   <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
     <button class="btn btn-primary btn-sm" onclick="salvarTodosItens()">💾 Salvar Itens</button>
-    <span id="msg_itens" style="font-size:13px;color:#6ee7b7"></span>
+    <span id="msg_itens" style="font-size:13px;color:#16a34a"></span>
   </div>
 </div>
 
@@ -355,7 +355,7 @@
       </tfoot>
     </table>
   </div>
-  <span id="msg_medicao" style="font-size:13px;color:#6ee7b7;margin-top:10px;display:block"></span>
+  <span id="msg_medicao" style="font-size:13px;color:#16a34a;margin-top:10px;display:block"></span>
 
   {% else %}
   <div style="text-align:center;padding:48px;color:#6b7280">
@@ -486,15 +486,15 @@
       <button class="btn btn-primary" onclick="salvarEdicaoPeriodo()">💾 Salvar Alteração</button>
       <button class="btn btn-secondary" onclick="fecharModal('modal_editar_periodo')">Cancelar</button>
     </div>
-    <span id="msg_editar_periodo" style="font-size:13px;color:#fca5a5;margin-top:8px;display:block"></span>
+    <span id="msg_editar_periodo" style="font-size:13px;color:#16a34a;margin-top:8px;display:block"></span>
   </div>
 </div>
 
 <!-- ═══ Modal Excluir Período ═══ -->
 <div id="modal_excluir_periodo" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.6);align-items:center;justify-content:center">
   <div class="card" style="width:420px;max-width:95vw">
-    <div style="font-size:16px;font-weight:700;color:#fca5a5;margin-bottom:12px">⚠️ Excluir Período</div>
-    <div id="modal_excluir_texto" style="font-size:14px;color:#e2e8f0;margin-bottom:18px;line-height:1.6"></div>
+    <div style="font-size:16px;font-weight:700;color:#b91c1c;margin-bottom:12px">⚠️ Excluir Período</div>
+    <div id="modal_excluir_texto" style="font-size:14px;color:#374151;margin-bottom:18px;line-height:1.6"></div>
     <div style="background:#1e293b;border:1px solid #ef4444;border-radius:8px;padding:12px 14px;margin-bottom:18px;font-size:13px;color:#fca5a5">
       ⚠️ Esta ação é irreversível. Todas as medições do período serão excluídas permanentemente.
     </div>
@@ -502,7 +502,7 @@
       <button class="btn btn-danger" onclick="executarExcluirPeriodo()">🗑️ Confirmar Exclusão</button>
       <button class="btn btn-secondary" onclick="fecharModal('modal_excluir_periodo')">Cancelar</button>
     </div>
-    <span id="msg_excluir_periodo" style="font-size:13px;color:#fca5a5;margin-top:8px;display:block"></span>
+    <span id="msg_excluir_periodo" style="font-size:13px;color:#16a34a;margin-top:8px;display:block"></span>
   </div>
 </div>
 
@@ -523,7 +523,7 @@
       <button class="btn btn-primary" onclick="criarPeriodo()">Criar BM</button>
       <button class="btn btn-secondary" onclick="fecharModal('modal_periodo')">Cancelar</button>
     </div>
-    <span id="msg_periodo" style="font-size:13px;color:#6ee7b7;margin-top:8px;display:block"></span>
+    <span id="msg_periodo" style="font-size:13px;color:#16a34a;margin-top:8px;display:block"></span>
   </div>
 </div>
 {% endblock %}
@@ -550,7 +550,7 @@ function post(url, data) {
   }).then(r => r.json());
 }
 
-function showMsg(id, txt, cor='#6ee7b7') {
+function showMsg(id, txt, cor='#16a34a') {
   const el = document.getElementById(id);
   if (!el) return;
   el.style.color = cor;
@@ -609,7 +609,7 @@ function salvarBoletim() {
   };
   post('/medicao/api/salvar/', payload).then(res => {
     if (res.ok) showMsg('msg_projeto', '✔ ' + res.mensagem);
-    else showMsg('msg_projeto', '✘ ' + res.erro, '#fca5a5');
+    else showMsg('msg_projeto', '✘ ' + res.erro, '#dc2626');
   });
 }
 
@@ -698,7 +698,7 @@ function salvarTodosItens() {
   });
   Promise.all(promessas).then(results => {
     const erros = results.filter(r => !r.ok);
-    if (erros.length) showMsg('msg_itens', '✘ Erro em ' + erros.length + ' item(s)', '#fca5a5');
+    if (erros.length) showMsg('msg_itens', '✘ Erro em ' + erros.length + ' item(s)', '#dc2626');
     else showMsg('msg_itens', '✔ Todos os itens salvos.');
   });
 }
@@ -800,7 +800,7 @@ function salvarMedicao() {
         document.querySelector('.tfoot-periodo').textContent = 'R$ ' + fmt(res.total_periodo);
       }
     } else {
-      showMsg('msg_medicao', '✘ ' + (res.erro || 'Erro ao salvar'), '#fca5a5');
+      showMsg('msg_medicao', '✘ ' + (res.erro || 'Erro ao salvar'), '#dc2626');
     }
   });
 }
@@ -815,7 +815,7 @@ function abrirModalNovoPeriodo() {
 function criarPeriodo() {
   const inicio = document.getElementById('novo_bm_inicio').value;
   const fim = document.getElementById('novo_bm_fim').value;
-  if (!inicio || !fim) { showMsg('msg_periodo', '✘ Informe as datas', '#fca5a5'); return; }
+  if (!inicio || !fim) { showMsg('msg_periodo', '✘ Informe as datas', '#dc2626'); return; }
   post(`/medicao/${BM_ID}/api/periodos/criar/`, {data_inicio: inicio, data_fim: fim}).then(res => {
     if (res.ok) {
       showMsg('msg_periodo', '✔ ' + res.mensagem);
@@ -823,7 +823,7 @@ function criarPeriodo() {
       const destino = res.redirect + (res.redirect.includes('?') ? '&' : '?') + 'tab=tab-medicao';
       setTimeout(() => { window.location.href = destino; }, 800);
     } else {
-      showMsg('msg_periodo', '✘ ' + (res.erro || 'Erro'), '#fca5a5');
+      showMsg('msg_periodo', '✘ ' + (res.erro || 'Erro'), '#dc2626');
     }
   });
 }
@@ -865,7 +865,7 @@ function salvarEdicaoPeriodo() {
         window.location.href = url.toString();
       }, 700);
     } else {
-      showMsg('msg_editar_periodo', '✘ ' + (res.erro || 'Erro ao salvar'), '#fca5a5');
+      showMsg('msg_editar_periodo', '✘ ' + (res.erro || 'Erro ao salvar'), '#dc2626');
     }
   });
 }
@@ -907,7 +907,7 @@ function executarExcluirPeriodo() {
           }
         }, 600);
       } else {
-        showMsg('msg_excluir_periodo', '✘ ' + (res.erro || 'Erro ao excluir'), '#fca5a5');
+        showMsg('msg_excluir_periodo', '✘ ' + (res.erro || 'Erro ao excluir'), '#dc2626');
       }
     });
 }

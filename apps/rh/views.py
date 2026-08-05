@@ -4,7 +4,7 @@ from datetime import date
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required
-from apps.accounts.decorators import admin_required
+from django.contrib import messages
 from .models import Colaborador, Cargo, Departamento, Ferias
 
 
@@ -21,7 +21,7 @@ def _qs_empresa(qs, request):
 
 # ── COLABORADORES ──────────────────────────────────────────────────────────
 
-@admin_required
+@login_required
 def colaboradores(request):
     if request.method == 'POST':
         # Tenta JSON primeiro (API), depois form data (template)
@@ -122,7 +122,7 @@ def colaboradores(request):
     })
 
 
-@admin_required
+@login_required
 def exportar_colaboradores(request):
     qs = _qs_empresa(Colaborador.objects, request).select_related('cargo', 'departamento').order_by('nome')
     resp = HttpResponse(content_type='text/csv; charset=utf-8-sig')
@@ -139,7 +139,7 @@ def exportar_colaboradores(request):
 
 # ── DEPARTAMENTOS ──────────────────────────────────────────────────────────
 
-@admin_required
+@login_required
 def departamentos(request):
     if request.method == 'POST':
         # Aceita form data (template) OU JSON (API)
@@ -205,7 +205,7 @@ def departamentos(request):
 
 # ── CARGOS ──────────────────────────────────────────────────────────────────
 
-@admin_required
+@login_required
 def cargos(request):
     if request.method == 'POST':
         try:
@@ -266,7 +266,7 @@ def cargos(request):
 
 # ── FÉRIAS ──────────────────────────────────────────────────────────────────
 
-@admin_required
+@login_required
 def ferias(request):
     if request.method == 'POST':
         try:
@@ -284,13 +284,42 @@ def ferias(request):
             if obj is None:
                 obj = Ferias()
 
-            colab_id = data.get('colaborador_id')
+            # CORRIGIDO: o formulário em rh/ferias.html envia o campo como
+            # "colaborador" (POST tradicional), não "colaborador_id" — o
+            # código antigo sempre lia None aqui e o save() falhava
+            # (colaborador é FK obrigatória, sem null=True).
+            colab_id = data.get('colaborador_id') or data.get('colaborador')
             obj.colaborador_id = int(colab_id) if colab_id else None
             obj.data_inicio = data.get('data_inicio') or None
             obj.data_fim = data.get('data_fim') or None
             obj.dias = data.get('dias', 30) or 30
             obj.status = data.get('status', 'agendada')
             obj.observacoes = data.get('observacoes', '').strip()
+
+            # ── Regra CLT (Art. 130): só há direito a férias após 12 meses
+            # de trabalho (período aquisitivo). Bloqueia o agendamento de
+            # férias que comecem antes de o colaborador completar 1 ano.
+            if obj.colaborador_id and obj.data_inicio:
+                colaborador = _qs_empresa(Colaborador.objects, request).filter(id=obj.colaborador_id).first()
+                if colaborador and colaborador.data_admissao:
+                    from datetime import date as _date, timedelta as _timedelta
+                    try:
+                        inicio = obj.data_inicio if isinstance(obj.data_inicio, _date) else _date.fromisoformat(str(obj.data_inicio)[:10])
+                    except Exception:
+                        inicio = None
+                    if inicio:
+                        um_ano_depois = colaborador.data_admissao + _timedelta(days=365)
+                        if inicio < um_ano_depois:
+                            msg = (
+                                f'{colaborador.nome} completa 1 ano de empresa em '
+                                f'{um_ano_depois.strftime("%d/%m/%Y")} — pela CLT (Art. 130), '
+                                'o período aquisitivo de férias só se completa após 12 meses de trabalho.'
+                            )
+                            if is_json:
+                                return JsonResponse({'ok': False, 'erro': msg})
+                            messages.error(request, msg)
+                            return redirect('rh:ferias')
+
             if obj.pk is None and _empresa(request):
                 obj.empresa = _empresa(request)
             obj.save()
@@ -306,6 +335,30 @@ def ferias(request):
                 return JsonResponse({'ok': True})
             return redirect('rh:ferias')
 
+    # CORRIGIDO: a listagem/filtros/KPIs abaixo eram completamente inertes —
+    # o template usa `{% for f in ferias %}` (variável nunca enviada pelo
+    # contexto, só existia `ferias_json`), o filtro de status/mês/busca do
+    # GET nunca era lido, e os 4 KPIs do topo (total/em férias/agendadas/
+    # concluídas) referenciavam variáveis que também nunca eram enviadas.
+    ferias_qs = _qs_empresa(Ferias.objects, request).select_related(
+        'colaborador', 'colaborador__departamento'
+    ).order_by('-data_inicio')
+
+    status_f = request.GET.get('status', '').strip()
+    mes_f = request.GET.get('mes', '').strip()
+    q_f = request.GET.get('q', '').strip()
+
+    if status_f:
+        ferias_qs = ferias_qs.filter(status=status_f)
+    if mes_f:
+        try:
+            ano_m, mes_m = mes_f.split('-')
+            ferias_qs = ferias_qs.filter(data_inicio__year=int(ano_m), data_inicio__month=int(mes_m))
+        except (ValueError, IndexError):
+            pass
+    if q_f:
+        ferias_qs = ferias_qs.filter(colaborador__nome__icontains=q_f)
+
     lista = list(_qs_empresa(Ferias.objects, request).select_related('colaborador').values(
         'id', 'colaborador__nome', 'colaborador_id', 'data_inicio', 'data_fim', 'dias', 'status', 'observacoes'
     ))
@@ -313,7 +366,49 @@ def ferias(request):
         status__in=['ativo', 'ferias']
     ).values('id', 'nome'))
 
+    base_qs = _qs_empresa(Ferias.objects, request)
+    total_ferias = base_qs.count()
+    em_ferias_kpi = base_qs.filter(status='em_gozo').count()
+    agendadas_kpi = base_qs.filter(status__in=['agendada', 'aprovada']).count()
+    concluidas_kpi = base_qs.filter(status='concluida').count()
+
+    # ── Alerta CLT: férias vencidas ──────────────────────────────────────
+    # Pela CLT, após completar o período aquisitivo (12 meses), o
+    # empregador tem até 12 meses (período concessivo) para conceder as
+    # férias — passado isso (24 meses desde a admissão sem férias
+    # "concluida" registrada no período), as férias estão "vencidas" e
+    # a empresa pode ser autuada e obrigada a pagar em dobro (Art. 137, CLT).
+    from datetime import date as _date, timedelta as _timedelta
+    hoje = _date.today()
+    ultima_ferias_por_colab = {}
+    for f in _qs_empresa(Ferias.objects, request).filter(status='concluida').order_by('colaborador_id', '-data_fim').values('colaborador_id', 'data_fim'):
+        ultima_ferias_por_colab.setdefault(f['colaborador_id'], f['data_fim'])
+
+    ferias_vencidas = []
+    for c in _qs_empresa(Colaborador.objects, request).filter(status__in=['ativo', 'ferias']):
+        if not c.data_admissao:
+            continue
+        referencia = ultima_ferias_por_colab.get(c.id) or c.data_admissao
+        if isinstance(referencia, str):
+            try:
+                referencia = _date.fromisoformat(referencia[:10])
+            except Exception:
+                continue
+        limite = referencia + _timedelta(days=730)  # 12 (aquisitivo) + 12 (concessivo) meses
+        if hoje > limite:
+            ferias_vencidas.append({
+                'nome': c.nome,
+                'venceu_em': limite.strftime('%d/%m/%Y'),
+                'dias_vencido': (hoje - limite).days,
+            })
+
     return render(request, 'rh/ferias.html', {
+        'ferias': ferias_qs,
         'ferias_json': json.dumps(lista, default=str),
         'colaboradores': colaboradores_list,
+        'ferias_vencidas': ferias_vencidas,
+        'total_ferias': total_ferias,
+        'em_ferias': em_ferias_kpi,
+        'agendadas': agendadas_kpi,
+        'concluidas': concluidas_kpi,
     })

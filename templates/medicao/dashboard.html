@@ -11,7 +11,7 @@
 {% endblock %}
 
 {% block content %}
-<a href="{% url 'core:dashboard' %}" class="btn btn-secondary btn-sm" style="margin-bottom:16px;display:inline-flex;align-items:center;gap:6px;">← Voltar</a>
+<a href="{% url 'core:dashboard' %}" class="btn btn-secondary btn-sm btn-voltar">← Voltar</a>
 
 <!-- KPIs rápidos -->
 <div class="kpi-grid" style="margin-bottom:20px">
@@ -127,7 +127,7 @@
       <button class="btn btn-primary" onclick="criarBoletim()">Criar</button>
       <button class="btn btn-secondary" onclick="fecharModal()">Cancelar</button>
     </div>
-    <span id="msg_novo" style="font-size:13px;color:#6ee7b7;margin-top:8px;display:block"></span>
+    <span id="msg_novo" style="font-size:13px;color:#16a34a;margin-top:8px;display:block"></span>
   </div>
 </div>
 {% endblock %}
@@ -163,7 +163,7 @@ function criarBoletim() {
   const nome = document.getElementById('novo_nome').value.trim();
   if (!nome) {
     document.getElementById('msg_novo').textContent = '✘ Informe o nome.';
-    document.getElementById('msg_novo').style.color = '#fca5a5';
+    document.getElementById('msg_novo').style.color = '#dc2626';
     return;
   }
   post('/medicao/api/salvar/', {
@@ -174,11 +174,11 @@ function criarBoletim() {
     codigo_obra: document.getElementById('novo_codigo_obra').value.trim(),
   }).then(res => {
     if (res.ok) {
-      document.getElementById('msg_novo').style.color = '#6ee7b7';
+      document.getElementById('msg_novo').style.color = '#16a34a';
       document.getElementById('msg_novo').textContent = '✔ ' + res.mensagem;
       setTimeout(() => { window.location.href = res.redirect; }, 600);
     } else {
-      document.getElementById('msg_novo').style.color = '#fca5a5';
+      document.getElementById('msg_novo').style.color = '#dc2626';
       document.getElementById('msg_novo').textContent = '✘ ' + (res.erro || 'Erro');
     }
   });

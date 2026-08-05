@@ -7,7 +7,7 @@
 <button class="btn btn-primary" onclick="abrirModal()">➕ Novo Pedido</button>
 {% endblock %}
 {% block content %}
-<a href="{% url 'core:dashboard' %}" class="btn btn-secondary btn-sm" style="margin-bottom:16px;display:inline-flex;align-items:center;gap:6px;">← Voltar</a>
+<a href="{% url 'core:dashboard' %}" class="btn btn-secondary btn-sm btn-voltar">← Voltar</a>
 
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px">
   <div class="kpi-card kpi-blue"><div class="kpi-label">🛒 Total de Pedidos</div><div class="kpi-value">{{ total_pedidos }}</div></div>
@@ -72,7 +72,7 @@
           <tbody id="itens-tbody"></tbody>
         </table>
       </div>
-      <div style="text-align:right;margin-top:10px;font-weight:700;font-size:14px;color:#f1f5f9">
+      <div style="text-align:right;margin-top:10px;font-weight:700;font-size:14px;color:#111827">
         💰 Total: R$ <span id="total-display">0,00</span>
       </div>
     </div>

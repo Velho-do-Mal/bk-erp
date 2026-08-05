@@ -6,7 +6,6 @@ from datetime import date
 from apps.core.tenant import tenant_get_or_404
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
-from apps.accounts.decorators import admin_required
 from apps.core.exportacao import exportar_csv
 from apps.core.audit import registrar as audit
 from django.http import JsonResponse, HttpResponse
@@ -172,7 +171,7 @@ def _criar_projeto_a_partir_de_proposta(proposta):
 
 # ─── Lista principal ────────────────────────────────────────────
 
-@admin_required
+@login_required
 def lista(request):
     """Lista de propostas e leads com KPIs. POST via JSON para CRUD de leads e delete de proposta."""
     if request.method == 'POST':
@@ -228,7 +227,7 @@ def lista(request):
             except Exception as e:
                 return JsonResponse({'ok': False, 'msg': str(e)})
 
-    propostas = Proposta.objects.select_related('cliente', 'lead').prefetch_related('itens')
+    propostas = _qs_empresa(Proposta.objects, request).select_related('cliente', 'lead').prefetch_related('itens')
     propostas_data = [_proposta_to_dict(p) for p in propostas]
 
     leads_data = list(_qs_empresa(Lead.objects, request).filter().values(
@@ -237,7 +236,7 @@ def lista(request):
     for l in leads_data:
         l['valor_estimado'] = float(l['valor_estimado'])
 
-    total_valor = Proposta.objects.aggregate(s=Sum('valor_total'))['s'] or 0
+    total_valor = _qs_empresa(Proposta.objects, request).aggregate(s=Sum('valor_total'))['s'] or 0
     aprovadas = _qs_empresa(Proposta.objects, request).filter(status='aprovada').count()
     pipeline_valor = _qs_empresa(Lead.objects, request).filter(estagio__in=['qualificacao', 'proposta', 'negociacao']
     ).aggregate(s=Sum('valor_estimado'))['s'] or 0
@@ -245,7 +244,7 @@ def lista(request):
     ctx = {
         'propostas_json': json.dumps(propostas_data),
         'leads_json': json.dumps(leads_data, default=str),
-        'total_propostas': Proposta.objects.count(),
+        'total_propostas': _qs_empresa(Proposta.objects, request).count(),
         'total_valor': float(total_valor),
         'aprovadas': aprovadas,
         'pipeline_valor': float(pipeline_valor),
@@ -255,7 +254,7 @@ def lista(request):
 
 # ─── Detalhe / Nova Proposta ─────────────────────────────────────────
 
-@admin_required
+@login_required
 def proposta_nova(request):
     """Cria uma nova proposta e redireciona para a pagina de detalhe."""
     from datetime import date as dt
@@ -264,11 +263,12 @@ def proposta_nova(request):
         titulo='Nova Proposta',
         data_emissao=dt.today(),
         status='rascunho',
+        empresa=_empresa(request),
     )
     return redirect('vendas:proposta_detalhe', pk=p.pk)
 
 
-@admin_required
+@login_required
 def proposta_detalhe(request, pk):
     """
     Pagina dedicada da proposta com duas abas:
@@ -385,7 +385,7 @@ def proposta_detalhe(request, pk):
 
 # ─── Exportar Word ────────────────────────────────────────────────────
 
-@admin_required
+@login_required
 def exportar_word(request, pk):
     """
     Gera um arquivo .docx com a proposta formatada para envio ao cliente.
@@ -640,7 +640,7 @@ def exportar_word(request, pk):
 
 
 
-@admin_required
+@login_required
 def exportar_propostas(request):
     empresa = _empresa(request)
     qs = Proposta.objects.filter(empresa=empresa).values('id', 'titulo', 'cliente__nome', 'status', 'valor_total', 'data_criacao')

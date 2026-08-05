@@ -75,23 +75,36 @@ def dashboard_relatorios(request):
 
 @login_required
 def dre(request):
-    """DRE — Demonstrativo de Resultado do Exercício por período."""
+    """
+    DRE — Demonstrativo de Resultado do Exercício por período.
+
+    CORRIGIDO: um DRE, por definição contábil, é apurado pelo REGIME DE
+    COMPETÊNCIA — a receita/despesa é reconhecida no período em que foi
+    gerada (data_competencia), independente de já ter sido paga ou não.
+    A versão anterior filtrava por data_pagamento + status='realizado',
+    ou seja, calculava um resultado de CAIXA e o rotulava como "DRE" —
+    isso subestima receitas/despesas já competentes ao período mas ainda
+    pendentes de pagamento. O relatório de caixa "de fato" já existe
+    separadamente em Fluxo de Caixa (fluxo_caixa, abaixo), que
+    corretamente usa data_vencimento/data_pagamento.
+    """
     ano, mes = _get_periodo(request)
     ini, fim = _periodo_range(ano, mes)
     qs = _qs_empresa(Transacao.objects, request)
 
-    # Receitas por categoria
+    # Receitas por categoria (regime de competência — todas as receitas
+    # cuja competência cai no período, pagas ou não)
     receitas = list(
-        qs.filter(tipo='entrada', status='realizado', data_pagamento__gte=ini, data_pagamento__lte=fim)
+        qs.filter(tipo='entrada', data_competencia__gte=ini, data_competencia__lte=fim)
         .values('categoria__nome')
         .annotate(total=Sum('valor'))
         .order_by('-total')
     )
     total_receita = sum(r['total'] for r in receitas)
 
-    # Despesas por categoria
+    # Despesas por categoria (regime de competência)
     despesas = list(
-        qs.filter(tipo='saida', status='realizado', data_pagamento__gte=ini, data_pagamento__lte=fim)
+        qs.filter(tipo='saida', data_competencia__gte=ini, data_competencia__lte=fim)
         .values('categoria__nome')
         .annotate(total=Sum('valor'))
         .order_by('-total')
@@ -262,18 +275,20 @@ def inadimplencia(request):
     total = qs.aggregate(Sum('valor'))['valor__sum'] or 0
     count = qs.count()
 
-    # Agrupa por descrição/cliente (simplificado — sem FK de cliente em Transacao)
-    por_descricao = list(
-        qs.values('descricao')
+    # Agrupa por cliente (Transacao tem FK cliente — usa descrição só quando não há cliente vinculado)
+    por_cliente = list(
+        qs.values('cliente__id', 'cliente__nome')
         .annotate(total=Sum('valor'), qtd=Count('id'))
         .order_by('-total')[:20]
     )
+    for row in por_cliente:
+        row['nome_exibicao'] = row['cliente__nome'] or 'Sem cliente vinculado'
 
     return render(request, 'relatorios/inadimplencia.html', {
         'contas': qs,
         'total': total,
         'count': count,
-        'por_descricao': por_descricao,
+        'por_cliente': por_cliente,
         'hoje': hoje,
     })
 
@@ -290,13 +305,14 @@ def exportar_dre(request):
     response.write('﻿')  # BOM para Excel
 
     writer = csv.writer(response, delimiter=';')
-    writer.writerow(['DEMONSTRATIVO DE RESULTADO DO EXERCÍCIO'])
+    writer.writerow(['DEMONSTRATIVO DE RESULTADO DO EXERCÍCIO (Regime de Competência)'])
     writer.writerow([f'Período: {ini.strftime("%d/%m/%Y")} a {fim.strftime("%d/%m/%Y")}'])
     writer.writerow([])
     writer.writerow(['RECEITAS'])
     writer.writerow(['Categoria', 'Valor (R$)'])
 
-    receitas = qs.filter(tipo='entrada', status='realizado', data_pagamento__gte=ini, data_pagamento__lte=fim) \
+    # CORRIGIDO: DRE usa regime de competência (data_competencia), não caixa.
+    receitas = qs.filter(tipo='entrada', data_competencia__gte=ini, data_competencia__lte=fim) \
         .values('categoria__nome').annotate(total=Sum('valor')).order_by('-total')
     total_rec = 0
     for r in receitas:
@@ -307,7 +323,7 @@ def exportar_dre(request):
 
     writer.writerow(['DESPESAS'])
     writer.writerow(['Categoria', 'Valor (R$)'])
-    despesas = qs.filter(tipo='saida', status='realizado', data_pagamento__gte=ini, data_pagamento__lte=fim) \
+    despesas = qs.filter(tipo='saida', data_competencia__gte=ini, data_competencia__lte=fim) \
         .values('categoria__nome').annotate(total=Sum('valor')).order_by('-total')
     total_desp = 0
     for d in despesas:

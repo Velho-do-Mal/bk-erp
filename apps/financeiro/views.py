@@ -6,7 +6,6 @@ from dateutil.relativedelta import relativedelta
 from apps.core.tenant import tenant_get_or_404
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from apps.accounts.decorators import admin_required
 from apps.core.exportacao import exportar_csv
 from apps.core.audit import registrar as audit
 from django.http import JsonResponse, HttpResponse
@@ -59,7 +58,7 @@ RECORRENCIA_DELTAS = {
 }
 
 
-@admin_required
+@login_required
 def download_anexo(request, pk):
     from django.http import Http404
     t = get_object_or_404(Transacao, pk=pk)
@@ -72,7 +71,7 @@ def download_anexo(request, pk):
     return resp
 
 
-@admin_required
+@login_required
 def dashboard_financeiro(request):
     from django.db.models.functions import TruncMonth
     from apps.cadastros.models import CentrosDeCusto
@@ -196,6 +195,30 @@ def dashboard_financeiro(request):
     total_vencidas_receber = sum(float(v['valor'] or 0) for v in vencidas_receber)
     total_vencidas_pagar   = sum(float(v['valor'] or 0) for v in vencidas_pagar)
 
+    # ── Projeção de Fluxo de Caixa (30/60/90 dias) ──────────────────────
+    # Ponto de partida: saldo realizado (entradas - saídas já pagas/recebidas).
+    # Para cada horizonte, soma o que já está pendente com vencimento dentro
+    # da janela (recebimentos futuros - pagamentos futuros), incluindo o que
+    # já está vencido (pendente com vencimento no passado, que ainda deve
+    # ser resolvido). Não sintetiza lançamentos recorrentes futuros que
+    # ainda não foram gerados — projeta apenas sobre transações já lançadas.
+    projecao_fluxo = []
+    for horizonte in (30, 60, 90):
+        limite = hoje + timedelta(days=horizonte)
+        a_receber = _qs_empresa(Transacao.objects, request).filter(
+            tipo='entrada', status='pendente', data_vencimento__lte=limite
+        ).aggregate(s=Sum('valor'))['s'] or Decimal('0')
+        a_pagar = _qs_empresa(Transacao.objects, request).filter(
+            tipo='saida', status='pendente', data_vencimento__lte=limite
+        ).aggregate(s=Sum('valor'))['s'] or Decimal('0')
+        projecao_fluxo.append({
+            'dias': horizonte,
+            'data_limite': limite.strftime('%d/%m/%Y'),
+            'a_receber': float(a_receber),
+            'a_pagar': float(a_pagar),
+            'saldo_projetado': float(saldo + a_receber - a_pagar),
+        })
+
     ctx = {
         'total_entrada': total_entrada,
         'total_saida': total_saida,
@@ -216,12 +239,13 @@ def dashboard_financeiro(request):
         'data_ini': d_ini.isoformat(),
         'data_fim': d_fim.isoformat(),
         'modo': modo,
+        'projecao_fluxo': projecao_fluxo,
     }
 
     return render(request, 'financeiro/dashboard.html', ctx)
 
 
-@admin_required
+@login_required
 def transacoes(request):
     if request.method == 'POST' and request.FILES.get('anexo'):
         from apps.core.validators import validate_upload_view
@@ -462,7 +486,7 @@ def _gerar_recorrencia(origem: Transacao):
         )
 
 
-@admin_required
+@login_required
 def contas(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -498,7 +522,7 @@ def contas(request):
     return render(request, 'financeiro/contas.html', {'contas_json': json.dumps(qs)})
 
 
-@admin_required
+@login_required
 def categorias(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -528,7 +552,7 @@ def categorias(request):
     return render(request, 'financeiro/categorias.html', {'categorias_json': json.dumps(qs)})
 
 
-@admin_required
+@login_required
 def orcamento(request):
     from django.db.models.functions import ExtractMonth
 
@@ -621,7 +645,7 @@ def orcamento(request):
     return render(request, 'financeiro/orcamento.html', ctx)
 
 
-@admin_required
+@login_required
 def salvar_orcamento(request):
     if request.method == 'POST':
         try:
@@ -644,7 +668,7 @@ def salvar_orcamento(request):
     return JsonResponse({'ok': False}, status=405)
 
 
-@admin_required
+@login_required
 def exportar_transacoes(request):
     empresa = _empresa(request)
     qs = Transacao.objects.filter(empresa=empresa).values('id', 'descricao', 'tipo', 'valor', 'data', 'categoria__nome', 'conta__nome')

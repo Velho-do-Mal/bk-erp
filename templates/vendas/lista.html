@@ -49,16 +49,10 @@
   .badge-perdida   { background:#fee2e2; color:#ef4444; }
   .badge-cancelada { background:#f3f4f6; color:#9ca3af; }
 
-  /* ── Ações de linha ── */
+  /* ── Ações de linha ──
+     .btn-sm / .btn-sm.danger / .btn-sm.primary já vêm do design system global
+     (static/css/bk_erp.css) — não redefinir aqui para manter padronização. */
   .row-actions { display:flex; gap:6px; }
-  .btn-sm { font-size:12px; padding:4px 10px; border-radius:5px; text-decoration:none;
-            border:1px solid #e5e7eb; background:#fff; color:#374151; cursor:pointer;
-            transition:all .15s; display:inline-block; }
-  .btn-sm:hover { background:#f1f5f9; }
-  .btn-sm.danger { border-color:#fca5a5; color:#ef4444; }
-  .btn-sm.danger:hover { background:#fee2e2; }
-  .btn-sm.primary { border-color:#93c5fd; color:#1e40af; }
-  .btn-sm.primary:hover { background:#eff6ff; }
 
   /* ── Filtro / Busca ── */
   .table-toolbar {
@@ -106,7 +100,7 @@
 {% endblock %}
 
 {% block content %}
-<a href="{% url 'core:dashboard' %}" class="btn btn-secondary btn-sm" style="margin-bottom:16px;display:inline-flex;align-items:center;gap:6px;">← Voltar</a>
+<a href="{% url 'core:dashboard' %}" class="btn btn-secondary btn-sm btn-voltar">← Voltar</a>
 
 <div id="toast"></div>
 

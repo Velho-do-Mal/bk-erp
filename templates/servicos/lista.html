@@ -8,7 +8,7 @@
 {% endblock %}
 
 {% block content %}
-<a href="{% url 'core:dashboard' %}" class="btn btn-secondary btn-sm" style="margin-bottom:16px;display:inline-flex;align-items:center;gap:6px;">← Voltar</a>
+<a href="{% url 'core:dashboard' %}" class="btn btn-secondary btn-sm btn-voltar">← Voltar</a>
 
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px">
   <div class="kpi-card kpi-blue"><div class="kpi-label">📦 Total Cadastros</div><div class="kpi-value">{{ total }}</div></div>

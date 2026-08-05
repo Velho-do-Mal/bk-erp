@@ -211,34 +211,74 @@ tbody td { padding: 12px 14px; font-size: 13px; color: #111827; }
   border-radius: 20px;
   font-size: 11px; font-weight: 600;
 }
-.badge-blue   { background: #dbeafe; color: #1e40af; }
-.badge-green  { background: #dcfce7; color: #16a34a; }
-.badge-orange { background: #fef3c7; color: #d97706; }
-.badge-red    { background: #fee2e2; color: #dc2626; }
-.badge-gray   { background: #f1f5f9; color: #475569; }
-.badge-teal   { background: #ccfbf1; color: #0f766e; }
+.badge-blue      { background: #dbeafe; color: #1e40af; }
+.badge-green, .badge-success   { background: #dcfce7; color: #16a34a; }
+.badge-orange, .badge-warning  { background: #fef3c7; color: #d97706; }
+.badge-red, .badge-danger      { background: #fee2e2; color: #dc2626; }
+.badge-gray, .badge-secondary  { background: #f1f5f9; color: #475569; }
+.badge-teal      { background: #ccfbf1; color: #0f766e; }
 
 /* ══════════════════════════════
-   BOTÕES
+   BOTÕES — sistema único (funciona em qualquer combinação de classes)
 ══════════════════════════════ */
 .btn {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 8px 16px;
   border-radius: 8px;
   font-size: 13px; font-weight: 600;
-  cursor: pointer; border: none;
+  cursor: pointer; border: 1px solid transparent;
+  text-decoration: none;
+  transition: all 0.15s;
+  line-height: 1.3;
+}
+.btn-primary, .btn-sm.primary       { background: var(--bk-blue); color: #fff; border-color: var(--bk-blue); }
+.btn-primary:hover, .btn-sm.primary:hover     { background: #2563EB; border-color: #2563EB; }
+
+.btn-secondary, .btn-sm.secondary   { background: #f9fafb; color: #374151; border-color: #d1d5db; }
+.btn-secondary:hover, .btn-sm.secondary:hover { background: #f1f5f9; color: #111827; }
+
+.btn-danger, .btn-sm.danger         { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
+.btn-danger:hover, .btn-sm.danger:hover       { background: #fecaca; }
+
+.btn-success, .btn-sm.success       { background: #dcfce7; color: #15803d; border-color: #86efac; }
+.btn-success:hover, .btn-sm.success:hover     { background: #bbf7d0; }
+
+.btn-warning, .btn-sm.warning        { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+.btn-warning:hover, .btn-sm.warning:hover      { background: #fde68a; }
+
+/* .btn-sm = modificador de TAMANHO apenas (padding/fonte). Nunca define cor —
+   isso evita o bug em que "btn btn-danger btn-sm" perdia a cor por conflito de cascata
+   (a regra antiga de .btn-sm definia fundo/cor e "vencia" .btn-danger por ordem no arquivo). */
+.btn-sm {
+  padding: 5px 10px;
+  font-size: 12px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  font-weight: 600;
   text-decoration: none;
   transition: all 0.15s;
 }
-.btn-primary   { background: var(--bk-blue); color: #fff; }
-.btn-primary:hover { background: #2563EB; }
-.btn-secondary { background: #f9fafb; color: #374151; border: 1px solid #d1d5db; }
-.btn-secondary:hover { background: #f1f5f9; color: #111827; }
-.btn-danger    { background: rgba(239,68,68,0.15); color: #FCA5A5; border: 1px solid rgba(239,68,68,0.3); }
-.btn-danger:hover { background: rgba(239,68,68,0.25); }
-.btn-success   { background: rgba(16,185,129,0.15); color: #6EE7B7; border: 1px solid rgba(16,185,129,0.3); }
-.btn-success:hover { background: rgba(16,185,129,0.25); }
-.btn-sm { padding: 5px 10px; font-size: 12px; }
+/* Aparência padrão do .btn-sm usado sozinho (sem nenhum modificador de cor) */
+.btn-sm:not(.btn-primary):not(.btn-secondary):not(.btn-danger):not(.btn-success):not(.btn-warning):not(.primary):not(.secondary):not(.danger):not(.success):not(.warning) {
+  background: #fff;
+  border: 1px solid #d1d5db;
+  color: #374151;
+}
+.btn-sm:not(.btn-primary):not(.btn-secondary):not(.btn-danger):not(.btn-success):not(.btn-warning):not(.primary):not(.secondary):not(.danger):not(.success):not(.warning):hover {
+  background: #f1f5f9;
+  color: #111827;
+}
+
+/* Botão "Voltar" padronizado em todo o sistema — usar class="btn btn-secondary btn-voltar" */
+.btn-voltar {
+  margin-bottom: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
 
 /* ══════════════════════════════
    FORMULÁRIOS — inputs escuros (texto escuro por padrão)
@@ -346,14 +386,6 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   .kpi-grid { grid-template-columns: 1fr 1fr; }
 }
 
-/* ── Extra badges ── */
-.badge-success   { background: #dcfce7; color: #16a34a; }
-.badge-danger    { background: #fee2e2; color: #ef4444; }
-.badge-warning   { background: #fef3c7; color: #d97706; }
-.badge-secondary { background: #f1f5f9; color: #475569; }
-.badge-blue      { background: #dbeafe; color: #1e40af; }
-.badge-teal      { background: #ccfbf1; color: #0f766e; }
-
 /* ── KPI color variants ── */
 .kpi-blue   { border-left: 3px solid #3B82F6; }
 .kpi-green  { border-left: 3px solid #10B981; }
@@ -362,18 +394,19 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 .kpi-orange { border-left: 3px solid #F97316; }
 .kpi-teal   { border-left: 3px solid #14B8A6; }
 
-/* ── Table editable input ── */
+/* ── Table editable input (fundo claro — a tabela em si já é clara) ── */
 .table input.form-control {
-  background: #0d1526;
-  border: 1px solid #2D4A7A;
+  background: #fff;
+  border: 1px solid #d1d5db;
   padding: 4px 8px;
   border-radius: 4px;
-  color: #e2e8f0;
+  color: #111827;
   font-size: 13px;
 }
 .table input.form-control:focus {
   outline: none;
   border-color: #3B82F6;
+  box-shadow: 0 0 0 2px rgba(59,130,246,0.15);
 }
 
 /* ══════════════════════════════
@@ -565,30 +598,7 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 .data-table .col-actions { width: 110px; text-align: center; white-space: nowrap; }
 .table-container { background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; }
 
-.btn-sm {
-  padding: 4px 10px;
-  font-size: 12px;
-  border-radius: 5px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
-  color: #374151;
-  cursor: pointer;
-  font-weight: 600;
-  transition: all 0.15s;
-  display: inline-block;
-  text-decoration: none;
-}
-.btn-sm:hover { background: #f1f5f9; }
-.btn-sm.primary  { border-color: #93c5fd; color: #1e40af; }
-.btn-sm.primary:hover  { background: #eff6ff; }
-.btn-sm.success  { border-color: #86efac; color: #16a34a; }
-.btn-sm.success:hover  { background: #f0fdf4; }
-.btn-sm.danger   { border-color: #fca5a5; color: #ef4444; }
-.btn-sm.danger:hover   { background: #fee2e2; }
-.btn-sm.warning  { border-color: #fcd34d; color: #d97706; }
-.btn-sm.warning:hover  { background: #fffbeb; }
-.btn-sm.secondary { border-color: #d1d5db; color: #6b7280; }
-.btn-sm.secondary:hover { background: #f9fafb; }
+/* (sistema de .btn-sm já definido acima, na seção BOTÕES — não duplicar aqui) */
 
 /* ══════════════════════════════
    EXCEL GRID (padrão Projetos)

@@ -12,7 +12,7 @@
         <option value="{{ a }}" {% if a == ano %}selected{% endif %}>{{ a }}</option>
         {% endfor %}
     </select>
-    <a href="{% url 'financeiro:dashboard' %}" class="btn btn-secondary">Voltar ao Dashboard</a>
+    <a href="{% url 'financeiro:dashboard' %}" class="btn btn-secondary btn-sm btn-voltar">← Voltar</a>
 </div>
 {% endblock %}
 

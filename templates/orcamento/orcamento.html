@@ -145,7 +145,7 @@
       {% if orcamento %}
       <a class="btn btn-ghost" href="{% url 'orcamento:exportar_excel' orcamento.id %}">↓ Exportar CSV</a>
       {% endif %}
-      <a class="btn btn-ghost" href="javascript:history.back()">← Voltar</a>
+      <a class="btn btn-ghost" href="{% url 'core:dashboard' %}">← Voltar</a>
     </div>
   </div>
 

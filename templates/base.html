@@ -8,6 +8,10 @@
   <title>{% block title %}BK ERP{% endblock %}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Bootstrap 5 (grid/utilitários usados nas telas — carregado ANTES do bk_erp.css para que
+       nossos estilos próprios sempre tenham prioridade sobre o padrão do Bootstrap) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="{% static 'css/bk_erp.css' %}">
   {% block extra_css %}{% endblock %}
 </head>
@@ -210,6 +214,9 @@
 {% else %}
 {% block full_content %}{% endblock %}
 {% endif %}
+
+<!-- Bootstrap 5 JS (modais/dropdowns usados em algumas telas, ex: Recursos Humanos > Férias) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
 
 <script>
 // ══════════════════════════════

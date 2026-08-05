@@ -135,7 +135,7 @@ def _totais_orcamento(orcamento: Orcamento | None) -> dict:
 @login_required
 @require_GET
 def dashboard(request):
-    obras = Obra.objects.select_related("cliente", "projeto").all()
+    obras = _qs_empresa(Obra.objects, request).select_related("cliente", "projeto").all()
     clientes = _qs_empresa(Cliente.objects, request).filter(ativo=True).order_by("nome")
     projetos = _qs_empresa(Projeto.objects, request).filter().order_by("nome") if Projeto is not None else []
 
@@ -164,14 +164,14 @@ def dashboard(request):
 
     if orcamento_id:
         try:
-            orcamento = Orcamento.objects.select_related(
+            orcamento = _qs_empresa(Orcamento.objects, request).select_related(
                 "obra", "obra__cliente", "obra__projeto"
             ).get(id=orcamento_id)
         except Orcamento.DoesNotExist:
             pass
 
     if not orcamento:
-        orcamento = Orcamento.objects.select_related(
+        orcamento = _qs_empresa(Orcamento.objects, request).select_related(
             "obra", "obra__cliente", "obra__projeto"
         ).order_by("-criado_em").first()
 
@@ -211,13 +211,13 @@ def dashboard(request):
 def salvar_obra(request):
     data = _request_data(request)
     cliente_id = data.get("cliente_id")
-    cliente = get_object_or_404(Cliente, id=cliente_id) if cliente_id else None
+    cliente = get_object_or_404(_qs_empresa(Cliente.objects, request), id=cliente_id) if cliente_id else None
 
     projeto = None
     projeto_id = data.get("projeto_id")
     if projeto_id and Projeto is not None:
         try:
-            projeto = Projeto.objects.get(id=projeto_id)
+            projeto = _qs_empresa(Projeto.objects, request).get(id=projeto_id)
         except Projeto.DoesNotExist:
             pass
 
@@ -229,14 +229,14 @@ def salvar_obra(request):
     obra_id = data.get("id")
 
     if obra_id:
-        obra = get_object_or_404(Obra, id=obra_id)
+        obra = get_object_or_404(_qs_empresa(Obra.objects, request), id=obra_id)
         obra.nome = nome
         obra.cliente = cliente
         obra.projeto = projeto
         obra.save()
         criada = False
     else:
-        obra = Obra.objects.create(nome=nome, cliente=cliente, projeto=projeto)
+        obra = Obra.objects.create(nome=nome, cliente=cliente, projeto=projeto, empresa=_empresa(request))
         criada = True
 
     nome_orcamento = (data.get("nome_orcamento") or "Orçamento").strip() or "Orçamento"
@@ -245,7 +245,7 @@ def salvar_obra(request):
     #   mais de um orçamento para a mesma obra. Usa filter().first() no lugar.
     orcamento = _qs_empresa(Orcamento.objects, request).filter(obra=obra).order_by("-criado_em").first()
     if not orcamento:
-        orcamento = Orcamento.objects.create(obra=obra, nome=nome_orcamento)
+        orcamento = Orcamento.objects.create(obra=obra, nome=nome_orcamento, empresa=_empresa(request))
     elif orcamento.nome != nome_orcamento:
         orcamento.nome = nome_orcamento
         orcamento.save(update_fields=["nome"])
@@ -303,8 +303,8 @@ def salvar_item_material(request):
     if not produto_id:
         return JsonResponse({"ok": False, "erro": "produto_id é obrigatório."}, status=400)
 
-    orcamento = get_object_or_404(Orcamento, id=orcamento_id)
-    produto = get_object_or_404(ProdutoServico, id=produto_id)
+    orcamento = get_object_or_404(_qs_empresa(Orcamento.objects, request), id=orcamento_id)
+    produto = get_object_or_404(_qs_empresa(ProdutoServico.objects, request), id=produto_id)
 
     quantidade = _to_decimal(data.get("quantidade"), default="1")
     valor_unitario = _to_decimal(data.get("valor_unitario"), default=str(produto.preco_unitario or 0))
@@ -333,7 +333,9 @@ def excluir_item_material(request):
     if not item_id:
         return JsonResponse({"ok": False, "erro": "id do item é obrigatório."}, status=400)
 
-    item = get_object_or_404(ItemMaterial, id=item_id)
+    item = get_object_or_404(
+        ItemMaterial.objects.filter(orcamento__in=_qs_empresa(Orcamento.objects, request)), id=item_id
+    )
     orcamento = item.orcamento
     item.delete()
 
@@ -352,8 +354,8 @@ def salvar_item_servico(request):
     if not servico_id:
         return JsonResponse({"ok": False, "erro": "servico_id é obrigatório."}, status=400)
 
-    orcamento = get_object_or_404(Orcamento, id=orcamento_id)
-    servico = get_object_or_404(ProdutoServico, id=servico_id)
+    orcamento = get_object_or_404(_qs_empresa(Orcamento.objects, request), id=orcamento_id)
+    servico = get_object_or_404(_qs_empresa(ProdutoServico.objects, request), id=servico_id)
 
     quantidade = _to_decimal(data.get("quantidade"), default="1")
     valor_unitario = _to_decimal(data.get("valor_unitario"), default=str(servico.preco_unitario or 0))
@@ -382,7 +384,9 @@ def excluir_item_servico(request):
     if not item_id:
         return JsonResponse({"ok": False, "erro": "id do item é obrigatório."}, status=400)
 
-    item = get_object_or_404(ItemServico, id=item_id)
+    item = get_object_or_404(
+        ItemServico.objects.filter(orcamento__in=_qs_empresa(Orcamento.objects, request)), id=item_id
+    )
     orcamento = item.orcamento
     item.delete()
 
@@ -393,7 +397,7 @@ def excluir_item_servico(request):
 @require_GET
 def exportar_excel(request, orcamento_id):
     orcamento = get_object_or_404(
-        Orcamento.objects.select_related("obra", "obra__cliente", "obra__projeto"),
+        _qs_empresa(Orcamento.objects, request).select_related("obra", "obra__cliente", "obra__projeto"),
         id=orcamento_id,
     )
 

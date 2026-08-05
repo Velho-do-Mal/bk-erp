@@ -3,7 +3,7 @@
 {% block title %}Inadimplência{% endblock %}
 
 {% block content %}
-<a href="{% url 'relatorios:dashboard' %}" class="btn btn-secondary btn-sm" style="margin-bottom:16px;display:inline-flex;align-items:center;gap:6px;">← Relatórios</a>
+<a href="{% url 'relatorios:dashboard' %}" class="btn btn-secondary btn-sm btn-voltar">← Relatórios</a>
 
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px">
   <div class="kpi-card kpi-red">
@@ -15,6 +15,34 @@
     <div class="kpi-value" style="color:#d97706">{{ count }}</div>
   </div>
 </div>
+
+{% if por_cliente %}
+<div class="card" style="margin-bottom:20px;overflow:hidden">
+  <div class="card-header" style="padding:12px 16px;font-weight:600;border-bottom:1px solid #e5e7eb">
+    👤 Maiores Inadimplentes por Cliente
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Cliente</th>
+          <th style="text-align:right">Qtd. Títulos</th>
+          <th style="text-align:right">Total em Atraso</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in por_cliente %}
+        <tr>
+          <td>{{ row.nome_exibicao }}</td>
+          <td style="text-align:right">{{ row.qtd }}</td>
+          <td style="text-align:right;color:#ef4444;font-weight:600">{{ row.total|moeda }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
 
 <div class="card" style="overflow:hidden">
   <div class="card-header" style="padding:12px 16px;font-weight:600;border-bottom:1px solid #e5e7eb">

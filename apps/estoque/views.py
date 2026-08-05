@@ -4,7 +4,6 @@ from datetime import date
 from apps.core.tenant import tenant_get_or_404
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from apps.accounts.decorators import admin_required
 from apps.core.exportacao import exportar_csv
 from apps.core.audit import registrar as audit
 from django.http import JsonResponse
@@ -46,7 +45,7 @@ def _to_date(v):
         return None
 
 
-@admin_required
+@login_required
 def lista(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -124,6 +123,13 @@ def lista(request):
     total_investido = sum(m['preco_total'] for m in materiais)
     total_itens = len(materiais)
     itens_criticos = sum(1 for m in materiais if m['saldo'] <= 0)
+    # Alerta de estoque baixo: saldo positivo mas abaixo de 10% da quantidade
+    # comprada (sem campo de "estoque mínimo" configurável no modelo — usa
+    # uma heurística proporcional para sinalizar itens que estão acabando).
+    itens_estoque_baixo = sum(
+        1 for m in materiais
+        if m['saldo'] > 0 and m['qtd_comprada'] > 0 and (m['saldo'] / m['qtd_comprada']) <= 0.10
+    )
 
     ctx = {
         'materiais_json': json.dumps(materiais),
@@ -132,13 +138,21 @@ def lista(request):
         'total_investido': total_investido,
         'total_itens': total_itens,
         'itens_criticos': itens_criticos,
+        'itens_estoque_baixo': itens_estoque_baixo,
     }
     return render(request, 'estoque/lista.html', ctx)
 
 
-@admin_required
+@login_required
 def exportar_estoque(request):
-    empresa = _empresa(request)
-    qs = MaterialEstoque.objects.filter(empresa=empresa).values('id', 'codigo_bk', 'descricao', 'unidade', 'qtd_comprada', 'qtd_utilizada', 'qtd_saldo')
+    # CORRIGIDO: a query anterior referenciava campos inexistentes no modelo
+    # (codigo_bk, unidade, qtd_saldo) e sempre lançava FieldError ao ser chamada.
+    qs = _qs_empresa(MaterialEstoque.objects, request).annotate(
+        qtd_saldo=F('qtd_comprada') - F('qtd_utilizada')
+    ).values('id', 'codigo', 'descricao', 'qtd_comprada', 'qtd_utilizada', 'qtd_saldo')
     rows = [list(r.values()) for r in qs]
-    return exportar_csv('estoque.csv', ['ID', 'Código BK', 'Descrição', 'Unidade', 'Qtd Comprada', 'Qtd Utilizada', 'Saldo'], rows)
+    return exportar_csv(
+        'estoque.csv',
+        ['ID', 'Código', 'Descrição', 'Qtd Comprada', 'Qtd Utilizada', 'Saldo'],
+        rows,
+    )

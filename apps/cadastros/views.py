@@ -3,7 +3,6 @@ from apps.core.tenant import tenant_get_or_404
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
-from apps.accounts.decorators import admin_required
 from apps.core.exportacao import exportar_csv
 from apps.core.audit import registrar as audit
 from .models import Cliente, Fornecedor, CentrosDeCusto
@@ -26,7 +25,7 @@ def _qs_empresa(qs, request):
 
 
 
-@admin_required
+@login_required
 def clientes(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -63,7 +62,7 @@ def clientes(request):
     return render(request, 'cadastros/clientes.html', {'clientes_json': json.dumps(qs, ensure_ascii=False)})
 
 
-@admin_required
+@login_required
 def fornecedores(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -100,7 +99,7 @@ def fornecedores(request):
     return render(request, 'cadastros/fornecedores.html', {'fornecedores_json': json.dumps(qs, ensure_ascii=False)})
 
 
-@admin_required
+@login_required
 def centros_custo(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -134,7 +133,7 @@ def centros_custo(request):
     return render(request, 'cadastros/centros_custo.html', {'centros_json': json.dumps(qs, ensure_ascii=False)})
 
 
-@admin_required
+@login_required
 def exportar_clientes(request):
     empresa = _empresa(request)
     qs = Cliente.objects.filter(empresa=empresa).values('id', 'nome', 'documento', 'email', 'telefone', 'ativo')
@@ -142,7 +141,7 @@ def exportar_clientes(request):
     return exportar_csv('clientes.csv', ['ID', 'Nome', 'Documento', 'E-mail', 'Telefone', 'Ativo'], rows)
 
 
-@admin_required
+@login_required
 def exportar_fornecedores(request):
     empresa = _empresa(request)
     qs = Fornecedor.objects.filter(empresa=empresa).values('id', 'nome', 'cnpj', 'email', 'telefone', 'ativo')

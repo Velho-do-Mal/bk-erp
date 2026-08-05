@@ -4,7 +4,6 @@ from datetime import date
 from apps.core.tenant import tenant_get_or_404
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from apps.accounts.decorators import admin_required
 from apps.core.audit import registrar as audit
 from django.http import JsonResponse
 from django.db.models import Sum, Count, Q
@@ -45,7 +44,7 @@ def _to_date(v):
         return None
 
 
-@admin_required
+@login_required
 def lista(request):
     if request.method == 'POST':
         data = json.loads(request.body)

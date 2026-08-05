@@ -12,7 +12,7 @@
 {% endblock %}
 
 {% block content %}
-<a href="{% url 'core:dashboard' %}" class="btn btn-secondary btn-sm" style="margin-bottom:16px;display:inline-flex;align-items:center;gap:6px;">← Voltar</a>
+<a href="{% url 'core:dashboard' %}" class="btn btn-secondary btn-sm btn-voltar">← Voltar</a>
 
 <!-- Filtros de Período -->
 <div class="bk-card" style="padding:12px 16px;margin-bottom:18px">
@@ -74,6 +74,29 @@
   <div class="kpi-card kpi-orange">
     <div class="kpi-label">A Pagar</div>
     <div class="kpi-value">{{ pendentes_pagar|moeda }}</div>
+  </div>
+</div>
+
+<!-- Projeção de Fluxo de Caixa (30/60/90 dias) -->
+<div class="bk-card" style="margin-bottom:18px">
+  <div class="bk-title" style="font-size:14px;margin:0 0 4px">🔮 Projeção de Caixa</div>
+  <div style="font-size:12px;color:#6b7280;margin-bottom:14px">
+    Saldo atual (realizado) somado ao que já está lançado como pendente, com vencimento dentro de cada janela.
+    Não inclui parcelas recorrentes futuras ainda não geradas.
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px">
+    {% for p in projecao_fluxo %}
+    <div class="kpi-card {% if p.saldo_projetado >= 0 %}kpi-blue{% else %}kpi-red{% endif %}">
+      <div class="kpi-label">Em {{ p.dias }} dias (até {{ p.data_limite }})</div>
+      <div class="kpi-value" style="color:{% if p.saldo_projetado >= 0 %}#1e40af{% else %}#ef4444{% endif %}">
+        {{ p.saldo_projetado|moeda }}
+      </div>
+      <div class="kpi-sub" style="margin-top:4px">
+        <span style="color:#16a34a">+{{ p.a_receber|moeda }}</span> a receber ·
+        <span style="color:#ef4444">-{{ p.a_pagar|moeda }}</span> a pagar
+      </div>
+    </div>
+    {% endfor %}
   </div>
 </div>
 

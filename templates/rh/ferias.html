@@ -36,6 +36,21 @@
   </div>
 </div>
 
+{% if ferias_vencidas %}
+<div class="card mb-4" style="border-color:#fca5a5">
+  <div class="card-body" style="background:#fef2f2">
+    <div class="fw-semibold mb-2" style="color:#b91c1c">
+      ⚠️ {{ ferias_vencidas|length }} colaborador{{ ferias_vencidas|length|pluralize }} com férias vencidas (Art. 137, CLT — risco de pagamento em dobro)
+    </div>
+    <ul class="mb-0" style="color:#7f1d1d;font-size:13px">
+      {% for fv in ferias_vencidas %}
+      <li>{{ fv.nome }} — vencida desde {{ fv.venceu_em }} ({{ fv.dias_vencido }} dia{{ fv.dias_vencido|pluralize }} de atraso)</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endif %}
+
 <!-- KPIs -->
 <div class="row g-3 mb-4">
   <div class="col-md-3 col-6">
@@ -78,10 +93,11 @@
     <form method="get" class="d-flex gap-2 flex-wrap align-items-center">
       <select name="status" class="form-select form-select-sm w-auto" onchange="this.form.submit()">
         <option value="">Todos os status</option>
-        <option value="agendado" {% if request.GET.status == 'agendado' %}selected{% endif %}>Agendado</option>
-        <option value="em_andamento" {% if request.GET.status == 'em_andamento' %}selected{% endif %}>Em andamento</option>
-        <option value="concluido" {% if request.GET.status == 'concluido' %}selected{% endif %}>Concluído</option>
-        <option value="cancelado" {% if request.GET.status == 'cancelado' %}selected{% endif %}>Cancelado</option>
+        <option value="agendada" {% if request.GET.status == 'agendada' %}selected{% endif %}>Agendada</option>
+        <option value="aprovada" {% if request.GET.status == 'aprovada' %}selected{% endif %}>Aprovada</option>
+        <option value="em_gozo" {% if request.GET.status == 'em_gozo' %}selected{% endif %}>Em Gozo</option>
+        <option value="concluida" {% if request.GET.status == 'concluida' %}selected{% endif %}>Concluída</option>
+        <option value="cancelada" {% if request.GET.status == 'cancelada' %}selected{% endif %}>Cancelada</option>
       </select>
       <input type="month" name="mes" class="form-control form-control-sm w-auto" value="{{ request.GET.mes }}" onchange="this.form.submit()">
       <input type="text" name="q" class="form-control form-control-sm" style="max-width:200px" placeholder="Colaborador…" value="{{ request.GET.q }}">
@@ -120,14 +136,16 @@
             <td>{{ f.data_fim|date:"d/m/Y" }}</td>
             <td class="text-center">{{ f.dias }}</td>
             <td class="text-center">
-              {% if f.status == 'agendado' %}
-                <span class="badge" style="background:#dbeafe;color:#1d4ed8">📅 Agendado</span>
-              {% elif f.status == 'em_andamento' %}
-                <span class="badge badge-warning">🏖️ Em andamento</span>
-              {% elif f.status == 'concluido' %}
-                <span class="badge badge-success">✅ Concluído</span>
+              {% if f.status == 'agendada' %}
+                <span class="badge" style="background:#dbeafe;color:#1d4ed8">📅 Agendada</span>
+              {% elif f.status == 'aprovada' %}
+                <span class="badge" style="background:#e0e7ff;color:#4338ca">👍 Aprovada</span>
+              {% elif f.status == 'em_gozo' %}
+                <span class="badge badge-warning">🏖️ Em Gozo</span>
+              {% elif f.status == 'concluida' %}
+                <span class="badge badge-success">✅ Concluída</span>
               {% else %}
-                <span class="badge badge-danger">❌ Cancelado</span>
+                <span class="badge badge-danger">❌ Cancelada</span>
               {% endif %}
             </td>
             <td class="text-muted small">{{ f.observacoes|default:"—"|truncatechars:40 }}</td>
@@ -194,10 +212,11 @@
             <div class="col-md-8">
               <label class="form-label fw-semibold">Status</label>
               <select name="status" id="status" class="form-select">
-                <option value="agendado">Agendado</option>
-                <option value="em_andamento">Em andamento</option>
-                <option value="concluido">Concluído</option>
-                <option value="cancelado">Cancelado</option>
+                <option value="agendada">Agendada</option>
+                <option value="aprovada">Aprovada</option>
+                <option value="em_gozo">Em Gozo</option>
+                <option value="concluida">Concluída</option>
+                <option value="cancelada">Cancelada</option>
               </select>
             </div>
             <div class="col-12">
@@ -248,7 +267,7 @@ function abrirModal() {
   document.getElementById('data_inicio').value = '';
   document.getElementById('data_fim').value = '';
   document.getElementById('dias').value = '';
-  document.getElementById('status').value = 'agendado';
+  document.getElementById('status').value = 'agendada';
   document.getElementById('observacoes').value = '';
   new bootstrap.Modal(document.getElementById('modalFerias')).show();
 }
