@@ -8,6 +8,7 @@ from apps.core.audit import registrar as audit
 from django.http import JsonResponse
 from django.db.models import Sum, Count, Q
 from .models import PedidoCompra, ItemPedidoCompra
+TIPO_ITEM_CHOICES = ItemPedidoCompra.TIPO_CHOICES
 from apps.cadastros.models import Fornecedor, CentrosDeCusto
 
 def _empresa(request):
@@ -89,6 +90,7 @@ def lista(request):
                 total += subtotal
                 ItemPedidoCompra.objects.create(
                     pedido=obj,
+                    tipo=it.get('tipo') or 'material',
                     descricao=it.get('descricao', ''),
                     codigo_material=it.get('codigo_material', ''),
                     unidade=it.get('unidade', ''),
@@ -104,24 +106,30 @@ def lista(request):
             _qs_empresa(PedidoCompra.objects, request).filter(id=data.get('id')).delete()
             return JsonResponse({'ok': True})
 
-        elif action == 'marcar_entregue':
-            # Muda status para entregue e lança itens no estoque
+        elif action in ('marcar_recebido', 'marcar_entregue'):
+            # INTERLIGAÇÃO ESTOQUE <-> COMPRAS
+            # "Entregue" é um status informativo de logística (fornecedor
+            # despachou/entregou no endereço). "Recebida" é a confirmação
+            # interna de recebimento e conferência — é esse o status que
+            # dispara a entrada automática no Estoque, para cada item já
+            # classificado por tipo (Material/Equipamento/Veículo/Software).
             po = tenant_get_or_404(PedidoCompra, request, pk=data.get('id'))
-            if po.status == 'entregue':
-                return JsonResponse({'ok': False, 'msg': 'Pedido já está marcado como Entregue.'})
-            
-            status_anterior = po.status
-            po.status = 'entregue'
-            po.data_entrega_real = date.today()
+            if po.status in ('recebida', 'encerrada'):
+                return JsonResponse({'ok': False, 'msg': 'Pedido já está marcado como Recebido.'})
+
+            po.status = 'recebida'
+            if not po.data_entrega_real:
+                po.data_entrega_real = date.today()
             po.save(update_fields=['status', 'data_entrega_real'])
-            
-            # Lança itens no estoque automaticamente
+
+            # Lança itens no estoque automaticamente, preservando o tipo
             from apps.estoque.models import MaterialEstoque
             criados = 0
             for item in po.itens.all():
                 mat = MaterialEstoque(
                     empresa=po.empresa,
                     codigo=item.codigo_material or f'PC{po.id}-{item.id}',
+                    tipo=item.tipo,
                     descricao=item.descricao,
                     fornecedor_id=po.fornecedor_id,
                     centro_custo_id=po.centro_custo_id,
@@ -134,10 +142,10 @@ def lista(request):
                 )
                 mat.save()
                 criados += 1
-            
+
             return JsonResponse({
                 'ok': True,
-                'msg': f'Pedido marcado como Entregue. {criados} item(ns) lançado(s) no Estoque.',
+                'msg': f'Pedido marcado como Recebido. {criados} item(ns) lançado(s) no Estoque.',
                 'criados': criados,
             })
 
@@ -187,6 +195,7 @@ def lista(request):
             'tem_financeiro': bool(p.transacao_financeiro_ref),
             'itens': [
                 {
+                    'tipo': it.tipo,
                     'descricao': it.descricao,
                     'codigo_material': it.codigo_material,
                     'unidade': it.unidade,
@@ -213,5 +222,6 @@ def lista(request):
         'total_valor': float(total_valor),
         'em_aberto': em_aberto,
         'canceladas': canceladas,
+        'tipos_item': TIPO_ITEM_CHOICES,
     }
     return render(request, 'compras/lista.html', ctx)

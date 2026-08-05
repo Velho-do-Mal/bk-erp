@@ -68,7 +68,7 @@
       </div>
       <div class="excel-grid-wrap">
         <table class="excel-grid" style="font-size:12px">
-          <thead><tr><th>Descrição</th><th>Código</th><th>Unid.</th><th>Qtd</th><th>Preço Unit.</th><th>Total</th><th style="width:40px"></th></tr></thead>
+          <thead><tr><th style="width:110px">Tipo</th><th>Descrição</th><th>Código</th><th>Unid.</th><th>Qtd</th><th>Preço Unit.</th><th>Total</th><th style="width:40px"></th></tr></thead>
           <tbody id="itens-tbody"></tbody>
         </table>
       </div>
@@ -80,7 +80,7 @@
     <div class="modal-footer">
       <button class="btn btn-danger btn-sm" id="btn-del" onclick="excluir()" style="display:none;margin-right:auto">🗑️ Excluir</button>
       <button class="btn-sm success" id="btn-fin" onclick="gerarFinanceiro()" style="display:none">💰 Gerar conta a pagar</button>
-      <button class="btn-sm warning" id="btn-entregue" onclick="marcarEntregue()" style="display:none">📦 Marcar como Entregue → Estoque</button>
+      <button class="btn-sm warning" id="btn-recebido" onclick="marcarRecebido()" style="display:none">✔️ Marcar como Recebido → Estoque</button>
       <button class="btn btn-secondary" onclick="fecharModal()">❌ Cancelar</button>
       <button class="btn btn-primary" onclick="salvar()">💾 Salvar</button>
     </div>
@@ -93,6 +93,7 @@
 const CSRF='{{ csrf_token }}';
 let dados={{ pedidos_json|safe }};
 let itens=[];
+const TIPOS_ITEM=[{% for v,l in tipos_item %}{v:'{{ v }}',l:'{{ l }}'},{% endfor %}];
 const STATUS_BADGE={aberta:'badge-blue',aprovacao:'badge-warning',aprovada:'badge-success',entregue:'badge-teal',recebida:'badge-teal',encerrada:'badge-secondary',cancelada:'badge-danger'};
 const STATUS_LABEL={aberta:'📋 Aberta',aprovacao:'⏳ Aprovação',aprovada:'✅ Aprovada',entregue:'📦 Entregue',recebida:'✔️ Recebida',encerrada:'🔒 Encerrada',cancelada:'❌ Cancelada'};
 function fmtDate(d){return d?d.substring(0,10):'—';}
@@ -116,14 +117,17 @@ function renderTabela(){
 }
 
 function addItem(it){
-  itens.push(it||{descricao:'',codigo_material:'',unidade:'un',quantidade:1,preco_unitario:0,preco_total:0});
+  itens.push(it||{tipo:'material',descricao:'',codigo_material:'',unidade:'un',quantidade:1,preco_unitario:0,preco_total:0});
   renderItens();
 }
 
 function renderItens(){
   const tb=document.getElementById('itens-tbody');
-  tb.innerHTML=itens.map(function(it,i){return `
+  tb.innerHTML=itens.map(function(it,i){
+    var opts=TIPOS_ITEM.map(function(t){return '<option value="'+t.v+'"'+(t.v===(it.tipo||'material')?' selected':'')+'>'+t.l+'</option>';}).join('');
+    return `
     <tr>
+      <td><select class="grid-input" style="min-width:100px" onchange="itens[${i}].tipo=this.value">${opts}</select></td>
       <td><input class="grid-input" style="min-width:160px" value="${it.descricao||''}" oninput="itens[${i}].descricao=this.value"></td>
       <td><input class="grid-input" style="width:80px" value="${it.codigo_material||''}" oninput="itens[${i}].codigo_material=this.value"></td>
       <td><input class="grid-input" style="width:55px" value="${it.unidade||'un'}" oninput="itens[${i}].unidade=this.value"></td>
@@ -162,9 +166,9 @@ function abrirModal(r){
   document.getElementById('modal-titulo').textContent=r?'✏️ Editar Pedido':'➕ Novo Pedido de Compra';
   document.getElementById('btn-del').style.display=r?'':'none';
   document.getElementById('btn-fin').style.display=(r&&!r.tem_financeiro)?'':'none';
-  // Botão "Marcar Entregue" só aparece para pedidos aprovados/abertos (não entregues ainda)
-  var podeEntregar=r&&r.status!='entregue'&&r.status!='encerrada'&&r.status!='cancelada';
-  document.getElementById('btn-entregue').style.display=podeEntregar?'':'none';
+  // Botão "Marcar Recebido" aparece enquanto o pedido ainda não foi recebido/encerrado/cancelado
+  var podeReceber=r&&r.status!='recebida'&&r.status!='encerrada'&&r.status!='cancelada';
+  document.getElementById('btn-recebido').style.display=podeReceber?'':'none';
   document.getElementById('modal').classList.add('open');
 }
 function editar(id){abrirModal(dados.find(function(r){return r.id===id;}));}
@@ -200,14 +204,14 @@ async function gerarFinanceiro(){
   if(d.ok)setTimeout(function(){location.reload();},900);
 }
 
-async function marcarEntregue(){
+async function marcarRecebido(){
   var id=document.getElementById('m-id').value;
   if(!id)return;
-  var ok=await bkConfirm('Marcar como ENTREGUE?\n\nTodos os itens deste pedido serão lançados automaticamente no Estoque com o Centro de Custos selecionado.','📦 Confirmar Entrega');
+  var ok=await bkConfirm('Marcar como RECEBIDO?\n\nTodos os itens deste pedido serão lançados automaticamente no Estoque (já classificados por Tipo) com o Centro de Custos selecionado.','✔️ Confirmar Recebimento');
   if(!ok)return;
-  var res=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({action:'marcar_entregue',id:id})});
+  var res=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({action:'marcar_recebido',id:id})});
   var d=await res.json();
-  bkToast(d.msg||(d.ok?'✅ Entregue!':'❌ Erro'),d.ok?'sucesso':'erro');
+  bkToast(d.msg||(d.ok?'✅ Recebido!':'❌ Erro'),d.ok?'sucesso':'erro');
   if(d.ok)setTimeout(function(){location.reload();},1200);
 }
 

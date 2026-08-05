@@ -61,6 +61,7 @@ def lista(request):
             except MaterialEstoque.DoesNotExist:
                 return JsonResponse({'ok': False, 'error': 'Registro não encontrado.'})
             obj.codigo = data.get('codigo', '').strip()
+            obj.tipo = data.get('tipo') or 'material'
             obj.descricao = descricao
             fid = data.get('fornecedor_id')
             obj.fornecedor_id = int(fid) if fid else None
@@ -103,6 +104,8 @@ def lista(request):
         materiais.append({
             'id': m.id,
             'codigo': m.codigo,
+            'tipo': m.tipo,
+            'tipo_label': m.get_tipo_display(),
             'descricao': m.descricao,
             'fornecedor_id': m.fornecedor_id,
             'fornecedor_nome': m.fornecedor.nome if m.fornecedor else '',
@@ -139,6 +142,7 @@ def lista(request):
         'total_itens': total_itens,
         'itens_criticos': itens_criticos,
         'itens_estoque_baixo': itens_estoque_baixo,
+        'tipos_material': MaterialEstoque.TIPO_CHOICES,
     }
     return render(request, 'estoque/lista.html', ctx)
 
@@ -149,10 +153,10 @@ def exportar_estoque(request):
     # (codigo_bk, unidade, qtd_saldo) e sempre lançava FieldError ao ser chamada.
     qs = _qs_empresa(MaterialEstoque.objects, request).annotate(
         qtd_saldo=F('qtd_comprada') - F('qtd_utilizada')
-    ).values('id', 'codigo', 'descricao', 'qtd_comprada', 'qtd_utilizada', 'qtd_saldo')
+    ).values('id', 'codigo', 'tipo', 'descricao', 'qtd_comprada', 'qtd_utilizada', 'qtd_saldo')
     rows = [list(r.values()) for r in qs]
     return exportar_csv(
         'estoque.csv',
-        ['ID', 'Código', 'Descrição', 'Qtd Comprada', 'Qtd Utilizada', 'Saldo'],
+        ['ID', 'Código', 'Tipo', 'Descrição', 'Qtd Comprada', 'Qtd Utilizada', 'Saldo'],
         rows,
     )

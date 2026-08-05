@@ -48,7 +48,16 @@ class PedidoCompra(models.Model):
 
 
 class ItemPedidoCompra(models.Model):
+    TIPO_CHOICES = [
+        ('material', '📦 Material'),
+        ('equipamento', '🔧 Equipamento'),
+        ('veiculo', '🚗 Veículo'),
+        ('software', '💻 Software'),
+        ('outro', '📁 Outro'),
+    ]
+
     pedido = models.ForeignKey(PedidoCompra, on_delete=models.CASCADE, related_name='itens')
+    tipo = models.CharField(max_length=15, choices=TIPO_CHOICES, default='material')
     descricao = models.CharField(max_length=300)
     codigo_material = models.CharField(max_length=100, blank=True)
     unidade = models.CharField(max_length=20, blank=True)

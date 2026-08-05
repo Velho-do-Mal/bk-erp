@@ -4,8 +4,17 @@ from apps.cadastros.models import Fornecedor, CentrosDeCusto
 
 
 class MaterialEstoque(models.Model):
+    TIPO_CHOICES = [
+        ('material', '📦 Material'),
+        ('equipamento', '🔧 Equipamento'),
+        ('veiculo', '🚗 Veículo'),
+        ('software', '💻 Software'),
+        ('outro', '📁 Outro'),
+    ]
+
     empresa = models.ForeignKey('saas.Empresa', on_delete=models.CASCADE, null=True, blank=True, related_name='+', verbose_name='Empresa', db_index=True)
     codigo = models.CharField(max_length=100)
+    tipo = models.CharField(max_length=15, choices=TIPO_CHOICES, default='material')
     descricao = models.CharField(max_length=300)
     fornecedor = models.ForeignKey(Fornecedor, on_delete=models.SET_NULL, null=True, blank=True)
     centro_custo = models.ForeignKey(
