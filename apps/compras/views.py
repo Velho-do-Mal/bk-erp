@@ -198,17 +198,18 @@ def lista(request):
             ],
         })
 
-    # KPIs
-    qs = PedidoCompra.objects
-    total_valor = qs.aggregate(s=Sum('valor_total'))['s'] or 0
-    em_aberto = qs.filter(status__in=['aberta', 'aprovacao', 'aprovada']).count()
-    canceladas = qs.filter(status='cancelada').count()
+    # KPIs — CORRIGIDO: usava PedidoCompra.objects sem filtro de empresa,
+    # vazando contagem/valor de pedidos de outras empresas no dashboard.
+    qs_kpi = _qs_empresa(PedidoCompra.objects, request)
+    total_valor = qs_kpi.aggregate(s=Sum('valor_total'))['s'] or 0
+    em_aberto = qs_kpi.filter(status__in=['aberta', 'aprovacao', 'aprovada']).count()
+    canceladas = qs_kpi.filter(status='cancelada').count()
 
     ctx = {
         'pedidos_json': json.dumps(pedidos_data),
         'fornecedores': list(_qs_empresa(Fornecedor.objects, request).filter(ativo=True).values('id', 'nome')),
         'centros_custo': list(_qs_empresa(CentrosDeCusto.objects, request).filter(ativo=True).values('id', 'nome')),
-        'total_pedidos': qs.count(),
+        'total_pedidos': qs_kpi.count(),
         'total_valor': float(total_valor),
         'em_aberto': em_aberto,
         'canceladas': canceladas,
