@@ -75,6 +75,10 @@
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:#374151;font-weight:400">
           <input type="checkbox" class="m-modulo" value="{{ chave }}" checked> {{ rotulo }}
         </label>
+        {% empty %}
+        <p style="grid-column:1/-1;font-size:12px;color:#6b7280;margin:0">
+          Nenhum módulo contratado para o plano da sua empresa. Fale com o suporte para liberar módulos.
+        </p>
         {% endfor %}
       </div>
     </div>

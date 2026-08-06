@@ -11,6 +11,17 @@ from apps.core.modulos import MODULOS, MODULOS_KEYS
 def usuarios(request):
     empresa = getattr(request, 'empresa', None)
 
+    # Só é possível marcar, para um usuário "cliente", módulos que a
+    # EMPRESA contratou (Empresa.modulos_contratados) — evita que o admin
+    # da empresa libere pra um funcionário um módulo que ela não comprou.
+    # Superadmin (empresa=None) continua vendo/podendo marcar todos.
+    if empresa is not None:
+        contratados = set(empresa.modulos_contratados or [])
+        modulos_disponiveis = [(c, r) for c, r in MODULOS if c in contratados]
+    else:
+        modulos_disponiveis = MODULOS
+    chaves_disponiveis = {c for c, _ in modulos_disponiveis}
+
     if request.method == 'POST':
         data  = json.loads(request.body)
         action = data.get('action')
@@ -25,8 +36,11 @@ def usuarios(request):
             uid     = data.get('id')
             modulos_raw = data.get('modulos_permitidos') or []
             # Só valida/salva módulos para perfil 'cliente' — admin/superadmin
-            # sempre têm acesso total e não usam essa lista.
-            modulos = [m for m in modulos_raw if m in MODULOS_KEYS] if perfil == 'cliente' else []
+            # sempre têm acesso total (dentro do que a empresa contratou) e
+            # não usam essa lista. Além de ser uma chave de módulo válida,
+            # também precisa estar entre os módulos que a EMPRESA contratou
+            # (chaves_disponiveis) — trava tanto na tela quanto na API.
+            modulos = [m for m in modulos_raw if m in MODULOS_KEYS and m in chaves_disponiveis] if perfil == 'cliente' else []
 
             if not nome:     return JsonResponse({'ok': False, 'error': 'Nome é obrigatório.'})
             if not username: return JsonResponse({'ok': False, 'error': 'Usuário é obrigatório.'})
@@ -97,4 +111,4 @@ def usuarios(request):
             'restante': (limite - total) if limite > 0 else None,
         }
 
-    return render(request, 'accounts/usuarios.html', {'plano_info': plano_info, 'modulos': MODULOS})
+    return render(request, 'accounts/usuarios.html', {'plano_info': plano_info, 'modulos': modulos_disponiveis})

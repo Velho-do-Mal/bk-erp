@@ -39,8 +39,23 @@ class User(AbstractUser):
     def tem_modulo(self, chave):
         """
         True se o usuário pode acessar o módulo `chave`.
-        Administradores sempre têm acesso a todos os módulos.
+
+        Ordem de checagem (do mais amplo pro mais restrito):
+        1. Superadmin da plataforma (perfil='superadmin' ou is_superuser):
+           acesso total, cruza empresas — é quem vende/administra o SaaS.
+        2. O módulo precisa estar CONTRATADO pela empresa
+           (Empresa.modulos_contratados). Isso vale até para o admin da
+           própria empresa: se a empresa não comprou o módulo, ninguém
+           dela o acessa — a licença é da empresa, não do usuário.
+        3. Dentro do que a empresa contratou: administradores da empresa
+           têm acesso a tudo; usuários "cliente" só ao que estiver
+           marcado em modulos_permitidos.
         """
+        if self.is_superadmin:
+            return True
+        empresa = self.empresa
+        if empresa is not None and not empresa.tem_modulo(chave):
+            return False
         if self.is_admin_erp:
             return True
         return chave in (self.modulos_permitidos or [])

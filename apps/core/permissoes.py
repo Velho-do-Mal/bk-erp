@@ -10,9 +10,11 @@ class ModulosPermissionMiddleware:
     lateral (templates/base.html), que sozinha não impede o acesso via
     link direto/favorito.
 
-    Administradores (is_admin_erp) nunca são bloqueados. Usuários não
-    autenticados também não são afetados aqui (o @login_required de
-    cada view continua sendo a primeira barreira).
+    Apenas o superadmin da plataforma (is_superadmin) nunca é bloqueado
+    aqui — administradores de empresa continuam sujeitos ao que a
+    empresa contratou (ver User.tem_modulo). Usuários não autenticados
+    também não são afetados aqui (o @login_required de cada view
+    continua sendo a primeira barreira).
     """
 
     def __init__(self, get_response):
@@ -21,7 +23,7 @@ class ModulosPermissionMiddleware:
     def __call__(self, request):
         user = getattr(request, 'user', None)
 
-        if user is not None and user.is_authenticated and not user.is_admin_erp:
+        if user is not None and user.is_authenticated and not user.is_superadmin:
             primeiro_segmento = request.path.strip('/').split('/', 1)[0]
             modulo = PREFIXO_URL_POR_MODULO.get(primeiro_segmento)
 

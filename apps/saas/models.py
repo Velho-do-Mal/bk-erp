@@ -1,6 +1,18 @@
 from django.db import models
 
 
+def _todos_modulos():
+    """
+    Default de `Empresa.modulos_contratados`: empresas criadas sem passar
+    por um fluxo que defina explicitamente os módulos (ex: script, seed,
+    Django Admin sem tocar no campo) recebem acesso total — evita bloquear
+    por acidente uma empresa já em produção. Restringir é um ato deliberado
+    (Django Admin ou o fluxo de cadastro), nunca um efeito colateral.
+    """
+    from apps.core.modulos import MODULOS_KEYS
+    return list(MODULOS_KEYS)
+
+
 class Plano(models.Model):
     NOME_CHOICES = [
         ('free',       'Free'),
@@ -33,6 +45,16 @@ class Empresa(models.Model):
     logo          = models.ImageField(upload_to='logos/', blank=True, null=True)
     plano         = models.ForeignKey(Plano, on_delete=models.PROTECT, null=True, blank=True, related_name='empresas')
     ativa         = models.BooleanField(default=True)
+    modulos_contratados = models.JSONField(
+        default=_todos_modulos,
+        blank=True,
+        verbose_name='Módulos Contratados',
+        help_text=(
+            'Módulos do sistema que esta empresa contratou. Vale para TODOS os '
+            'usuários dela, inclusive administradores — se um módulo não está '
+            'aqui, ninguém da empresa o acessa. Editável no cadastro da Empresa.'
+        ),
+    )
     criada_em     = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -42,6 +64,10 @@ class Empresa(models.Model):
 
     def __str__(self):
         return self.nome
+
+    def tem_modulo(self, chave):
+        """True se a empresa contratou o módulo `chave`."""
+        return chave in (self.modulos_contratados or [])
 
     @property
     def inadimplente(self):

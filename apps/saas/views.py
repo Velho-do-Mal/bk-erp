@@ -1,5 +1,6 @@
 import json
 from django_ratelimit.decorators import ratelimit
+from django.conf import settings
 from django.shortcuts import render, redirect
 from django.contrib.auth import login
 from django.contrib import messages
@@ -43,10 +44,17 @@ def cadastro(request):
             return render(request, 'saas/cadastro.html', {
                 'planos': planos, 'erros': erros,
                 'dados': request.POST,
+                'trial_dias': settings.TRIAL_DIAS,
             })
 
         plano = Plano.objects.filter(id=plano_id).first() or Plano.objects.filter(nome='free').first()
 
+        # Empresa nasce com modulos_contratados no default (todos os módulos —
+        # ver apps/saas/models.py) para que o trial seja de acesso completo: é
+        # a prática recomendada para maximizar conversão (o cliente avalia o
+        # produto inteiro, não uma versão capada). Restringir módulos por
+        # contrato é feito depois, manualmente, via Django Admin — para venda
+        # negociada/direta, não durante o autocadastro.
         empresa = Empresa.objects.create(
             nome=nome_empresa, cnpj=cnpj, email=email,
             telefone=telefone, plano=plano, ativa=True,
@@ -56,7 +64,7 @@ def cadastro(request):
             empresa=empresa, plano=plano,
             status='trial',
             inicio=hoje,
-            vencimento=hoje + datetime.timedelta(days=30),
+            vencimento=hoje + datetime.timedelta(days=settings.TRIAL_DIAS),
         )
 
         user = User.objects.create_user(
@@ -70,10 +78,13 @@ def cadastro(request):
         user.save()
 
         login(request, user)
-        messages.success(request, f'Bem-vindo à {nome_empresa}! Seu trial de 30 dias começou.')
+        messages.success(request, f'Bem-vindo à {nome_empresa}! Seu trial de {settings.TRIAL_DIAS} dias começou.')
         return redirect('core:dashboard')
 
-    return render(request, 'saas/cadastro.html', {'planos': planos, 'bloqueado': bloqueado})
+    return render(request, 'saas/cadastro.html', {
+        'planos': planos, 'bloqueado': bloqueado,
+        'trial_dias': settings.TRIAL_DIAS,
+    })
 
 
 def termos(request):

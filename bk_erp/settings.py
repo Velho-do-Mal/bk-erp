@@ -33,6 +33,10 @@ if not SECRET_KEY:
 
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
+# Duração do período de trial gratuito no autocadastro (/cadastro/).
+# Ajustável por variável de ambiente sem precisar de deploy de código.
+TRIAL_DIAS = int(os.environ.get('TRIAL_DIAS', '10'))
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
