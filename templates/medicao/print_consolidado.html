@@ -113,7 +113,7 @@
   <table>
     <thead>
       <tr>
-        <th style="width:25px">Item</th>
+        <th style="width:25px">Cód.</th>
         <th style="min-width:180px; text-align:left">Descrição do Item</th>
         <th style="width:90px">Valor Total Item</th>
         <th style="width:30px">Un</th>
@@ -131,7 +131,7 @@
     <tbody>
       {% for linha in linhas %}
       <tr>
-        <td class="td-center" style="color:#9ca3af">{{ forloop.counter }}</td>
+        <td class="td-center" style="color:#9ca3af">{{ linha.item.codigo }}</td>
         <td>{{ linha.item.descricao }}</td>
         <td class="td-num">{{ linha.valor_total|moeda }}</td>
         <td class="td-center">{{ linha.item.unidade }}</td>
