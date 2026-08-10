@@ -32,14 +32,21 @@
     .info-cell .value.blue { color: #003087; }
 
     /* Tabela consolidada */
-    .table-wrap { margin-top: 10px; overflow-x: auto; }
-    table { width: 100%; border-collapse: collapse; font-size: 9px; }
+    /* table-layout:fixed obriga a tabela a respeitar 100% da largura da
+       página impressa, sem estourar pra direita — mesmo com muitas
+       colunas de período. Sem isso, cabeçalhos longos com
+       white-space:nowrap forçavam a tabela mais larga que a folha, e o
+       navegador imprimia o excedente em folhas extras ao lado, em vez de
+       uma abaixo da outra. */
+    .table-wrap { margin-top: 10px; }
+    table { width: 100%; border-collapse: collapse; font-size: 9px; table-layout: fixed; }
     thead th {
       background: #003087; color: #fff; padding: 4px 5px;
-      text-align: center; border: 1px solid #003087; font-size: 9px; white-space: nowrap;
+      text-align: center; border: 1px solid #003087; font-size: 9px;
+      white-space: normal; word-wrap: break-word; overflow-wrap: break-word;
     }
     thead th.bm-col { background: #1d4ed8; }
-    tbody td { padding: 3px 5px; border: 1px solid #ccd; font-size: 9px; }
+    tbody td { padding: 3px 5px; border: 1px solid #ccd; font-size: 9px; word-wrap: break-word; overflow-wrap: break-word; }
     tbody tr:nth-child(even) td { background: #f4f7ff; }
     .td-right { text-align: right; }
     .td-center { text-align: center; }

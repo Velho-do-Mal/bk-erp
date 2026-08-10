@@ -32,13 +32,19 @@
     .info-cell .value.blue { color: #003087; }
 
     /* Tabela de medição */
+    /* table-layout:fixed obriga a tabela a respeitar 100% da largura da
+       página impressa, sem estourar pra direita. Sem isso, cabeçalhos
+       longos com white-space:nowrap (ex: "Valor Medido Período") forçavam
+       a tabela a ficar mais larga que a folha, e o navegador imprimia o
+       excedente em folhas extras ao lado — em vez de uma abaixo da outra. */
     .table-wrap { margin-top: 12px; }
-    table { width: 100%; border-collapse: collapse; font-size: 10px; }
+    table { width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; }
     thead th {
       background: #003087; color: #fff; padding: 5px 6px;
-      text-align: center; border: 1px solid #003087; font-size: 10px; white-space: nowrap;
+      text-align: center; border: 1px solid #003087; font-size: 10px;
+      white-space: normal; word-wrap: break-word; overflow-wrap: break-word;
     }
-    tbody td { padding: 4px 6px; border: 1px solid #ccd; font-size: 10px; }
+    tbody td { padding: 4px 6px; border: 1px solid #ccd; font-size: 10px; word-wrap: break-word; overflow-wrap: break-word; }
     tbody tr:nth-child(even) td { background: #f4f7ff; }
     .td-right { text-align: right; }
     .td-center { text-align: center; }
