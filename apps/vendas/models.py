@@ -75,7 +75,7 @@ class Proposta(models.Model):
         if self.cliente:
             return self.cliente.nome
         if self.lead:
-            return self.lead.empresa or self.lead.nome
+            return self.lead.empresa_nome or self.lead.nome
         return ''
 
     def get_cliente_tipo(self):
@@ -114,21 +114,41 @@ class ItemProposta(models.Model):
 
 
 class Lead(models.Model):
+    # CORRIGIDO: existiam DOIS campos chamados "empresa" nesta classe — o
+    # ForeignKey de isolamento por tenant (linha abaixo) e um CharField com
+    # a razão social do prospect. Em Python, a segunda atribuição sobrescrevia
+    # a primeira no namespace da classe, então o ForeignKey NUNCA existiu de
+    # fato no model — Lead não tinha isolamento por empresa (tenant), e
+    # _qs_empresa(Lead.objects, request) comparava a razão social do prospect
+    # com o nome do seu próprio tenant (praticamente nunca batia). Além disso,
+    # ao criar um lead novo, a razão social digitada era sobrescrita pelo
+    # objeto Empresa do tenant. Renomeado para `empresa_nome` para eliminar
+    # a colisão — agora o FK `empresa` funciona corretamente.
     empresa = models.ForeignKey('saas.Empresa', on_delete=models.CASCADE, null=True, blank=True, related_name='+', verbose_name='Empresa', db_index=True)
+
+    # CORRIGIDO: havia 3 definições divergentes de estágio (model, migration
+    # e template/JS usavam listas diferentes). Unificado com o que a tela já
+    # usa de fato (inclui negociação e fechamento ganho/perdido — necessário
+    # para medir taxa de conversão do funil).
     ESTAGIO_CHOICES = [
-        ('oportunidade', 'Oportunidade'),
         ('prospeccao', 'Prospecção'),
         ('qualificacao', 'Qualificação'),
         ('proposta', 'Proposta Enviada'),
+        ('negociacao', 'Negociação'),
+        ('fechado_ganho', 'Fechado Ganho'),
+        ('fechado_perdido', 'Fechado Perdido'),
     ]
     nome = models.CharField(max_length=200)
-    empresa = models.CharField(max_length=200, blank=True)
+    empresa_nome = models.CharField('Empresa (razão social do prospect)', max_length=200, blank=True)
     contato = models.CharField(max_length=200, blank=True)
     email = models.EmailField(blank=True)
     estagio = models.CharField(max_length=20, choices=ESTAGIO_CHOICES, default='prospeccao')
     valor_estimado = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     observacoes = models.TextField(blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)
+    # Usado pelo lembrete automático de "leads sem contato há N dias" —
+    # qualquer edição no lead reseta a contagem (ver enviar_alertas).
+    atualizado_em = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = 'Lead'

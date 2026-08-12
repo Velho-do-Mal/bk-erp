@@ -7,9 +7,17 @@ Alertas disparados:
   1. Contas a vencer amanhã (financeiro)
   2. Projetos com data de conclusão amanhã (prazo)
   3. Documentos de controle com data_conclusao amanhã
-  4. Propostas enviadas há 5 dias sem resposta
+  4. Propostas sem movimentação há N dias (settings.DIAS_LEMBRAR_PROPOSTA)
   5. Pedidos de compra com data_entrega_prevista amanhã
   6. Documentos (GED) com data_validade amanhã
+  7. Leads sem contato há N dias (settings.DIAS_LEMBRAR_LEAD) — "ligar hoje"
+
+Observação sobre os itens 4 e 7: usam `atualizado_em` (data da última
+edição do registro) em vez de comparar com uma data exata — assim o
+alerta se repete TODO dia enquanto o lead/proposta ficar parado, e some
+automaticamente no dia seguinte a qualquer edição (mudar estágio/status,
+registrar uma observação, etc.), sem precisar de um campo extra de
+"último lembrete enviado".
 
 Uso:
   python manage.py enviar_alertas
@@ -106,7 +114,8 @@ class Command(BaseCommand):
         dry_run = options['dry_run']
         hoje = date.today()
         amanha = hoje + timedelta(days=1)
-        ha_5_dias = hoje - timedelta(days=5)
+        limite_proposta = hoje - timedelta(days=settings.DIAS_LEMBRAR_PROPOSTA)
+        limite_lead = hoje - timedelta(days=settings.DIAS_LEMBRAR_LEAD)
 
         self.stdout.write(f'=== enviar_alertas — {hoje} ===')
         if dry_run:
@@ -218,33 +227,42 @@ class Command(BaseCommand):
             except Exception as e:
                 self.stdout.write(f'  ✗ Docs de controle: erro — {e}')
 
-            # ── 4. PROPOSTAS SEM RESPOSTA HÁ 5 DIAS ───────────────────────
+            # ── 4. PROPOSTAS SEM MOVIMENTAÇÃO HÁ N DIAS ───────────────────
+            # CORRIGIDO: bloco original usava data_envio/numero/status
+            # 'em_negociacao' — nenhum desses existe no model Proposta
+            # (são data_emissao, codigo, e o status certo é 'negociacao'),
+            # então esse alerta sempre falhava silenciosamente (capturado
+            # pelo except abaixo) e nunca disparou um e-mail de verdade.
             try:
                 from apps.vendas.models import Proposta
-                propostas = list(Proposta.objects.filter(
-                    empresa=empresa,
-                    data_envio=ha_5_dias,
-                    status__in=['enviada', 'em_negociacao'],
-                ).values('numero', 'cliente__nome', 'valor_total', 'data_envio', 'status'))
+                propostas = list(
+                    Proposta.objects.filter(
+                        empresa=empresa,
+                        status__in=['enviada', 'negociacao'],
+                        atualizado_em__date__lte=limite_proposta,
+                    ).select_related('cliente', 'lead')
+                )
 
                 if propostas:
                     itens = [{
-                        'numero': p['numero'] or '—',
-                        'cliente': p['cliente__nome'] or '—',
-                        'valor': f"R$ {float(p['valor_total'] or 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
-                        'enviada': p['data_envio'].strftime('%d/%m/%Y') if p['data_envio'] else '—',
+                        'codigo': p.codigo or '—',
+                        'cliente': p.get_cliente_nome() or '—',
+                        'valor': f"R$ {float(p.valor_total or 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+                        'status': p.get_status_display(),
+                        'sem_mov': (hoje - p.atualizado_em.date()).days,
                     } for p in propostas]
 
                     tabela = _html_lista(itens, [
-                        ('numero', 'Nº Proposta'), ('cliente', 'Cliente'),
-                        ('valor', 'Valor'), ('enviada', 'Enviada em'),
+                        ('codigo', 'Nº Proposta'), ('cliente', 'Cliente'),
+                        ('valor', 'Valor'), ('status', 'Status'),
+                        ('sem_mov', 'Dias sem movimentação'),
                     ])
                     corpo_html = HTML_BASE.format(
-                        titulo='Propostas Sem Resposta (5 dias)',
-                        corpo=f'<p>As seguintes propostas foram enviadas há 5 dias e ainda não tiveram retorno:</p>{tabela}'
+                        titulo=f'Propostas Sem Movimentação ({settings.DIAS_LEMBRAR_PROPOSTA}+ dias)',
+                        corpo=f'<p>As seguintes propostas estão há {settings.DIAS_LEMBRAR_PROPOSTA} dias ou mais sem nenhuma atualização — hora de fazer contato com o cliente:</p>{tabela}'
                     )
-                    corpo_txt = f'Propostas sem resposta (enviadas em {ha_5_dias}): ' + ', '.join(p["numero"] or "—" for p in propostas)
-                    _enviar(f'💼 [{empresa.nome}] Propostas sem resposta há 5 dias ({len(propostas)})', corpo_txt, corpo_html, dest, dry_run)
+                    corpo_txt = 'Propostas sem movimentação: ' + ', '.join(p.codigo or '—' for p in propostas)
+                    _enviar(f'💼 [{empresa.nome}] Propostas sem movimentação ({len(propostas)})', corpo_txt, corpo_html, dest, dry_run)
                     total_emails += 1
                     self.stdout.write(f'  ✓ Propostas: {len(propostas)} alerta(s)')
             except Exception as e:
@@ -317,5 +335,43 @@ class Command(BaseCommand):
                     self.stdout.write(f'  ✓ Docs GED: {len(docs_ged)} alerta(s)')
             except Exception as e:
                 self.stdout.write(f'  ✗ Docs GED: erro — {e}')
+
+            # ── 7. LEADS SEM CONTATO HÁ N DIAS ("ligar hoje") ─────────────
+            try:
+                from apps.vendas.models import Lead
+                ESTAGIOS_ATIVOS = ['prospeccao', 'qualificacao', 'proposta', 'negociacao']
+                leads = list(
+                    Lead.objects.filter(
+                        empresa=empresa,
+                        estagio__in=ESTAGIOS_ATIVOS,
+                        atualizado_em__date__lte=limite_lead,
+                    )
+                )
+
+                if leads:
+                    itens = [{
+                        'nome': l.nome,
+                        'empresa_nome': l.empresa_nome or '—',
+                        'contato': l.contato or l.email or '—',
+                        'estagio': l.get_estagio_display(),
+                        'valor': f"R$ {float(l.valor_estimado or 0):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.'),
+                        'sem_contato': (hoje - l.atualizado_em.date()).days,
+                    } for l in leads]
+
+                    tabela = _html_lista(itens, [
+                        ('nome', 'Contato'), ('empresa_nome', 'Empresa'),
+                        ('contato', 'Telefone/E-mail'), ('estagio', 'Estágio'),
+                        ('valor', 'Valor Est.'), ('sem_contato', 'Dias sem contato'),
+                    ])
+                    corpo_html = HTML_BASE.format(
+                        titulo=f'Leads Para Ligar Hoje ({settings.DIAS_LEMBRAR_LEAD}+ dias sem contato)',
+                        corpo=f'<p>Os leads abaixo estão há {settings.DIAS_LEMBRAR_LEAD} dias ou mais sem nenhuma atualização — ligue hoje antes que fiquem frios:</p>{tabela}'
+                    )
+                    corpo_txt = 'Leads para ligar: ' + ', '.join(l.nome for l in leads)
+                    _enviar(f'📞 [{empresa.nome}] Leads para ligar hoje ({len(leads)})', corpo_txt, corpo_html, dest, dry_run)
+                    total_emails += 1
+                    self.stdout.write(f'  ✓ Leads: {len(leads)} alerta(s)')
+            except Exception as e:
+                self.stdout.write(f'  ✗ Leads: erro — {e}')
 
         self.stdout.write(f'\n=== Concluído — {total_emails} e-mail(s) enviado(s) ===')

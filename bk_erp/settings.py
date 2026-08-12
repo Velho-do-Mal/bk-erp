@@ -37,6 +37,13 @@ ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 # Ajustável por variável de ambiente sem precisar de deploy de código.
 TRIAL_DIAS = int(os.environ.get('TRIAL_DIAS', '10'))
 
+# Lembretes automáticos por e-mail (management command enviar_alertas,
+# executado diariamente pelo cron do Railway — ver railway.toml). Um lead
+# ou proposta "parado" pelo número de dias abaixo, sem nenhuma edição,
+# entra no e-mail do dia seguinte — editar o registro reseta a contagem.
+DIAS_LEMBRAR_LEAD = int(os.environ.get('DIAS_LEMBRAR_LEAD', '3'))
+DIAS_LEMBRAR_PROPOSTA = int(os.environ.get('DIAS_LEMBRAR_PROPOSTA', '5'))
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',

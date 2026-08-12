@@ -182,14 +182,16 @@ def lista(request):
             rid = data.get('id')
             obj = tenant_get_or_404(Lead, request, pk=int(rid)) if rid else Lead()
             obj.nome = data.get('nome', '').strip()
-            obj.empresa = data.get('empresa', '').strip()
+            # CORRIGIDO: campo renomeado para empresa_nome (era "empresa",
+            # colidia com o FK de tenant — ver apps/vendas/models.py). A
+            # chave do JSON continua "empresa" (compatível com o front-end).
+            obj.empresa_nome = data.get('empresa', '').strip()
             obj.contato = data.get('contato', '').strip()
             obj.email = data.get('email', '').strip()
             obj.estagio = data.get('estagio', 'prospeccao')
             obj.valor_estimado = _to_dec(data.get('valor_estimado', 0))
             obj.observacoes = data.get('observacoes', '').strip()
             if obj.pk is None and _empresa(request):
-
                 obj.empresa = _empresa(request)
 
             obj.save()
@@ -231,10 +233,15 @@ def lista(request):
     propostas_data = [_proposta_to_dict(p) for p in propostas]
 
     leads_data = list(_qs_empresa(Lead.objects, request).filter().values(
-        'id', 'nome', 'empresa', 'contato', 'email', 'estagio', 'valor_estimado', 'observacoes'
+        'id', 'nome', 'contato', 'email', 'estagio', 'valor_estimado', 'observacoes', 'empresa_nome'
     ))
     for l in leads_data:
         l['valor_estimado'] = float(l['valor_estimado'])
+        # Mantém a chave "empresa" no JSON (compat. com o front-end) — não dá
+        # pra usar .values(empresa=F('empresa_nome')) porque "empresa" agora
+        # também é um campo real do model (o FK de tenant), e o Django não
+        # permite anotação com o mesmo nome de um campo existente.
+        l['empresa'] = l.pop('empresa_nome')
 
     total_valor = _qs_empresa(Proposta.objects, request).aggregate(s=Sum('valor_total'))['s'] or 0
     aprovadas = _qs_empresa(Proposta.objects, request).filter(status='aprovada').count()
@@ -370,7 +377,9 @@ def proposta_detalhe(request, pk):
             })
 
     clientes = list(_qs_empresa(Cliente.objects, request).filter(ativo=True).values('id', 'nome'))
-    leads = list(_qs_empresa(Lead.objects, request).filter().values('id', 'nome', 'empresa'))
+    leads = list(_qs_empresa(Lead.objects, request).filter().values('id', 'nome', 'empresa_nome'))
+    for l in leads:
+        l['empresa'] = l.pop('empresa_nome')
     proposta_data = _proposta_to_dict(proposta)
 
     ctx = {
