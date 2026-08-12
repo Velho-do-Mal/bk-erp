@@ -12,6 +12,28 @@ from django.http import JsonResponse, HttpResponse
 from django.db.models import Sum, Q          # ← Q adicionado aqui (era só Sum)
 from .models import Conta, Categoria, Transacao, Orcamento
 from apps.cadastros.models import Cliente, Fornecedor, CentrosDeCusto
+from apps.rh.models import Colaborador
+
+
+def _split_favorecido(valor):
+    """
+    O combobox de favorecido no front-end envia um valor prefixado para
+    distinguir Fornecedor de Colaborador (mesmo <select>, duas origens):
+    "f-<id>" = fornecedor, "c-<id>" = colaborador, "" = nenhum.
+    Retorna (fornecedor_id, colaborador_id) — sempre um dos dois None.
+    """
+    if not valor:
+        return None, None
+    valor = str(valor)
+    if valor.startswith('f-'):
+        return int(valor[2:]), None
+    if valor.startswith('c-'):
+        return None, int(valor[2:])
+    # Compatibilidade com valor legado (só o id do fornecedor, sem prefixo).
+    try:
+        return int(valor), None
+    except (TypeError, ValueError):
+        return None, None
 
 def _empresa(request):
     """Retorna a empresa do usuário ou None para superadmin."""
@@ -190,8 +212,15 @@ def dashboard_financeiro(request):
         _qs_empresa(Transacao.objects, request)
         .filter(tipo='saida', status='pendente', data_vencimento__lt=hoje)
         .order_by('data_vencimento')
-        .values('id', 'descricao', 'valor', 'data_vencimento', 'categoria__nome', 'fornecedor__nome')[:50]
+        .values('id', 'descricao', 'valor', 'data_vencimento', 'categoria__nome',
+                 'fornecedor__nome', 'colaborador__nome')[:50]
     )
+    # O favorecido pode ser um Fornecedor OU um Colaborador — mantém a
+    # chave 'fornecedor__nome' (já usada pelo JS do dashboard) preenchida
+    # com quem estiver definido, para não duplicar a lógica no front-end.
+    for v in vencidas_pagar:
+        if not v.get('fornecedor__nome') and v.get('colaborador__nome'):
+            v['fornecedor__nome'] = v['colaborador__nome']
     total_vencidas_receber = sum(float(v['valor'] or 0) for v in vencidas_receber)
     total_vencidas_pagar   = sum(float(v['valor'] or 0) for v in vencidas_pagar)
 
@@ -280,8 +309,7 @@ def transacoes(request):
         obj.categoria_id = int(catid) if catid else None
         clid = request.POST.get('cliente_id')
         obj.cliente_id = int(clid) if clid else None
-        fid = request.POST.get('fornecedor_id')
-        obj.fornecedor_id = int(fid) if fid else None
+        obj.fornecedor_id, obj.colaborador_id = _split_favorecido(request.POST.get('favorecido'))
         ccid = request.POST.get('centro_custo_id')
         obj.centro_custo_id = int(ccid) if ccid else None
         obj.anexo_nome = f.name
@@ -317,8 +345,7 @@ def transacoes(request):
             obj.categoria_id = int(catid) if catid else None
             clid = data.get('cliente_id')
             obj.cliente_id = int(clid) if clid else None
-            fid = data.get('fornecedor_id')
-            obj.fornecedor_id = int(fid) if fid else None
+            obj.fornecedor_id, obj.colaborador_id = _split_favorecido(data.get('favorecido'))
             ccid = data.get('centro_custo_id')
             obj.centro_custo_id = int(ccid) if ccid else None
             is_new = not obj.pk
@@ -380,7 +407,7 @@ def transacoes(request):
     if sem_filtro_periodo:
         mes_f = mes_default
 
-    qs = Transacao.objects.select_related('conta', 'categoria', 'cliente', 'fornecedor', 'centro_custo')
+    qs = Transacao.objects.select_related('conta', 'categoria', 'cliente', 'fornecedor', 'colaborador', 'centro_custo')
 
     if tipo_f:
         qs = qs.filter(tipo=tipo_f)
@@ -406,16 +433,28 @@ def transacoes(request):
         'id', 'descricao', 'tipo', 'valor', 'status',
         'data_competencia', 'data_vencimento', 'data_pagamento',
         'conta__nome', 'categoria__nome', 'categoria__pai__nome', 'cliente__nome',
-        'fornecedor__nome', 'centro_custo__nome', 'referencia',
-        'conta_id', 'categoria_id', 'cliente_id', 'fornecedor_id', 'centro_custo_id',
+        'fornecedor__nome', 'colaborador__nome', 'centro_custo__nome', 'referencia',
+        'conta_id', 'categoria_id', 'cliente_id', 'fornecedor_id', 'colaborador_id', 'centro_custo_id',
         'observacoes', 'recorrencia', 'recorrencia_parcelas', 'recorrencia_grupo',
         'anexo_nome', 'anexo_tipo',
     ))
+    # Valor único do combobox de favorecido no front-end (ver
+    # _split_favorecido) — evita reimplementar a lógica f-/c- em JS.
+    for t in transacoes_list:
+        if t.get('fornecedor_id'):
+            t['favorecido'] = f"f-{t['fornecedor_id']}"
+        elif t.get('colaborador_id'):
+            t['favorecido'] = f"c-{t['colaborador_id']}"
+        else:
+            t['favorecido'] = ''
 
     contas = list(_qs_empresa(Conta.objects, request).filter(ativa=True).values('id', 'nome'))
     categorias = list(_qs_empresa(Categoria.objects, request).filter().values('id', 'nome', 'tipo', 'pai_id'))
     clientes = list(_qs_empresa(Cliente.objects, request).filter(ativo=True).values('id', 'nome'))
     fornecedores_list = list(_qs_empresa(Fornecedor.objects, request).filter(ativo=True).values('id', 'nome'))
+    # Colaboradores entram no mesmo combobox de favorecido que os
+    # fornecedores (pedido do usuário) — só os com status "ativo".
+    colaboradores_list = list(_qs_empresa(Colaborador.objects, request).filter(status='ativo').values('id', 'nome'))
     centros = list(_qs_empresa(CentrosDeCusto.objects, request).filter(ativo=True).values('id', 'nome'))
 
     ctx = {
@@ -424,6 +463,7 @@ def transacoes(request):
         'categorias_json': json.dumps(categorias),
         'clientes_json': json.dumps(clientes),
         'fornecedores_json': json.dumps(fornecedores_list),
+        'colaboradores_json': json.dumps(colaboradores_list),
         'centros_json': json.dumps(centros),
         'tipo_f': tipo_f,
         'status_f': status_f,
@@ -477,6 +517,7 @@ def _gerar_recorrencia(origem: Transacao):
             categoria_id=origem.categoria_id,
             cliente_id=origem.cliente_id,
             fornecedor_id=origem.fornecedor_id,
+            colaborador_id=origem.colaborador_id,
             centro_custo_id=origem.centro_custo_id,
             referencia=origem.referencia,
             observacoes=origem.observacoes,

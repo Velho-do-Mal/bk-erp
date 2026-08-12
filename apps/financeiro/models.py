@@ -65,6 +65,12 @@ class Transacao(models.Model):
     categoria = models.ForeignKey(Categoria, on_delete=models.SET_NULL, null=True, blank=True)
     cliente = models.ForeignKey(Cliente, on_delete=models.SET_NULL, null=True, blank=True)
     fornecedor = models.ForeignKey(Fornecedor, on_delete=models.SET_NULL, null=True, blank=True)
+    # Adicionado a pedido do usuário: no combobox de "favorecido" da
+    # transação, junto com Fornecedores também aparecem Colaboradores
+    # (ex.: reembolso, vale, adiantamento pago a um funcionário — não é
+    # um fornecedor externo). Mutuamente exclusivo com `fornecedor` (só
+    # um dos dois é preenchido por lançamento — ver apps/financeiro/views.py).
+    colaborador = models.ForeignKey('rh.Colaborador', on_delete=models.SET_NULL, null=True, blank=True, related_name='transacoes')
     centro_custo = models.ForeignKey(CentrosDeCusto, on_delete=models.SET_NULL, null=True, blank=True)
 
     referencia = models.CharField(max_length=100, blank=True)

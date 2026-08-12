@@ -140,8 +140,8 @@
           <select id="m-cli" name="cliente_id" class="form-control"><option value="">— Selecione —</option></select>
         </div>
         <div>
-          <label class="form-label">Fornecedor</label>
-          <select id="m-forn" name="fornecedor_id" class="form-control"><option value="">— Selecione —</option></select>
+          <label class="form-label">Fornecedor / Colaborador</label>
+          <select id="m-forn" name="favorecido" class="form-control"><option value="">— Selecione —</option></select>
         </div>
         <div>
           <label class="form-label">Centro de Custo</label>
@@ -202,6 +202,7 @@ const contas={{ contas_json|safe }};
 const categorias={{ categorias_json|safe }};
 const clientes={{ clientes_json|safe }};
 const fornecedores={{ fornecedores_json|safe }};
+const colaboradores={{ colaboradores_json|safe }};
 const centros={{ centros_json|safe }};
 const REC_LABEL={semanal:'🔁 Semanal',quinzenal:'🔁 Quinzenal',mensal:'🔁 Mensal',bimestral:'🔁 Bimestral',trimestral:'🔁 Trimestral',semestral:'🔁 Semestral',anual:'🔁 Anual'};
 
@@ -230,7 +231,17 @@ function populateSelects(){
   const sel=(id,list,vf='id',tf='nome')=>{const el=document.getElementById(id);const cur=el.value;el.innerHTML='<option value="">— Selecione —</option>'+list.map(r=>`<option value="${r[vf]}">${r[tf]}</option>`).join('');el.value=cur;};
   sel('m-conta',contas);
   sel('m-cat',categorias.filter(c=>!c.pai_id));
-  sel('m-cli',clientes);sel('m-forn',fornecedores);sel('m-cc',centros);
+  sel('m-cli',clientes);sel('m-cc',centros);
+  // Fornecedor + Colaborador no mesmo combobox (pedido do usuário) — valor
+  // prefixado "f-<id>"/"c-<id>" para o backend saber qual FK preencher
+  // (ver _split_favorecido em apps/financeiro/views.py).
+  const elForn=document.getElementById('m-forn');
+  const curForn=elForn.value;
+  let optsForn='<option value="">— Selecione —</option>';
+  if(fornecedores.length) optsForn+=`<optgroup label="Fornecedores">${fornecedores.map(f=>`<option value="f-${f.id}">${f.nome}</option>`).join('')}</optgroup>`;
+  if(colaboradores.length) optsForn+=`<optgroup label="Colaboradores">${colaboradores.map(c=>`<option value="c-${c.id}">${c.nome}</option>`).join('')}</optgroup>`;
+  elForn.innerHTML=optsForn;
+  elForn.value=curForn;
 }
 
 function filtrarSubcategoria(){
@@ -269,7 +280,7 @@ function abrirModal(r=null){
   if(catAtual&&catAtual.pai_id){document.getElementById('m-cat').value=parseInt(catAtual.pai_id);filtrarSubcategoria();document.getElementById('m-subcat').value=catAtual.id;}
   else{document.getElementById('m-cat').value=r?.categoria_id||'';filtrarSubcategoria();}
   document.getElementById('m-cli').value=r?.cliente_id||'';
-  document.getElementById('m-forn').value=r?.fornecedor_id||'';
+  document.getElementById('m-forn').value=r?.favorecido||'';
   document.getElementById('m-cc').value=r?.centro_custo_id||'';
   document.getElementById('m-ref').value=r?.referencia||'';
   document.getElementById('m-obs').value=r?.observacoes||'';
@@ -293,7 +304,7 @@ async function salvar(e){
     if(d.ok){bkToast('Transação salva!','sucesso');setTimeout(()=>location.reload(),900);}
     else bkToast(d.error||'Erro ao salvar','erro');
   } else {
-    const payload={action:'save',id:document.getElementById('m-id').value||null,descricao:document.getElementById('m-desc').value,tipo:document.getElementById('m-tipo').value,valor:(function(){const v=document.getElementById('m-valor').value.replace(/\./g,'').replace(',','.');return parseFloat(v)||0;})(),data_competencia:document.getElementById('m-data').value,data_vencimento:document.getElementById('m-venc').value||null,data_pagamento:document.getElementById('m-pago').value||null,status:document.getElementById('m-status').value,recorrencia:document.getElementById('m-rec').value,recorrencia_parcelas:parseInt(document.getElementById('m-parcelas')?.value||0),conta_id:document.getElementById('m-conta').value||null,categoria_id:(document.getElementById('m-subcat').value||document.getElementById('m-cat').value)||null,cliente_id:document.getElementById('m-cli').value||null,fornecedor_id:document.getElementById('m-forn').value||null,centro_custo_id:document.getElementById('m-cc').value||null,referencia:document.getElementById('m-ref').value,observacoes:document.getElementById('m-obs').value};
+    const payload={action:'save',id:document.getElementById('m-id').value||null,descricao:document.getElementById('m-desc').value,tipo:document.getElementById('m-tipo').value,valor:(function(){const v=document.getElementById('m-valor').value.replace(/\./g,'').replace(',','.');return parseFloat(v)||0;})(),data_competencia:document.getElementById('m-data').value,data_vencimento:document.getElementById('m-venc').value||null,data_pagamento:document.getElementById('m-pago').value||null,status:document.getElementById('m-status').value,recorrencia:document.getElementById('m-rec').value,recorrencia_parcelas:parseInt(document.getElementById('m-parcelas')?.value||0),conta_id:document.getElementById('m-conta').value||null,categoria_id:(document.getElementById('m-subcat').value||document.getElementById('m-cat').value)||null,cliente_id:document.getElementById('m-cli').value||null,favorecido:document.getElementById('m-forn').value||null,centro_custo_id:document.getElementById('m-cc').value||null,referencia:document.getElementById('m-ref').value,observacoes:document.getElementById('m-obs').value};
     const r=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify(payload)});
     const d=await r.json();
     if(d.ok){bkToast('Transação salva!','sucesso');setTimeout(()=>location.reload(),900);}
