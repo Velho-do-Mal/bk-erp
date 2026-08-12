@@ -157,6 +157,10 @@
   const PROPOSTA = {{ proposta_json|safe }};
   const CLIENTES = {{ clientes_json|safe }};
   const LEADS    = {{ leads_json|safe }};
+  // Catálogo do módulo Serviços/Produtos, usado pelos comboboxes de
+  // Material e Serviço na tabela de itens (ver addItemDoCatalogo abaixo).
+  const MATERIAIS = {{ materiais_json|safe }};
+  const SERVICOS_CATALOGO = {{ servicos_catalogo_json|safe }};
   const URL_SALVAR = "{% url 'vendas:proposta_detalhe' proposta.pk %}";
   const URL_WORD   = "{% url 'vendas:exportar_word' proposta.pk %}";
   const URL_LISTA  = "{% url 'vendas:lista' %}";
@@ -412,7 +416,23 @@
       </thead>
       <tbody id="itens-body"></tbody>
     </table>
-    <button class="btn-add-row" onclick="addItemRow()">+ Adicionar item</button>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;align-items:center;">
+      <div style="flex:1;min-width:220px;">
+        <label style="font-size:12px;font-weight:600;color:#6b7280;display:block;margin-bottom:3px;">📦 Adicionar material do catálogo</label>
+        <select id="combo-material" onchange="addItemDoCatalogo('material')" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;">
+          <option value="">Selecione um material...</option>
+        </select>
+      </div>
+      <div style="flex:1;min-width:220px;">
+        <label style="font-size:12px;font-weight:600;color:#6b7280;display:block;margin-bottom:3px;">🛠️ Adicionar serviço do catálogo</label>
+        <select id="combo-servico" onchange="addItemDoCatalogo('servico')" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;">
+          <option value="">Selecione um serviço...</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="btn-add-row" onclick="addItemRow()">+ Adicionar item manual</button>
 
     <div style="text-align:right;margin-top:12px;font-size:15px;font-weight:700;color:#1e40af;">
       TOTAL: R$ <span id="itens-total">0,00</span>
@@ -458,6 +478,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderCd();
   renderPerc();
   renderItens();
+  popularCombosCatalogo();
   // Inicializa campo markup
   const mkEl = document.getElementById('input-markup');
   if (mkEl) mkEl.value = dadosOrcamento.markup_percentual || 10;
@@ -810,6 +831,47 @@ function renderItens() {
 function addItemRow() {
   itens.push({descricao:'',unidade:'',quantidade:1,preco_unitario:0,preco_total:0});
   renderItens();
+}
+
+// ─── Comboboxes de Material/Serviço (catálogo de Serviços/Produtos) ───────────
+// Preenche descrição/unidade/preço automaticamente ao escolher um item do
+// catálogo — os valores continuam 100% editáveis na tabela depois (mesmo
+// input de sempre). Também é possível continuar adicionando itens 100%
+// manuais pelo botão "+ Adicionar item manual".
+function popularCombosCatalogo() {
+  const selMat = document.getElementById('combo-material');
+  const selSrv = document.getElementById('combo-servico');
+  MATERIAIS.forEach(p => {
+    const op = document.createElement('option');
+    op.value = p.id;
+    op.textContent = p.codigo ? `[${p.codigo}] ${p.nome}` : p.nome;
+    selMat.appendChild(op);
+  });
+  SERVICOS_CATALOGO.forEach(s => {
+    const op = document.createElement('option');
+    op.value = s.id;
+    op.textContent = s.codigo ? `[${s.codigo}] ${s.nome}` : s.nome;
+    selSrv.appendChild(op);
+  });
+}
+
+function addItemDoCatalogo(tipo) {
+  const selectId = tipo === 'material' ? 'combo-material' : 'combo-servico';
+  const catalogo  = tipo === 'material' ? MATERIAIS : SERVICOS_CATALOGO;
+  const select = document.getElementById(selectId);
+  const id = select.value;
+  if (!id) return;
+  const item = catalogo.find(x => String(x.id) === String(id));
+  if (!item) return;
+  itens.push({
+    descricao: item.nome,
+    unidade: item.unidade || 'un',
+    quantidade: 1,
+    preco_unitario: item.preco_unitario || 0,
+    preco_total: item.preco_unitario || 0,
+  });
+  renderItens();
+  select.value = '';
 }
 
 function updateItem(i, campo, val) {

@@ -6,10 +6,12 @@
 {% block page_sub %}Propostas e CRM{% endblock %}
 
 {% block topbar_actions %}
-{# Botão agora leva para página dedicada — sem modal #}
-{# CORRIGIDO: .btn puro não define cor (só .btn-primary/.btn-secondary etc.
-   definem), então o texto herdava a cor escura padrão do body sobre o
-   topbar escuro — quase ilegível. #}
+{% comment %}
+Botão agora leva para página dedicada — sem modal.
+CORRIGIDO: .btn puro não define cor (só .btn-primary/.btn-secondary etc.
+definem), então o texto herdava a cor escura padrão do body sobre o
+topbar escuro — quase ilegível.
+{% endcomment %}
 <a href="{% url 'vendas:proposta_nova' %}" class="btn btn-primary">
   + Nova Proposta
 </a>

@@ -15,7 +15,8 @@ urlpatterns = [
     path('', include('apps.compras.urls')),
     path('', include('apps.vendas.urls')),
     path('', include('apps.servicos.urls')),
-    path('', include('apps.orcamento.urls')),
+    # apps.orcamento removido a pedido do usuário (redundante com Vendas) —
+    # ver bk_erp/settings.py.
     path('', include('apps.medicao.urls')),
     path('', include('apps.saas.urls', namespace='saas')),
     path('', include('apps.rh.urls', namespace='rh')),

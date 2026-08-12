@@ -392,9 +392,28 @@ def proposta_detalhe(request, pk):
         l['empresa'] = l.pop('empresa_nome')
     proposta_data = _proposta_to_dict(proposta)
 
+    # Comboboxes de Material/Serviço nos itens da proposta — fonte é o
+    # cadastro de Produto/Serviço (mesmo model que alimentava o extinto
+    # módulo Orçamento). Selecionar um item preenche descrição/unidade/
+    # preço automaticamente; os valores continuam editáveis depois.
+    try:
+        from apps.servicos.models import ProdutoServico
+        materiais = list(_qs_empresa(ProdutoServico.objects, request).filter(
+            ativo=True, tipo__in=['produto', 'ambos']
+        ).order_by('nome').values('id', 'codigo', 'nome', 'unidade', 'preco_unitario'))
+        servicos_catalogo = list(_qs_empresa(ProdutoServico.objects, request).filter(
+            ativo=True, tipo__in=['servico', 'ambos']
+        ).order_by('nome').values('id', 'codigo', 'nome', 'unidade', 'preco_unitario'))
+        for it in materiais + servicos_catalogo:
+            it['preco_unitario'] = float(it['preco_unitario'])
+    except Exception:
+        materiais, servicos_catalogo = [], []
+
     ctx = {
         'proposta': proposta,
         'proposta_json': json.dumps(proposta_data),
+        'materiais_json': json.dumps(materiais),
+        'servicos_catalogo_json': json.dumps(servicos_catalogo),
         'clientes_json': json.dumps(clientes),
         'leads_json': json.dumps(leads),
         'status_choices': Proposta.STATUS_CHOICES,

@@ -61,6 +61,17 @@ INSTALLED_APPS = [
     'apps.compras',
     'apps.vendas',
     'apps.servicos',
+    # NÃO REMOVER 'apps.orcamento' daqui, mesmo que o módulo tenha sido
+    # descontinuado (redundante com Vendas, a pedido do usuário) — a
+    # migration apps/saas/migrations/0003_associar_dados_bk.py depende
+    # explicitamente de 'orcamento' no grafo de migrations. Removê-lo do
+    # INSTALLED_APPS quebra "manage.py migrate" para o projeto INTEIRO
+    # (NodeNotFoundError), o que quebraria o deploy automático no Railway.
+    # O módulo foi desativado para o usuário final removendo suas rotas
+    # (bk_erp/urls.py) e sua entrada no menu/permissões
+    # (apps/core/modulos.py, templates/base.html) — as URLs /orcamento/...
+    # agora retornam 404 e o módulo não aparece em nenhum menu, mas o
+    # app continua registrado para não corromper o histórico de migrations.
     'apps.orcamento',
     'apps.medicao',
     'django.contrib.humanize',
