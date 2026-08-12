@@ -189,13 +189,21 @@ def lista(request):
             obj.contato = data.get('contato', '').strip()
             obj.email = data.get('email', '').strip()
             obj.estagio = data.get('estagio', 'prospeccao')
+            obj.temperatura = data.get('temperatura', 'medio')
             obj.valor_estimado = _to_dec(data.get('valor_estimado', 0))
             obj.observacoes = data.get('observacoes', '').strip()
             if obj.pk is None and _empresa(request):
                 obj.empresa = _empresa(request)
 
             obj.save()
-            return JsonResponse({'ok': True, 'id': obj.id})
+            # Quando o estágio chega a "fechamento", Lead.save() converte o
+            # lead em Cliente automaticamente — avisa o usuário que isso
+            # aconteceu (ver apps/vendas/models.py).
+            msg = 'Lead salvo!'
+            cliente_convertido = getattr(obj, 'cliente_convertido', None)
+            if cliente_convertido:
+                msg = f'Lead salvo e convertido automaticamente em cliente: "{cliente_convertido.nome}".'
+            return JsonResponse({'ok': True, 'id': obj.id, 'msg': msg})
 
         elif action == 'delete_lead':
             _qs_empresa(Lead.objects, request).filter(id=data.get('id')).delete()
@@ -233,7 +241,7 @@ def lista(request):
     propostas_data = [_proposta_to_dict(p) for p in propostas]
 
     leads_data = list(_qs_empresa(Lead.objects, request).filter().values(
-        'id', 'nome', 'contato', 'email', 'estagio', 'valor_estimado', 'observacoes', 'empresa_nome'
+        'id', 'nome', 'contato', 'email', 'estagio', 'temperatura', 'valor_estimado', 'observacoes', 'empresa_nome'
     ))
     for l in leads_data:
         l['valor_estimado'] = float(l['valor_estimado'])
@@ -245,7 +253,9 @@ def lista(request):
 
     total_valor = _qs_empresa(Proposta.objects, request).aggregate(s=Sum('valor_total'))['s'] or 0
     aprovadas = _qs_empresa(Proposta.objects, request).filter(status='aprovada').count()
-    pipeline_valor = _qs_empresa(Lead.objects, request).filter(estagio__in=['qualificacao', 'proposta', 'negociacao']
+    # Funil revisado (3 estágios + perdido — ver migration 0005): pipeline
+    # em aberto é tudo que ainda não fechou nem foi perdido.
+    pipeline_valor = _qs_empresa(Lead.objects, request).filter(estagio__in=['prospeccao', 'proposta']
     ).aggregate(s=Sum('valor_estimado'))['s'] or 0
 
     ctx = {

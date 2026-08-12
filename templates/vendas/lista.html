@@ -196,15 +196,19 @@
       <select class="filter-select" id="filtro-estagio" onchange="renderLeads()">
         <option value="">Todos os estágios</option>
         <option value="prospeccao">Prospecção</option>
-        <option value="qualificacao">Qualificação</option>
         <option value="proposta">Proposta Enviada</option>
-        <option value="negociacao">Negociação</option>
-        <option value="fechado_ganho">Fechado Ganho</option>
-        <option value="fechado_perdido">Fechado Perdido</option>
+        <option value="fechamento">Fechamento (Ganho)</option>
+        <option value="perdido">Perdido</option>
+      </select>
+      <select class="filter-select" id="filtro-temperatura" onchange="renderLeads()">
+        <option value="">Toda temperatura</option>
+        <option value="quente">🔥 Quente</option>
+        <option value="medio">🟡 Médio</option>
+        <option value="frio">🧊 Frio</option>
       </select>
     </div>
     <a href="{% url 'vendas:exportar_propostas' %}" class="btn btn-secondary btn-sm" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;">📊 Exportar CSV</a>
-  <button class="btn" onclick="abrirModalLead()">+ Novo Lead</button>
+  <button class="btn btn-primary" onclick="abrirModalLead()">+ Novo Lead</button>
   </div>
 
   <div style="overflow-x:auto;background:#fff;border:1px solid #e5e7eb;border-radius:10px;">
@@ -216,6 +220,7 @@
           <th>Contato</th>
           <th>E-mail</th>
           <th>Estágio</th>
+          <th>Temperatura</th>
           <th style="text-align:right">Valor Est. (R$)</th>
           <th>Ações</th>
         </tr>
@@ -251,11 +256,17 @@
         <label>Estágio</label>
         <select id="lead-estagio">
           <option value="prospeccao">Prospecção</option>
-          <option value="qualificacao">Qualificação</option>
           <option value="proposta">Proposta Enviada</option>
-          <option value="negociacao">Negociação</option>
-          <option value="fechado_ganho">Fechado Ganho</option>
-          <option value="fechado_perdido">Fechado Perdido</option>
+          <option value="fechamento">Fechamento (Ganho)</option>
+          <option value="perdido">Perdido</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Temperatura</label>
+        <select id="lead-temperatura">
+          <option value="quente">🔥 Quente</option>
+          <option value="medio">🟡 Médio</option>
+          <option value="frio">🧊 Frio</option>
         </select>
       </div>
       <div class="form-group">
@@ -269,7 +280,7 @@
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="fecharModalLead()">Cancelar</button>
-      <button class="btn" onclick="salvarLead()">Salvar Lead</button>
+      <button class="btn btn-primary" onclick="salvarLead()">Salvar Lead</button>
     </div>
   </div>
 </div>
@@ -285,9 +296,14 @@ const STATUS_LABELS = {
   aprovada:'Aprovada', perdida:'Perdida', cancelada:'Cancelada'
 };
 const ESTAGIO_LABELS = {
-  prospeccao:'Prospecção', qualificacao:'Qualificação', proposta:'Proposta Enviada',
-  negociacao:'Negociação', fechado_ganho:'Fechado Ganho', fechado_perdido:'Fechado Perdido'
+  prospeccao:'Prospecção', proposta:'Proposta Enviada',
+  fechamento:'Fechamento (Ganho)', perdido:'Perdido'
 };
+const ESTAGIO_BADGE = {
+  prospeccao:'badge-gray', proposta:'badge-blue', fechamento:'badge-green', perdido:'badge-red'
+};
+const TEMPERATURA_LABELS = { quente:'🔥 Quente', medio:'🟡 Médio', frio:'🧊 Frio' };
+const TEMPERATURA_BADGE  = { quente:'badge-red', medio:'badge-orange', frio:'badge-blue' };
 
 // ─── Renderizar Propostas ─────────────────────────────────────────────────────
 function renderPropostas() {
@@ -335,16 +351,18 @@ function renderPropostas() {
 
 // ─── Renderizar Leads ─────────────────────────────────────────────────────────
 function renderLeads() {
-  const busca   = document.getElementById('busca-lead').value.toLowerCase();
-  const estagio = document.getElementById('filtro-estagio').value;
-  const tbody   = document.getElementById('tbody-leads');
+  const busca       = document.getElementById('busca-lead').value.toLowerCase();
+  const estagio     = document.getElementById('filtro-estagio').value;
+  const temperatura = document.getElementById('filtro-temperatura').value;
+  const tbody       = document.getElementById('tbody-leads');
 
   const filtrados = LEADS_DATA.filter(l => {
     const matchBusca = !busca ||
       (l.nome||'').toLowerCase().includes(busca) ||
       (l.empresa||'').toLowerCase().includes(busca);
     const matchEstagio = !estagio || l.estagio === estagio;
-    return matchBusca && matchEstagio;
+    const matchTemp = !temperatura || l.temperatura === temperatura;
+    return matchBusca && matchEstagio && matchTemp;
   });
 
   tbody.innerHTML = filtrados.map(l => `
@@ -353,7 +371,8 @@ function renderLeads() {
       <td>${esc(l.empresa) || '—'}</td>
       <td>${esc(l.contato) || '—'}</td>
       <td>${esc(l.email) || '—'}</td>
-      <td><span class="badge badge-enviada">${ESTAGIO_LABELS[l.estagio]||l.estagio}</span></td>
+      <td><span class="badge ${ESTAGIO_BADGE[l.estagio]||'badge-gray'}">${ESTAGIO_LABELS[l.estagio]||l.estagio}</span></td>
+      <td><span class="badge ${TEMPERATURA_BADGE[l.temperatura]||'badge-gray'}">${TEMPERATURA_LABELS[l.temperatura]||l.temperatura||'—'}</span></td>
       <td style="text-align:right;font-weight:600">R$ ${fmtBr(l.valor_estimado)}</td>
       <td>
         <div class="row-actions">
@@ -362,7 +381,7 @@ function renderLeads() {
         </div>
       </td>
     </tr>
-  `).join('') || `<tr><td colspan="7" style="text-align:center;padding:24px;color:#9ca3af;">Nenhum lead encontrado.</td></tr>`;
+  `).join('') || `<tr><td colspan="8" style="text-align:center;padding:24px;color:#9ca3af;">Nenhum lead encontrado.</td></tr>`;
 }
 
 // ─── Proposta: ações ──────────────────────────────────────────────────────────
@@ -391,6 +410,7 @@ function abrirModalLead(dados) {
   document.getElementById('lead-contato').value = dados?.contato || '';
   document.getElementById('lead-email').value   = dados?.email || '';
   document.getElementById('lead-estagio').value = dados?.estagio || 'prospeccao';
+  document.getElementById('lead-temperatura').value = dados?.temperatura || 'medio';
   document.getElementById('lead-valor').value   = dados?.valor_estimado || 0;
   document.getElementById('lead-obs').value     = dados?.observacoes || '';
   document.getElementById('modal-lead').classList.add('open');
@@ -415,6 +435,7 @@ async function salvarLead() {
     contato: document.getElementById('lead-contato').value.trim(),
     email: document.getElementById('lead-email').value.trim(),
     estagio: document.getElementById('lead-estagio').value,
+    temperatura: document.getElementById('lead-temperatura').value,
     valor_estimado: parseFloat(document.getElementById('lead-valor').value) || 0,
     observacoes: document.getElementById('lead-obs').value.trim(),
   };
@@ -428,7 +449,9 @@ async function salvarLead() {
     if (existente >= 0) LEADS_DATA[existente] = novo;
     else LEADS_DATA.unshift(novo);
     renderLeads();
-    toast('Lead salvo!', 'sucesso');
+    // O backend converte o lead em cliente automaticamente ao chegar em
+    // "Fechamento" e devolve uma mensagem específica avisando disso.
+    toast(r.msg || 'Lead salvo!', 'sucesso');
   } else toast('Erro ao salvar lead.', 'erro');
 }
 

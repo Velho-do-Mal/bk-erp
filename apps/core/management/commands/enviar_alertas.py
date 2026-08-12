@@ -339,7 +339,9 @@ class Command(BaseCommand):
             # ── 7. LEADS SEM CONTATO HÁ N DIAS ("ligar hoje") ─────────────
             try:
                 from apps.vendas.models import Lead
-                ESTAGIOS_ATIVOS = ['prospeccao', 'qualificacao', 'proposta', 'negociacao']
+                # Funil revisado para 3 estágios + perdido (ver migration
+                # vendas/0005) — "ativo" agora é só prospecção e proposta.
+                ESTAGIOS_ATIVOS = ['prospeccao', 'proposta']
                 leads = list(
                     Lead.objects.filter(
                         empresa=empresa,

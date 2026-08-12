@@ -51,8 +51,16 @@ class Proposta(models.Model):
         super().save(*args, **kwargs)
         if self.status == 'aprovada' and status_anterior != 'aprovada':
             if self.lead and not self.cliente:
+                # CORRIGIDO: faltava empresa=self.empresa no get_or_create.
+                # Sem isso, o Cliente criado ficava sem tenant (empresa=None,
+                # invisível nas listagens filtradas por empresa) e, pior, o
+                # lookup por nome sozinho podia casar com um Cliente de OUTRA
+                # empresa com o mesmo nome, atribuindo a proposta a um cliente
+                # que não é seu. Também usa a razão social do lead quando
+                # disponível (mesma regra de get_cliente_nome).
                 cliente, _ = Cliente.objects.get_or_create(
-                    nome=self.lead.nome,
+                    nome=self.lead.empresa_nome or self.lead.nome,
+                    empresa=self.empresa,
                     defaults={
                         'email': self.lead.email,
                         'telefone': self.lead.contato,
@@ -126,23 +134,30 @@ class Lead(models.Model):
     # a colisão — agora o FK `empresa` funciona corretamente.
     empresa = models.ForeignKey('saas.Empresa', on_delete=models.CASCADE, null=True, blank=True, related_name='+', verbose_name='Empresa', db_index=True)
 
-    # CORRIGIDO: havia 3 definições divergentes de estágio (model, migration
-    # e template/JS usavam listas diferentes). Unificado com o que a tela já
-    # usa de fato (inclui negociação e fechamento ganho/perdido — necessário
-    # para medir taxa de conversão do funil).
+    # REVISADO a pedido: o funil agora tem 3 estágios operacionais (o que o
+    # usuário efetivamente acompanha no dia a dia) + "Perdido" para marcar
+    # oportunidades que não avançam (sem isso não haveria como distinguir um
+    # lead esquecido de um lead recusado, e nenhum relatório de conversão
+    # funcionaria). Ao chegar em "fechamento", o lead é convertido em Cliente
+    # automaticamente — ver save() abaixo.
     ESTAGIO_CHOICES = [
         ('prospeccao', 'Prospecção'),
-        ('qualificacao', 'Qualificação'),
         ('proposta', 'Proposta Enviada'),
-        ('negociacao', 'Negociação'),
-        ('fechado_ganho', 'Fechado Ganho'),
-        ('fechado_perdido', 'Fechado Perdido'),
+        ('fechamento', 'Fechamento (Ganho)'),
+        ('perdido', 'Perdido'),
+    ]
+    # Temperatura do lead (prioridade de contato) — pedido do usuário.
+    TEMPERATURA_CHOICES = [
+        ('quente', '🔥 Quente'),
+        ('medio', '🟡 Médio'),
+        ('frio', '🧊 Frio'),
     ]
     nome = models.CharField(max_length=200)
     empresa_nome = models.CharField('Empresa (razão social do prospect)', max_length=200, blank=True)
     contato = models.CharField(max_length=200, blank=True)
     email = models.EmailField(blank=True)
     estagio = models.CharField(max_length=20, choices=ESTAGIO_CHOICES, default='prospeccao')
+    temperatura = models.CharField(max_length=10, choices=TEMPERATURA_CHOICES, default='medio')
     valor_estimado = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     observacoes = models.TextField(blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)
@@ -156,3 +171,35 @@ class Lead(models.Model):
 
     def __str__(self):
         return self.nome
+
+    def save(self, *args, **kwargs):
+        # Conversão automática: Lead -> Cliente quando o estágio chega a
+        # "Fechamento" (pedido do usuário: "nesse último ele passa
+        # automaticamente para cliente"). Só dispara na transição (evita
+        # recriar/reprocessar em todo save subsequente do mesmo lead já
+        # fechado) e usa empresa=self.empresa para manter o isolamento por
+        # tenant (mesmo cuidado tomado na correção do Proposta.save() acima).
+        estagio_anterior = None
+        if self.pk:
+            try:
+                estagio_anterior = Lead.objects.get(pk=self.pk).estagio
+            except Lead.DoesNotExist:
+                pass
+        super().save(*args, **kwargs)
+        self.cliente_convertido = None
+        if self.estagio == 'fechamento' and estagio_anterior != 'fechamento':
+            cliente, _ = Cliente.objects.get_or_create(
+                nome=self.empresa_nome or self.nome,
+                empresa=self.empresa,
+                defaults={
+                    'email': self.email,
+                    'telefone': self.contato,
+                    'observacoes': self.observacoes,
+                    'ativo': True,
+                }
+            )
+            # Propostas deste lead que ainda não têm cliente vinculado
+            # passam a apontar para o cliente recém-criado, preservando o
+            # histórico comercial (a referência ao lead original é mantida).
+            self.propostas.filter(cliente__isnull=True).update(cliente=cliente)
+            self.cliente_convertido = cliente
