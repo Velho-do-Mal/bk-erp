@@ -26,19 +26,19 @@
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px">
   <div class="kpi-card kpi-red">
     <div class="kpi-label">Em Atraso</div>
-    <div class="kpi-value" style="color:#ef4444">{{ atrasado|moeda }}</div>
+    <div class="kpi-value moeda" style="color:#ef4444">{{ atrasado|moeda }}</div>
   </div>
   <div class="kpi-card kpi-orange">
     <div class="kpi-label">Vence Hoje</div>
-    <div class="kpi-value" style="color:#d97706">{{ vence_hoje|moeda }}</div>
+    <div class="kpi-value moeda" style="color:#d97706">{{ vence_hoje|moeda }}</div>
   </div>
   <div class="kpi-card kpi-blue">
     <div class="kpi-label">Futuras</div>
-    <div class="kpi-value" style="color:#1e40af">{{ futuro|moeda }}</div>
+    <div class="kpi-value moeda" style="color:#1e40af">{{ futuro|moeda }}</div>
   </div>
   <div class="kpi-card kpi-green">
     <div class="kpi-label">Total a Receber</div>
-    <div class="kpi-value" style="color:#16a34a">{{ total|moeda }}</div>
+    <div class="kpi-value moeda" style="color:#16a34a">{{ total|moeda }}</div>
   </div>
 </div>
 

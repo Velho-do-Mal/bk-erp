@@ -45,35 +45,35 @@
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:14px;margin-bottom:20px">
   <div class="kpi-card kpi-green">
     <div class="kpi-label">Total Recebido (geral)</div>
-    <div class="kpi-value">{{ total_entrada|moeda }}</div>
+    <div class="kpi-value moeda">{{ total_entrada|moeda }}</div>
   </div>
   <div class="kpi-card kpi-red">
     <div class="kpi-label">Total Pago (geral)</div>
-    <div class="kpi-value">{{ total_saida|moeda }}</div>
+    <div class="kpi-value moeda">{{ total_saida|moeda }}</div>
   </div>
   <div class="kpi-card {% if saldo >= 0 %}kpi-blue{% else %}kpi-red{% endif %}">
     <div class="kpi-label">Saldo Realizado</div>
-    <div class="kpi-value">{{ saldo|moeda }}</div>
+    <div class="kpi-value moeda">{{ saldo|moeda }}</div>
   </div>
   <div class="kpi-card" style="border-left:3px solid #10B981">
     <div class="kpi-label">Entradas (período)</div>
-    <div class="kpi-value" style="color:#16a34a">{{ ent_periodo|moeda }}</div>
+    <div class="kpi-value moeda" style="color:#16a34a">{{ ent_periodo|moeda }}</div>
   </div>
   <div class="kpi-card" style="border-left:3px solid #EF4444">
     <div class="kpi-label">Saídas (período)</div>
-    <div class="kpi-value" style="color:#ef4444">{{ said_periodo|moeda }}</div>
+    <div class="kpi-value moeda" style="color:#ef4444">{{ said_periodo|moeda }}</div>
   </div>
   <div class="kpi-card {% if saldo_periodo >= 0 %}kpi-blue{% else %}kpi-red{% endif %}">
     <div class="kpi-label">Saldo do Período</div>
-    <div class="kpi-value">{{ saldo_periodo|moeda }}</div>
+    <div class="kpi-value moeda">{{ saldo_periodo|moeda }}</div>
   </div>
   <div class="kpi-card kpi-yellow">
     <div class="kpi-label">A Receber</div>
-    <div class="kpi-value">{{ pendentes_receber|moeda }}</div>
+    <div class="kpi-value moeda">{{ pendentes_receber|moeda }}</div>
   </div>
   <div class="kpi-card kpi-orange">
     <div class="kpi-label">A Pagar</div>
-    <div class="kpi-value">{{ pendentes_pagar|moeda }}</div>
+    <div class="kpi-value moeda">{{ pendentes_pagar|moeda }}</div>
   </div>
 </div>
 
@@ -88,7 +88,7 @@
     {% for p in projecao_fluxo %}
     <div class="kpi-card {% if p.saldo_projetado >= 0 %}kpi-blue{% else %}kpi-red{% endif %}">
       <div class="kpi-label">Em {{ p.dias }} dias (até {{ p.data_limite }})</div>
-      <div class="kpi-value" style="color:{% if p.saldo_projetado >= 0 %}#1e40af{% else %}#ef4444{% endif %}">
+      <div class="kpi-value moeda" style="color:{% if p.saldo_projetado >= 0 %}#1e40af{% else %}#ef4444{% endif %}">
         {{ p.saldo_projetado|moeda }}
       </div>
       <div class="kpi-sub" style="margin-top:4px">

@@ -88,6 +88,10 @@
   .kpi-med-value.blue { color: #1e40af; }
   .kpi-med-value.green { color: #16a34a; }
   .kpi-med-value.orange { color: #b45309; }
+  /* Cartões de moeda um pouco menores que o padrão desta página (pedido do
+     usuário: fonte grande demais nos cartões de valor) — continua com
+     peso 800 para se destacar. */
+  .kpi-med-value.moeda { font-size: 20px; }
 </style>
 {% endblock %}
 
@@ -273,19 +277,19 @@
   <div class="kpi-med">
     <div class="kpi-med-card">
       <div class="kpi-med-label">Total Contrato</div>
-      <div class="kpi-med-value">{{ total_contrato|moeda }}</div>
+      <div class="kpi-med-value moeda">{{ total_contrato|moeda }}</div>
     </div>
     <div class="kpi-med-card">
       <div class="kpi-med-label">Medido no Período</div>
-      <div class="kpi-med-value blue" id="kpi_periodo">{{ total_periodo|moeda }}</div>
+      <div class="kpi-med-value blue moeda" id="kpi_periodo">{{ total_periodo|moeda }}</div>
     </div>
     <div class="kpi-med-card">
       <div class="kpi-med-label">Medido Acumulado</div>
-      <div class="kpi-med-value green" id="kpi_acum">{{ total_acum|moeda }}</div>
+      <div class="kpi-med-value green moeda" id="kpi_acum">{{ total_acum|moeda }}</div>
     </div>
     <div class="kpi-med-card">
       <div class="kpi-med-label">Saldo a Medir</div>
-      <div class="kpi-med-value orange" id="kpi_saldo">{{ total_saldo|moeda }}</div>
+      <div class="kpi-med-value orange moeda" id="kpi_saldo">{{ total_saldo|moeda }}</div>
     </div>
     <div class="kpi-med-card">
       <div class="kpi-med-label">% Medido</div>
@@ -372,15 +376,15 @@
   <div class="kpi-grid" id="dash_kpis">
     <div class="kpi-card">
       <div class="kpi-label">Total Contrato</div>
-      <div class="kpi-value" id="dash_total_contrato">{{ total_contrato|moeda }}</div>
+      <div class="kpi-value moeda" id="dash_total_contrato">{{ total_contrato|moeda }}</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Total Medido</div>
-      <div class="kpi-value" style="color:#16a34a" id="dash_total_acum">{{ total_acum|moeda }}</div>
+      <div class="kpi-value moeda" style="color:#16a34a" id="dash_total_acum">{{ total_acum|moeda }}</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Saldo a Medir</div>
-      <div class="kpi-value" style="color:#b45309" id="dash_saldo">{{ total_saldo|moeda }}</div>
+      <div class="kpi-value moeda" style="color:#b45309" id="dash_saldo">{{ total_saldo|moeda }}</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-label">Períodos (BMs)</div>

@@ -2009,9 +2009,9 @@ function renderFinanceiro() {
   const saldo = totE - totS;
 
   kd.innerHTML = `
-    <div class="kpi-card" style="border-left:3px solid #10B981"><div class="kpi-label">Entradas</div><div class="kpi-value" style="color:#10B981">${fmtBRL(totE)}</div></div>
-    <div class="kpi-card" style="border-left:3px solid #EF4444"><div class="kpi-label">Saídas</div><div class="kpi-value" style="color:#EF4444">${fmtBRL(totS)}</div></div>
-    <div class="kpi-card" style="border-left:3px solid #3B82F6"><div class="kpi-label">Saldo</div><div class="kpi-value" style="color:${saldo>=0?'#10B981':'#EF4444'}">${fmtBRL(saldo)}</div></div>
+    <div class="kpi-card" style="border-left:3px solid #10B981"><div class="kpi-label">Entradas</div><div class="kpi-value moeda" style="color:#10B981">${fmtBRL(totE)}</div></div>
+    <div class="kpi-card" style="border-left:3px solid #EF4444"><div class="kpi-label">Saídas</div><div class="kpi-value moeda" style="color:#EF4444">${fmtBRL(totS)}</div></div>
+    <div class="kpi-card" style="border-left:3px solid #3B82F6"><div class="kpi-label">Saldo</div><div class="kpi-value moeda" style="color:${saldo>=0?'#10B981':'#EF4444'}">${fmtBRL(saldo)}</div></div>
   `;
 
   ld.innerHTML = `<table class="table" style="font-size:12px">
@@ -2179,9 +2179,9 @@ function renderFinanceiroAnalise() {
 
   // KPIs
   if (kpisDiv) kpisDiv.innerHTML = `
-    <div class="kpi-card" style="border-left:3px solid #3B82F6"><div class="kpi-label">Total Planejado</div><div class="kpi-value">${fmtBRL(totPlan)}</div></div>
-    <div class="kpi-card" style="border-left:3px solid #EF4444"><div class="kpi-label">Total Realizado</div><div class="kpi-value">${fmtBRL(totReal)}</div></div>
-    <div class="kpi-card" style="border-left:3px solid #F59E0B"><div class="kpi-label">Diferença</div><div class="kpi-value">${fmtBRL(totDiff)}</div></div>
+    <div class="kpi-card" style="border-left:3px solid #3B82F6"><div class="kpi-label">Total Planejado</div><div class="kpi-value moeda">${fmtBRL(totPlan)}</div></div>
+    <div class="kpi-card" style="border-left:3px solid #EF4444"><div class="kpi-label">Total Realizado</div><div class="kpi-value moeda">${fmtBRL(totReal)}</div></div>
+    <div class="kpi-card" style="border-left:3px solid #F59E0B"><div class="kpi-label">Diferença</div><div class="kpi-value moeda">${fmtBRL(totDiff)}</div></div>
     <div class="kpi-card" style="border-left:3px solid #8B5CF6"><div class="kpi-label">Variação %</div><div class="kpi-value">${pctDiff.toFixed(1)}%</div></div>
   `;
 

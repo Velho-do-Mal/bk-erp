@@ -181,6 +181,15 @@ body {
 .kpi-value.vermelho { color: #ef4444; }
 .kpi-sub { font-size: 12px; color: #6b7280; }
 
+/* Modificador de TAMANHO (não de cor) para cartões que exibem valores em
+   moeda (R$) — pedido do usuário: o padrão de 26px ficava grande demais
+   para valores em Real (que têm mais dígitos que contagens simples).
+   Usar junto com .kpi-value/.kpi-valor, ex: class="kpi-value verde moeda".
+   Continua "grande o suficiente para se destacar" (peso 800), só reduz o
+   tamanho. Aplicar SOMENTE em cartões de moeda — cartões de contagem/
+   percentual continuam no tamanho padrão. */
+.kpi-value.moeda, .kpi-valor.moeda { font-size: 20px; }
+
 /* ══════════════════════════════
    TABELAS
 ══════════════════════════════ */

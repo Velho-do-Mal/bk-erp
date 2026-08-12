@@ -33,19 +33,19 @@
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px">
   <div class="kpi-card">
     <div class="kpi-label">Saldo Anterior</div>
-    <div class="kpi-value" style="color:#374151">{{ saldo_anterior|moeda }}</div>
+    <div class="kpi-value moeda" style="color:#374151">{{ saldo_anterior|moeda }}</div>
   </div>
   <div class="kpi-card kpi-green">
     <div class="kpi-label">Total Entradas</div>
-    <div class="kpi-value" style="color:#16a34a">{{ total_entradas|moeda }}</div>
+    <div class="kpi-value moeda" style="color:#16a34a">{{ total_entradas|moeda }}</div>
   </div>
   <div class="kpi-card kpi-red">
     <div class="kpi-label">Total Saídas</div>
-    <div class="kpi-value" style="color:#ef4444">{{ total_saidas|moeda }}</div>
+    <div class="kpi-value moeda" style="color:#ef4444">{{ total_saidas|moeda }}</div>
   </div>
   <div class="kpi-card {% if saldo_final >= 0 %}kpi-blue{% else %}kpi-red{% endif %}">
     <div class="kpi-label">Saldo Final</div>
-    <div class="kpi-value" style="color:{% if saldo_final >= 0 %}#1e40af{% else %}#ef4444{% endif %}">{{ saldo_final|moeda }}</div>
+    <div class="kpi-value moeda" style="color:{% if saldo_final >= 0 %}#1e40af{% else %}#ef4444{% endif %}">{{ saldo_final|moeda }}</div>
   </div>
 </div>
 

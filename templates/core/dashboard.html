@@ -48,22 +48,22 @@
 <div class="kpi-grid-4 mb-3">
   <div class="kpi-card" style="border-top:3px solid #dc2626;">
     <div class="kpi-label">Recebimentos Vencidos</div>
-    <div class="kpi-value" style="color:#dc2626;">{{ recebimentos_atrasados|moeda }}</div>
+    <div class="kpi-value moeda" style="color:#dc2626;">{{ recebimentos_atrasados|moeda }}</div>
     <div class="kpi-sub">{{ qtd_recebimentos_atrasados }} título(s) em atraso</div>
   </div>
   <div class="kpi-card" style="border-top:3px solid #f97316;">
     <div class="kpi-label">Pagamentos Vencidos</div>
-    <div class="kpi-value" style="color:#f97316;">{{ pagamentos_atrasados|moeda }}</div>
+    <div class="kpi-value moeda" style="color:#f97316;">{{ pagamentos_atrasados|moeda }}</div>
     <div class="kpi-sub">{{ qtd_pagamentos_atrasados }} conta(s) em atraso</div>
   </div>
   <div class="kpi-card" style="border-top:3px solid #16a34a;">
     <div class="kpi-label">Recebimentos Hoje</div>
-    <div class="kpi-value" style="color:#16a34a;">{{ recebimentos_hoje|moeda }}</div>
+    <div class="kpi-value moeda" style="color:#16a34a;">{{ recebimentos_hoje|moeda }}</div>
     <div class="kpi-sub">+ {{ recebimentos_amanha|moeda }} amanhã</div>
   </div>
   <div class="kpi-card" style="border-top:3px solid #3b82f6;">
     <div class="kpi-label">Pagamentos Hoje</div>
-    <div class="kpi-value" style="color:#3b82f6;">{{ pagamentos_hoje|moeda }}</div>
+    <div class="kpi-value moeda" style="color:#3b82f6;">{{ pagamentos_hoje|moeda }}</div>
     <div class="kpi-sub">+ {{ pagamentos_amanha|moeda }} amanhã</div>
   </div>
 </div>
@@ -158,22 +158,22 @@
 <div class="kpi-grid-4 mb-3">
   <div class="kpi-card" style="border-top:3px solid #16a34a;">
     <div class="kpi-label">Saldo Atual</div>
-    <div class="kpi-value" style="color:#16a34a;">{{ saldo_atual|moeda }}</div>
+    <div class="kpi-value moeda" style="color:#16a34a;">{{ saldo_atual|moeda }}</div>
     <div class="kpi-sub">Receitas − Despesas realizadas</div>
   </div>
   <div class="kpi-card" style="border-top:3px solid #3b82f6;">
     <div class="kpi-label">Receitas Realizadas</div>
-    <div class="kpi-value" style="color:#3b82f6;">{{ receita_total|moeda }}</div>
+    <div class="kpi-value moeda" style="color:#3b82f6;">{{ receita_total|moeda }}</div>
     <div class="kpi-sub">{{ receita_mes|moeda }} no mês atual</div>
   </div>
   <div class="kpi-card" style="border-top:3px solid #dc2626;">
     <div class="kpi-label">Despesas Realizadas</div>
-    <div class="kpi-value" style="color:#dc2626;">{{ despesa_total|moeda }}</div>
+    <div class="kpi-value moeda" style="color:#dc2626;">{{ despesa_total|moeda }}</div>
     <div class="kpi-sub">{{ despesa_mes|moeda }} no mês atual</div>
   </div>
   <div class="kpi-card" style="border-top:3px solid #f59e0b;">
     <div class="kpi-label">Compras no Mês</div>
-    <div class="kpi-value" style="color:#f59e0b;">{{ compras_mes|moeda }}</div>
+    <div class="kpi-value moeda" style="color:#f59e0b;">{{ compras_mes|moeda }}</div>
     <div class="kpi-sub">{{ pedidos_pendentes }} pedido(s) pendente(s)</div>
   </div>
 </div>
@@ -297,7 +297,7 @@
       </div>
       <div class="kpi-card" style="border-top:3px solid #f59e0b;">
         <div class="kpi-label">Ticket Médio</div>
-        <div class="kpi-value" style="color:#f59e0b;font-size:16px;">{{ ticket_medio|moeda }}</div>
+        <div class="kpi-value moeda" style="color:#f59e0b;">{{ ticket_medio|moeda }}</div>
         <div class="kpi-sub">por proposta</div>
       </div>
     </div>

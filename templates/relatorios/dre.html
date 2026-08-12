@@ -39,15 +39,15 @@
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px">
   <div class="kpi-card kpi-green">
     <div class="kpi-label">Receita Total</div>
-    <div class="kpi-value" style="color:#16a34a">{{ total_receita|moeda }}</div>
+    <div class="kpi-value moeda" style="color:#16a34a">{{ total_receita|moeda }}</div>
   </div>
   <div class="kpi-card kpi-red">
     <div class="kpi-label">Despesa Total</div>
-    <div class="kpi-value" style="color:#ef4444">{{ total_despesa|moeda }}</div>
+    <div class="kpi-value moeda" style="color:#ef4444">{{ total_despesa|moeda }}</div>
   </div>
   <div class="kpi-card {% if resultado >= 0 %}kpi-blue{% else %}kpi-red{% endif %}">
     <div class="kpi-label">Resultado Líquido</div>
-    <div class="kpi-value" style="color:{% if resultado >= 0 %}#1e40af{% else %}#ef4444{% endif %}">{{ resultado|moeda }}</div>
+    <div class="kpi-value moeda" style="color:{% if resultado >= 0 %}#1e40af{% else %}#ef4444{% endif %}">{{ resultado|moeda }}</div>
   </div>
   <div class="kpi-card kpi-yellow">
     <div class="kpi-label">Margem Líquida</div>
