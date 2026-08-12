@@ -1,6 +1,7 @@
 import json
 import csv
 from datetime import date
+from decimal import Decimal, InvalidOperation
 from django.shortcuts import render, redirect
 from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required
@@ -17,6 +18,30 @@ def _qs_empresa(qs, request):
     if empresa is None:
         return qs
     return qs.filter(empresa=empresa)
+
+
+def _to_dec_br(v):
+    """
+    Converte para Decimal aceitando tanto número puro (vindo de JSON/JS
+    já tratado) quanto texto no formato mascarado BR (ex.: "5.000,00",
+    vindo de <input data-mask="moeda"> sem nenhuma conversão antes do
+    submit — caso do formulário clássico de Cargo). CORRIGIDO: antes,
+    Cargo salário_base fazia só `data.get('salario_base') or 0` — ao
+    receber "5.000,00" o Django tentava Decimal("5.000,00") direto e
+    lançava decimal.InvalidOperation (não capturado), causando Erro 500
+    ao salvar um cargo com salário preenchido.
+    """
+    if v is None or v == '':
+        return Decimal('0')
+    if isinstance(v, (int, float, Decimal)):
+        return Decimal(str(v))
+    s = str(v).strip().replace('R$', '').strip()
+    if ',' in s:
+        s = s.replace('.', '').replace(',', '.')
+    try:
+        return Decimal(s)
+    except InvalidOperation:
+        return Decimal('0')
 
 
 # ── COLABORADORES ──────────────────────────────────────────────────────────
@@ -225,8 +250,15 @@ def cargos(request):
 
             obj.nome = data.get('nome', '').strip()
             obj.descricao = data.get('descricao', '').strip()
-            obj.salario_base = data.get('salario_base') or 0
-            depto_id = data.get('departamento_id')
+            # CORRIGIDO: usava data.get('salario_base') direto — string
+            # mascarada em BR ("5.000,00") quebrava o Decimal() e dava
+            # Erro 500. Ver _to_dec_br() acima.
+            obj.salario_base = _to_dec_br(data.get('salario_base'))
+            # CORRIGIDO: o <select> do template envia name="departamento"
+            # (ver templates/rh/cargos.html), mas o código só lia
+            # "departamento_id" — nunca existia essa chave no POST clássico,
+            # então o departamento escolhido no formulário nunca era salvo.
+            depto_id = data.get('departamento') or data.get('departamento_id')
             obj.departamento_id = int(depto_id) if depto_id else None
             if is_json:
                 obj.ativo = data.get('ativo', True)
@@ -260,7 +292,12 @@ def cargos(request):
               'ativo': c.ativo} for c in lista],
             default=str
         ),
-        'deptos': deptos,
+        # CORRIGIDO: a chave era 'deptos', mas templates/rh/cargos.html
+        # itera com {% for d in departamentos %} — chave inexistente no
+        # contexto, então o combobox de Departamento sempre renderizava
+        # vazio (só a opção "— Selecione —"), mesmo com departamentos
+        # cadastrados na empresa.
+        'departamentos': deptos,
     })
 
 
