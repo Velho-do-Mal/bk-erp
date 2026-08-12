@@ -152,6 +152,18 @@ class Lead(models.Model):
         ('medio', '🟡 Médio'),
         ('frio', '🧊 Frio'),
     ]
+    # Categoria do prospect (pedido do usuário) — combobox fixo, usado para
+    # segmentar o pipeline por tipo de cliente/mercado.
+    CATEGORIA_CHOICES = [
+        ('transmissora', 'Transmissora'),
+        ('distribuidora', 'Distribuidora'),
+        ('empreiteira', 'Empreiteira'),
+        ('construtora', 'Construtora'),
+        ('eolica', 'Eólica'),
+        ('epc', 'EPC'),
+        ('industrial', 'Industrial'),
+        ('engenharia', 'Engenharia'),
+    ]
     nome = models.CharField(max_length=200)
     empresa_nome = models.CharField('Empresa (razão social do prospect)', max_length=200, blank=True)
     contato = models.CharField(max_length=200, blank=True)
@@ -159,6 +171,8 @@ class Lead(models.Model):
     estagio = models.CharField(max_length=20, choices=ESTAGIO_CHOICES, default='prospeccao')
     temperatura = models.CharField(max_length=10, choices=TEMPERATURA_CHOICES, default='medio')
     valor_estimado = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    categoria = models.CharField(max_length=20, choices=CATEGORIA_CHOICES, blank=True)
+    servicos_interesse = models.TextField('Serviços de Interesse', blank=True)
     observacoes = models.TextField(blank=True)
     criado_em = models.DateTimeField(auto_now_add=True)
     # Usado pelo lembrete automático de "leads sem contato há N dias" —

@@ -191,6 +191,8 @@ def lista(request):
             obj.estagio = data.get('estagio', 'prospeccao')
             obj.temperatura = data.get('temperatura', 'medio')
             obj.valor_estimado = _to_dec(data.get('valor_estimado', 0))
+            obj.categoria = data.get('categoria', '').strip()
+            obj.servicos_interesse = data.get('servicos_interesse', '').strip()
             obj.observacoes = data.get('observacoes', '').strip()
             if obj.pk is None and _empresa(request):
                 obj.empresa = _empresa(request)
@@ -241,7 +243,8 @@ def lista(request):
     propostas_data = [_proposta_to_dict(p) for p in propostas]
 
     leads_data = list(_qs_empresa(Lead.objects, request).filter().values(
-        'id', 'nome', 'contato', 'email', 'estagio', 'temperatura', 'valor_estimado', 'observacoes', 'empresa_nome'
+        'id', 'nome', 'contato', 'email', 'estagio', 'temperatura', 'valor_estimado',
+        'categoria', 'servicos_interesse', 'observacoes', 'empresa_nome'
     ))
     for l in leads_data:
         l['valor_estimado'] = float(l['valor_estimado'])

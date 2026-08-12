@@ -208,6 +208,17 @@ topbar escuro — quase ilegível.
         <option value="medio">🟡 Médio</option>
         <option value="frio">🧊 Frio</option>
       </select>
+      <select class="filter-select" id="filtro-categoria" onchange="renderLeads()">
+        <option value="">Toda categoria</option>
+        <option value="transmissora">Transmissora</option>
+        <option value="distribuidora">Distribuidora</option>
+        <option value="empreiteira">Empreiteira</option>
+        <option value="construtora">Construtora</option>
+        <option value="eolica">Eólica</option>
+        <option value="epc">EPC</option>
+        <option value="industrial">Industrial</option>
+        <option value="engenharia">Engenharia</option>
+      </select>
     </div>
     <a href="{% url 'vendas:exportar_propostas' %}" class="btn btn-secondary btn-sm" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;">📊 Exportar CSV</a>
   <button class="btn btn-primary" onclick="abrirModalLead()">+ Novo Lead</button>
@@ -223,6 +234,7 @@ topbar escuro — quase ilegível.
           <th>E-mail</th>
           <th>Estágio</th>
           <th>Temperatura</th>
+          <th>Categoria</th>
           <th style="text-align:right">Valor Est. (R$)</th>
           <th>Ações</th>
         </tr>
@@ -274,6 +286,24 @@ topbar escuro — quase ilegível.
       <div class="form-group">
         <label>Valor Estimado (R$)</label>
         <input type="number" id="lead-valor" step="100" min="0" value="0">
+      </div>
+      <div class="form-group">
+        <label>Categoria</label>
+        <select id="lead-categoria">
+          <option value="">Selecione...</option>
+          <option value="transmissora">Transmissora</option>
+          <option value="distribuidora">Distribuidora</option>
+          <option value="empreiteira">Empreiteira</option>
+          <option value="construtora">Construtora</option>
+          <option value="eolica">Eólica</option>
+          <option value="epc">EPC</option>
+          <option value="industrial">Industrial</option>
+          <option value="engenharia">Engenharia</option>
+        </select>
+      </div>
+      <div class="form-group form-full">
+        <label>Serviços de Interesse</label>
+        <textarea id="lead-servicos" rows="2" placeholder="Ex.: Projeto executivo de SE, Boletim de medição, EPC..."></textarea>
       </div>
       <div class="form-group form-full">
         <label>Observações</label>
@@ -352,10 +382,16 @@ function renderPropostas() {
 }
 
 // ─── Renderizar Leads ─────────────────────────────────────────────────────────
+const CATEGORIA_LABELS = {
+  transmissora:'Transmissora', distribuidora:'Distribuidora', empreiteira:'Empreiteira',
+  construtora:'Construtora', eolica:'Eólica', epc:'EPC', industrial:'Industrial', engenharia:'Engenharia'
+};
+
 function renderLeads() {
   const busca       = document.getElementById('busca-lead').value.toLowerCase();
   const estagio     = document.getElementById('filtro-estagio').value;
   const temperatura = document.getElementById('filtro-temperatura').value;
+  const categoria   = document.getElementById('filtro-categoria').value;
   const tbody       = document.getElementById('tbody-leads');
 
   const filtrados = LEADS_DATA.filter(l => {
@@ -364,7 +400,8 @@ function renderLeads() {
       (l.empresa||'').toLowerCase().includes(busca);
     const matchEstagio = !estagio || l.estagio === estagio;
     const matchTemp = !temperatura || l.temperatura === temperatura;
-    return matchBusca && matchEstagio && matchTemp;
+    const matchCategoria = !categoria || l.categoria === categoria;
+    return matchBusca && matchEstagio && matchTemp && matchCategoria;
   });
 
   tbody.innerHTML = filtrados.map(l => `
@@ -375,6 +412,7 @@ function renderLeads() {
       <td>${esc(l.email) || '—'}</td>
       <td><span class="badge ${ESTAGIO_BADGE[l.estagio]||'badge-gray'}">${ESTAGIO_LABELS[l.estagio]||l.estagio}</span></td>
       <td><span class="badge ${TEMPERATURA_BADGE[l.temperatura]||'badge-gray'}">${TEMPERATURA_LABELS[l.temperatura]||l.temperatura||'—'}</span></td>
+      <td>${l.categoria ? (CATEGORIA_LABELS[l.categoria]||l.categoria) : '—'}</td>
       <td style="text-align:right;font-weight:600">R$ ${fmtBr(l.valor_estimado)}</td>
       <td>
         <div class="row-actions">
@@ -383,7 +421,7 @@ function renderLeads() {
         </div>
       </td>
     </tr>
-  `).join('') || `<tr><td colspan="8" style="text-align:center;padding:24px;color:#9ca3af;">Nenhum lead encontrado.</td></tr>`;
+  `).join('') || `<tr><td colspan="9" style="text-align:center;padding:24px;color:#9ca3af;">Nenhum lead encontrado.</td></tr>`;
 }
 
 // ─── Proposta: ações ──────────────────────────────────────────────────────────
@@ -414,6 +452,8 @@ function abrirModalLead(dados) {
   document.getElementById('lead-estagio').value = dados?.estagio || 'prospeccao';
   document.getElementById('lead-temperatura').value = dados?.temperatura || 'medio';
   document.getElementById('lead-valor').value   = dados?.valor_estimado || 0;
+  document.getElementById('lead-categoria').value = dados?.categoria || '';
+  document.getElementById('lead-servicos').value  = dados?.servicos_interesse || '';
   document.getElementById('lead-obs').value     = dados?.observacoes || '';
   document.getElementById('modal-lead').classList.add('open');
 }
@@ -439,6 +479,8 @@ async function salvarLead() {
     estagio: document.getElementById('lead-estagio').value,
     temperatura: document.getElementById('lead-temperatura').value,
     valor_estimado: parseFloat(document.getElementById('lead-valor').value) || 0,
+    categoria: document.getElementById('lead-categoria').value,
+    servicos_interesse: document.getElementById('lead-servicos').value.trim(),
     observacoes: document.getElementById('lead-obs').value.trim(),
   };
   if (!payload.nome) { toast('Nome é obrigatório.', 'erro'); return; }
