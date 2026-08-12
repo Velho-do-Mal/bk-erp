@@ -45,6 +45,27 @@ topbar escuro — quase ilegível.
   .data-table tr:hover td { background:#eff6ff; }
 .data-table tbody tr:nth-child(even) td { background:#f8fafc; }
 
+  /* ── Tabela de Leads: pedido do usuário para caber todas as colunas sem
+     precisar de barra de rolagem horizontal. table-layout:fixed + larguras
+     em % faz as colunas respeitarem a largura do container; texto que não
+     couber é truncado com "..." (ellipsis) mas o valor completo continua
+     acessível via tooltip (atributo title=, ver renderLeads()). Escopado
+     por id — não afeta a tabela de Propostas, que usa a mesma classe
+     .data-table mas não tem esse problema de excesso de colunas. */
+  #tabela-leads { table-layout:fixed; font-size:12.5px; }
+  #tabela-leads th, #tabela-leads td { padding:8px 8px; }
+  #tabela-leads td { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #tabela-leads th:nth-child(1), #tabela-leads td:nth-child(1) { width:12%; }
+  #tabela-leads th:nth-child(2), #tabela-leads td:nth-child(2) { width:12%; }
+  #tabela-leads th:nth-child(3), #tabela-leads td:nth-child(3) { width:9%; }
+  #tabela-leads th:nth-child(4), #tabela-leads td:nth-child(4) { width:12%; }
+  #tabela-leads th:nth-child(5), #tabela-leads td:nth-child(5) { width:8%; white-space:normal; }
+  #tabela-leads th:nth-child(6), #tabela-leads td:nth-child(6) { width:6%; white-space:normal; }
+  #tabela-leads th:nth-child(7), #tabela-leads td:nth-child(7) { width:9%; white-space:normal; }
+  #tabela-leads th:nth-child(8), #tabela-leads td:nth-child(8) { width:16%; }
+  #tabela-leads th:nth-child(9), #tabela-leads td:nth-child(9) { width:9%; text-align:right; white-space:normal; }
+  #tabela-leads th:nth-child(10), #tabela-leads td:nth-child(10) { width:7%; overflow:visible; white-space:normal; }
+
   /* ── Badges status ── */
   .badge { display:inline-block; padding:2px 10px; border-radius:12px; font-size:11px; font-weight:700; }
   .badge-rascunho  { background:#f1f5f9; color:#475569; }
@@ -224,8 +245,8 @@ topbar escuro — quase ilegível.
   <button class="btn btn-primary" onclick="abrirModalLead()">+ Novo Lead</button>
   </div>
 
-  <div style="overflow-x:auto;background:#fff;border:1px solid #e5e7eb;border-radius:10px;">
-    <table class="data-table">
+  <div style="background:#fff;border:1px solid #e5e7eb;border-radius:10px;">
+    <table class="data-table" id="tabela-leads">
       <thead>
         <tr>
           <th>Nome</th>
@@ -233,8 +254,9 @@ topbar escuro — quase ilegível.
           <th>Contato</th>
           <th>E-mail</th>
           <th>Estágio</th>
-          <th>Temperatura</th>
+          <th>Temp.</th>
           <th>Categoria</th>
+          <th>Serviços de Interesse</th>
           <th style="text-align:right">Valor Est. (R$)</th>
           <th>Ações</th>
         </tr>
@@ -406,13 +428,14 @@ function renderLeads() {
 
   tbody.innerHTML = filtrados.map(l => `
     <tr>
-      <td>${esc(l.nome)}</td>
-      <td>${esc(l.empresa) || '—'}</td>
-      <td>${esc(l.contato) || '—'}</td>
-      <td>${esc(l.email) || '—'}</td>
+      <td title="${esc(l.nome)}">${esc(l.nome)}</td>
+      <td title="${esc(l.empresa)}">${esc(l.empresa) || '—'}</td>
+      <td title="${esc(l.contato)}">${esc(l.contato) || '—'}</td>
+      <td title="${esc(l.email)}">${esc(l.email) || '—'}</td>
       <td><span class="badge ${ESTAGIO_BADGE[l.estagio]||'badge-gray'}">${ESTAGIO_LABELS[l.estagio]||l.estagio}</span></td>
       <td><span class="badge ${TEMPERATURA_BADGE[l.temperatura]||'badge-gray'}">${TEMPERATURA_LABELS[l.temperatura]||l.temperatura||'—'}</span></td>
       <td>${l.categoria ? (CATEGORIA_LABELS[l.categoria]||l.categoria) : '—'}</td>
+      <td title="${esc(l.servicos_interesse)}">${esc(l.servicos_interesse) || '—'}</td>
       <td style="text-align:right;font-weight:600">R$ ${fmtBr(l.valor_estimado)}</td>
       <td>
         <div class="row-actions">
@@ -421,7 +444,7 @@ function renderLeads() {
         </div>
       </td>
     </tr>
-  `).join('') || `<tr><td colspan="9" style="text-align:center;padding:24px;color:#9ca3af;">Nenhum lead encontrado.</td></tr>`;
+  `).join('') || `<tr><td colspan="10" style="text-align:center;padding:24px;color:#9ca3af;">Nenhum lead encontrado.</td></tr>`;
 }
 
 // ─── Proposta: ações ──────────────────────────────────────────────────────────

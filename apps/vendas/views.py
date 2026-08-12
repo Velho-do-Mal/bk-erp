@@ -683,7 +683,17 @@ def exportar_word(request, pk):
 
 @login_required
 def exportar_propostas(request):
+    # CORRIGIDO: .values(..., 'data_criacao') — Proposta não tem esse campo
+    # (o campo real é 'criado_em'), então o Django lançava FieldError e a
+    # rota dava Erro 500 sempre que alguém clicava em "Exportar CSV".
+    # Também trocado cliente__nome (fica vazio para propostas originadas de
+    # um Lead, sem Cliente ainda) por get_cliente_nome(), que já resolve
+    # cliente OU lead corretamente (ver apps/vendas/models.py).
     empresa = _empresa(request)
-    qs = Proposta.objects.filter(empresa=empresa).values('id', 'titulo', 'cliente__nome', 'status', 'valor_total', 'data_criacao')
-    rows = [list(r.values()) for r in qs]
+    propostas = Proposta.objects.filter(empresa=empresa).select_related('cliente', 'lead')
+    rows = [
+        [p.id, p.titulo, p.get_cliente_nome(), p.get_status_display(),
+         float(p.valor_total), p.criado_em.strftime('%d/%m/%Y') if p.criado_em else '']
+        for p in propostas
+    ]
     return exportar_csv('propostas.csv', ['ID', 'Título', 'Cliente', 'Status', 'Valor Total', 'Data'], rows)
