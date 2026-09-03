@@ -7,8 +7,17 @@ from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.db.models import Sum, Count, Q
 from django.utils import timezone
+from apps.core.exportacao import exportar_csv
 from apps.financeiro.models import Transacao, Categoria
 from apps.projetos.models import Projeto
+from apps.vendas.models import Lead, Proposta
+from apps.cadastros.models import Cliente
+# Reaproveita a mesma regra de visibilidade de projetos usada em
+# apps/projetos (admin_erp vê tudo da empresa; demais usuários só os
+# projetos em que têm ProjetoAcesso) — pedido do usuário para mover o
+# Relatório Executivo de Gestão de Projetos pra este módulo sem duplicar
+# essa lógica de permissão.
+from apps.projetos.views import get_projetos_usuario
 
 
 def _empresa(request):
@@ -365,3 +374,347 @@ def exportar_fluxo(request):
         ])
 
     return response
+
+
+# ─── Relatório Executivo (movido de Gestão de Projetos — pedido do usuário) ──
+#
+# Antes vivia em apps/projetos (views.relatorio_executivo,
+# templates/projetos/relatorio_executivo.html, rota
+# projetos:relatorio-executivo/, botão em templates/projetos/lista.html).
+# Passou a viver inteiramente aqui: mesma função, mesmo template (só
+# movido de pasta), rota e botão agora em Relatórios. get_projetos_usuario
+# é importado de apps.projetos.views para não duplicar a regra de
+# visibilidade (admin_erp vê tudo da empresa; demais usuários só os
+# projetos em que têm ProjetoAcesso).
+@login_required
+def relatorio_executivo(request):
+    """Gera uma página HTML formatada para impressão do portfólio com dashboards."""
+    projetos = get_projetos_usuario(request)
+    ativos = projetos.filter(encerrado=False).order_by('-id')
+    encerrados = projetos.filter(encerrado=True).order_by('-id')
+
+    # --- Dados Consolidados para Dashboards ---
+    total_projetos = ativos.count()
+    atrasados = 0
+    no_limite = 0
+    no_prazo = 0
+
+    total_docs = 0
+    docs_status = {
+        'concluido': 0,
+        'em_analise': 0,
+        'atrasado': 0,
+        'nao_iniciado': 0,
+    }
+
+    total_receitas = 0
+    total_despesas = 0
+
+    # Categorias Financeiras (Exemplo baseado nos slides)
+    fin_categorias = {
+        'Operacional': {'p': 140000, 'r': 108900},
+        'Marketing': {'p': 93200, 'r': 78200},
+        'Tecnologia': {'p': 98200, 'r': 63300},
+        'Administrativo': {'p': 135500, 'r': 145200},
+    }
+
+    for p in ativos:
+        # Status de Prazo
+        if p.data_conclusao:
+            if p.data_conclusao < date.today():
+                atrasados += 1
+            elif p.dias_para_conclusao <= 3:
+                no_limite += 1
+            else:
+                no_prazo += 1
+        else:
+            no_prazo += 1
+
+        # Dados de Documentos (Controle)
+        dados = p.dados or {}
+        docs = dados.get('docs', [])
+        total_docs += len(docs)
+
+        for d in docs:
+            st = d.get('status', 'nao_iniciado')
+            if st in ['concluido', 'aprovado']:
+                docs_status['concluido'] += 1
+            elif st in ['em_analise', 'em_elaboracao', 'em_andamento']:
+                docs_status['em_analise'] += 1
+            elif st == 'atrasado':
+                docs_status['atrasado'] += 1
+            else:
+                docs_status['nao_iniciado'] += 1
+
+        # Dados Financeiros
+        finances = dados.get('finances', [])
+        for f in finances:
+            val = float(f.get('valor', 0) or 0)
+            if f.get('tipo') == 'receita':
+                total_receitas += val
+            else:
+                total_despesas += val
+
+    # Fallback para dados de exemplo se estiver vazio
+    if total_docs == 0:
+        total_docs = 291
+        docs_status = {
+            'concluido': 131,
+            'em_analise': 87,
+            'atrasado': 44,
+            'nao_iniciado': 29,
+        }
+
+    if total_receitas == 0:
+        total_receitas = 182500
+        total_despesas = 145200
+
+    saldo_final = total_receitas - total_despesas
+    variacao_fluxo = 4.2
+
+    return render(request, 'relatorios/relatorio_executivo.html', {
+        'projetos_ativos': ativos,
+        'projetos_encerrados': encerrados,
+        'today': date.today(),
+        'agora': date.today().strftime('%d/%m/%Y'),
+
+        # Dashboards
+        'stats_prazo': [atrasados, no_limite, no_prazo],
+        'stats_docs': [
+            docs_status['concluido'],
+            docs_status['em_analise'],
+            docs_status['atrasado'],
+            docs_status['nao_iniciado'],
+        ],
+        'total_docs': total_docs,
+        'fin_receitas': total_receitas,
+        'fin_despesas': total_despesas,
+        'fin_saldo': saldo_final,
+        'fin_variacao': variacao_fluxo,
+        'fin_categorias_json': json.dumps(fin_categorias),
+
+        # Dados para Gráfico de Linhas
+        'fin_evolucao_json': json.dumps({
+            'labels': ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
+            'planejado': [120000, 135000, 110000, 145000, 130000, 150000],
+            'realizado': [105000, 128000, 115000, 142000, 125000, 148000],
+        }),
+    })
+
+
+# ─── Relatório de Projetos ────────────────────────────────────────────────
+
+@login_required
+def relatorio_projetos(request):
+    """Relatório de Projetos — visão consolidada do portfólio (status, prazos, responsáveis)."""
+    projetos = get_projetos_usuario(request).order_by('-criado_em')
+
+    status_f = request.GET.get('status', '')
+    if status_f:
+        projetos = projetos.filter(status=status_f)
+
+    hoje = date.today()
+    linhas = []
+    atrasados = no_limite = no_prazo = 0
+    for p in projetos:
+        situacao = None
+        if not p.encerrado and p.data_conclusao:
+            if p.data_conclusao < hoje:
+                situacao = 'atrasado'
+                atrasados += 1
+            elif p.dias_para_conclusao <= 3:
+                situacao = 'no_limite'
+                no_limite += 1
+            else:
+                situacao = 'no_prazo'
+                no_prazo += 1
+        linhas.append({'projeto': p, 'situacao': situacao})
+
+    total = len(linhas)
+    ativos = sum(1 for l in linhas if not l['projeto'].encerrado)
+    encerrados = sum(1 for l in linhas if l['projeto'].encerrado)
+
+    return render(request, 'relatorios/projetos.html', {
+        'linhas': linhas,
+        'total': total,
+        'ativos': ativos,
+        'encerrados': encerrados,
+        'atrasados': atrasados,
+        'no_limite': no_limite,
+        'no_prazo': no_prazo,
+        'status_f': status_f,
+        'status_choices': Projeto.STATUS_CHOICES,
+    })
+
+
+@login_required
+def exportar_projetos(request):
+    """Exporta o Relatório de Projetos como CSV."""
+    projetos = get_projetos_usuario(request).order_by('-criado_em')
+    hoje = date.today()
+
+    def fmt_data(d):
+        return d.strftime('%d/%m/%Y') if d else ''
+
+    def situacao(p):
+        if p.encerrado:
+            return 'Encerrado'
+        if not p.data_conclusao:
+            return ''
+        if p.data_conclusao < hoje:
+            return 'Atrasado'
+        if p.dias_para_conclusao <= 3:
+            return 'No Limite'
+        return 'No Prazo'
+
+    rows = [
+        [p.id, p.nome, p.get_status_display(), p.gerente, p.patrocinador,
+         fmt_data(p.data_inicio), fmt_data(p.data_conclusao), situacao(p),
+         fmt_data(p.criado_em.date() if p.criado_em else None)]
+        for p in projetos
+    ]
+    return exportar_csv('projetos.csv', [
+        'ID', 'Projeto', 'Status', 'Gerente', 'Patrocinador',
+        'Início', 'Conclusão Prevista', 'Situação do Prazo', 'Cadastrado em',
+    ], rows)
+
+
+# ─── Relatório de Leads ───────────────────────────────────────────────────
+
+@login_required
+def relatorio_leads(request):
+    """Relatório de Leads — funil comercial consolidado (dados do CRM em Vendas)."""
+    leads = _qs_empresa(Lead.objects, request).order_by('-criado_em')
+
+    estagio_f = request.GET.get('estagio', '')
+    if estagio_f:
+        leads = leads.filter(estagio=estagio_f)
+    temperatura_f = request.GET.get('temperatura', '')
+    if temperatura_f:
+        leads = leads.filter(temperatura=temperatura_f)
+
+    ESTAGIO_LABELS = dict(Lead.ESTAGIO_CHOICES)
+    CATEGORIA_LABELS = dict(Lead.CATEGORIA_CHOICES)
+
+    por_estagio = list(
+        leads.values('estagio').annotate(qtd=Count('id'), valor=Sum('valor_estimado')).order_by('-valor')
+    )
+    for row in por_estagio:
+        row['label'] = ESTAGIO_LABELS.get(row['estagio'], row['estagio'])
+
+    por_categoria = list(
+        leads.exclude(categoria='').values('categoria').annotate(qtd=Count('id'), valor=Sum('valor_estimado')).order_by('-valor')
+    )
+    for row in por_categoria:
+        row['label'] = CATEGORIA_LABELS.get(row['categoria'], row['categoria'])
+
+    total_leads = leads.count()
+    total_valor = leads.aggregate(s=Sum('valor_estimado'))['s'] or 0
+    pipeline_aberto = leads.filter(estagio__in=['prospeccao', 'proposta']).aggregate(s=Sum('valor_estimado'))['s'] or 0
+    ganhos = leads.filter(estagio='fechamento').count()
+    perdidos = leads.filter(estagio='perdido').count()
+    taxa_conversao = (ganhos / total_leads * 100) if total_leads else 0
+
+    return render(request, 'relatorios/leads.html', {
+        'leads': leads,
+        'por_estagio': por_estagio,
+        'por_categoria': por_categoria,
+        'total_leads': total_leads,
+        'total_valor': total_valor,
+        'pipeline_aberto': pipeline_aberto,
+        'ganhos': ganhos,
+        'perdidos': perdidos,
+        'taxa_conversao': round(taxa_conversao, 1),
+        'estagio_f': estagio_f,
+        'temperatura_f': temperatura_f,
+        'estagio_choices': Lead.ESTAGIO_CHOICES,
+        'temperatura_choices': Lead.TEMPERATURA_CHOICES,
+    })
+
+
+@login_required
+def exportar_leads(request):
+    """Exporta o Relatório de Leads como CSV."""
+    leads = _qs_empresa(Lead.objects, request).order_by('-criado_em')
+    ESTAGIO_LABELS = dict(Lead.ESTAGIO_CHOICES)
+    TEMPERATURA_LABELS = dict(Lead.TEMPERATURA_CHOICES)
+    CATEGORIA_LABELS = dict(Lead.CATEGORIA_CHOICES)
+
+    def fmt_data(d):
+        return d.strftime('%d/%m/%Y') if d else ''
+
+    rows = [
+        [
+            l.id, l.nome, l.empresa_nome, l.contato, l.email,
+            ESTAGIO_LABELS.get(l.estagio, l.estagio),
+            TEMPERATURA_LABELS.get(l.temperatura, l.temperatura),
+            CATEGORIA_LABELS.get(l.categoria, l.categoria) if l.categoria else '',
+            l.servicos_interesse, float(l.valor_estimado), l.observacoes,
+            fmt_data(l.criado_em.date() if l.criado_em else None),
+        ]
+        for l in leads
+    ]
+    return exportar_csv('leads.csv', [
+        'ID', 'Nome', 'Empresa', 'Contato', 'E-mail', 'Estágio', 'Temperatura',
+        'Categoria', 'Serviços de Interesse', 'Valor Estimado (R$)', 'Observações', 'Cadastrado em',
+    ], rows)
+
+
+# ─── Relatório de Propostas ───────────────────────────────────────────────
+
+@login_required
+def relatorio_propostas(request):
+    """Relatório de Propostas — pipeline de vendas por status, com taxa de conversão."""
+    propostas = _qs_empresa(Proposta.objects, request).select_related('cliente', 'lead').order_by('-criado_em')
+
+    status_f = request.GET.get('status', '')
+    if status_f:
+        propostas = propostas.filter(status=status_f)
+
+    STATUS_LABELS = dict(Proposta.STATUS_CHOICES)
+    por_status = list(
+        propostas.values('status').annotate(qtd=Count('id'), valor=Sum('valor_total')).order_by('-valor')
+    )
+    for row in por_status:
+        row['label'] = STATUS_LABELS.get(row['status'], row['status'])
+
+    total_propostas = propostas.count()
+    total_valor = propostas.aggregate(s=Sum('valor_total'))['s'] or 0
+    aprovadas_qs = propostas.filter(status='aprovada')
+    aprovadas = aprovadas_qs.count()
+    valor_aprovado = aprovadas_qs.aggregate(s=Sum('valor_total'))['s'] or 0
+    taxa_conversao = (aprovadas / total_propostas * 100) if total_propostas else 0
+
+    return render(request, 'relatorios/propostas.html', {
+        'propostas': propostas,
+        'por_status': por_status,
+        'total_propostas': total_propostas,
+        'total_valor': total_valor,
+        'aprovadas': aprovadas,
+        'valor_aprovado': valor_aprovado,
+        'taxa_conversao': round(taxa_conversao, 1),
+        'status_f': status_f,
+        'status_choices': Proposta.STATUS_CHOICES,
+    })
+
+
+@login_required
+def exportar_propostas(request):
+    """Exporta o Relatório de Propostas como CSV."""
+    propostas = _qs_empresa(Proposta.objects, request).select_related('cliente', 'lead').order_by('-criado_em')
+
+    def fmt_data(d):
+        return d.strftime('%d/%m/%Y') if d else ''
+
+    rows = [
+        [
+            p.id, p.codigo, p.titulo, p.get_cliente_nome(), p.get_status_display(),
+            float(p.valor_total), fmt_data(p.data_emissao), fmt_data(p.data_validade),
+            fmt_data(p.criado_em.date() if p.criado_em else None),
+        ]
+        for p in propostas
+    ]
+    return exportar_csv('propostas.csv', [
+        'ID', 'Código', 'Título', 'Cliente', 'Status', 'Valor Total (R$)',
+        'Emissão', 'Validade', 'Cadastrado em',
+    ], rows)

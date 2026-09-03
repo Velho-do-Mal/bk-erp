@@ -1,6 +1,7 @@
 import json
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from apps.core.exportacao import exportar_csv
 from django.http import HttpResponse, JsonResponse
 from .models import Documento
@@ -92,10 +93,25 @@ def download(request, pk):
     if empresa:
         kwargs['empresa'] = empresa
     doc = get_object_or_404(Documento, **kwargs)
-    if doc.arquivo:
-        data = doc.arquivo.read()
-    else:
+    if not doc.arquivo:
         raise Http404
+    try:
+        data = doc.arquivo.read()
+    except (FileNotFoundError, OSError):
+        # CORRIGIDO: quando o registro no banco aponta pra um arquivo que
+        # não existe mais no storage (local: apagado, ou perdido num
+        # redeploy do filesystem efêmero do Railway quando USE_S3 não está
+        # habilitado; S3: chave removida do bucket — django-storages
+        # normaliza pra FileNotFoundError nos dois casos, ver
+        # S3Boto3Storage._open), .read() lançava a exceção direto pro
+        # usuário e a rota dava Erro 500 sem explicar o que aconteceu.
+        # Agora avisa e volta pra lista em vez de quebrar a página.
+        messages.error(
+            request,
+            f'O arquivo "{doc.arquivo_nome or doc.titulo}" não foi encontrado no '
+            'armazenamento (pode ter sido removido). Reenvie o documento ou contate o suporte.'
+        )
+        return redirect('documentos:lista')
     resp = HttpResponse(data, content_type=doc.arquivo_tipo or 'application/octet-stream')
     resp['Content-Disposition'] = f'attachment; filename="{doc.arquivo_nome}"'
     return resp

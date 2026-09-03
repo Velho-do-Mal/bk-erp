@@ -4,8 +4,9 @@ from decimal import Decimal
 from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
 from apps.core.tenant import tenant_get_or_404
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from apps.core.exportacao import exportar_csv
 from apps.core.audit import registrar as audit
 from django.http import JsonResponse, HttpResponse
@@ -83,11 +84,28 @@ RECORRENCIA_DELTAS = {
 @login_required
 def download_anexo(request, pk):
     from django.http import Http404
-    t = get_object_or_404(Transacao, pk=pk)
-    if t.anexo_arquivo:
-        data = t.anexo_arquivo.read()
-    else:
+    # CORRIGIDO: get_object_or_404 sem filtro de empresa — qualquer usuário
+    # logado podia baixar o anexo de uma transação de OUTRA empresa só
+    # adivinhando o pk (falta de isolamento de tenant). tenant_get_or_404 é
+    # o helper já usado pro resto deste arquivo (ver salvar_transacao etc.)
+    # e injeta esse filtro automaticamente.
+    t = tenant_get_or_404(Transacao, request, pk=pk)
+    if not t.anexo_arquivo:
         raise Http404
+    try:
+        data = t.anexo_arquivo.read()
+    except (FileNotFoundError, OSError):
+        # CORRIGIDO: mesma causa do Erro 500 em Documentos — o registro no
+        # banco aponta pra um arquivo que não existe mais no storage
+        # (local: apagado / perdido num redeploy do filesystem efêmero do
+        # Railway sem USE_S3; S3: chave removida do bucket). Antes isso
+        # derrubava a página com Erro 500; agora avisa e volta.
+        messages.error(
+            request,
+            f'O anexo "{t.anexo_nome or t.descricao}" não foi encontrado no '
+            'armazenamento (pode ter sido removido). Reenvie o anexo ou contate o suporte.'
+        )
+        return redirect('financeiro:transacoes')
     resp = HttpResponse(data, content_type=t.anexo_tipo or 'application/octet-stream')
     resp['Content-Disposition'] = f'attachment; filename="{t.anexo_nome}"'
     return resp
@@ -711,7 +729,22 @@ def salvar_orcamento(request):
 
 @login_required
 def exportar_transacoes(request):
-    empresa = _empresa(request)
-    qs = Transacao.objects.filter(empresa=empresa).values('id', 'descricao', 'tipo', 'valor', 'data', 'categoria__nome', 'conta__nome')
-    rows = [list(r.values()) for r in qs]
+    # CORRIGIDO: .values(..., 'data', ...) — Transacao não tem campo
+    # chamado "data" (os campos reais são data_competencia,
+    # data_vencimento, data_pagamento), então o Django lançava FieldError
+    # e a rota dava Erro 500 sempre que alguém clicava em "Exportar CSV"
+    # em Financeiro (mesma classe de bug já corrigida em
+    # vendas.exportar_propostas — ver histórico). Usa data_competencia,
+    # que é o campo obrigatório (sempre preenchido) e é o que a tela de
+    # Financeiro mostra como "Data" nas listagens.
+    # Também trocado o filtro manual empresa=empresa por _qs_empresa(),
+    # que já trata corretamente o caso do superadmin (empresa=None não
+    # deve filtrar nada, e sim ver tudo).
+    qs = _qs_empresa(Transacao.objects, request).values_list(
+        'id', 'descricao', 'tipo', 'valor', 'data_competencia', 'categoria__nome', 'conta__nome'
+    )
+    rows = [
+        [id_, descricao, tipo, float(valor), data.strftime('%d/%m/%Y') if data else '', categoria, conta]
+        for id_, descricao, tipo, valor, data, categoria, conta in qs
+    ]
     return exportar_csv('transacoes.csv', ['ID', 'Descrição', 'Tipo', 'Valor', 'Data', 'Categoria', 'Conta'], rows)

@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load bk_filters %}
+{% block title %}Relatório de Propostas{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Mesmas cores de badge por status usadas em vendas/lista.html — os
+     nomes de classe .badge-{status} não existem no CSS global (que só
+     tem cores genéricas como .badge-blue/.badge-green), então precisam
+     ser redefinidos aqui também. */
+  .badge-rascunho  { background:#f1f5f9; color:#475569; }
+  .badge-enviada   { background:#dbeafe; color:#1e40af; }
+  .badge-negociacao{ background:#fef3c7; color:#d97706; }
+  .badge-aprovada  { background:#dcfce7; color:#16a34a; }
+  .badge-perdida   { background:#fee2e2; color:#ef4444; }
+  .badge-cancelada { background:#f3f4f6; color:#9ca3af; }
+</style>
+{% endblock %}
+
+{% block content %}
+<a href="{% url 'relatorios:dashboard' %}" class="btn btn-secondary btn-sm btn-voltar">← Relatórios</a>
+
+<!-- Filtro status -->
+<div class="bk-card" style="padding:12px 16px;margin-bottom:18px">
+  <form method="get" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+    <div>
+      <label class="form-label" style="font-size:11px">Status</label>
+      <select name="status" class="form-control" style="width:180px">
+        <option value="" {% if not status_f %}selected{% endif %}>Todos os status</option>
+        {% for valor, label in status_choices %}
+        <option value="{{ valor }}" {% if status_f == valor %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm">🔍 Filtrar</button>
+    <a href="?" class="btn btn-secondary btn-sm">✕ Limpar</a>
+    <a href="{% url 'relatorios:exportar_propostas' %}" class="btn btn-secondary btn-sm" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;margin-left:auto">📊 Exportar CSV</a>
+  </form>
+</div>
+
+<!-- KPIs -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px">
+  <div class="kpi-card">
+    <div class="kpi-label">Total de Propostas</div>
+    <div class="kpi-value">{{ total_propostas }}</div>
+  </div>
+  <div class="kpi-card kpi-blue">
+    <div class="kpi-label">Valor Total (R$)</div>
+    <div class="kpi-value moeda" style="color:#1e40af">{{ total_valor|moeda }}</div>
+  </div>
+  <div class="kpi-card kpi-green">
+    <div class="kpi-label">Aprovadas</div>
+    <div class="kpi-value" style="color:#16a34a">{{ aprovadas }}</div>
+  </div>
+  <div class="kpi-card kpi-green">
+    <div class="kpi-label">Valor Aprovado (R$)</div>
+    <div class="kpi-value moeda" style="color:#16a34a">{{ valor_aprovado|moeda }}</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Taxa de Conversão</div>
+    <div class="kpi-value">{{ taxa_conversao }}%</div>
+  </div>
+</div>
+
+<!-- Composição por status -->
+<div class="card" style="overflow:hidden;margin-bottom:16px">
+  <div class="card-header" style="padding:12px 16px;font-weight:600;border-bottom:1px solid #e5e7eb">
+    📋 Por Status
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Status</th><th style="text-align:center">Qtd.</th><th style="text-align:right">Valor</th></tr></thead>
+      <tbody>
+        {% for r in por_status %}
+        <tr>
+          <td><span class="badge badge-{{ r.status }}">{{ r.label }}</span></td>
+          <td style="text-align:center">{{ r.qtd }}</td>
+          <td style="text-align:right">{{ r.valor|moeda }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="3" style="text-align:center;color:#6b7280;padding:20px">Sem propostas</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Lista -->
+<div class="card" style="overflow:hidden">
+  <div class="card-header" style="padding:12px 16px;font-weight:600;border-bottom:1px solid #e5e7eb">
+    📋 Propostas
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Título / Projeto</th>
+          <th>Cliente</th>
+          <th>Emissão</th>
+          <th>Status</th>
+          <th style="text-align:right">Valor (R$)</th>
+          <th class="col-actions">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in propostas %}
+        <tr>
+          <td><strong>{{ p.codigo|default:"—" }}</strong></td>
+          <td>{{ p.titulo }}</td>
+          <td>{{ p.get_cliente_nome|default:"—" }}</td>
+          <td>{{ p.data_emissao|date:"d/m/Y" }}</td>
+          <td><span class="badge badge-{{ p.status }}">{{ p.get_status_display }}</span></td>
+          <td style="text-align:right;font-weight:600">{{ p.valor_total|moeda }}</td>
+          <td class="col-actions">
+            <a href="{% url 'vendas:proposta_detalhe' p.id %}" class="btn btn-sm btn-secondary" title="Ver proposta">✏️ Abrir</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" style="text-align:center;color:#6b7280;padding:32px">Nenhuma proposta encontrada.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

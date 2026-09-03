@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% load bk_filters %}
+{% block title %}Relatório de Leads{% endblock %}
+
+{% block content %}
+<a href="{% url 'relatorios:dashboard' %}" class="btn btn-secondary btn-sm btn-voltar">← Relatórios</a>
+
+<!-- Filtros -->
+<div class="bk-card" style="padding:12px 16px;margin-bottom:18px">
+  <form method="get" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+    <div>
+      <label class="form-label" style="font-size:11px">Estágio</label>
+      <select name="estagio" class="form-control" style="width:180px">
+        <option value="" {% if not estagio_f %}selected{% endif %}>Todos os estágios</option>
+        {% for valor, label in estagio_choices %}
+        <option value="{{ valor }}" {% if estagio_f == valor %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div>
+      <label class="form-label" style="font-size:11px">Temperatura</label>
+      <select name="temperatura" class="form-control" style="width:150px">
+        <option value="" {% if not temperatura_f %}selected{% endif %}>Toda temperatura</option>
+        {% for valor, label in temperatura_choices %}
+        <option value="{{ valor }}" {% if temperatura_f == valor %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm">🔍 Filtrar</button>
+    <a href="?" class="btn btn-secondary btn-sm">✕ Limpar</a>
+    <a href="{% url 'relatorios:exportar_leads' %}" class="btn btn-secondary btn-sm" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;margin-left:auto">📊 Exportar CSV</a>
+  </form>
+</div>
+
+<!-- KPIs -->
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px">
+  <div class="kpi-card">
+    <div class="kpi-label">Total de Leads</div>
+    <div class="kpi-value">{{ total_leads }}</div>
+  </div>
+  <div class="kpi-card kpi-blue">
+    <div class="kpi-label">Valor Total do Pipeline</div>
+    <div class="kpi-value moeda" style="color:#1e40af">{{ total_valor|moeda }}</div>
+  </div>
+  <div class="kpi-card kpi-orange">
+    <div class="kpi-label">Pipeline em Aberto</div>
+    <div class="kpi-value moeda" style="color:#d97706">{{ pipeline_aberto|moeda }}</div>
+  </div>
+  <div class="kpi-card kpi-green">
+    <div class="kpi-label">Ganhos (Fechamento)</div>
+    <div class="kpi-value" style="color:#16a34a">{{ ganhos }}</div>
+  </div>
+  <div class="kpi-card kpi-red">
+    <div class="kpi-label">Perdidos</div>
+    <div class="kpi-value" style="color:#ef4444">{{ perdidos }}</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-label">Taxa de Conversão</div>
+    <div class="kpi-value">{{ taxa_conversao }}%</div>
+  </div>
+</div>
+
+<!-- Tabelas de composição -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+  <div class="card" style="overflow:hidden">
+    <div class="card-header" style="padding:12px 16px;font-weight:600;border-bottom:1px solid #e5e7eb">
+      🎯 Por Estágio
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Estágio</th><th style="text-align:center">Qtd.</th><th style="text-align:right">Valor</th></tr></thead>
+        <tbody>
+          {% for r in por_estagio %}
+          <tr>
+            <td>{{ r.label }}</td>
+            <td style="text-align:center">{{ r.qtd }}</td>
+            <td style="text-align:right">{{ r.valor|moeda }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" style="text-align:center;color:#6b7280;padding:20px">Sem leads</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" style="overflow:hidden">
+    <div class="card-header" style="padding:12px 16px;font-weight:600;border-bottom:1px solid #e5e7eb">
+      🏷️ Por Categoria
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Categoria</th><th style="text-align:center">Qtd.</th><th style="text-align:right">Valor</th></tr></thead>
+        <tbody>
+          {% for r in por_categoria %}
+          <tr>
+            <td>{{ r.label }}</td>
+            <td style="text-align:center">{{ r.qtd }}</td>
+            <td style="text-align:right">{{ r.valor|moeda }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" style="text-align:center;color:#6b7280;padding:20px">Sem categoria informada</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Lista -->
+<div class="card" style="overflow:hidden">
+  <div class="card-header" style="padding:12px 16px;font-weight:600;border-bottom:1px solid #e5e7eb">
+    🎯 Leads / CRM
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>Empresa</th>
+          <th>Estágio</th>
+          <th>Temp.</th>
+          <th>Categoria</th>
+          <th style="text-align:right">Valor Est.</th>
+          <th>Cadastrado em</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for l in leads %}
+        <tr>
+          <td>{{ l.nome }}</td>
+          <td>{{ l.empresa_nome|default:"—" }}</td>
+          <td>{{ l.get_estagio_display }}</td>
+          <td>{{ l.get_temperatura_display }}</td>
+          <td>{{ l.get_categoria_display|default:"—" }}</td>
+          <td style="text-align:right">{{ l.valor_estimado|moeda }}</td>
+          <td>{{ l.criado_em|date:"d/m/Y" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" style="text-align:center;color:#6b7280;padding:32px">Nenhum lead encontrado.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

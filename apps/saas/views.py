@@ -47,7 +47,18 @@ def cadastro(request):
                 'trial_dias': settings.TRIAL_DIAS,
             })
 
-        plano = Plano.objects.filter(id=plano_id).first() or Plano.objects.filter(nome='free').first()
+        # CORRIGIDO: quando nenhum plano é selecionado no formulário (ou o
+        # campo vem vazio por qualquer motivo), plano_id chega como '' —
+        # Plano.objects.filter(id='') estoura ValueError ("expected a
+        # number but got ''"), porque o campo id é numérico, e essa
+        # exceção não é tratada, então a rota dava Erro 500 sempre que o
+        # cadastro era enviado sem plano selecionado. Agora só filtra por
+        # id quando plano_id de fato veio preenchido e é numérico.
+        plano = None
+        if plano_id and plano_id.isdigit():
+            plano = Plano.objects.filter(id=plano_id).first()
+        if not plano:
+            plano = Plano.objects.filter(nome='free').first()
 
         # Empresa nasce com modulos_contratados no default (todos os módulos —
         # ver apps/saas/models.py) para que o trial seja de acesso completo: é
