@@ -49,6 +49,75 @@
   </div>
 </div>
 
+<!-- Edição (modal) -->
+<div class="modal-overlay" id="edit-panel">
+  <div class="modal-box modal-box-lg">
+    <button class="modal-close-x" onclick="document.getElementById('edit-panel').classList.remove('open')">✕</button>
+    <div class="modal-title">✏️ Editar Documento</div>
+    <form id="edit-form" onsubmit="salvarEdicao(event)">
+      <input type="hidden" id="edit-id">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+        <div><label class="form-label">Título *</label><input id="edit-titulo" class="form-control"></div>
+        <div><label class="form-label">Tipo</label>
+          <select id="edit-tipo" class="form-control">
+            {% for val, label in tipos %}<option value="{{ val }}">{{ label }}</option>{% endfor %}
+          </select>
+        </div>
+        <div><label class="form-label">Tags (vírgula)</label><input id="edit-tags" class="form-control"></div>
+        <div><label class="form-label">Cliente</label>
+          <select id="edit-cliente" class="form-control"><option value="">—</option>
+            {% for c in clientes %}<option value="{{ c.id }}">{{ c.nome }}</option>{% endfor %}
+          </select>
+        </div>
+        <div><label class="form-label">Fornecedor</label>
+          <select id="edit-fornecedor" class="form-control"><option value="">—</option>
+            {% for f in fornecedores %}<option value="{{ f.id }}">{{ f.nome }}</option>{% endfor %}
+          </select>
+        </div>
+        <div><label class="form-label">Projeto (nome livre)</label><input id="edit-projeto" class="form-control"></div>
+        <div style="grid-column:1/-1"><label class="form-label">Observações</label><textarea id="edit-observacoes" class="form-control" rows="2"></textarea></div>
+        <div><label class="form-label">📅 Validade</label><input type="date" id="edit-validade" class="form-control"></div>
+      </div>
+      <p style="font-size:12px;color:#94a3b8;margin-top:10px">Isso altera apenas os dados do documento. Para substituir o arquivo mantendo o histórico, use "🔄 Nova Versão".</p>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('edit-panel').classList.remove('open')">❌ Cancelar</button>
+        <button type="submit" class="btn btn-primary">💾 Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Nova versão (modal) -->
+<div class="modal-overlay" id="versao-panel">
+  <div class="modal-box modal-box-lg">
+    <button class="modal-close-x" onclick="document.getElementById('versao-panel').classList.remove('open')">✕</button>
+    <div class="modal-title">🔄 Nova Versão do Documento</div>
+    <p style="font-size:13px;color:#475569" id="versao-info"></p>
+    <p style="font-size:12px;color:#94a3b8;margin-top:-6px">A versão atual não é apagada — fica salva no histórico deste documento.</p>
+    <form id="versao-form" enctype="multipart/form-data" onsubmit="enviarNovaVersao(event)">
+      <input type="hidden" id="versao-id">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div style="grid-column:1/-1"><label class="form-label">📎 Novo Arquivo *</label><input type="file" name="arquivo" class="form-control" required></div>
+        <div><label class="form-label">📅 Validade <span style="color:#94a3b8;font-size:11px">(deixe em branco pra manter a validade anterior)</span></label><input type="date" name="data_validade" class="form-control"></div>
+        <div><label class="form-label">Observações da revisão</label><input name="observacoes" class="form-control" placeholder="Ex: revisão trimestral"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('versao-panel').classList.remove('open')">❌ Cancelar</button>
+        <button type="submit" class="btn btn-primary">🔄 Enviar Nova Versão</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Histórico de versões (modal) -->
+<div class="modal-overlay" id="historico-panel">
+  <div class="modal-box modal-box-lg">
+    <button class="modal-close-x" onclick="document.getElementById('historico-panel').classList.remove('open')">✕</button>
+    <div class="modal-title">🕓 Histórico de Versões</div>
+    <div id="historico-lista" style="max-height:400px;overflow-y:auto"></div>
+  </div>
+</div>
+
 <!-- Filtros -->
 <div class="bk-card" style="padding:12px 16px;margin-bottom:16px">
   <form method="get" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
@@ -71,7 +140,7 @@
       <thead>
         <tr>
           <th>Título</th><th>Tipo</th><th>Projeto</th><th>Cliente</th>
-          <th>Arquivo</th><th>Tags</th><th>Validade</th><th>Enviado em</th><th class="col-actions" style="width:130px">Ações</th>
+          <th>Arquivo</th><th>Tags</th><th>Validade</th><th>Enviado em</th><th class="col-actions" style="width:170px">Ações</th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
@@ -88,6 +157,8 @@ const TIPO_MAP={contrato:'📄 Contrato',empresa:'🏢 Doc. Empresa',seguro:'�
 
 function fmtDate(d){if(!d)return'—';return new Date(d+'T00:00:00').toLocaleDateString('pt-BR');}
 
+function docPorId(id){return docs.find(d=>d.id===id);}
+
 function badgeValidade(val){
   if(!val) return '<span style="color:#94a3b8;font-size:11px">—</span>';
   const hoje = new Date(); hoje.setHours(0,0,0,0);
@@ -98,22 +169,29 @@ function badgeValidade(val){
   return '<span class="badge badge-success">✅ Em dia</span>';
 }
 
+function seloVersao(r){
+  if(r.total_versoes<=1) return '';
+  return ` <a href="javascript:void(0)" onclick="abrirHistorico(${r.id})" class="badge badge-secondary" style="cursor:pointer" title="Ver histórico de versões">v${r.versao} · ${r.total_versoes} versões</a>`;
+}
+
 function renderTabela(){
   const tb=document.getElementById('tbody');
   if(!docs.length){tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:#64748b;padding:24px">Nenhum documento cadastrado</td></tr>';return;}
   tb.innerHTML=docs.map(r=>`
     <tr>
-      <td><strong>${r.titulo}</strong></td>
+      <td><strong>${r.titulo}</strong>${seloVersao(r)}</td>
       <td><span class="badge badge-secondary">${TIPO_MAP[r.tipo]||r.tipo}</span></td>
       <td>${r.projeto_nome||'—'}</td>
       <td>${r['cliente__nome']||'—'}</td>
       <td style="font-size:12px;color:#6b7280">${r.arquivo_nome||'—'}</td>
       <td style="font-size:11px;color:#64748b">${r.tags||'—'}</td>
       <td>${badgeValidade(r.data_validade)}<br><small style="color:#94a3b8;font-size:10px">${r.data_validade?fmtDate(r.data_validade):''}</small></td>
-      <td style="font-size:12px">${fmtDate(r.criado_em)}</td>
+      <td style="font-size:12px">${r.criado_em||'—'}</td>
       <td style="white-space:nowrap">
-        <a href="/documentos/download/${r.id}/" class="btn-sm success">⬇️ Baixar</a>
-        <button class="btn-sm danger" onclick="excluir(${r.id})" style="margin-left:4px">🗑️</button>
+        <a href="/documentos/download/${r.id}/" class="btn-sm success" title="Baixar">⬇️</a>
+        <button class="btn-sm" onclick="abrirEdicao(${r.id})" style="margin-left:4px" title="Editar dados">✏️</button>
+        <button class="btn-sm" onclick="abrirNovaVersao(${r.id})" style="margin-left:4px" title="Enviar nova versão">🔄</button>
+        <button class="btn-sm danger" onclick="excluir(${r.id})" style="margin-left:4px" title="Excluir">🗑️</button>
       </td>
     </tr>`).join('');
 }
@@ -125,16 +203,88 @@ async function enviarDoc(e){
   const r=await fetch('',{method:'POST',headers:{'X-CSRFToken':CSRF},body:fd});
   const data=await r.json();
   if(data.ok){bkToast('Documento enviado!','sucesso');setTimeout(()=>location.reload(),900);}
-  else bkToast(data.error||'Erro ao enviar','erro');
+  else bkToast(data.error||data.erro||'Erro ao enviar','erro');
 }
 
 async function excluir(id){
-  const ok=await bkConfirm('Excluir este documento permanentemente?','🗑️ Excluir Documento');
+  const ok=await bkConfirm('Excluir este documento permanentemente? Se ele tiver versões antigas no histórico, elas continuam salvas.','🗑️ Excluir Documento');
   if(!ok)return;
   const r=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({action:'delete',id})});
   const data=await r.json();
   if(data.ok){bkToast('Documento excluído','sucesso');setTimeout(()=>location.reload(),900);}
-  else bkToast(data.error||'Erro ao excluir','erro');
+  else bkToast(data.error||data.erro||'Erro ao excluir','erro');
+}
+
+function abrirEdicao(id){
+  const r=docPorId(id);
+  if(!r)return;
+  document.getElementById('edit-id').value=r.id;
+  document.getElementById('edit-titulo').value=r.titulo||'';
+  document.getElementById('edit-tipo').value=r.tipo||'outro';
+  document.getElementById('edit-tags').value=r.tags||'';
+  document.getElementById('edit-cliente').value=r.cliente_id||'';
+  document.getElementById('edit-fornecedor').value=r.fornecedor_id||'';
+  document.getElementById('edit-projeto').value=r.projeto_nome||'';
+  document.getElementById('edit-observacoes').value=r.observacoes||'';
+  document.getElementById('edit-validade').value=r.data_validade||'';
+  document.getElementById('edit-panel').classList.add('open');
+}
+
+async function salvarEdicao(e){
+  e.preventDefault();
+  const id=document.getElementById('edit-id').value;
+  const payload={
+    titulo:document.getElementById('edit-titulo').value,
+    tipo:document.getElementById('edit-tipo').value,
+    tags:document.getElementById('edit-tags').value,
+    cliente_id:document.getElementById('edit-cliente').value,
+    fornecedor_id:document.getElementById('edit-fornecedor').value,
+    projeto_nome:document.getElementById('edit-projeto').value,
+    observacoes:document.getElementById('edit-observacoes').value,
+    data_validade:document.getElementById('edit-validade').value,
+  };
+  const r=await fetch(`/documentos/editar/${id}/`,{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify(payload)});
+  const data=await r.json();
+  if(data.ok){bkToast('Documento atualizado!','sucesso');setTimeout(()=>location.reload(),900);}
+  else bkToast(data.erro||'Erro ao salvar','erro');
+}
+
+function abrirNovaVersao(id){
+  const r=docPorId(id);
+  if(!r)return;
+  document.getElementById('versao-id').value=r.id;
+  document.getElementById('versao-info').innerHTML=`Enviando nova versão de <strong>${r.titulo}</strong> (versão atual: v${r.versao}). O arquivo atual continuará disponível no histórico.`;
+  document.getElementById('versao-form').reset();
+  document.getElementById('versao-panel').classList.add('open');
+}
+
+async function enviarNovaVersao(e){
+  e.preventDefault();
+  const id=document.getElementById('versao-id').value;
+  const form=document.getElementById('versao-form');
+  const fd=new FormData(form);
+  const r=await fetch(`/documentos/nova-versao/${id}/`,{method:'POST',headers:{'X-CSRFToken':CSRF},body:fd});
+  const data=await r.json();
+  if(data.ok){bkToast('Nova versão enviada!','sucesso');setTimeout(()=>location.reload(),900);}
+  else bkToast(data.erro||'Erro ao enviar nova versão','erro');
+}
+
+async function abrirHistorico(id){
+  const box=document.getElementById('historico-lista');
+  box.innerHTML='<p style="color:#94a3b8;font-size:13px">Carregando...</p>';
+  document.getElementById('historico-panel').classList.add('open');
+  const r=await fetch(`/documentos/historico/${id}/`);
+  const data=await r.json();
+  if(!data.ok || !data.itens.length){box.innerHTML='<p style="color:#94a3b8;font-size:13px">Nenhuma versão encontrada.</p>';return;}
+  box.innerHTML=data.itens.map(v=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 4px;border-bottom:1px solid #e5e7eb">
+      <div>
+        <strong>v${v.versao}</strong> ${v.vigente?'<span class="badge badge-success">Vigente</span>':'<span class="badge badge-secondary">Histórico</span>'}
+        <div style="font-size:12px;color:#6b7280">${v.titulo}</div>
+        <div style="font-size:11px;color:#94a3b8">${v.arquivo_nome||'—'} · enviado por ${v.enviado_por||'—'} em ${v.criado_em||'—'}</div>
+      </div>
+      <a href="/documentos/download/${v.id}/" class="btn-sm success" title="Baixar esta versão">⬇️</a>
+    </div>`).join('');
 }
 
 renderTabela();
