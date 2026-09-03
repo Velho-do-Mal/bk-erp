@@ -87,14 +87,25 @@ def lista(request):
 
 @login_required
 def download(request, pk):
-    from django.http import Http404
     empresa = _empresa(request)
     kwargs = {'pk': pk}
     if empresa:
         kwargs['empresa'] = empresa
     doc = get_object_or_404(Documento, **kwargs)
     if not doc.arquivo:
-        raise Http404
+        # CORRIGIDO: registros de Documento com o campo "arquivo" vazio
+        # (nenhum arquivo foi de fato anexado ao registro) faziam a rota
+        # estourar um Http404 puro, sem nenhuma mensagem — o usuário via a
+        # página padrão do Django "Não encontrado", diferente da mensagem
+        # amigável de "arquivo não encontrado no armazenamento" usada
+        # abaixo. Agora os dois casos (arquivo nunca anexado / arquivo
+        # perdido no armazenamento) mostram um aviso e voltam pra lista.
+        messages.error(
+            request,
+            f'O documento "{doc.titulo}" não possui um arquivo anexado. '
+            'Reenvie o documento ou contate o suporte.'
+        )
+        return redirect('documentos:lista')
     try:
         data = doc.arquivo.read()
     except (FileNotFoundError, OSError):
