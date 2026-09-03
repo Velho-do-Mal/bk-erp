@@ -697,3 +697,79 @@ def exportar_propostas(request):
         for p in propostas
     ]
     return exportar_csv('propostas.csv', ['ID', 'Título', 'Cliente', 'Status', 'Valor Total', 'Data'], rows)
+
+
+@login_required
+def exportar_leads_clientes(request):
+    """
+    Exporta, num único CSV, todos os Leads (pipeline/CRM) + todos os
+    Clientes já cadastrados — pedido do usuário para ter uma planilha só
+    de consulta comercial com as duas bases juntas.
+
+    As colunas "Última Proposta" e "Data Fechamento (Negócio Ganho)" só
+    são preenchidas para Cliente (pedido explícito do usuário: para Lead
+    elas ficam em branco, mesmo que o lead já tenha propostas vinculadas
+    via `Proposta.lead` — esse histórico "pré-cliente" não é o que essas
+    colunas representam aqui):
+      - "Última Proposta"  = maior data_emissao entre TODAS as propostas
+        do cliente (qualquer status).
+      - "Data Fechamento"  = maior data_emissao entre as propostas do
+        cliente com status='aprovada' (quando o negócio foi ganho).
+    Calculado com 2 agregações em memória a partir de 1 única query,
+    para não fazer N+1 (uma query de propostas por cliente).
+    """
+    leads = _qs_empresa(Lead.objects, request).order_by('-criado_em')
+    clientes = _qs_empresa(Cliente.objects, request).order_by('nome')
+
+    propostas_cliente = (
+        _qs_empresa(Proposta.objects, request)
+        .filter(cliente__isnull=False)
+        .values_list('cliente_id', 'status', 'data_emissao')
+    )
+    ultima_proposta = {}
+    ultima_fechamento = {}
+    for cliente_id, status, data_emissao in propostas_cliente:
+        if not data_emissao:
+            continue
+        if data_emissao > ultima_proposta.get(cliente_id, date.min):
+            ultima_proposta[cliente_id] = data_emissao
+        if status == 'aprovada' and data_emissao > ultima_fechamento.get(cliente_id, date.min):
+            ultima_fechamento[cliente_id] = data_emissao
+
+    ESTAGIO_LABELS = dict(Lead.ESTAGIO_CHOICES)
+    TEMPERATURA_LABELS = dict(Lead.TEMPERATURA_CHOICES)
+    CATEGORIA_LABELS = dict(Lead.CATEGORIA_CHOICES)
+
+    def fmt_data(d):
+        return d.strftime('%d/%m/%Y') if d else ''
+
+    headers = [
+        'Tipo', 'Nome (Contato)', 'Empresa / Cliente', 'Documento',
+        'Contato / Telefone', 'E-mail', 'Estágio', 'Temperatura', 'Categoria',
+        'Serviços de Interesse', 'Valor Estimado (R$)', 'Ativo', 'Observações',
+        'Cadastrado em', 'Última Proposta', 'Data Fechamento (Negócio Ganho)',
+    ]
+
+    rows = []
+    for l in leads:
+        rows.append([
+            'Lead', l.nome, l.empresa_nome, '', l.contato, l.email,
+            ESTAGIO_LABELS.get(l.estagio, l.estagio),
+            TEMPERATURA_LABELS.get(l.temperatura, l.temperatura),
+            CATEGORIA_LABELS.get(l.categoria, l.categoria) if l.categoria else '',
+            l.servicos_interesse, float(l.valor_estimado), '', l.observacoes,
+            fmt_data(l.criado_em.date() if l.criado_em else None),
+            '', '',  # Última Proposta / Data Fechamento — em branco para Lead
+        ])
+
+    for c in clientes:
+        rows.append([
+            'Cliente', '', c.nome, c.documento, c.telefone, c.email,
+            '', '', '', '', '',
+            'Sim' if c.ativo else 'Não', c.observacoes,
+            fmt_data(c.criado_em.date() if c.criado_em else None),
+            fmt_data(ultima_proposta.get(c.id)),
+            fmt_data(ultima_fechamento.get(c.id)),
+        ])
+
+    return exportar_csv('leads_e_clientes.csv', headers, rows)
