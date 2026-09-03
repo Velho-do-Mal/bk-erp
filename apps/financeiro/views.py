@@ -425,7 +425,11 @@ def transacoes(request):
     if sem_filtro_periodo:
         mes_f = mes_default
 
-    qs = Transacao.objects.select_related('conta', 'categoria', 'cliente', 'fornecedor', 'colaborador', 'centro_custo')
+    # CORRIGIDO (segurança): faltava `_qs_empresa` aqui — a listagem de
+    # lançamentos financeiros devolvia transações (valor, descrição,
+    # cliente/fornecedor) de TODAS as empresas do SaaS pra qualquer
+    # usuário logado (vazamento de dados financeiros entre tenants).
+    qs = _qs_empresa(Transacao.objects, request).select_related('conta', 'categoria', 'cliente', 'fornecedor', 'colaborador', 'centro_custo')
 
     if tipo_f:
         qs = qs.filter(tipo=tipo_f)
@@ -553,7 +557,10 @@ def contas(request):
 
         if action == 'save':
             rid = data.get('id')
-            obj = get_object_or_404(Conta, pk=int(rid)) if rid else Conta()
+            # CORRIGIDO (segurança): buscava a Conta só por pk, sem
+            # filtro de empresa — um usuário conseguia editar a conta
+            # bancária de OUTRA empresa só informando o id dela (IDOR).
+            obj = get_object_or_404(_qs_empresa(Conta.objects, request), pk=int(rid)) if rid else Conta()
             obj.nome = data.get('nome', '').strip()
             obj.banco = data.get('banco', '').strip()
             obj.saldo_inicial = _to_dec(data.get('saldo_inicial', 0))
@@ -589,7 +596,10 @@ def categorias(request):
 
         if action == 'save':
             rid = data.get('id')
-            obj = get_object_or_404(Categoria, pk=int(rid)) if rid else Categoria()
+            # CORRIGIDO (segurança): buscava a Categoria só por pk, sem
+            # filtro de empresa — um usuário conseguia editar a categoria
+            # de OUTRA empresa só informando o id dela (IDOR).
+            obj = get_object_or_404(_qs_empresa(Categoria.objects, request), pk=int(rid)) if rid else Categoria()
             obj.nome = data.get('nome', '').strip()
             obj.tipo = data.get('tipo', 'ambos')
             pid = data.get('pai_id')
@@ -714,9 +724,18 @@ def salvar_orcamento(request):
             mes = int(data.get('mes'))
             valor = Decimal(str(data.get('valor', 0)))
 
+            # CORRIGIDO (segurança): não validava que a categoria
+            # pertence à empresa do usuário nem gravava o orçamento com
+            # a empresa correta — um usuário conseguia criar/alterar
+            # orçamento de uma categoria de OUTRA empresa só informando
+            # o id dela (IDOR de escrita).
+            categoria = get_object_or_404(_qs_empresa(Categoria.objects, request), pk=cat_id)
+
             orc, created = Orcamento.objects.update_or_create(
-                categoria_id=cat_id, ano=ano, mes=mes,
-                defaults={'valor': valor}
+                categoria=categoria, ano=ano, mes=mes,
+                # empresa vem da categoria (já validada acima), não do
+                # request — evita zerar o campo se um superadmin editar.
+                defaults={'valor': valor, 'empresa': categoria.empresa}
             )
 
             return JsonResponse({'ok': True, 'id': orc.id})

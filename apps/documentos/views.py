@@ -68,7 +68,10 @@ def lista(request):
     # (v1, v2, v3...) misturadas. Agora só mostra a versão vigente de
     # cada grupo; as demais ficam disponíveis pelo histórico (ver
     # `historico()` abaixo), sem serem apagadas.
-    qs = Documento.objects.filter(vigente=True).select_related('cliente', 'fornecedor')
+    # CORRIGIDO (segurança): faltava `_qs_empresa` aqui — a listagem
+    # devolvia documentos de TODAS as empresas do SaaS pra qualquer
+    # usuário logado (vazamento de dados entre clientes/tenants).
+    qs = _qs_empresa(Documento.objects.filter(vigente=True), request).select_related('cliente', 'fornecedor')
     if tipo_f:
         qs = qs.filter(tipo=tipo_f)
     if q:
