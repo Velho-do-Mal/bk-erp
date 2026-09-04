@@ -1,4 +1,5 @@
 import json
+from apps.core.json_utils import safe_json_dumps
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -110,7 +111,7 @@ def lista(request):
         d['total_versoes'] = contagem_por_raiz.get(raiz, 1)
 
     ctx = {
-        'docs_json': json.dumps(docs, default=str),
+        'docs_json': safe_json_dumps(docs, default=str),
         'clientes': _qs_empresa(Cliente.objects, request).filter(ativo=True).values('id', 'nome'),
         'fornecedores': _qs_empresa(Fornecedor.objects, request).filter(ativo=True).values('id', 'nome'),
         'tipo_f': tipo_f,
