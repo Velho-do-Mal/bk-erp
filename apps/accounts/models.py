@@ -27,6 +27,32 @@ class User(AbstractUser):
     class Meta:
         verbose_name = 'Usuário'
         verbose_name_plural = 'Usuários'
+        constraints = [
+            # Isolamento entre empresas (multi-tenant): em toda a aplicação,
+            # os helpers de tenant (`_qs_empresa`, `tenant_get_or_404` etc,
+            # um por app) tratam `request.empresa is None` como "não filtrar
+            # por empresa" — ou seja, como sinônimo de superadmin. Essa
+            # constraint garante que só um usuário DE FATO superadmin possa
+            # ficar sem empresa vinculada. Sem ela, um usuário comum criado
+            # sem empresa (por engano no Django Admin, ou porque a empresa
+            # dele foi excluída — o FK abaixo usa on_delete=SET_NULL) veria
+            # os dados de TODAS as empresas em cada tela do sistema.
+            # A segunda camada dessa proteção é apps.saas.middleware.TenantMiddleware,
+            # que bloqueia no login qualquer usuário não-superadmin que,
+            # apesar desta constraint, ainda chegue com empresa=None
+            # (ex.: linha já existente no banco antes desta migração).
+            models.CheckConstraint(
+                check=(
+                    models.Q(is_superuser=True)
+                    | models.Q(perfil='superadmin')
+                    | models.Q(empresa__isnull=False)
+                ),
+                name='usuario_nao_superadmin_deve_ter_empresa',
+                violation_error_message=(
+                    'Usuário sem perfil de superadmin precisa estar vinculado a uma empresa.'
+                ),
+            ),
+        ]
 
     @property
     def is_admin_erp(self):
