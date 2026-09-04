@@ -1,4 +1,5 @@
 import json
+from apps.core.json_utils import safe_json_dumps
 from datetime import date
 
 from apps.core.tenant import tenant_get_or_404
@@ -103,12 +104,26 @@ def detalhe(request, pk):
             .first()
         )
 
+    tap = projeto.get_tap()
+
     return render(request, 'projetos/detalhe.html', {
         'projeto': projeto,
         'acesso': acesso,
-        'tap': projeto.get_tap(),
-        'eap_tasks': json.dumps(projeto.get_eap_tasks()),
-        'finances': json.dumps(projeto.get_finances()),
+        'tap': tap,
+        'eap_tasks': safe_json_dumps(projeto.get_eap_tasks()),
+        'finances': safe_json_dumps(projeto.get_finances()),
+        # Mesmo motivo do eap_tasks/finances acima: nunca embutir esses
+        # valores crus (com |safe) direto no <script> do template — um
+        # risco, licao aprendida ou item de plano de acao com
+        # "</script><script>...evil...</script>" digitado pelo usuario
+        # quebraria a tag e executaria HTML/JS arbitrário no navegador de
+        # quem abrir o projeto. safe_json_dumps() escapa isso.
+        'kpis': safe_json_dumps(projeto.dados.get('kpis', [])),
+        'risks': safe_json_dumps(projeto.dados.get('risks', [])),
+        'lessons': safe_json_dumps(projeto.dados.get('lessons', [])),
+        'close_data': safe_json_dumps(projeto.dados.get('close', {})),
+        'action_plan': safe_json_dumps(projeto.dados.get('actionPlan', [])),
+        'alteracoes_escopo': safe_json_dumps(tap.get('alteracoesEscopo', [])),
         'is_admin': request.user.is_admin_erp,
     })
 
