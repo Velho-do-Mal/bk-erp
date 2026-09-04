@@ -1,5 +1,6 @@
 import io
 import json
+from apps.core.json_utils import safe_json_dumps
 from decimal import Decimal
 from datetime import date
 
@@ -262,8 +263,8 @@ def lista(request):
     ).aggregate(s=Sum('valor_estimado'))['s'] or 0
 
     ctx = {
-        'propostas_json': json.dumps(propostas_data),
-        'leads_json': json.dumps(leads_data, default=str),
+        'propostas_json': safe_json_dumps(propostas_data),
+        'leads_json': safe_json_dumps(leads_data, default=str),
         'total_propostas': _qs_empresa(Proposta.objects, request).count(),
         'total_valor': float(total_valor),
         'aprovadas': aprovadas,
@@ -414,11 +415,11 @@ def proposta_detalhe(request, pk):
 
     ctx = {
         'proposta': proposta,
-        'proposta_json': json.dumps(proposta_data),
-        'materiais_json': json.dumps(materiais),
-        'servicos_catalogo_json': json.dumps(servicos_catalogo),
-        'clientes_json': json.dumps(clientes),
-        'leads_json': json.dumps(leads),
+        'proposta_json': safe_json_dumps(proposta_data),
+        'materiais_json': safe_json_dumps(materiais),
+        'servicos_catalogo_json': safe_json_dumps(servicos_catalogo),
+        'clientes_json': safe_json_dumps(clientes),
+        'leads_json': safe_json_dumps(leads),
         'status_choices': Proposta.STATUS_CHOICES,
     }
     return render(request, 'vendas/proposta_detalhe.html', ctx)
