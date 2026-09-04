@@ -1,4 +1,5 @@
 import json
+from apps.core.json_utils import safe_json_dumps
 from decimal import Decimal
 from datetime import date
 from apps.core.tenant import tenant_get_or_404
@@ -135,7 +136,7 @@ def lista(request):
     )
 
     ctx = {
-        'materiais_json': json.dumps(materiais),
+        'materiais_json': safe_json_dumps(materiais),
         'fornecedores': list(_qs_empresa(Fornecedor.objects, request).filter(ativo=True).values('id', 'nome')),
         'centros_custo': list(_qs_empresa(CentrosDeCusto.objects, request).filter(ativo=True).values('id', 'nome')),
         'total_investido': total_investido,
