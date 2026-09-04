@@ -56,6 +56,8 @@
   <div class="bloqueio">⛔ Esta empresa está inativa. Entre em contato com o suporte.</div>
   {% elif bloqueado == 'inadimplente' %}
   <div class="bloqueio">⚠️ Sua assinatura está vencida. Regularize o pagamento para continuar.</div>
+  {% elif bloqueado == 'sem_empresa' %}
+  <div class="bloqueio">⛔ Sua conta não está vinculada a nenhuma empresa. Entre em contato com o suporte.</div>
   {% endif %}
 
   {% if erros %}
@@ -119,7 +121,7 @@
       <h2>📋 Escolha seu Plano</h2>
       <div class="planos-grid" id="planos-grid">
         {% for plano in planos %}
-        <label class="plano-opt {% if forloop.first %}selecionado{% endif %}" id="opt-{{ plano.id }}">
+        <label class="plano-opt {% if forloop.first %}selecionado'% endif %}" id="opt-{{ plano.id }}">
           <input type="radio" name="plano" value="{{ plano.id }}" {% if forloop.first %}checked{% endif %}>
           <div class="pnome">{{ plano.get_nome_display }}</div>
           <div class="ppreco">{% if plano.preco_mensal == 0 %}Grátis{% else %}R$ {{ plano.preco_mensal }}/mês{% endif %}</div>
