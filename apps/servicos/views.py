@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
+from apps.core.exportacao import exportar_csv
 from .models import ProdutoServico
 
 def _empresa(request):
@@ -88,3 +89,31 @@ def lista(request):
         'total': _qs_empresa(ProdutoServico.objects, request).count(),
         'ativos': _qs_empresa(ProdutoServico.objects, request).filter(ativo=True).count(),
     })
+
+
+TIPO_LABEL = dict(ProdutoServico.TIPO_CHOICES)
+
+
+@login_required
+def exportar_servicos(request):
+    """Exporta o catálogo de Serviços/Produtos com todas as colunas,
+    incluindo a descrição (campo de observação livre do item)."""
+    qs = _qs_empresa(ProdutoServico.objects, request).order_by('nome')
+    rows = []
+    for p in qs:
+        rows.append([
+            p.id,
+            p.codigo,
+            TIPO_LABEL.get(p.tipo, p.tipo),
+            p.nome,
+            p.descricao,
+            p.unidade,
+            float(p.preco_unitario),
+            'Sim' if p.ativo else 'Não',
+            p.criado_em.strftime('%d/%m/%Y') if p.criado_em else '',
+        ])
+    return exportar_csv(
+        'servicos_produtos.csv',
+        ['ID', 'Código', 'Tipo', 'Nome', 'Descrição', 'Unidade', 'Preço Unitário', 'Ativo', 'Criado em'],
+        rows,
+    )

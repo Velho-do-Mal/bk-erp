@@ -4,6 +4,7 @@
 {% block page_sub %}Itens utilizados em Propostas e Controle de Documentos{% endblock %}
 
 {% block topbar_actions %}
+<a href="{% url 'servicos:exportar_servicos' %}" class="btn btn-secondary btn-sm" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;">📊 Exportar para Excel</a>
 <button class="btn btn-primary" onclick="abrirModal()">➕ Novo Item</button>
 {% endblock %}
 
