@@ -1,4 +1,5 @@
 import json
+from apps.core.json_utils import safe_json_dumps
 from decimal import Decimal
 from django.shortcuts import render
 from django.http import JsonResponse
@@ -85,7 +86,7 @@ def lista(request):
         i['preco_unitario'] = float(i['preco_unitario'])
 
     return render(request, 'servicos/lista.html', {
-        'items_json': json.dumps(items, ensure_ascii=False),
+        'items_json': safe_json_dumps(items, ensure_ascii=False),
         'total': _qs_empresa(ProdutoServico.objects, request).count(),
         'ativos': _qs_empresa(ProdutoServico.objects, request).filter(ativo=True).count(),
     })
