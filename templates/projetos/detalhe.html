@@ -329,7 +329,7 @@
     {% if is_admin %}
     <div class="form-group" style="margin-bottom:14px;">
       <label class="form-label">Inserir alterações de escopo</label>
-      <textarea id="tap-alteracoes-escopo" class="form-control" style="min-height:120px;" placeholder="Digite uma alteração por linha. Você pode usar 'AAAA-MM-DD | descrição' ou apenas a descrição.">{{ tap.alteracoesEscopo|default:'[]'|safe }}</textarea>
+      <textarea id="tap-alteracoes-escopo" class="form-control" style="min-height:120px;" placeholder="Digite uma alteração por linha. Você pode usar 'AAAA-MM-DD | descrição' ou apenas a descrição.">{{ alteracoes_escopo|safe }}</textarea>
       <div style="font-size:11px;color:#6b7280;margin-top:6px;">
         Uma linha por alteração. Exemplo: 2026-03-27 | Inclusão do estudo elétrico complementar
       </div>
@@ -722,11 +722,11 @@ const CSRF_TOKEN = "{{ csrf_token }}";
 // Dados vindos do servidor
 let eapTasks = {{ eap_tasks|safe }};
 let finances = {{ finances|safe }};
-let riscos = {{ projeto.dados.risks|default:'[]'|safe }};
-let licoes = {{ projeto.dados.lessons|default:'[]'|safe }};
-let closeData = {{ projeto.dados.close|default:'{}'|safe }};
-let kpis = {{ projeto.dados.kpis|default:'[]'|safe }};
-let actionPlan = {{ projeto.dados.actionPlan|default:'[]'|safe }};
+let riscos = {{ risks|safe }};
+let licoes = {{ lessons|safe }};
+let closeData = {{ close_data|safe }};
+let kpis = {{ kpis|safe }};
+let actionPlan = {{ action_plan|safe }};
 
 // ══════════════════════════════
 // FUNÇÕES DE DADOS
@@ -734,7 +734,7 @@ let actionPlan = {{ projeto.dados.actionPlan|default:'[]'|safe }};
 
 function parseAlteracoesEscopo() {
   const campo = el('tap-alteracoes-escopo');
-  if (!campo) return {{ tap.alteracoesEscopo|default:'[]'|safe }};
+  if (!campo) return {{ alteracoes_escopo|safe }};
 
   const bruto = (campo.value || '').trim();
   if (!bruto) return [];

@@ -1,5 +1,6 @@
 import csv
 import json
+from apps.core.json_utils import safe_json_dumps
 from datetime import date, timedelta
 from calendar import monthrange
 from django.shortcuts import render
@@ -78,7 +79,7 @@ def dashboard_relatorios(request):
     return render(request, 'relatorios/dashboard.html', {
         'meses': meses,
         'totais': totais,
-        'meses_json': json.dumps(meses),
+        'meses_json': safe_json_dumps(meses),
     })
 
 
@@ -491,10 +492,10 @@ def relatorio_executivo(request):
         'fin_despesas': total_despesas,
         'fin_saldo': saldo_final,
         'fin_variacao': variacao_fluxo,
-        'fin_categorias_json': json.dumps(fin_categorias),
+        'fin_categorias_json': safe_json_dumps(fin_categorias),
 
         # Dados para Gráfico de Linhas
-        'fin_evolucao_json': json.dumps({
+        'fin_evolucao_json': safe_json_dumps({
             'labels': ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
             'planejado': [120000, 135000, 110000, 145000, 130000, 150000],
             'realizado': [105000, 128000, 115000, 142000, 125000, 148000],

@@ -1,4 +1,5 @@
 import json
+from apps.core.json_utils import safe_json_dumps
 import csv
 from datetime import date
 from decimal import Decimal, InvalidOperation
@@ -134,7 +135,7 @@ def colaboradores(request):
     desligados = _qs_empresa(Colaborador.objects, request).filter(status='desligado').count()
 
     return render(request, 'rh/colaboradores.html', {
-        'colaboradores_json': json.dumps(lista, default=str),
+        'colaboradores_json': safe_json_dumps(lista, default=str),
         'deptos': deptos,
         'cargos': cargos,
         'status_f': status_f,
@@ -217,7 +218,7 @@ def departamentos(request):
 
     return render(request, 'rh/departamentos.html', {
         'departamentos': lista,
-        'deptos_json': json.dumps(
+        'deptos_json': safe_json_dumps(
             [{'id': d.id, 'nome': d.nome, 'descricao': d.descricao, 'ativo': d.ativo} for d in lista],
             default=str
         ),
@@ -285,7 +286,7 @@ def cargos(request):
 
     return render(request, 'rh/cargos.html', {
         'cargos': lista,
-        'cargos_json': json.dumps(
+        'cargos_json': safe_json_dumps(
             [{'id': c.id, 'nome': c.nome, 'descricao': c.descricao,
               'salario_base': float(c.salario_base), 'departamento_id': c.departamento_id,
               'departamento__nome': c.departamento.nome if c.departamento else '',
@@ -441,7 +442,7 @@ def ferias(request):
 
     return render(request, 'rh/ferias.html', {
         'ferias': ferias_qs,
-        'ferias_json': json.dumps(lista, default=str),
+        'ferias_json': safe_json_dumps(lista, default=str),
         'colaboradores': colaboradores_list,
         'ferias_vencidas': ferias_vencidas,
         'total_ferias': total_ferias,

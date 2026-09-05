@@ -1,4 +1,5 @@
 import json
+from apps.core.json_utils import safe_json_dumps
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, Count, Q
@@ -198,10 +199,10 @@ def dashboard(request):
         'vencidas_entrada': vencidas_entrada,
 
         # Charts
-        'chart_evolucao_json': json.dumps(chart_evolucao),
-        'chart_despesas_json': json.dumps(chart_despesas),
-        'pipeline_labels_json': json.dumps(pipeline_labels),
-        'pipeline_data_json': json.dumps(pipeline_data),
+        'chart_evolucao_json': safe_json_dumps(chart_evolucao),
+        'chart_despesas_json': safe_json_dumps(chart_despesas),
+        'pipeline_labels_json': safe_json_dumps(pipeline_labels),
+        'pipeline_data_json': safe_json_dumps(pipeline_data),
 
         # Vendas
         'taxa_conversao': round(taxa_conversao, 1),

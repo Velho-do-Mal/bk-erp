@@ -1,4 +1,5 @@
 import json
+from apps.core.json_utils import safe_json_dumps
 from apps.core.tenant import tenant_get_or_404
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
@@ -59,7 +60,7 @@ def clientes(request):
             return JsonResponse({'ok': True})
         return JsonResponse({'ok': False, 'error': 'Ação inválida.'})
     qs = list(_qs_empresa(Cliente.objects, request).filter().values('id', 'nome', 'documento', 'email', 'telefone', 'observacoes', 'ativo'))
-    return render(request, 'cadastros/clientes.html', {'clientes_json': json.dumps(qs, ensure_ascii=False)})
+    return render(request, 'cadastros/clientes.html', {'clientes_json': safe_json_dumps(qs, ensure_ascii=False)})
 
 
 @login_required
@@ -96,7 +97,7 @@ def fornecedores(request):
             return JsonResponse({'ok': True})
         return JsonResponse({'ok': False, 'error': 'Ação inválida.'})
     qs = list(_qs_empresa(Fornecedor.objects, request).filter().values('id', 'nome', 'documento', 'email', 'telefone', 'observacoes', 'ativo'))
-    return render(request, 'cadastros/fornecedores.html', {'fornecedores_json': json.dumps(qs, ensure_ascii=False)})
+    return render(request, 'cadastros/fornecedores.html', {'fornecedores_json': safe_json_dumps(qs, ensure_ascii=False)})
 
 
 @login_required
@@ -130,7 +131,7 @@ def centros_custo(request):
             return JsonResponse({'ok': True})
         return JsonResponse({'ok': False, 'error': 'Ação inválida.'})
     qs = list(_qs_empresa(CentrosDeCusto.objects, request).filter().values('id', 'nome', 'observacoes', 'ativo'))
-    return render(request, 'cadastros/centros_custo.html', {'centros_json': json.dumps(qs, ensure_ascii=False)})
+    return render(request, 'cadastros/centros_custo.html', {'centros_json': safe_json_dumps(qs, ensure_ascii=False)})
 
 
 @login_required

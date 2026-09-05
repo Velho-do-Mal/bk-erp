@@ -1,4 +1,5 @@
 import json
+from apps.core.json_utils import safe_json_dumps
 import uuid
 from decimal import Decimal
 from datetime import date, timedelta
@@ -275,14 +276,14 @@ def dashboard_financeiro(request):
         'ent_periodo': ent_periodo,
         'said_periodo': said_periodo,
         'saldo_periodo': ent_periodo - said_periodo,
-        'vencidas_receber_json': json.dumps(vencidas_receber, default=str),
-        'vencidas_pagar_json':   json.dumps(vencidas_pagar,   default=str),
+        'vencidas_receber_json': safe_json_dumps(vencidas_receber, default=str),
+        'vencidas_pagar_json':   safe_json_dumps(vencidas_pagar,   default=str),
         'total_vencidas_receber': total_vencidas_receber,
         'total_vencidas_pagar':   total_vencidas_pagar,
-        'ultimas_json': json.dumps(ultimas, default=str),
-        'meses_json': json.dumps(meses_data),
-        'cat_saida_json': json.dumps(cat_saida_data),
-        'cc_json': json.dumps(cc_data),
+        'ultimas_json': safe_json_dumps(ultimas, default=str),
+        'meses_json': safe_json_dumps(meses_data),
+        'cat_saida_json': safe_json_dumps(cat_saida_data),
+        'cc_json': safe_json_dumps(cc_data),
         'data_ini': d_ini.isoformat(),
         'data_fim': d_fim.isoformat(),
         'modo': modo,
@@ -480,13 +481,13 @@ def transacoes(request):
     centros = list(_qs_empresa(CentrosDeCusto.objects, request).filter(ativo=True).values('id', 'nome'))
 
     ctx = {
-        'transacoes_json': json.dumps(transacoes_list, default=str),
-        'contas_json': json.dumps(contas),
-        'categorias_json': json.dumps(categorias),
-        'clientes_json': json.dumps(clientes),
-        'fornecedores_json': json.dumps(fornecedores_list),
-        'colaboradores_json': json.dumps(colaboradores_list),
-        'centros_json': json.dumps(centros),
+        'transacoes_json': safe_json_dumps(transacoes_list, default=str),
+        'contas_json': safe_json_dumps(contas),
+        'categorias_json': safe_json_dumps(categorias),
+        'clientes_json': safe_json_dumps(clientes),
+        'fornecedores_json': safe_json_dumps(fornecedores_list),
+        'colaboradores_json': safe_json_dumps(colaboradores_list),
+        'centros_json': safe_json_dumps(centros),
         'tipo_f': tipo_f,
         'status_f': status_f,
         'mes_f': mes_f,
@@ -585,7 +586,7 @@ def contas(request):
         c['saldo_atual'] = float(Decimal(str(c['saldo_inicial'])) + entrada - saida)
         c['saldo_inicial'] = float(c['saldo_inicial'])
 
-    return render(request, 'financeiro/contas.html', {'contas_json': json.dumps(qs)})
+    return render(request, 'financeiro/contas.html', {'contas_json': safe_json_dumps(qs)})
 
 
 @login_required
@@ -618,7 +619,7 @@ def categorias(request):
 
     qs = list(_qs_empresa(Categoria.objects, request).filter().values('id', 'nome', 'tipo', 'pai_id', 'observacoes'))
 
-    return render(request, 'financeiro/categorias.html', {'categorias_json': json.dumps(qs)})
+    return render(request, 'financeiro/categorias.html', {'categorias_json': safe_json_dumps(qs)})
 
 
 @login_required
@@ -705,10 +706,10 @@ def orcamento(request):
         'grid_previsto_saida': grid_previsto_saida,
         'grid_real_entrada': grid_real_entrada,
         'grid_real_saida': grid_real_saida,
-        'totais_previsto_json': json.dumps(totais_previsto),
-        'totais_real_json': json.dumps(totais_real),
-        'fluxo_previsto_json': json.dumps(fluxo_previsto),
-        'fluxo_real_json': json.dumps(fluxo_real),
+        'totais_previsto_json': safe_json_dumps(totais_previsto),
+        'totais_real_json': safe_json_dumps(totais_real),
+        'fluxo_previsto_json': safe_json_dumps(fluxo_previsto),
+        'fluxo_real_json': safe_json_dumps(fluxo_real),
     }
 
     return render(request, 'financeiro/orcamento.html', ctx)
