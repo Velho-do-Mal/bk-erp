@@ -128,6 +128,30 @@ def detalhe(request, pk):
     })
 
 
+@login_required
+def relatorio_docx(request, pk):
+    """Gera o Relatório Geral do projeto em Word (.docx) — mesmos dados do
+    relatório HTML (impressão no navegador), formatado pra apresentação a
+    patrocinador/gestor: organograma, EAP, Gantt, financeiro e riscos."""
+    from django.http import HttpResponse
+    from .relatorio_docx import gerar_relatorio_docx
+
+    projeto = tenant_get_or_404(Projeto, request, pk=pk)
+    check_acesso(request, projeto)
+
+    buf = gerar_relatorio_docx(projeto)
+    nome_arquivo = f"Relatorio_{projeto.nome}_{date.today().isoformat()}.docx"
+    nome_arquivo = "".join(c if (c.isalnum() or c in "._-") else " " for c in nome_arquivo)
+    nome_arquivo = "_".join(nome_arquivo.split())
+
+    response = HttpResponse(
+        buf.read(),
+        content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    )
+    response['Content-Disposition'] = f'attachment; filename="{nome_arquivo}"'
+    return response
+
+
 # ── CRUD (apenas admin) ──────────────────────────────────
 
 @login_required

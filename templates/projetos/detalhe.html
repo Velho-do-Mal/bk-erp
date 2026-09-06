@@ -244,7 +244,8 @@
   <button class="tab-btn" data-group="proj" data-tab="tab-encerramento">🏁 Encerramento</button>
 </div>
 {% if is_admin %}
-<div style="margin-bottom:16px;text-align:right;">
+<div style="margin-bottom:16px;text-align:right;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+  <a class="btn btn-secondary btn-sm" href="{% url 'projetos:relatorio_docx' projeto.id %}" style="text-decoration:none;">📄 Relatório (Word)</a>
   <button class="btn btn-primary btn-sm" onclick="gerarRelatorioGeral()" style="background:linear-gradient(135deg,#0d47a1,#00bcd4);border:none;">🖨️ Imprimir Relatório Geral</button>
 </div>
 {% endif %}
@@ -465,17 +466,17 @@
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px">
       <h3 style="font-size:14px;font-weight:700;margin:0;color:#1e40af;">📊 Diagrama de Gantt</h3>
-      <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--bk-text-muted)">
+      <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:11px;font-weight:600;color:#475569">
         <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:#64748B;display:inline-block"></span>Não Iniciado</span>
         <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:#3B82F6;display:inline-block"></span>Em Andamento</span>
         <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:#10B981;display:inline-block"></span>Concluído</span>
         <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:#EF4444;display:inline-block"></span>Atrasado</span>
-        <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;background:#93C5FD;display:inline-block;transform:rotate(45deg)"></span>Marco</span>
-        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:#1E293B;border:1px solid #475569;display:inline-block"></span>Fase (resumo)</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:11px;height:11px;background:#8B5CF6;display:inline-block;transform:rotate(45deg);border-radius:2px"></span>Marco</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:#1E293B;display:inline-block"></span>Fase (resumo)</span>
         <span style="display:flex;align-items:center;gap:5px"><span style="width:2px;height:12px;background:#F59E0B;display:inline-block"></span>Hoje</span>
       </div>
     </div>
-    <div id="gantt-chart" style="height:500px;"></div>
+    <div id="gantt-chart" style="min-height:420px;"></div>
   </div>
 </div>
 
@@ -1208,7 +1209,24 @@ function renderGantt() {
 
   const tasks = calcularDatas();
   const isSummary = computeEapSummarySet(eapTasks);
-  const yLabels = tasks.map(t => `${t.codigo} — ${t.nome}`);
+  // Rótulo curto (exibido no eixo) truncado com reticências pra nunca
+  // "cortar" texto no meio de uma palavra, e rótulo completo (no hover)
+  // pra quem quiser o nome inteiro da atividade.
+  const MAX_LBL = 34;
+  const shortLbl = (t) => {
+    const full = `${t.codigo} — ${t.nome}`;
+    return full.length > MAX_LBL ? full.slice(0, MAX_LBL - 1).trimEnd() + '…' : full;
+  };
+  const yLabels = tasks.map(shortLbl);
+  // Margem esquerda cresce com o rótulo mais comprido (até um teto), pra
+  // acomodar nomes de atividade longos sem sobrepor o gráfico.
+  const maxLblLen = yLabels.reduce((m, l) => Math.max(m, l.length), 0);
+  const leftMargin = Math.min(340, Math.max(160, maxLblLen * 6.4 + 24));
+  // Altura cresce com o nº de linhas, pra cada atividade ter espaço
+  // suficiente e os rótulos não ficarem espremidos/cortados verticalmente.
+  const chartHeight = Math.max(360, tasks.length * 34 + 90);
+  const ganttDiv = el('gantt-chart');
+  if (ganttDiv) ganttDiv.style.height = chartHeight + 'px';
 
   // MS Project convém: fases (linhas-resumo) viram uma barra escura e
   // fina (estilo "colchete"), tarefas normais de duração 0 viram marco
@@ -1229,12 +1247,12 @@ function renderGantt() {
     x: idxBarras.map(i => tasks[i].endDate - tasks[i].startDate),
     y: idxBarras.map(i => yLabels[i]),
     base: idxBarras.map(i => tasks[i].startDate.getTime()),
-    marker: { color: idxBarras.map(i => _eapFade(corBarra(tasks[i]), 0.30)),
-              line: { color: idxBarras.map(i => corBarra(tasks[i])), width: 1 } },
+    marker: { color: idxBarras.map(i => _eapFade(corBarra(tasks[i]), 0.22)),
+              line: { color: idxBarras.map(i => corBarra(tasks[i])), width: 1.5 } },
     width: idxBarras.map(i => isSummary[String(tasks[i].codigo || '').trim()] ? 0.35 : 0.6),
     text: idxBarras.map(i => `${tasks[i].duracao}d`),
     textposition: 'outside',
-    textfont: { color: '#94A3B8', size: 10 },
+    textfont: { color: '#334155', size: 11, family: 'Inter, Arial' },
     hovertemplate: idxBarras.map(i => {
       const t = tasks[i];
       const pct = Math.max(0, Math.min(100, parseFloat(t.percentualConcluido || 0)));
@@ -1282,33 +1300,41 @@ function renderGantt() {
   const shapes = [{
     type: 'line', xref: 'x', yref: 'paper',
     x0: hoje.getTime(), x1: hoje.getTime(), y0: 0, y1: 1,
-    line: { color: '#F59E0B', width: 1.5, dash: 'dot' },
+    line: { color: '#F59E0B', width: 2, dash: 'dot' },
   }];
   const annotations = [{
     xref: 'x', yref: 'paper', x: hoje.getTime(), y: 1.02,
-    text: 'Hoje', showarrow: false, font: { color: '#F59E0B', size: 10, family: 'Inter, Arial' },
+    text: 'Hoje', showarrow: false, font: { color: '#B45309', size: 10, family: 'Inter, Arial', weight: 700 },
   }];
 
+  // Tema claro (o card em volta do Gantt é branco, igual à tabela EAP e
+  // ao organograma — um gráfico escuro flutuando ali quebrava a
+  // consistência visual e ainda cortava rótulos por falta de margem).
   const layout = {
-    paper_bgcolor: '#0F172A',
-    plot_bgcolor: '#1E293B',
-    font: { family: 'Inter, Arial', color: '#F1F5F9', size: 11 },
-    margin: { l: 220, r: 40, t: 24, b: 40 },
+    paper_bgcolor: '#ffffff',
+    plot_bgcolor: '#f8fafc',
+    font: { family: 'Inter, Arial', color: '#1e293b', size: 12 },
+    margin: { l: leftMargin, r: 50, t: 28, b: 40 },
+    height: chartHeight,
     xaxis: {
       type: 'date',
-      gridcolor: '#334155',
-      tickfont: { color: '#94A3B8', size: 10 },
+      gridcolor: '#e2e8f0',
+      zerolinecolor: '#e2e8f0',
+      tickfont: { color: '#475569', size: 11 },
+      side: 'top',
     },
     yaxis: {
-      gridcolor: '#334155',
-      tickfont: { color: '#F1F5F9', size: 11 },
+      gridcolor: '#f1f5f9',
+      tickfont: { color: '#1e293b', size: 12 },
       autorange: 'reversed',
+      automargin: true,
     },
     bargap: 0.35,
     barmode: 'overlay',
     shapes: shapes,
     annotations: annotations,
     showlegend: false,
+    hoverlabel: { bgcolor: '#1e293b', font: { color: '#f8fafc', size: 12, family: 'Inter, Arial' } },
   };
 
   Plotly.newPlot(div, ganttData, layout, { responsive: true, displayModeBar: false });
