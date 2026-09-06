@@ -56,6 +56,16 @@ class Transacao(models.Model):
     descricao = models.CharField(max_length=300)
     tipo = models.CharField(max_length=10, choices=TIPO_CHOICES)
     valor = models.DecimalField(max_digits=14, decimal_places=2)
+    # Adicionado a pedido do usuário: `valor` é o valor PREVISTO/faturado e
+    # nunca é alterado depois de criado. `valor_pago` guarda o valor
+    # REALMENTE pago/recebido (pode divergir do previsto — desconto, juros,
+    # pagamento parcial, etc.). Antes, "previsto" e "realizado" nos
+    # relatórios vinham do mesmo campo `valor`, só reclassificado pelo
+    # `status` — ou seja, o realizado SEMPRE era igual ao previsto, o que
+    # não é a melhor prática. Nula enquanto a transação não é marcada como
+    # "Realizado"; os relatórios usam valor_pago com fallback pra `valor`
+    # (compatibilidade com registros já realizados antes desta mudança).
+    valor_pago = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
     data_competencia = models.DateField()
     data_vencimento = models.DateField(null=True, blank=True)
     data_pagamento = models.DateField(null=True, blank=True)

@@ -216,7 +216,10 @@ if (!ultimas.length) {
   tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#64748b;padding:20px">Nenhuma transação</td></tr>';
 } else {
   tb.innerHTML = ultimas.map(r => {
-    const v = parseFloat(r.valor).toLocaleString('pt-BR',{minimumFractionDigits:2});
+    // Realizado: mostra o valor de fato pago/recebido (valor_pago), com
+    // fallback pro previsto — mesma regra usada nos totais do dashboard.
+    const vEfetivo = (r.valor_pago!=null) ? r.valor_pago : r.valor;
+    const v = parseFloat(vEfetivo).toLocaleString('pt-BR',{minimumFractionDigits:2});
     return `<tr>
       <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.descricao}</td>
       <td><span class="badge ${r.tipo==='entrada'?'badge-success':'badge-danger'}">${r.tipo}</span></td>

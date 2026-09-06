@@ -53,7 +53,7 @@
     <table class="data-table">
       <thead>
         <tr>
-          <th>Descrição</th><th>Tipo</th><th>Valor</th><th>Competência</th>
+          <th>Descrição</th><th>Tipo</th><th>Previsto</th><th>Pago</th><th>Competência</th>
           <th>Vencimento</th><th>Categoria</th><th>Recorrência</th><th>Anexo</th><th>Status</th><th class="col-actions">Ações</th>
         </tr>
       </thead>
@@ -100,10 +100,15 @@
         </div>
         <div>
           <label class="form-label">Status</label>
-          <select id="m-status" name="status" class="form-control">
+          <select id="m-status" name="status" class="form-control" onchange="toggleValorPago()">
             <option value="pendente">⏳ Pendente</option>
             <option value="realizado">✅ Realizado</option>
           </select>
+        </div>
+        <div id="wrap-valor-pago" style="display:none">
+          <label class="form-label">Valor Pago (real) *</label>
+          <input id="m-valor-pago" name="valor_pago" class="form-control" type="text" inputmode="decimal" data-mask="moeda" placeholder="0,00">
+          <div style="font-size:11px;color:#6b7280;margin-top:4px">💡 Pode divergir do previsto (desconto, juros, pagamento parcial…)</div>
         </div>
         <div>
           <label class="form-label">Recorrência</label>
@@ -192,6 +197,21 @@
     <button class="btn btn-secondary" style="width:100%;margin-top:4px" onclick="document.getElementById('modal-del-rec').classList.remove('open')">❌ Cancelar</button>
   </div>
 </div>
+
+<!-- Modal Confirmar Valor Pago (ao marcar transação como Realizado) -->
+<div class="modal-overlay" id="modal-valor-pago">
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-title">✅ Marcar como Realizado</div>
+    <p style="font-size:13px;color:#374151;margin-bottom:12px;line-height:1.5" id="vp-desc"></p>
+    <label class="form-label">Valor efetivamente pago/recebido *</label>
+    <input id="vp-valor" class="form-control" type="text" inputmode="decimal" data-mask="moeda" placeholder="0,00">
+    <div style="font-size:11px;color:#6b7280;margin-top:4px">💡 Pré-preenchido com o valor previsto — ajuste se pagou/recebeu um valor diferente (desconto, juros, pagamento parcial…)</div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="cancelarValorPago()">❌ Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarValorPago()">✅ Confirmar</button>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
@@ -211,12 +231,13 @@ function fmtDate(d){if(!d)return'—';const p=d.substring(0,10).split('-');retur
 
 function renderTabela(){
   const tb=document.getElementById('tbody');
-  if(!dados.length){tb.innerHTML='<tr><td colspan="10" style="text-align:center;color:#64748b;padding:24px">Nenhuma transação encontrada</td></tr>';return;}
+  if(!dados.length){tb.innerHTML='<tr><td colspan="11" style="text-align:center;color:#64748b;padding:24px">Nenhuma transação encontrada</td></tr>';return;}
   tb.innerHTML=dados.map(r=>`
     <tr>
       <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.descricao}">${r.descricao}</td>
       <td><span class="badge ${r.tipo==='entrada'?'badge-success':'badge-danger'}">${r.tipo==='entrada'?'📥 Entrada':'📤 Saída'}</span></td>
       <td style="font-weight:600;color:${r.tipo==='entrada'?'#10B981':'#EF4444'}">${fmtVal(r.valor)}</td>
+      <td style="font-weight:600;color:#6b7280">${r.valor_pago!=null?fmtVal(r.valor_pago):'—'}</td>
       <td>${fmtDate(r.data_competencia)}</td>
       <td>${fmtDate(r.data_vencimento)}</td>
       <td style="font-size:12px">${r['categoria__pai__nome']?`<span style='color:#6b7280'>${r['categoria__pai__nome']}</span> › ${r['categoria__nome']||'—'}`:(r['categoria__nome']||'—')}</td>
@@ -261,6 +282,19 @@ function toggleParcelas(){
   if(!rec)document.getElementById('m-parcelas').value=2;
 }
 
+// Valor Pago só faz sentido quando a transação está Realizado (ver
+// modelo Transacao.valor_pago). Ao virar Realizado, pré-preenche com o
+// valor previsto (zero atrito), mas o usuário pode ajustar se o valor
+// de fato pago/recebido foi diferente.
+function toggleValorPago(){
+  const realizado=document.getElementById('m-status').value==='realizado';
+  const wrap=document.getElementById('wrap-valor-pago');
+  wrap.style.display=realizado?'block':'none';
+  const campo=document.getElementById('m-valor-pago');
+  if(realizado&&!campo.value){campo.value=document.getElementById('m-valor').value;}
+  if(!realizado){campo.value='';}
+}
+
 function abrirModal(r=null){
   populateSelects();
   const today=new Date().toISOString().substring(0,10);
@@ -272,6 +306,8 @@ function abrirModal(r=null){
   document.getElementById('m-venc').value=r?.data_vencimento?r.data_vencimento.substring(0,10):'';
   document.getElementById('m-pago').value=r?.data_pagamento?r.data_pagamento.substring(0,10):'';
   document.getElementById('m-status').value=r?.status||'pendente';
+  document.getElementById('m-valor-pago').value=(r&&r.valor_pago!=null) ? maskMoeda(String(parseFloat(r.valor_pago).toFixed(2)).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.')) : '';
+  toggleValorPago();
   document.getElementById('m-rec').value=r?.recorrencia||'';
   document.getElementById('m-parcelas').value=r?.recorrencia_parcelas||2;
   toggleParcelas();
@@ -304,7 +340,9 @@ async function salvar(e){
     if(d.ok){bkToast('Transação salva!','sucesso');setTimeout(()=>location.reload(),900);}
     else bkToast(d.error||'Erro ao salvar','erro');
   } else {
-    const payload={action:'save',id:document.getElementById('m-id').value||null,descricao:document.getElementById('m-desc').value,tipo:document.getElementById('m-tipo').value,valor:(function(){const v=document.getElementById('m-valor').value.replace(/\./g,'').replace(',','.');return parseFloat(v)||0;})(),data_competencia:document.getElementById('m-data').value,data_vencimento:document.getElementById('m-venc').value||null,data_pagamento:document.getElementById('m-pago').value||null,status:document.getElementById('m-status').value,recorrencia:document.getElementById('m-rec').value,recorrencia_parcelas:parseInt(document.getElementById('m-parcelas')?.value||0),conta_id:document.getElementById('m-conta').value||null,categoria_id:(document.getElementById('m-subcat').value||document.getElementById('m-cat').value)||null,cliente_id:document.getElementById('m-cli').value||null,favorecido:document.getElementById('m-forn').value||null,centro_custo_id:document.getElementById('m-cc').value||null,referencia:document.getElementById('m-ref').value,observacoes:document.getElementById('m-obs').value};
+    const statusAtual=document.getElementById('m-status').value;
+    const valorPagoStr=document.getElementById('m-valor-pago').value;
+    const payload={action:'save',id:document.getElementById('m-id').value||null,descricao:document.getElementById('m-desc').value,tipo:document.getElementById('m-tipo').value,valor:(function(){const v=document.getElementById('m-valor').value.replace(/\./g,'').replace(',','.');return parseFloat(v)||0;})(),valor_pago:(statusAtual==='realizado'&&valorPagoStr)?parseFloat(valorPagoStr.replace(/\./g,'').replace(',','.'))||0:null,data_competencia:document.getElementById('m-data').value,data_vencimento:document.getElementById('m-venc').value||null,data_pagamento:document.getElementById('m-pago').value||null,status:statusAtual,recorrencia:document.getElementById('m-rec').value,recorrencia_parcelas:parseInt(document.getElementById('m-parcelas')?.value||0),conta_id:document.getElementById('m-conta').value||null,categoria_id:(document.getElementById('m-subcat').value||document.getElementById('m-cat').value)||null,cliente_id:document.getElementById('m-cli').value||null,favorecido:document.getElementById('m-forn').value||null,centro_custo_id:document.getElementById('m-cc').value||null,referencia:document.getElementById('m-ref').value,observacoes:document.getElementById('m-obs').value};
     const r=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify(payload)});
     const d=await r.json();
     if(d.ok){bkToast('Transação salva!','sucesso');setTimeout(()=>location.reload(),900);}
@@ -335,10 +373,48 @@ async function executarDelete(modo){
   if(d.ok){bkToast('Transação excluída','sucesso');setTimeout(()=>location.reload(),900);}
   else bkToast(d.error||'Erro ao excluir','erro');
 }
+// Marcar como Realizado pede o valor de fato pago/recebido (pré-preenchido
+// com o previsto); voltar pra Pendente não precisa perguntar nada — o
+// valor_pago é zerado automaticamente pelo backend nesse caso (ver
+// apps/financeiro/views.py toggle_status).
+let _vpTransacaoId=null;
 async function toggleStatus(id,el){
-  const r=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({action:'toggle_status',id})});
+  const t=dados.find(r=>r.id===id);
+  if(t&&t.status==='pendente'){
+    _vpTransacaoId=id;
+    document.getElementById('vp-desc').innerHTML=`<strong>${t.descricao}</strong><br>Valor previsto: ${fmtVal(t.valor)}`;
+    document.getElementById('vp-valor').value=maskMoeda(String(parseFloat(t.valor).toFixed(2)).replace('.',',').replace(/\B(?=(\d{3})+(?!\d))/g,'.'));
+    document.getElementById('modal-valor-pago').classList.add('open');
+    return;
+  }
+  await _executarToggleStatus(id, null);
+}
+
+function cancelarValorPago(){
+  document.getElementById('modal-valor-pago').classList.remove('open');
+  _vpTransacaoId=null;
+}
+
+async function confirmarValorPago(){
+  const v=document.getElementById('vp-valor').value.replace(/\./g,'').replace(',','.');
+  const valorPago=parseFloat(v)||0;
+  document.getElementById('modal-valor-pago').classList.remove('open');
+  await _executarToggleStatus(_vpTransacaoId, valorPago);
+  _vpTransacaoId=null;
+}
+
+async function _executarToggleStatus(id, valorPago){
+  const body={action:'toggle_status',id};
+  if(valorPago!=null) body.valor_pago=valorPago;
+  const r=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify(body)});
   const d=await r.json();
-  if(d.ok){el.textContent=d.status==='realizado'?'✅ Realizado':'⏳ Pendente';el.className='badge '+(d.status==='realizado'?'badge-success':'badge-warning');}
+  if(d.ok){
+    const t=dados.find(r=>r.id===id);
+    if(t){t.status=d.status;t.valor_pago=d.valor_pago;}
+    renderTabela();
+  } else {
+    bkToast(d.error||'Erro ao atualizar status','erro');
+  }
 }
 renderTabela();
 </script>

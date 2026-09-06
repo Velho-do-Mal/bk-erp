@@ -7,6 +7,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.db.models import Sum, Count, Q
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 from apps.core.exportacao import exportar_csv
 from apps.financeiro.models import Transacao, Categoria
@@ -61,8 +62,12 @@ def dashboard_relatorios(request):
         ref = hoje.replace(day=1) - timedelta(days=i * 28)
         ref = ref.replace(day=1)
         ini, fim = _periodo_range(ref.year, ref.month)
-        rec = qs.filter(tipo='entrada', status='realizado', data_pagamento__gte=ini, data_pagamento__lte=fim).aggregate(Sum('valor'))['valor__sum'] or 0
-        desp = qs.filter(tipo='saida', status='realizado', data_pagamento__gte=ini, data_pagamento__lte=fim).aggregate(Sum('valor'))['valor__sum'] or 0
+        # CORRIGIDO (design financeiro): realizado agora reflete o valor de
+        # fato pago/recebido (valor_pago), com fallback pra `valor` pra
+        # registros já realizados antes desta mudança — ver models.py e o
+        # comentário equivalente em apps/financeiro/views.py.
+        rec = qs.filter(tipo='entrada', status='realizado', data_pagamento__gte=ini, data_pagamento__lte=fim).aggregate(s=Sum(Coalesce('valor_pago', 'valor')))['s'] or 0
+        desp = qs.filter(tipo='saida', status='realizado', data_pagamento__gte=ini, data_pagamento__lte=fim).aggregate(s=Sum(Coalesce('valor_pago', 'valor')))['s'] or 0
         meses.append({
             'label': ref.strftime('%b/%y'),
             'receita': float(rec),
@@ -157,9 +162,11 @@ def fluxo_caixa(request):
     )
 
     saldo_acumulado = 0
-    # Calcula saldo anterior ao período
-    rec_ant = qs.filter(tipo='entrada', status='realizado', data_pagamento__lt=ini).aggregate(Sum('valor'))['valor__sum'] or 0
-    desp_ant = qs.filter(tipo='saida', status='realizado', data_pagamento__lt=ini).aggregate(Sum('valor'))['valor__sum'] or 0
+    # Calcula saldo anterior ao período — usa valor_pago (valor de fato
+    # movimentado) com fallback pra `valor`, mesma regra do restante do
+    # módulo Financeiro (ver Coalesce importado no topo do arquivo).
+    rec_ant = qs.filter(tipo='entrada', status='realizado', data_pagamento__lt=ini).aggregate(s=Sum(Coalesce('valor_pago', 'valor')))['s'] or 0
+    desp_ant = qs.filter(tipo='saida', status='realizado', data_pagamento__lt=ini).aggregate(s=Sum(Coalesce('valor_pago', 'valor')))['s'] or 0
     saldo_anterior = float(rec_ant) - float(desp_ant)
 
     # Monta fluxo diário
@@ -168,12 +175,18 @@ def fluxo_caixa(request):
         dia = t.data_vencimento
         if dia not in fluxo:
             fluxo[dia] = {'entradas': [], 'saidas': [], 'total_entrada': 0, 'total_saida': 0}
+        # Transação realizada: usa o valor de fato pago/recebido
+        # (valor_pago), com fallback pra `valor`. Pendente: valor_pago é
+        # sempre nulo, então usa `valor` (previsto) normalmente. Anexado
+        # ao objeto pra o template exibir o mesmo valor usado no total.
+        valor_efetivo = float(t.valor_pago) if t.valor_pago is not None else float(t.valor)
+        t.valor_efetivo = valor_efetivo
         if t.tipo == 'entrada':
             fluxo[dia]['entradas'].append(t)
-            fluxo[dia]['total_entrada'] += float(t.valor)
+            fluxo[dia]['total_entrada'] += valor_efetivo
         else:
             fluxo[dia]['saidas'].append(t)
-            fluxo[dia]['total_saida'] += float(t.valor)
+            fluxo[dia]['total_saida'] += valor_efetivo
 
     # Lista ordenada com saldo acumulado
     fluxo_lista = []

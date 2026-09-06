@@ -65,7 +65,7 @@
     {% for t in dia.entradas %}
     <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f1f5f9;font-size:13px">
       <span style="color:#374151">{{ t.descricao|default:"—" }} <span style="color:#6b7280">({{ t.categoria.nome|default:"—" }})</span></span>
-      <span style="color:#16a34a;font-weight:600">+{{ t.valor|moeda }}</span>
+      <span style="color:#16a34a;font-weight:600">+{{ t.valor_efetivo|moeda }}</span>
     </div>
     {% endfor %}
   </div>
@@ -76,7 +76,7 @@
     {% for t in dia.saidas %}
     <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f1f5f9;font-size:13px">
       <span style="color:#374151">{{ t.descricao|default:"—" }} <span style="color:#6b7280">({{ t.categoria.nome|default:"—" }})</span></span>
-      <span style="color:#ef4444;font-weight:600">-{{ t.valor|moeda }}</span>
+      <span style="color:#ef4444;font-weight:600">-{{ t.valor_efetivo|moeda }}</span>
     </div>
     {% endfor %}
   </div>

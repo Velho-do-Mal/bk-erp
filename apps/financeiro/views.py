@@ -12,6 +12,15 @@ from apps.core.exportacao import exportar_csv
 from apps.core.audit import registrar as audit
 from django.http import JsonResponse, HttpResponse
 from django.db.models import Sum, Q          # ← Q adicionado aqui (era só Sum)
+# CORRIGIDO (design): "previsto" e "realizado" usavam o mesmo campo `valor`
+# só reclassificado pelo `status`, então o realizado sempre era idêntico ao
+# previsto. Agora `valor_pago` guarda o valor de fato pago/recebido; nas
+# somas abaixo, Coalesce('valor_pago', 'valor') usa o valor pago quando
+# existir e cai pra `valor` quando for nulo — o que preserva o
+# comportamento de transações pendentes (valor_pago sempre nulo → usa
+# `valor`, ou seja "previsto") e de registros já realizados antes desta
+# mudança (compatibilidade retroativa, sem precisar de migração de dados).
+from django.db.models.functions import Coalesce
 from .models import Conta, Categoria, Transacao, Orcamento
 from apps.cadastros.models import Cliente, Fornecedor, CentrosDeCusto
 from apps.rh.models import Colaborador
@@ -141,24 +150,30 @@ def dashboard_financeiro(request):
             qs = qs.filter(status='pendente')
         return qs
 
-    total_entrada = _qs_empresa(Transacao.objects, request).filter(tipo='entrada', status='realizado').aggregate(s=Sum('valor'))['s'] or Decimal('0')
-    total_saida = _qs_empresa(Transacao.objects, request).filter(tipo='saida', status='realizado').aggregate(s=Sum('valor'))['s'] or Decimal('0')
+    # Realizado usa o valor de fato pago/recebido (valor_pago), com
+    # fallback pra `valor` — ver comentário na importação de Coalesce.
+    total_entrada = _qs_empresa(Transacao.objects, request).filter(tipo='entrada', status='realizado').aggregate(s=Sum(Coalesce('valor_pago', 'valor')))['s'] or Decimal('0')
+    total_saida = _qs_empresa(Transacao.objects, request).filter(tipo='saida', status='realizado').aggregate(s=Sum(Coalesce('valor_pago', 'valor')))['s'] or Decimal('0')
     saldo = total_entrada - total_saida
+    # Previsto (pendente) sempre usa `valor` — valor_pago é nulo enquanto a
+    # transação não é realizada, então não há o que substituir aqui.
     pendentes_receber = _qs_empresa(Transacao.objects, request).filter(tipo='entrada', status='pendente').aggregate(s=Sum('valor'))['s'] or Decimal('0')
     pendentes_pagar = _qs_empresa(Transacao.objects, request).filter(tipo='saida', status='pendente').aggregate(s=Sum('valor'))['s'] or Decimal('0')
 
-    ent_periodo = _qs_base().filter(tipo='entrada').aggregate(s=Sum('valor'))['s'] or Decimal('0')
-    said_periodo = _qs_base().filter(tipo='saida').aggregate(s=Sum('valor'))['s'] or Decimal('0')
+    # _qs_base() mistura pendente e realizado (a depender do filtro "modo"),
+    # então usa Coalesce pra cada linha resolver pro valor certo sozinha.
+    ent_periodo = _qs_base().filter(tipo='entrada').aggregate(s=Sum(Coalesce('valor_pago', 'valor')))['s'] or Decimal('0')
+    said_periodo = _qs_base().filter(tipo='saida').aggregate(s=Sum(Coalesce('valor_pago', 'valor')))['s'] or Decimal('0')
 
     ultimas = list(_qs_empresa(Transacao.objects, request).filter().select_related('categoria', 'conta').order_by('-criado_em')[:10].values(
-        'id', 'descricao', 'tipo', 'valor', 'status', 'data_competencia', 'categoria__nome', 'conta__nome'
+        'id', 'descricao', 'tipo', 'valor', 'valor_pago', 'status', 'data_competencia', 'categoria__nome', 'conta__nome'
     ))
 
     meses_raw = (
         _qs_base()
         .annotate(mes=TruncMonth('data_competencia'))
         .values('mes', 'tipo')
-        .annotate(total=Sum('valor'))
+        .annotate(total=Sum(Coalesce('valor_pago', 'valor')))
         .order_by('mes')
     )
 
@@ -179,7 +194,7 @@ def dashboard_financeiro(request):
         _qs_base()
         .filter(tipo='saida')
         .values('categoria__nome')
-        .annotate(total=Sum('valor'))
+        .annotate(total=Sum(Coalesce('valor_pago', 'valor')))
         .order_by('-total')
     )
 
@@ -192,14 +207,14 @@ def dashboard_financeiro(request):
         _qs_base()
         .filter(tipo='entrada')
         .values('centro_custo__nome')
-        .annotate(total=Sum('valor'))
+        .annotate(total=Sum(Coalesce('valor_pago', 'valor')))
     )
 
     cc_saidas = (
         _qs_base()
         .filter(tipo='saida')
         .values('centro_custo__nome')
-        .annotate(total=Sum('valor'))
+        .annotate(total=Sum(Coalesce('valor_pago', 'valor')))
     )
 
     cc_map = {}
@@ -314,10 +329,20 @@ def transacoes(request):
         obj.descricao = request.POST.get('descricao', '').strip()
         obj.tipo = request.POST.get('tipo', 'saida')
         obj.valor = _to_dec(request.POST.get('valor', 0))
+        # `valor_pago` (valor realmente pago/recebido) só é gravado quando
+        # enviado explicitamente pelo front — senão mantém o que já
+        # existia (não zera um valor pago já lançado antes).
+        valor_pago_raw = request.POST.get('valor_pago')
+        if valor_pago_raw not in (None, ''):
+            obj.valor_pago = _to_dec(valor_pago_raw)
         obj.data_competencia = _to_date(request.POST.get('data_competencia')) or date.today()
         obj.data_vencimento = _to_date(request.POST.get('data_vencimento'))
         obj.data_pagamento = _to_date(request.POST.get('data_pagamento'))
         obj.status = request.POST.get('status', 'pendente')
+        if obj.status != 'realizado':
+            # Mesma invariante do toggle_status/action=save: valor_pago só
+            # existe pra transações Realizado.
+            obj.valor_pago = None
         obj.recorrencia = request.POST.get('recorrencia', '')
         obj.recorrencia_parcelas = int(request.POST.get('recorrencia_parcelas') or 0)
         obj.referencia = request.POST.get('referencia', '').strip()
@@ -350,10 +375,22 @@ def transacoes(request):
             obj.descricao = data.get('descricao', '').strip()
             obj.tipo = data.get('tipo', 'saida')
             obj.valor = _to_dec(data.get('valor', 0))
+            # Mesma regra do upload multipart acima: só grava valor_pago se
+            # o front mandou algo, pra não apagar um valor pago existente.
+            valor_pago_raw = data.get('valor_pago')
+            if valor_pago_raw not in (None, ''):
+                obj.valor_pago = _to_dec(valor_pago_raw)
             obj.data_competencia = _to_date(data.get('data_competencia')) or date.today()
             obj.data_vencimento = _to_date(data.get('data_vencimento'))
             obj.data_pagamento = _to_date(data.get('data_pagamento'))
             obj.status = data.get('status', 'pendente')
+            if obj.status != 'realizado':
+                # Mesma invariante do toggle_status: valor_pago só existe
+                # pra transações Realizado. Editar e voltar pra Pendente
+                # pelo modal também precisa zerar, senão um valor pago
+                # "fantasma" vaza pros relatórios que somam sem filtrar
+                # por status.
+                obj.valor_pago = None
             obj.recorrencia = data.get('recorrencia', '')
             obj.recorrencia_parcelas = int(data.get('recorrencia_parcelas') or 0)
             obj.referencia = data.get('referencia', '').strip()
@@ -401,14 +438,30 @@ def transacoes(request):
         elif action == 'toggle_status':
             obj = tenant_get_or_404(Transacao, request, pk=data.get('id'))
             obj.status = 'realizado' if obj.status == 'pendente' else 'pendente'
-            if obj.status == 'realizado' and not obj.data_pagamento:
-                obj.data_pagamento = date.today()
+            if obj.status == 'realizado':
+                if not obj.data_pagamento:
+                    obj.data_pagamento = date.today()
+                # Valor realmente pago/recebido: usa o que o front mandou
+                # (o modal de confirmação pré-preenche com `valor`, mas
+                # permite o usuário ajustar); se nada foi enviado, cai pra
+                # `valor` — fluxo antigo (toggle direto sem prompt) continua
+                # funcionando, só que agora o dado fica registrado também
+                # em valor_pago, não só implícito pelo status.
+                valor_pago_raw = data.get('valor_pago')
+                obj.valor_pago = _to_dec(valor_pago_raw) if valor_pago_raw not in (None, '') else obj.valor
+            else:
+                # Voltou pra pendente: zera valor_pago. Sem isso, um valor
+                # pago "fantasma" de uma realização anterior poderia
+                # vazar pro cálculo de "previsto" nos relatórios que somam
+                # entradas/saídas sem filtrar por status (ex.: gráfico
+                # mensal do dashboard no modo "todos").
+                obj.valor_pago = None
             if obj.pk is None and _empresa(request):
 
                 obj.empresa = _empresa(request)
 
             obj.save()
-            return JsonResponse({'ok': True, 'status': obj.status})
+            return JsonResponse({'ok': True, 'status': obj.status, 'valor_pago': str(obj.valor_pago) if obj.valor_pago is not None else None})
 
     tipo_f   = request.GET.get('tipo', '')
     status_f = request.GET.get('status', '')
@@ -453,7 +506,7 @@ def transacoes(request):
             pass
 
     transacoes_list = list(qs.values(
-        'id', 'descricao', 'tipo', 'valor', 'status',
+        'id', 'descricao', 'tipo', 'valor', 'valor_pago', 'status',
         'data_competencia', 'data_vencimento', 'data_pagamento',
         'conta__nome', 'categoria__nome', 'categoria__pai__nome', 'cliente__nome',
         'fornecedor__nome', 'colaborador__nome', 'centro_custo__nome', 'referencia',
@@ -581,8 +634,11 @@ def contas(request):
     qs = list(_qs_empresa(Conta.objects, request).filter().values('id', 'nome', 'banco', 'saldo_inicial', 'ativa', 'observacoes'))
 
     for c in qs:
-        entrada = _qs_empresa(Transacao.objects, request).filter(conta_id=c['id'], tipo='entrada', status='realizado').aggregate(s=Sum('valor'))['s'] or Decimal('0')
-        saida = _qs_empresa(Transacao.objects, request).filter(conta_id=c['id'], tipo='saida', status='realizado').aggregate(s=Sum('valor'))['s'] or Decimal('0')
+        # Saldo da conta reflete o valor de fato movimentado (valor_pago),
+        # não mais o previsto reclassificado — ver comentário na
+        # importação de Coalesce, no topo do arquivo.
+        entrada = _qs_empresa(Transacao.objects, request).filter(conta_id=c['id'], tipo='entrada', status='realizado').aggregate(s=Sum(Coalesce('valor_pago', 'valor')))['s'] or Decimal('0')
+        saida = _qs_empresa(Transacao.objects, request).filter(conta_id=c['id'], tipo='saida', status='realizado').aggregate(s=Sum(Coalesce('valor_pago', 'valor')))['s'] or Decimal('0')
         c['saldo_atual'] = float(Decimal(str(c['saldo_inicial'])) + entrada - saida)
         c['saldo_inicial'] = float(c['saldo_inicial'])
 
@@ -761,10 +817,15 @@ def exportar_transacoes(request):
     # que já trata corretamente o caso do superadmin (empresa=None não
     # deve filtrar nada, e sim ver tudo).
     qs = _qs_empresa(Transacao.objects, request).values_list(
-        'id', 'descricao', 'tipo', 'valor', 'data_competencia', 'categoria__nome', 'conta__nome'
+        'id', 'descricao', 'tipo', 'valor', 'valor_pago', 'status', 'data_competencia', 'categoria__nome', 'conta__nome'
     )
     rows = [
-        [id_, descricao, tipo, float(valor), data.strftime('%d/%m/%Y') if data else '', categoria, conta]
-        for id_, descricao, tipo, valor, data, categoria, conta in qs
+        [id_, descricao, tipo, float(valor), float(valor_pago) if valor_pago is not None else '',
+         status, data.strftime('%d/%m/%Y') if data else '', categoria, conta]
+        for id_, descricao, tipo, valor, valor_pago, status, data, categoria, conta in qs
     ]
-    return exportar_csv('transacoes.csv', ['ID', 'Descrição', 'Tipo', 'Valor', 'Data', 'Categoria', 'Conta'], rows)
+    return exportar_csv(
+        'transacoes.csv',
+        ['ID', 'Descrição', 'Tipo', 'Valor Previsto', 'Valor Pago', 'Status', 'Data', 'Categoria', 'Conta'],
+        rows,
+    )
