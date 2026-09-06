@@ -36,6 +36,41 @@
   .eap-status-andamento { color:#1565c0; font-weight:600; }
   .eap-status-atrasado  { color:#b71c1c; font-weight:600; }
   .eap-status-nao { color:#546e7a; }
+
+  /* ── EAP: paleta viva por status (compartilhada com Gantt/Organograma) ──
+     Mesmas 4 cores em todo lugar que a EAP aparece, pra status ser
+     reconhecível de relance (padrão comum em ferramentas de cronograma:
+     verde=concluído, azul=em andamento, vermelho=atrasado, cinza=não
+     iniciado). Aplicado tanto no <select> quanto nos badges/legendas. */
+  .eap-table .grid-select {
+    border-radius: 6px;
+    font-weight: 700;
+    padding-left: 8px !important;
+  }
+  .eap-table .grid-select.st-concluido     { background: rgba(16,185,129,.14); color: #0f766e; }
+  .eap-table .grid-select.st-em-andamento  { background: rgba(59,130,246,.14); color: #1d4ed8; }
+  .eap-table .grid-select.st-atrasado      { background: rgba(239,68,68,.14);  color: #b91c1c; }
+  .eap-table .grid-select.st-nao-iniciado  { background: rgba(100,116,139,.14); color: #475569; }
+
+  .eap-status-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 700; white-space: nowrap;
+  }
+  .eap-status-badge.st-concluido    { background: rgba(16,185,129,.14); color: #0f766e; }
+  .eap-status-badge.st-em-andamento { background: rgba(59,130,246,.14); color: #1d4ed8; }
+  .eap-status-badge.st-atrasado     { background: rgba(239,68,68,.14);  color: #b91c1c; }
+  .eap-status-badge.st-nao-iniciado { background: rgba(100,116,139,.14); color: #475569; }
+
+  /* Mini barra de progresso inline na coluna "% Concl." da tabela EAP */
+  .eap-pct-cell { display: flex; align-items: center; gap: 8px; padding: 4px 10px; }
+  .eap-pct-num  { font-size: 12px; font-weight: 700; min-width: 34px; text-align: right; color: #111827; }
+  .eap-pct-track { flex: 1; height: 7px; border-radius: 4px; background: #e5e7eb; overflow: hidden; min-width: 40px; }
+  .eap-pct-fill  { height: 100%; border-radius: 4px; transition: width .3s; }
+
+  /* Ícone de hierarquia (fase vs. atividade-folha) — reforça visualmente
+     a EAP como uma árvore, no espírito do outline do MS Project */
+  .eap-hier-icon { display:inline-block; width:16px; text-align:center; opacity:.85; }
   .risk-matrix { display: grid; grid-template-columns: repeat(5,1fr); gap: 4px; }
   .risk-cell {
     padding: 8px; border-radius: 6px; text-align: center;
@@ -399,6 +434,12 @@
   <div id="eap-organograma" class="eap-org-shell" style="overflow-x:auto;margin-top:20px">
     <div class="eap-org-toolbar">
       <strong style="font-size:12px;color:#334155">Organograma da EAP</strong>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:#64748b">
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:50%;background:#64748B;display:inline-block"></span>Não Iniciado</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:50%;background:#3B82F6;display:inline-block"></span>Em Andamento</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:50%;background:#10B981;display:inline-block"></span>Concluído</span>
+        <span style="display:flex;align-items:center;gap:4px"><span style="width:9px;height:9px;border-radius:50%;background:#EF4444;display:inline-block"></span>Atrasado</span>
+      </div>
       <div class="eap-org-actions">
         <button type="button" class="btn btn-secondary btn-sm" onclick="zoomEapOrg(-0.1)">− Zoom</button>
         <button type="button" class="btn btn-secondary btn-sm" onclick="zoomEapOrg(0.1)">+ Zoom</button>
@@ -422,7 +463,18 @@
 ══════════════════════════════ -->
 <div class="tab-panel" data-group="proj" id="tab-gantt">
   <div class="card">
-    <h3 style="font-size:14px;font-weight:700;margin-bottom:16px;color:#1e40af;">📊 Diagrama de Gantt</h3>
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+      <h3 style="font-size:14px;font-weight:700;margin:0;color:#1e40af;">📊 Diagrama de Gantt</h3>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--bk-text-muted)">
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:#64748B;display:inline-block"></span>Não Iniciado</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:#3B82F6;display:inline-block"></span>Em Andamento</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:#10B981;display:inline-block"></span>Concluído</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:#EF4444;display:inline-block"></span>Atrasado</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:12px;background:#93C5FD;display:inline-block;transform:rotate(45deg)"></span>Marco</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:#1E293B;border:1px solid #475569;display:inline-block"></span>Fase (resumo)</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:2px;height:12px;background:#F59E0B;display:inline-block"></span>Hoje</span>
+      </div>
+    </div>
     <div id="gantt-chart" style="height:500px;"></div>
   </div>
 </div>
@@ -820,6 +872,39 @@ async function salvarProjeto() {
 }
 
 // ══════════════════════════════
+// EAP — PALETA/HELPERS COMPARTILHADOS
+// (mesma cor por status na tabela, no organograma e no Gantt, pra dar
+// consistência visual e facilitar reconhecer o status de relance)
+// ══════════════════════════════
+const EAP_STATUS_COLOR = {
+  'concluido':     '#10B981',
+  'em-andamento':  '#3B82F6',
+  'atrasado':      '#EF4444',
+  'nao-iniciado':  '#64748B',
+};
+const EAP_STATUS_LABEL = {
+  'concluido':     'Concluído',
+  'em-andamento':  'Em Andamento',
+  'atrasado':      'Atrasado',
+  'nao-iniciado':  'Não Iniciado',
+};
+function eapStatusKey(status) {
+  return (status && EAP_STATUS_COLOR[status]) ? status : 'nao-iniciado';
+}
+// Códigos WBS (ex.: "1.2") que têm pelo menos um filho (ex.: "1.2.1")
+// viram "linha-resumo" (fase) — mesma convenção usada em toda a EAP.
+function computeEapSummarySet(tasks) {
+  const isSummary = {};
+  tasks.map(t => String(t.codigo || '').trim()).forEach(c => {
+    const parts = c.split('.');
+    for (let i = 1; i < parts.length; i++) {
+      isSummary[parts.slice(0, i).join('.')] = true;
+    }
+  });
+  return isSummary;
+}
+
+// ══════════════════════════════
 // EAP TABLE
 // ══════════════════════════════
 function toggleEapView(view) {
@@ -860,15 +945,7 @@ function renderEAP() {
 
   tbody.innerHTML = '';
 
-  const codes = eapTasks.map(t => String(t.codigo || '').trim());
-  const isSummary = {};
-  codes.forEach(c => {
-    const parts = c.split('.');
-    for (let i = 1; i < parts.length; i++) {
-      const parent = parts.slice(0, i).join('.');
-      isSummary[parent] = true;
-    }
-  });
+  const isSummary = computeEapSummarySet(eapTasks);
 
   const _dateTasks = calcularDatas();
   const _dateMap = {};
@@ -878,20 +955,17 @@ function renderEAP() {
     const cod = String(t.codigo || '').trim();
     const depth = cod.split('.').length - 1;
     const summary = isSummary[cod] || false;
-    const pct = parseFloat(t.percentualConcluido || t.pct || 0);
-    const status = t.status || 'nao-iniciado';
+    const pct = Math.max(0, Math.min(100, parseFloat(t.percentualConcluido || t.pct || 0)));
+    const statusKey = eapStatusKey(t.status);
     const indent = 12 + depth * 20;
+    const hierIcon = summary ? '📁' : '📄';
 
     const _de = _dateMap[t.codigo] || {};
     const _dtIniISO = t.dtInicioManual || (_de.startDate ? _de.startDate.toISOString().split('T')[0] : '');
     const _dtFimISO = t.dtConclusaoManual || (_de.endDate ? _de.endDate.toISOString().split('T')[0] : '');
 
-    const statusRead = {
-      'concluido': 'Concluído',
-      'em-andamento': 'Em Andamento',
-      'atrasado': 'Atrasado',
-      'nao-iniciado': 'Não Iniciado'
-    }[status] || status;
+    const statusRead = EAP_STATUS_LABEL[statusKey];
+    const statusColor = EAP_STATUS_COLOR[statusKey];
 
     const tr = document.createElement('tr');
     tr.className = ((summary ? 'eap-row-summary' : 'eap-row-normal') + ' eap-level-' + depth);
@@ -901,7 +975,7 @@ function renderEAP() {
       <td>
         ${IS_ADMIN
           ? `<input type="text" class="grid-input" style="padding-left:${indent}px;${summary ? 'font-weight:700;' : ''}" value="${escHtml(t.nome || '')}" onchange="eapTasks[${idx}].nome=this.value">`
-          : `<div class="grid-input" style="padding-left:${indent}px;${summary ? 'font-weight:700;' : ''}">${escHtml(t.nome || '')}</div>`
+          : `<div class="grid-input" style="padding-left:${indent}px;${summary ? 'font-weight:700;' : ''}"><span class="eap-hier-icon">${hierIcon}</span> ${escHtml(t.nome || '')}</div>`
         }
       </td>
       <td>${IS_ADMIN
@@ -917,18 +991,22 @@ function renderEAP() {
           ? `<input type="date" class="grid-input" value="${_dtFimISO}" onchange="setTkDate(${idx},'f',this.value)">`
           : `<div class="grid-input">${_dtFimISO ? new Date(_dtFimISO + 'T12:00').toLocaleDateString('pt-BR') : '—'}</div>`}
       </td>
-      <td>${IS_ADMIN
-          ? `<input type="number" class="grid-input" value="${pct}" min="0" max="100" onchange="eapTasks[${idx}].percentualConcluido=parseFloat(this.value)||0">`
-          : `<div class="grid-input">${pct}%</div>`}
+      <td>
+        <div class="eap-pct-cell">
+          <div class="eap-pct-track"><div class="eap-pct-fill" style="width:${pct}%;background:${statusColor}"></div></div>
+          ${IS_ADMIN
+            ? `<input type="number" class="grid-input eap-pct-num" style="min-width:44px;padding:0;text-align:right" value="${pct}" min="0" max="100" onchange="eapTasks[${idx}].percentualConcluido=Math.max(0,Math.min(100,parseFloat(this.value)||0));renderEAP()">`
+            : `<span class="eap-pct-num">${pct}%</span>`}
+        </div>
       </td>
       <td>${IS_ADMIN
-          ? `<select class="grid-select" onchange="eapTasks[${idx}].status=this.value">
-              <option value="nao-iniciado" ${status === 'nao-iniciado' ? 'selected' : ''}>Não Iniciado</option>
-              <option value="em-andamento" ${status === 'em-andamento' ? 'selected' : ''}>Em Andamento</option>
-              <option value="concluido" ${status === 'concluido' ? 'selected' : ''}>Concluído</option>
-              <option value="atrasado" ${status === 'atrasado' ? 'selected' : ''}>Atrasado</option>
+          ? `<select class="grid-select st-${statusKey}" onchange="eapTasks[${idx}].status=this.value;renderEAP()">
+              <option value="nao-iniciado" ${statusKey === 'nao-iniciado' ? 'selected' : ''}>Não Iniciado</option>
+              <option value="em-andamento" ${statusKey === 'em-andamento' ? 'selected' : ''}>Em Andamento</option>
+              <option value="concluido" ${statusKey === 'concluido' ? 'selected' : ''}>Concluído</option>
+              <option value="atrasado" ${statusKey === 'atrasado' ? 'selected' : ''}>Atrasado</option>
             </select>`
-          : `<div class="grid-input">${statusRead}</div>`}
+          : `<span class="eap-status-badge st-${statusKey}">${statusRead}</span>`}
       </td>
       <td><input type="text" class="grid-input" value="${escHtml(t.responsavel || '')}" ${IS_ADMIN ? `onchange="eapTasks[${idx}].responsavel=this.value"` : 'readonly'}></td>
       ${IS_ADMIN
@@ -952,12 +1030,12 @@ function renderEapOrg() {
     return n ? n.textContent.trim().toUpperCase() : 'PROJETO';
   })();
   // Build nodes
-  var root = {id:'ROOT', label:projName, code:'', children:[], depth:0};
+  var root = {id:'ROOT', label:projName, code:'', children:[], depth:0, status:null};
   var nodeMap = {'': root};
   eapTasks.forEach(function(t, i) {
     var desc = (t.descricao || t.nome || t.titulo || ('Tarefa '+(i+1)));
     var lbl = (t.codigo ? t.codigo + ' ' : '') + desc.toUpperCase();
-    var nd = {id:'t'+i, label:lbl, code:t.codigo||('t'+i), children:[], depth:0};
+    var nd = {id:'t'+i, label:lbl, code:t.codigo||('t'+i), children:[], depth:0, status:eapStatusKey(t.status)};
     nodeMap[t.codigo||('t'+i)] = nd;
   });
   // Build hierarchy from codigo dots or nivel field
@@ -994,31 +1072,43 @@ function renderEapOrg() {
   var maxY=Math.max.apply(null,positioned.map(function(n){return n.y+BH;}));
   var maxDepth=Math.max.apply(null,positioned.map(function(n){return n.depth;}));
   var svgW=maxX+PAD+LBL_W, svgH=maxY+PAD;
-  function bgColor(d){if(d===0)return '#c62828';if(d===1)return '#2e7d32';return '#f9a825';}
-  function txtColor(d){return d>=2?'#333':'#fff';}
-  var svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+svgW+'" height="'+svgH+'" style="font-family:Arial,sans-serif">';
+  // Cor do nó pelo STATUS da atividade (mesma paleta viva usada na
+  // tabela e no Gantt) — o nível hierárquico já fica visualmente claro
+  // pela posição em árvore, então a cor fica livre pra transmitir uma
+  // informação mais útil: onde cada atividade está no andamento.
+  var ROOT_COLOR = '#1E40AF';
+  var LEVEL_ACCENT = ['#F59E0B','#8B5CF6','#14B8A6','#F472B6','#22D3EE'];
+  function bgColor(n){ return n.status ? EAP_STATUS_COLOR[n.status] : ROOT_COLOR; }
+  var svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+svgW+'" height="'+svgH+'" style="font-family:\'Inter\',\'Segoe UI\',Arial,sans-serif">';
+  svg+='<defs><filter id="eapNodeShadow" x="-30%" y="-30%" width="160%" height="160%">'
+     + '<feDropShadow dx="0" dy="2" stdDeviation="2.2" flood-color="#0F172A" flood-opacity="0.35"/>'
+     + '</filter></defs>';
   // Level rows + labels
   for(var d=0;d<=maxDepth;d++){
     var rowY=PAD+d*(BH+VG);
-    if(d>0) svg+='<line x1="0" y1="'+(rowY-VG/2)+'" x2="'+svgW+'" y2="'+(rowY-VG/2)+'" stroke="#ddd" stroke-dasharray="5,4" stroke-width="1"/>';
-    svg+='<text x="'+(svgW-LBL_W+8)+'" y="'+(rowY+BH/2+4)+'" fill="#aaa" font-size="9" font-weight="bold">NÍVEL '+(d+1)+'</text>';
+    if(d>0) svg+='<line x1="0" y1="'+(rowY-VG/2)+'" x2="'+svgW+'" y2="'+(rowY-VG/2)+'" stroke="#dde3ec" stroke-dasharray="5,4" stroke-width="1"/>';
+    svg+='<text x="'+(svgW-LBL_W+8)+'" y="'+(rowY+BH/2+4)+'" fill="#94a3b8" font-size="9" font-weight="700" letter-spacing="0.5">NÍVEL '+(d+1)+'</text>';
   }
   // Connectors
   positioned.forEach(function(n){
     n.children.forEach(function(c){
       var mid=n.y+BH+VG/2;
-      svg+='<polyline points="'+n.x+','+(n.y+BH)+' '+n.x+','+mid+' '+c.x+','+mid+' '+c.x+','+c.y+'" fill="none" stroke="#555" stroke-width="1.5"/>';
+      svg+='<polyline points="'+n.x+','+(n.y+BH)+' '+n.x+','+mid+' '+c.x+','+mid+' '+c.x+','+c.y+'" fill="none" stroke="#94a3b8" stroke-width="1.5"/>';
     });
   });
   // Boxes + text
   positioned.forEach(function(n){
-    var bx=n.x-BW/2, by=n.y, bg=bgColor(n.depth), tc=txtColor(n.depth);
-    svg+='<rect x="'+bx+'" y="'+by+'" width="'+BW+'" height="'+BH+'" rx="2" fill="'+bg+'"/>';
+    var bx=n.x-BW/2, by=n.y, bg=bgColor(n), accent=LEVEL_ACCENT[n.depth % LEVEL_ACCENT.length];
+    svg+='<g filter="url(#eapNodeShadow)">';
+    svg+='<rect x="'+bx+'" y="'+by+'" width="'+BW+'" height="'+BH+'" rx="8" fill="'+bg+'"/>';
+    svg+='<rect x="'+(bx+5)+'" y="'+(by+4)+'" width="'+(BW-10)+'" height="4" rx="2" fill="'+accent+'" opacity="0.9"/>';
+    svg+='</g>';
     var lbl=n.label, lines=[];
     if(lbl.length>19){var sp=lbl.lastIndexOf(' ',Math.floor(lbl.length/2));lines=sp>0?[lbl.slice(0,sp),lbl.slice(sp+1)]:[lbl.slice(0,18),lbl.slice(18)];}
     else{lines=[lbl];}
-    if(lines.length===1){svg+='<text x="'+n.x+'" y="'+(by+BH/2+4)+'" text-anchor="middle" fill="'+tc+'" font-size="10" font-weight="bold">'+lines[0]+'</text>';}
-    else{svg+='<text x="'+n.x+'" y="'+(by+BH/2-4)+'" text-anchor="middle" fill="'+tc+'" font-size="9" font-weight="bold">'+lines[0]+'</text><text x="'+n.x+'" y="'+(by+BH/2+8)+'" text-anchor="middle" fill="'+tc+'" font-size="9" font-weight="bold">'+lines[1]+'</text>';}
+    var ty = by + BH/2 + 6;
+    if(lines.length===1){svg+='<text x="'+n.x+'" y="'+ty+'" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">'+lines[0]+'</text>';}
+    else{svg+='<text x="'+n.x+'" y="'+(ty-6)+'" text-anchor="middle" fill="#fff" font-size="9" font-weight="700">'+lines[0]+'</text><text x="'+n.x+'" y="'+(ty+7)+'" text-anchor="middle" fill="#fff" font-size="9" font-weight="700">'+lines[1]+'</text>';}
   });
   svg+='</svg>';
   el.innerHTML = svg;
@@ -1101,6 +1191,14 @@ function calcularDatas() {
   return tasks;
 }
 
+// Cor translúcida (mesmo tom, alfa reduzido) — usada como "trilho" de
+// fundo da barra, por trás do preenchimento sólido de % concluído.
+function _eapFade(hex, alpha) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
 function renderGantt() {
   const div = el('gantt-chart');
   if (!div || eapTasks.length === 0) {
@@ -1109,56 +1207,107 @@ function renderGantt() {
   }
 
   const tasks = calcularDatas();
-  const colors = {
-    'concluido': '#10B981',
-    'em-andamento': '#3B82F6',
-    'atrasado': '#EF4444',
-    'nao-iniciado': '#64748B',
+  const isSummary = computeEapSummarySet(eapTasks);
+  const yLabels = tasks.map(t => `${t.codigo} — ${t.nome}`);
+
+  // MS Project convém: fases (linhas-resumo) viram uma barra escura e
+  // fina (estilo "colchete"), tarefas normais de duração 0 viram marco
+  // (losango), e as demais são barras coloridas por status com o
+  // percentual concluído preenchido dentro da própria barra.
+  const idxBarras = [];
+  const idxMarcos = [];
+  tasks.forEach((t, i) => {
+    const dur = parseInt(t.duracao) || 0;
+    if (dur <= 0) idxMarcos.push(i); else idxBarras.push(i);
+  });
+
+  const corBarra = (t) => isSummary[String(t.codigo || '').trim()] ? '#1E293B' : (EAP_STATUS_COLOR[eapStatusKey(t.status)]);
+
+  // Trilho (fundo) — toda a duração planejada, em tom translúcido
+  const traceFundo = {
+    type: 'bar', orientation: 'h',
+    x: idxBarras.map(i => tasks[i].endDate - tasks[i].startDate),
+    y: idxBarras.map(i => yLabels[i]),
+    base: idxBarras.map(i => tasks[i].startDate.getTime()),
+    marker: { color: idxBarras.map(i => _eapFade(corBarra(tasks[i]), 0.30)),
+              line: { color: idxBarras.map(i => corBarra(tasks[i])), width: 1 } },
+    width: idxBarras.map(i => isSummary[String(tasks[i].codigo || '').trim()] ? 0.35 : 0.6),
+    text: idxBarras.map(i => `${tasks[i].duracao}d`),
+    textposition: 'outside',
+    textfont: { color: '#94A3B8', size: 10 },
+    hovertemplate: idxBarras.map(i => {
+      const t = tasks[i];
+      const pct = Math.max(0, Math.min(100, parseFloat(t.percentualConcluido || 0)));
+      return `<b>${t.nome}</b><br>Início: ${t.startDate.toLocaleDateString('pt-BR')}<br>Fim: ${t.endDate.toLocaleDateString('pt-BR')}<br>Duração: ${t.duracao}d<br>Status: ${EAP_STATUS_LABEL[eapStatusKey(t.status)]}<br>Concluído: ${pct}%<extra></extra>`;
+    }),
+    showlegend: false,
+    name: '',
   };
 
-  const data = tasks.map(t => ({
-    x: [t.startDate.toISOString().split('T')[0], t.endDate.toISOString().split('T')[0]],
-    y: [`${t.codigo} — ${t.nome}`],
-    type: 'bar',
-    orientation: 'h',
-    marker: { color: colors[t.status] || '#64748B' },
-    hovertemplate: `<b>${t.nome}</b><br>Início: ${t.startDate.toLocaleDateString('pt-BR')}<br>Fim: ${t.endDate.toLocaleDateString('pt-BR')}<br>Duração: ${t.duracao}d<br>Status: ${t.status}<extra></extra>`,
-    name: t.nome,
+  // Preenchimento — só a fatia já concluída (% concluído), cor sólida
+  const traceProgresso = {
+    type: 'bar', orientation: 'h',
+    x: idxBarras.map(i => {
+      const t = tasks[i];
+      const pct = Math.max(0, Math.min(100, parseFloat(t.percentualConcluido || 0))) / 100;
+      return (t.endDate - t.startDate) * pct;
+    }),
+    y: idxBarras.map(i => yLabels[i]),
+    base: idxBarras.map(i => tasks[i].startDate.getTime()),
+    marker: { color: idxBarras.map(i => corBarra(tasks[i])) },
+    width: idxBarras.map(i => isSummary[String(tasks[i].codigo || '').trim()] ? 0.35 : 0.6),
+    hoverinfo: 'skip',
     showlegend: false,
-  }));
+    name: '',
+  };
 
-  // Plotly Gantt via scatter com barras horizontais
-  const yLabels = tasks.map(t => `${t.codigo} — ${t.nome}`);
-  const ganttData = [{
-    type: 'bar',
-    orientation: 'h',
-    x: tasks.map(t => t.endDate - t.startDate),
-    y: yLabels,
-    base: tasks.map(t => t.startDate.getTime()),
-    marker: { color: tasks.map(t => colors[t.status] || '#64748B') },
-    text: tasks.map(t => `${t.duracao}d`),
-    textposition: 'inside',
-    hovertemplate: tasks.map(t =>
-      `<b>${t.nome}</b><br>Início: ${t.startDate.toLocaleDateString('pt-BR')}<br>Fim: ${t.endDate.toLocaleDateString('pt-BR')}<br>Duração: ${t.duracao}d<extra></extra>`
-    ),
+  const ganttData = [traceFundo, traceProgresso];
+
+  // Marcos (duração 0/ausente) — losango na data de início
+  if (idxMarcos.length) {
+    ganttData.push({
+      type: 'scatter', mode: 'markers',
+      x: idxMarcos.map(i => tasks[i].startDate.toISOString().split('T')[0]),
+      y: idxMarcos.map(i => yLabels[i]),
+      marker: { symbol: 'diamond', size: 13, color: idxMarcos.map(i => EAP_STATUS_COLOR[eapStatusKey(tasks[i].status)]),
+                line: { color: '#0F172A', width: 1.5 } },
+      hovertemplate: idxMarcos.map(i => `<b>◆ ${tasks[i].nome}</b><br>Data: ${tasks[i].startDate.toLocaleDateString('pt-BR')}<extra></extra>`),
+      showlegend: false,
+      name: '',
+    });
+  }
+
+  // Linha vertical marcando "hoje", pra situar visualmente o andamento
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const shapes = [{
+    type: 'line', xref: 'x', yref: 'paper',
+    x0: hoje.getTime(), x1: hoje.getTime(), y0: 0, y1: 1,
+    line: { color: '#F59E0B', width: 1.5, dash: 'dot' },
+  }];
+  const annotations = [{
+    xref: 'x', yref: 'paper', x: hoje.getTime(), y: 1.02,
+    text: 'Hoje', showarrow: false, font: { color: '#F59E0B', size: 10, family: 'Inter, Arial' },
   }];
 
   const layout = {
     paper_bgcolor: '#0F172A',
     plot_bgcolor: '#1E293B',
     font: { family: 'Inter, Arial', color: '#F1F5F9', size: 11 },
-    margin: { l: 200, r: 30, t: 20, b: 40 },
+    margin: { l: 220, r: 40, t: 24, b: 40 },
     xaxis: {
       type: 'date',
       gridcolor: '#334155',
-      tickfont: { color: '#6b7280', size: 10 },
+      tickfont: { color: '#94A3B8', size: 10 },
     },
     yaxis: {
       gridcolor: '#334155',
       tickfont: { color: '#F1F5F9', size: 11 },
       autorange: 'reversed',
     },
-    bargap: 0.4,
+    bargap: 0.35,
+    barmode: 'overlay',
+    shapes: shapes,
+    annotations: annotations,
     showlegend: false,
   };
 
@@ -2925,30 +3074,38 @@ function renderMovimentacao() {
   }).join('');
 }
 
+// Executa cada render isoladamente: uma falha (ex.: Plotly bloqueado por
+// rede/ad-blocker do usuário) não pode derrubar as demais renderizações
+// nem impedir o cadastro dos listeners de troca de aba logo abaixo.
+function _safeRun(fn) {
+  try { fn(); } catch (e) { console.error('[detalhe.html]', fn.name || 'render', e); }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
-  renderEAP();
-  renderGantt();
-  renderCurvaS();
-  carregarControle();
-  renderRiscos();
-  renderEncerramento();
-  renderFinanceiro();
-  renderKPIs();
-  renderPlanoAcao();
-  renderMovimentacao();
+  _safeRun(renderEAP);
+  _safeRun(renderGantt);
+  _safeRun(renderCurvaS);
+  _safeRun(renderEapOrg);
+  _safeRun(carregarControle);
+  _safeRun(renderRiscos);
+  _safeRun(renderEncerramento);
+  _safeRun(renderFinanceiro);
+  _safeRun(renderKPIs);
+  _safeRun(renderPlanoAcao);
+  _safeRun(renderMovimentacao);
 
   document.querySelectorAll('.tab-btn[data-group="proj"]').forEach(btn => {
     btn.addEventListener('click', () => {
       const tab = btn.dataset.tab;
       setTimeout(() => {
-        if (tab === 'tab-gantt') renderGantt();
-        if (tab === 'tab-eap') { renderEAP(); renderCurvaS(); }
-        if (tab === 'tab-controle') carregarControle();
-        if (tab === 'tab-riscos') renderRiscos();
-        if (tab === 'tab-encerramento') renderEncerramento();
-          if (tab === 'tab-fin-analise') renderFinanceiroAnalise();
-        if (tab === 'tab-kpis') renderKPIs();
-        if (tab === 'tab-plano-acao') renderPlanoAcao();
+        if (tab === 'tab-gantt') _safeRun(renderGantt);
+        if (tab === 'tab-eap') { _safeRun(renderEAP); _safeRun(renderCurvaS); _safeRun(renderEapOrg); }
+        if (tab === 'tab-controle') _safeRun(carregarControle);
+        if (tab === 'tab-riscos') _safeRun(renderRiscos);
+        if (tab === 'tab-encerramento') _safeRun(renderEncerramento);
+        if (tab === 'tab-fin-analise') _safeRun(renderFinanceiroAnalise);
+        if (tab === 'tab-kpis') _safeRun(renderKPIs);
+        if (tab === 'tab-plano-acao') _safeRun(renderPlanoAcao);
       }, 50);
     });
   });
