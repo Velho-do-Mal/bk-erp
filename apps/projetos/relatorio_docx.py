@@ -380,10 +380,25 @@ def chart_financeiro(finances):
 
 
 def chart_organograma(eap_tasks, projeto_nome):
-    """Organograma da EAP como imagem — mesmo algoritmo de layout em
-    árvore do renderEapOrg() (JS), colorido por status da atividade."""
+    """Organograma da EAP como uma ou mais imagens — mesmo algoritmo de
+    layout em árvore do renderEapOrg() (JS), colorido por status da
+    atividade. Retorna uma LISTA de PNGs (BytesIO): quando a árvore é
+    grande, a imagem inteira é dividida em fatias que cabem cada uma numa
+    única página do Word.
+
+    Por quê: um único inline picture mais alto que uma página fica sujeito
+    a como o Word/LibreOffice paginam imagem grande dentro de um parágrafo
+    — na conversão para PDF via LibreOffice (usada aqui pra conferência
+    visual) a parte que não cabe na página corrente é simplesmente CORTADA,
+    em vez de continuar na página seguinte (confirmado inspecionando o PDF
+    gerado: a imagem de 45 tarefas aparece inteira, uma única vez, como
+    objeto da página 4 — nada dela é desenhado na página 5, ou seja, tudo
+    que ficava abaixo da margem inferior da página 4 nunca chegava a ser
+    renderizado). Cortando a árvore em fatias que cabem cada uma dentro de
+    uma página, cada imagem é sempre desenhada por completo, e o próprio
+    fluxo de texto do Word decide em qual página cada fatia entra."""
     if not eap_tasks:
-        return None
+        return []
 
     class Node:
         __slots__ = ('code', 'label', 'status', 'children', 'depth', 'x', 'y', 'w')
@@ -411,62 +426,129 @@ def chart_organograma(eap_tasks, projeto_nome):
             set_depth(c, d + 1)
     set_depth(root, 0)
 
-    BW, BH, HG, VG = 2.7, 0.86, 0.65, 1.25
-
-    def subtree_w(n):
-        if not n.children:
-            return BW
-        return max(BW, sum(subtree_w(c) for c in n.children) + HG * (len(n.children) - 1))
-
-    positioned = []
-
-    def layout(n, x, y):
-        n.x, n.y = x, y
-        positioned.append(n)
-        total = subtree_w(n)
-        cx = x - total / 2
-        for c in n.children:
-            cw = subtree_w(c)
-            layout(c, cx + cw / 2, y - (BH + VG))
-            cx += cw + HG
-    layout(root, subtree_w(root) / 2, 0)
-
-    max_depth = max((n.depth for n in positioned), default=0)
-    fig_w = max(6.0, subtree_w(root) + 1.0)
-    fig_h = max(2.6, (max_depth + 1) * (BH + VG) + 0.6)
-    fig, ax = plt.subplots(figsize=(fig_w, fig_h))
-    fig.patch.set_facecolor('white')
-    ax.set_facecolor('white')
-
+    # Árvore orientada da esquerda pra direita (raiz à esquerda, atividades
+    # empilhadas verticalmente) em vez de de cima pra baixo. Com a EAP
+    # crescendo de cima pra baixo, a LARGURA da imagem cresce com o nº
+    # total de atividades (que pode ser enorme) — daí, forçada numa
+    # largura fixa de página, tudo virava ilegível com muitas tarefas.
+    # Deitando a árvore, a largura passa a depender só da PROFUNDIDADE da
+    # EAP (poucos níveis, quase sempre 3-5); quem cresce com o nº de
+    # atividades é a ALTURA — e é ela que agora fatiamos por página.
+    BW, BH, HG, VG = 3.0, 0.5, 0.95, 0.26
     ROOT_COLOR = '#1E40AF'
     ACCENT = ['#F59E0B', '#8B5CF6', '#14B8A6', '#F472B6', '#22D3EE']
 
-    for n in positioned:
+    def subtree_h(n):
+        if not n.children:
+            return BH
+        return max(BH, sum(subtree_h(c) for c in n.children) + VG * (len(n.children) - 1))
+
+    max_depth = 0
+
+    def scan_depth(n):
+        nonlocal max_depth
+        max_depth = max(max_depth, n.depth)
         for c in n.children:
-            midy = n.y - BH / 2 - VG / 2
-            ax.plot([n.x, n.x, c.x, c.x], [n.y - BH / 2, midy, midy, c.y + BH / 2],
-                    color='#94a3b8', linewidth=1.1, zorder=1)
+            scan_depth(c)
+    scan_depth(root)
 
-    for n in positioned:
-        color = ROOT_COLOR if n.status is None else STATUS_COLOR[n.status]
-        rect = mpatches.FancyBboxPatch((n.x - BW / 2, n.y - BH / 2), BW, BH,
-                                        boxstyle='round,pad=0.02,rounding_size=0.06',
-                                        linewidth=0, facecolor=color, zorder=2)
-        ax.add_patch(rect)
-        accent = ACCENT[n.depth % len(ACCENT)]
-        ax.add_patch(mpatches.Rectangle((n.x - BW / 2 + 0.08, n.y + BH / 2 - 0.12),
-                                         BW - 0.16, 0.06, facecolor=accent, linewidth=0, zorder=3))
-        # Quebra em até 3 linhas curtas (largura fixa da caixa não pode
-        # estourar por cima do nó vizinho); trunca com reticências além
-        # disso — o nome completo continua na tabela EAP.
-        wrapped = textwrap.wrap(n.label, width=17, max_lines=3, placeholder='…')
-        ax.text(n.x, n.y, '\n'.join(wrapped), ha='center', va='center', color='white',
-                fontsize=7.0, fontweight='bold', zorder=4, linespacing=1.3)
+    # Largura é sempre a mesma (só depende da profundidade da EAP, não de
+    # quantas fatias/páginas o organograma acaba ocupando) — assim todas as
+    # imagens saem com a mesma escala/proporção.
+    fig_w = max(6.0, max_depth * (BW + HG) + BW + 0.6)
 
-    ax.set_xlim(-0.5, subtree_w(root) + 0.5)
-    ax.set_ylim(-(max_depth + 1) * (BH + VG) + 0.3, BH)
-    ax.axis('off')
-    return _fig_to_png(fig, dpi=190)
+    # Altura segura por imagem: um pouco menor que uma página A4 útil
+    # (~9.7in), pra sobrar espaço de margem/legenda — convertida pra "data
+    # units" (aqui 1 unidade ≈ 1in antes do Word reescalar pra 16.5cm de
+    # largura).
+    SAFE_ASPECT = 1.15
+    HEIGHT_BUDGET = max(BH + 0.6, SAFE_ASPECT * fig_w - 0.6)
+
+    def make_group_root(n, children):
+        g = Node(n.code, n.label, n.status)
+        g.depth = n.depth
+        g.children = children
+        return g
+
+    def split_into_groups(n):
+        """Agrupa os filhos de n em blocos cuja altura (subtree_h somada)
+        cabe em HEIGHT_BUDGET. Se um filho já é grande demais sozinho,
+        desce um nível e agrupa os FILHOS dele (recursivo) — ele mesmo
+        reaparece como 'raiz local' em cada fatia, pra manter o contexto."""
+        if subtree_h(n) <= HEIGHT_BUDGET or not n.children:
+            return [n]
+        groups, bucket = [], []
+
+        def bucket_h(extra=None):
+            items = bucket + ([extra] if extra is not None else [])
+            if not items:
+                return 0.0
+            return sum(subtree_h(x) for x in items) + VG * (len(items) - 1)
+
+        def flush():
+            if bucket:
+                groups.append(make_group_root(n, list(bucket)))
+                bucket.clear()
+        for c in n.children:
+            if subtree_h(c) > HEIGHT_BUDGET:
+                flush()
+                groups.extend(split_into_groups(c))
+                continue
+            if bucket and bucket_h(c) > HEIGHT_BUDGET:
+                flush()
+            bucket.append(c)
+        flush()
+        return groups or [n]
+
+    def render_group(local_root):
+        positioned = []
+
+        def layout(n, x, y):
+            n.x, n.y = x, y
+            positioned.append(n)
+            total = subtree_h(n)
+            top = y + total / 2
+            for c in n.children:
+                ch = subtree_h(c)
+                layout(c, x + BW + HG, top - ch / 2)
+                top -= ch + VG
+        layout(local_root, 0, 0)
+
+        total_h = subtree_h(local_root)
+        fig_h = max(2.6, total_h + 0.6)
+        fig, ax = plt.subplots(figsize=(fig_w, fig_h))
+        fig.patch.set_facecolor('white')
+        ax.set_facecolor('white')
+
+        for n in positioned:
+            for c in n.children:
+                midx = n.x + BW / 2 + HG / 2
+                ax.plot([n.x + BW / 2, midx, midx, c.x - BW / 2], [n.y, n.y, c.y, c.y],
+                        color='#94a3b8', linewidth=1.1, zorder=1)
+
+        for n in positioned:
+            color = ROOT_COLOR if n.status is None else STATUS_COLOR[n.status]
+            rect = mpatches.FancyBboxPatch((n.x - BW / 2, n.y - BH / 2), BW, BH,
+                                            boxstyle='round,pad=0.02,rounding_size=0.06',
+                                            linewidth=0, facecolor=color, zorder=2)
+            ax.add_patch(rect)
+            accent = ACCENT[n.depth % len(ACCENT)]
+            ax.add_patch(mpatches.Rectangle((n.x - BW / 2 + 0.08, n.y + BH / 2 - 0.09),
+                                             BW - 0.16, 0.05, facecolor=accent, linewidth=0, zorder=3))
+            # Quebra em até 2 linhas curtas (a caixa agora tem largura fixa
+            # constante, não precisa mais encolher o texto pra caber); trunca
+            # com reticências além disso — o nome completo continua na
+            # tabela EAP.
+            wrapped = textwrap.wrap(n.label, width=22, max_lines=2, placeholder='…')
+            ax.text(n.x, n.y, '\n'.join(wrapped), ha='center', va='center', color='white',
+                    fontsize=7.6, fontweight='bold', zorder=4, linespacing=1.25)
+
+        ax.set_xlim(-BW / 2 - 0.3, max_depth * (BW + HG) + BW / 2 + 0.3)
+        ax.set_ylim(-total_h / 2 - 0.3, total_h / 2 + 0.3)
+        ax.axis('off')
+        return _fig_to_png(fig, dpi=190)
+
+    return [render_group(g) for g in split_into_groups(root)]
 
 
 # ── Helpers python-docx ──────────────────────────────────────────────────
@@ -698,7 +780,14 @@ def gerar_relatorio_docx(projeto):
 
     # ── Organograma ───────────────────────────────────────────────────
     _add_heading(doc, '2. Organograma da EAP', size=16)
-    _add_image(doc, chart_organograma(eap_tasks, tap.get('nome') or projeto.nome), width_cm=16.5)
+    org_imgs = chart_organograma(eap_tasks, tap.get('nome') or projeto.nome)
+    if not org_imgs:
+        _add_image(doc, None, width_cm=16.5)
+    else:
+        total_imgs = len(org_imgs)
+        for i, png in enumerate(org_imgs, start=1):
+            cap = None if total_imgs == 1 else f'Organograma da EAP — continuação {i}/{total_imgs}'
+            _add_image(doc, png, width_cm=16.5, caption=cap)
 
     # ── Tabela EAP ────────────────────────────────────────────────────
     doc.add_page_break()
