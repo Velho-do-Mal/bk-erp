@@ -3,6 +3,7 @@ from apps.core.json_utils import safe_json_dumps
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.db.models import Sum, Count, Q
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 from datetime import timedelta, date
 from calendar import monthrange
@@ -40,6 +41,8 @@ def dashboard(request):
     hoje = timezone.now().date()
     inicio_mes = hoje.replace(day=1)
     amanha = hoje + timedelta(days=1)
+    fim_mes_anterior = inicio_mes - timedelta(days=1)
+    inicio_mes_anterior = fim_mes_anterior.replace(day=1)
 
     # --- PROJETOS ---
     qs_projetos = _qs_empresa(Projeto.objects, request)
@@ -61,12 +64,39 @@ def dashboard(request):
     # --- FINANCEIRO ---
     qs_trans = _qs_empresa(Transacao.objects, request)
 
-    receita_total = qs_trans.filter(tipo='entrada', status='realizado').aggregate(Sum('valor'))['valor__sum'] or 0
-    despesa_total = qs_trans.filter(tipo='saida', status='realizado').aggregate(Sum('valor'))['valor__sum'] or 0
+    # Coalesce('valor_pago','valor'): numa transação já realizada, usa o valor
+    # de fato pago/recebido (pode divergir do previsto por desconto, juros,
+    # pagamento parcial etc.) — mesma regra usada em Financeiro e Relatórios,
+    # pra Home não mostrar um número diferente do resto do sistema.
+    receita_total = qs_trans.filter(tipo='entrada', status='realizado').aggregate(s=Sum(Coalesce('valor_pago', 'valor')))['s'] or 0
+    despesa_total = qs_trans.filter(tipo='saida', status='realizado').aggregate(s=Sum(Coalesce('valor_pago', 'valor')))['s'] or 0
     saldo_atual = receita_total - despesa_total
 
-    receita_mes = qs_trans.filter(tipo='entrada', status='realizado', data_pagamento__gte=inicio_mes).aggregate(Sum('valor'))['valor__sum'] or 0
-    despesa_mes = qs_trans.filter(tipo='saida', status='realizado', data_pagamento__gte=inicio_mes).aggregate(Sum('valor'))['valor__sum'] or 0
+    receita_mes = qs_trans.filter(tipo='entrada', status='realizado', data_pagamento__gte=inicio_mes).aggregate(s=Sum(Coalesce('valor_pago', 'valor')))['s'] or 0
+    despesa_mes = qs_trans.filter(tipo='saida', status='realizado', data_pagamento__gte=inicio_mes).aggregate(s=Sum(Coalesce('valor_pago', 'valor')))['s'] or 0
+
+    # Mês anterior (mesma regra de valor) — só pra calcular a variação % dos
+    # cards de KPI da Home. Nunca inventa número: se não houver nada no mês
+    # anterior, a variação simplesmente não é exibida (ver template).
+    receita_mes_anterior = qs_trans.filter(
+        tipo='entrada', status='realizado',
+        data_pagamento__gte=inicio_mes_anterior, data_pagamento__lte=fim_mes_anterior,
+    ).aggregate(s=Sum(Coalesce('valor_pago', 'valor')))['s'] or 0
+    despesa_mes_anterior = qs_trans.filter(
+        tipo='saida', status='realizado',
+        data_pagamento__gte=inicio_mes_anterior, data_pagamento__lte=fim_mes_anterior,
+    ).aggregate(s=Sum(Coalesce('valor_pago', 'valor')))['s'] or 0
+    saldo_mes_anterior = receita_mes_anterior - despesa_mes_anterior
+    saldo_mes = receita_mes - despesa_mes
+
+    def _variacao_pct(atual, anterior):
+        if not anterior:
+            return None
+        return float((atual - anterior) / anterior * 100)
+
+    var_receita = _variacao_pct(receita_mes, receita_mes_anterior)
+    var_despesa = _variacao_pct(despesa_mes, despesa_mes_anterior)
+    var_saldo = _variacao_pct(saldo_mes, saldo_mes_anterior)
 
     # Contas a pagar / receber HOJE
     recebimentos_hoje = qs_trans.filter(tipo='entrada', status='pendente', data_vencimento=hoje).aggregate(Sum('valor'))['valor__sum'] or 0
@@ -179,6 +209,9 @@ def dashboard(request):
         'saldo_atual': saldo_atual,
         'receita_mes': receita_mes,
         'despesa_mes': despesa_mes,
+        'var_receita': var_receita,
+        'var_despesa': var_despesa,
+        'var_saldo': var_saldo,
 
         # Hoje / Amanhã
         'recebimentos_hoje': recebimentos_hoje,

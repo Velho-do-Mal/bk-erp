@@ -44,34 +44,42 @@
 <!-- KPI Cards -->
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:14px;margin-bottom:20px">
   <div class="kpi-card kpi-green">
+    <div class="kpi-icon green"><i class="fas fa-arrow-down"></i></div>
     <div class="kpi-label">Total Recebido (geral)</div>
     <div class="kpi-value moeda">{{ total_entrada|moeda }}</div>
   </div>
   <div class="kpi-card kpi-red">
+    <div class="kpi-icon red"><i class="fas fa-arrow-up"></i></div>
     <div class="kpi-label">Total Pago (geral)</div>
     <div class="kpi-value moeda">{{ total_saida|moeda }}</div>
   </div>
   <div class="kpi-card {% if saldo >= 0 %}kpi-blue{% else %}kpi-red{% endif %}">
+    <div class="kpi-icon {% if saldo >= 0 %}blue{% else %}red{% endif %}"><i class="fas fa-scale-balanced"></i></div>
     <div class="kpi-label">Saldo Realizado</div>
     <div class="kpi-value moeda">{{ saldo|moeda }}</div>
   </div>
   <div class="kpi-card" style="border-left:3px solid #10B981">
+    <div class="kpi-icon green"><i class="fas fa-arrow-down"></i></div>
     <div class="kpi-label">Entradas (período)</div>
     <div class="kpi-value moeda" style="color:#16a34a">{{ ent_periodo|moeda }}</div>
   </div>
   <div class="kpi-card" style="border-left:3px solid #EF4444">
+    <div class="kpi-icon red"><i class="fas fa-arrow-up"></i></div>
     <div class="kpi-label">Saídas (período)</div>
     <div class="kpi-value moeda" style="color:#ef4444">{{ said_periodo|moeda }}</div>
   </div>
   <div class="kpi-card {% if saldo_periodo >= 0 %}kpi-blue{% else %}kpi-red{% endif %}">
+    <div class="kpi-icon {% if saldo_periodo >= 0 %}blue{% else %}red{% endif %}"><i class="fas fa-scale-balanced"></i></div>
     <div class="kpi-label">Saldo do Período</div>
     <div class="kpi-value moeda">{{ saldo_periodo|moeda }}</div>
   </div>
   <div class="kpi-card kpi-yellow">
+    <div class="kpi-icon orange"><i class="fas fa-hourglass-half"></i></div>
     <div class="kpi-label">A Receber</div>
     <div class="kpi-value moeda">{{ pendentes_receber|moeda }}</div>
   </div>
   <div class="kpi-card kpi-orange">
+    <div class="kpi-icon orange"><i class="fas fa-hourglass-half"></i></div>
     <div class="kpi-label">A Pagar</div>
     <div class="kpi-value moeda">{{ pendentes_pagar|moeda }}</div>
   </div>
@@ -79,7 +87,7 @@
 
 <!-- Projeção de Fluxo de Caixa (30/60/90 dias) -->
 <div class="bk-card" style="margin-bottom:18px">
-  <div class="bk-title" style="font-size:14px;margin:0 0 4px">🔮 Projeção de Caixa</div>
+  <div class="bk-title" style="font-size:14px;margin:0 0 4px"><i class="fas fa-binoculars"></i> Projeção de Caixa</div>
   <div style="font-size:12px;color:#6b7280;margin-bottom:14px">
     Saldo atual (realizado) somado ao que já está lançado como pendente, com vencimento dentro de cada janela.
     Não inclui parcelas recorrentes futuras ainda não geradas.

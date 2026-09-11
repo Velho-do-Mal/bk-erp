@@ -8,7 +8,7 @@
   .kpi-grid-5 { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; margin-bottom:20px; }
   .kpi-grid-4 { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:20px; }
   .kpi-grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:20px; }
-  .kpi-card { background:#fff; border:1px solid var(--bk-border); border-radius:10px; padding:16px 18px; transition:transform .15s,box-shadow .15s; }
+  .kpi-card { background:#fff; border:1px solid var(--bk-border); border-radius:10px; padding:16px 18px; transition:transform .15s,box-shadow .15s; position:relative; }
   .kpi-card:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.08); }
   .kpi-label { font-size:11px; font-weight:600; color:#6b7280; text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
   .kpi-value { font-size:22px; font-weight:800; line-height:1.2; }
@@ -157,21 +157,34 @@
 
 <div class="kpi-grid-4 mb-3">
   <div class="kpi-card" style="border-top:3px solid #16a34a;">
+    <div class="kpi-icon green"><i class="fas fa-scale-balanced"></i></div>
+    {% if var_saldo is not None %}
+      <span class="kpi-trend {% if var_saldo >= 0 %}up{% else %}down{% endif %}"><i class="fas fa-arrow-{% if var_saldo >= 0 %}up{% else %}down{% endif %}"></i> {{ var_saldo|floatformat:1 }}%</span>
+    {% endif %}
     <div class="kpi-label">Saldo Atual</div>
     <div class="kpi-value moeda" style="color:#16a34a;">{{ saldo_atual|moeda }}</div>
     <div class="kpi-sub">Receitas − Despesas realizadas</div>
   </div>
   <div class="kpi-card" style="border-top:3px solid #3b82f6;">
+    <div class="kpi-icon blue"><i class="fas fa-sack-dollar"></i></div>
+    {% if var_receita is not None %}
+      <span class="kpi-trend {% if var_receita >= 0 %}up{% else %}down{% endif %}"><i class="fas fa-arrow-{% if var_receita >= 0 %}up{% else %}down{% endif %}"></i> {{ var_receita|floatformat:1 }}%</span>
+    {% endif %}
     <div class="kpi-label">Receitas Realizadas</div>
     <div class="kpi-value moeda" style="color:#3b82f6;">{{ receita_total|moeda }}</div>
     <div class="kpi-sub">{{ receita_mes|moeda }} no mês atual</div>
   </div>
   <div class="kpi-card" style="border-top:3px solid #dc2626;">
+    <div class="kpi-icon red"><i class="fas fa-file-invoice-dollar"></i></div>
+    {% if var_despesa is not None %}
+      <span class="kpi-trend {% if var_despesa <= 0 %}up{% else %}down{% endif %}"><i class="fas fa-arrow-{% if var_despesa >= 0 %}up{% else %}down{% endif %}"></i> {{ var_despesa|floatformat:1 }}%</span>
+    {% endif %}
     <div class="kpi-label">Despesas Realizadas</div>
     <div class="kpi-value moeda" style="color:#dc2626;">{{ despesa_total|moeda }}</div>
     <div class="kpi-sub">{{ despesa_mes|moeda }} no mês atual</div>
   </div>
   <div class="kpi-card" style="border-top:3px solid #f59e0b;">
+    <div class="kpi-icon orange"><i class="fas fa-cart-shopping"></i></div>
     <div class="kpi-label">Compras no Mês</div>
     <div class="kpi-value moeda" style="color:#f59e0b;">{{ compras_mes|moeda }}</div>
     <div class="kpi-sub">{{ pedidos_pendentes }} pedido(s) pendente(s)</div>
@@ -322,6 +335,15 @@ const bkColors = {
 (function(){
   const data = {{ chart_evolucao_json|safe }};
   const ctx = document.getElementById('chartEvolucao').getContext('2d');
+
+  // Preenchimento em gradiente (mais elegante que uma cor sólida chapada)
+  const gReceita = ctx.createLinearGradient(0, 0, 0, 260);
+  gReceita.addColorStop(0, 'rgba(22,163,74,.28)');
+  gReceita.addColorStop(1, 'rgba(22,163,74,.02)');
+  const gDespesa = ctx.createLinearGradient(0, 0, 0, 260);
+  gDespesa.addColorStop(0, 'rgba(220,38,38,.22)');
+  gDespesa.addColorStop(1, 'rgba(220,38,38,.02)');
+
   new Chart(ctx, {
     type: 'line',
     data: {
@@ -331,30 +353,39 @@ const bkColors = {
           label: 'Receita',
           data: data.receitas,
           borderColor: bkColors.green,
-          backgroundColor: 'rgba(22,163,74,.08)',
-          borderWidth: 2.5,
-          pointRadius: 4,
+          backgroundColor: gReceita,
+          borderWidth: 3,
+          pointRadius: 3,
+          pointHoverRadius: 6,
+          pointBackgroundColor: bkColors.green,
           fill: true,
-          tension: 0.3
+          tension: 0.35
         },
         {
           label: 'Despesa',
           data: data.despesas,
           borderColor: bkColors.red,
-          backgroundColor: 'rgba(220,38,38,.06)',
-          borderWidth: 2.5,
-          pointRadius: 4,
+          backgroundColor: gDespesa,
+          borderWidth: 3,
+          pointRadius: 3,
+          pointHoverRadius: 6,
+          pointBackgroundColor: bkColors.red,
           fill: true,
-          tension: 0.3
+          tension: 0.35
         }
       ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      animation: { duration: 700, easing: 'easeOutQuart' },
+      interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: { position: 'top', labels: { boxWidth: 12, font: { size: 11 } } },
-        tooltip: { callbacks: { label: ctx => ' R$ ' + ctx.raw.toLocaleString('pt-BR', {minimumFractionDigits:2}) } }
+        tooltip: {
+          backgroundColor: '#0F172A', padding: 10, cornerRadius: 8, displayColors: true,
+          callbacks: { label: ctx => ' ' + ctx.dataset.label + ': R$ ' + ctx.raw.toLocaleString('pt-BR', {minimumFractionDigits:2}) }
+        }
       },
       scales: {
         y: { ticks: { callback: v => 'R$ ' + (v/1000).toFixed(0) + 'k', font:{size:10} }, grid: { color: '#f3f4f6' } },

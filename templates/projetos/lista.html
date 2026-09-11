@@ -19,25 +19,27 @@
 <a href="{% url 'core:dashboard' %}" class="btn btn-secondary btn-sm btn-voltar">← Voltar</a>
 
 <!-- ATIVOS -->
-<div class="card" style="margin-bottom:20px;">
+<div class="bk-card" style="margin-bottom:20px;">
   <h2 style="font-size:15px;font-weight:700;margin-bottom:16px;">
-    🟢 Projetos Ativos <span style="color:#6b7280;font-weight:400;font-size:13px;">({{ projetos_ativos.count }})</span>
+    Projetos Ativos <span style="color:#6b7280;font-weight:400;font-size:13px;">({{ projetos_ativos.count }})</span>
   </h2>
   {% if projetos_ativos %}
-  <div class="table-wrap">
-    <table>
+  <div class="table-container">
+    <div class="tbl-wrap" style="overflow-x:auto;">
+    <table class="data-table">
       <thead>
         <tr>
-          <th>#</th><th>Nome</th><th>Status</th><th>Início</th><th>Conclusão</th><th>Gerente</th><th>Patrocinador</th><th>Prazo</th><th>Ações</th>
+          <th>#</th><th>Nome</th><th>Status</th><th>Início</th><th>Conclusão</th><th>Gerente</th><th>Patrocinador</th><th>Prazo</th><th class="col-actions">Ações</th>
         </tr>
       </thead>
       <tbody>
         {% for p in projetos_ativos %}
         <tr>
-          <td style="color:#374151">{{ p.id }}</td>
+          <td style="color:#6b7280">{{ p.id }}</td>
           <td style="font-weight:600;">{{ p.nome }}</td>
           <td>
             {% if p.status == 'execucao' %}<span class="badge badge-green">Execução</span>
+            {% elif p.status == 'em_aprovacao' %}<span class="badge badge-purple">Em Aprovação</span>
             {% elif p.status == 'planejamento' %}<span class="badge badge-blue">Planejamento</span>
             {% elif p.status == 'monitoramento' %}<span class="badge badge-teal">Monitoramento</span>
             {% elif p.status == 'suspenso' %}<span class="badge badge-orange">Suspenso</span>
@@ -53,18 +55,18 @@
             {% if p.status != 'encerrado' and p.data_conclusao %}
               {% with hoje=today %}
                 {% if p.data_conclusao < hoje %}
-                  <span class="badge badge-danger" title="Conclusão era em {{ p.data_conclusao|date:'d/m/Y' }}">🔴 Atrasado</span>
+                  <span class="badge badge-red" title="Conclusão era em {{ p.data_conclusao|date:'d/m/Y' }}">Atrasado</span>
                 {% elif p.dias_para_conclusao <= 3 %}
-                  <span class="badge badge-orange" title="Faltam {{ p.dias_para_conclusao }} dias">🟡 No Limite</span>
+                  <span class="badge badge-orange" title="Faltam {{ p.dias_para_conclusao }} dias">No Limite</span>
                 {% else %}
-                  <span class="badge badge-green">🟢 No Prazo</span>
+                  <span class="badge badge-green">No Prazo</span>
                 {% endif %}
               {% endwith %}
             {% else %}
-              <span style="color:#374151">—</span>
+              <span style="color:#9ca3af">—</span>
             {% endif %}
           </td>
-          <td>
+          <td class="col-actions">
             <div style="display:flex;gap:6px;flex-wrap:wrap;">
               <a href="{% url 'projetos:detalhe' p.pk %}" class="btn btn-secondary btn-sm">Abrir</a>
               {% if user.is_admin_erp %}
@@ -77,9 +79,10 @@
         {% endfor %}
       </tbody>
     </table>
+    </div>
   </div>
   {% else %}
-  <div style="text-align:center;padding:32px;color:#6b7280;">
+  <div class="empty-state" style="text-align:center;padding:32px;color:#6b7280;">
     Nenhum projeto ativo.
     {% if user.is_admin_erp %}<br><a href="{% url 'projetos:novo' %}" class="btn btn-primary" style="margin-top:12px">Criar Projeto</a>{% endif %}
   </div>
@@ -88,14 +91,15 @@
 
 <!-- ENCERRADOS -->
 {% if projetos_encerrados %}
-<div class="card">
+<div class="bk-card">
   <h2 style="font-size:15px;font-weight:700;margin-bottom:16px;">
-    ⚫ Projetos Encerrados <span style="color:#6b7280;font-weight:400;font-size:13px;">({{ projetos_encerrados.count }})</span>
+    Projetos Encerrados <span style="color:#6b7280;font-weight:400;font-size:13px;">({{ projetos_encerrados.count }})</span>
   </h2>
-  <div class="table-wrap">
-    <table>
+  <div class="table-container">
+    <div class="tbl-wrap" style="overflow-x:auto;">
+    <table class="data-table">
       <thead>
-        <tr><th>#</th><th>Nome</th><th>Início</th><th>Gerente</th><th>Ações</th></tr>
+        <tr><th>#</th><th>Nome</th><th>Início</th><th>Gerente</th><th class="col-actions">Ações</th></tr>
       </thead>
       <tbody>
         {% for p in projetos_encerrados %}
@@ -104,7 +108,7 @@
           <td>{{ p.nome }}</td>
           <td>{{ p.data_inicio|date:"d/m/Y"|default:"—" }}</td>
           <td>{{ p.gerente|default:"—" }}</td>
-          <td>
+          <td class="col-actions">
             <div style="display:flex;gap:6px;">
               <a href="{% url 'projetos:detalhe' p.pk %}" class="btn btn-secondary btn-sm">Ver</a>
               {% if user.is_admin_erp %}
@@ -117,6 +121,7 @@
         {% endfor %}
       </tbody>
     </table>
+    </div>
   </div>
 </div>
 {% endif %}

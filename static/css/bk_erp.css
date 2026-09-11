@@ -290,17 +290,33 @@ tbody td { padding: 12px 14px; font-size: 13px; color: #111827; }
    BADGES / STATUS
 ══════════════════════════════ */
 .badge {
-  display: inline-flex; align-items: center;
+  display: inline-flex; align-items: center; gap: 5px;
   padding: 3px 10px;
   border-radius: 20px;
   font-size: 11px; font-weight: 600;
 }
+/* Pontinho colorido antes do texto — automático em todo badge com uma
+   das classes de cor abaixo, sem precisar de markup extra no template. */
+.badge-blue::before, .badge-green::before, .badge-success::before,
+.badge-orange::before, .badge-warning::before, .badge-red::before,
+.badge-danger::before, .badge-gray::before, .badge-secondary::before,
+.badge-teal::before, .badge-purple::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%; flex: none;
+}
 .badge-blue      { background: #dbeafe; color: #1e40af; }
+.badge-blue::before { background: #3b82f6; }
 .badge-green, .badge-success   { background: #dcfce7; color: #16a34a; }
+.badge-green::before, .badge-success::before { background: #16a34a; }
 .badge-orange, .badge-warning  { background: #fef3c7; color: #d97706; }
+.badge-orange::before, .badge-warning::before { background: #d97706; }
 .badge-red, .badge-danger      { background: #fee2e2; color: #dc2626; }
+.badge-red::before, .badge-danger::before { background: #dc2626; }
 .badge-gray, .badge-secondary  { background: #f1f5f9; color: #475569; }
+.badge-gray::before, .badge-secondary::before { background: #94a3b8; }
 .badge-teal      { background: #ccfbf1; color: #0f766e; }
+.badge-teal::before { background: #14b8a6; }
+.badge-purple    { background: #f1ebfd; color: #6d28d9; }
+.badge-purple::before { background: #8b5cf6; }
 
 /* ══════════════════════════════
    BOTÕES — sistema único (funciona em qualquer combinação de classes)
