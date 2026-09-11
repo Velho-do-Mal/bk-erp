@@ -247,13 +247,13 @@ function bkPaginator({ pageSize = 15, container } = {}) {
     let to = Math.min(totalPages, Math.max(1, state.page - 2) + maxBtns - 1);
     let from = Math.max(1, to - maxBtns + 1);
     let btns = '';
-    for (let p = from; p <= to; p++) btns += `<button class="${p === state.page ? 'active' : ''}" data-p="${p}">${p}</button>`;
+    for (let p = from; p <= to; p++) btns += `<button class="${p === state.page ? 'active' : ''}" data-p="${p}" aria-label="Página ${p}" ${p === state.page ? 'aria-current="page"' : ''}>${p}</button>`;
     container.innerHTML = `
       <div class="info">Mostrando <b>${start + 1}–${end}</b> de <b>${total}</b></div>
       <div class="pager">
-        <button data-p="${state.page - 1}" ${state.page === 1 ? 'disabled' : ''}><i class="fas fa-angle-left"></i></button>
+        <button data-p="${state.page - 1}" ${state.page === 1 ? 'disabled' : ''} aria-label="Página anterior"><i class="fas fa-angle-left"></i></button>
         ${btns}
-        <button data-p="${state.page + 1}" ${state.page === totalPages ? 'disabled' : ''}><i class="fas fa-angle-right"></i></button>
+        <button data-p="${state.page + 1}" ${state.page === totalPages ? 'disabled' : ''} aria-label="Próxima página"><i class="fas fa-angle-right"></i></button>
       </div>`;
     container.querySelectorAll('button[data-p]').forEach(b => {
       b.addEventListener('click', () => { state.page = parseInt(b.dataset.p, 10); doRender(items, renderRows); });

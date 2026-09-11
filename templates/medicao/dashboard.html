@@ -70,7 +70,7 @@
           <td>
             <div style="display:flex;gap:6px">
               <a href="{% url 'medicao:detalhe' bm.id %}" class="btn btn-secondary btn-sm"><i class="fas fa-pen"></i> Abrir</a>
-              <button class="btn btn-danger btn-sm" onclick="excluirBM({{ bm.id }}, '{{ bm.nome|escapejs }}')"><i class="fas fa-trash"></i></button>
+              <button class="btn btn-danger btn-sm" onclick="excluirBM({{ bm.id }}, '{{ bm.nome|escapejs }}')" title="Excluir" aria-label="Excluir boletim"><i class="fas fa-trash"></i></button>
             </div>
           </td>
         </tr>

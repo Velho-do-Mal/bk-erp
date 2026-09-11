@@ -101,7 +101,7 @@
       </select>
       <input type="month" name="mes" class="form-control form-control-sm w-auto" value="{{ request.GET.mes }}" onchange="this.form.submit()">
       <input type="text" name="q" class="form-control form-control-sm" style="max-width:200px" placeholder="Colaborador…" value="{{ request.GET.q }}">
-      <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-search"></i></button>
+      <button type="submit" class="btn btn-sm btn-primary" title="Buscar" aria-label="Buscar"><i class="fas fa-search"></i></button>
       <a href="{% url 'rh:ferias' %}" class="btn btn-sm btn-outline-secondary">Limpar</a>
     </form>
   </div>
@@ -151,11 +151,11 @@
             </td>
             <td class="text-muted small">{{ f.observacoes|default:"—"|truncatechars:40 }}</td>
             <td class="text-end">
-              <button class="btn btn-sm btn-outline-primary me-1"
+              <button class="btn btn-sm btn-outline-primary me-1" title="Editar" aria-label="Editar"
                 onclick="editarFerias({{ f.id }}, {{ f.colaborador_id }}, '{{ f.data_inicio|date:'Y-m-d' }}', '{{ f.data_fim|date:'Y-m-d' }}', {{ f.dias }}, '{{ f.status }}', '{{ f.observacoes|default:''|escapejs }}')">
                 <i class="fas fa-edit"></i>
               </button>
-              <button class="btn btn-sm btn-outline-danger"
+              <button class="btn btn-sm btn-outline-danger" title="Excluir" aria-label="Excluir"
                 onclick="excluirFerias({{ f.id }}, '{{ f.colaborador.nome|escapejs }}')">
                 <i class="fas fa-trash"></i>
               </button>

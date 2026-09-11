@@ -55,7 +55,7 @@
 <!-- Modal cadastro -->
 <div class="modal-overlay" id="modal">
   <div class="modal-box modal-box-lg">
-    <button class="modal-close-x" onclick="fecharModal()">✕</button>
+    <button class="modal-close-x" onclick="fecharModal()" title="Fechar" aria-label="Fechar">✕</button>
     <div class="modal-title" id="modal-titulo"><i class="fas fa-plus"></i> Novo Material</div>
     <input type="hidden" id="m-id">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -122,7 +122,7 @@ function renderTabela(){
       '<td><input class="grid-input" value="'+(r.data_compra||'—')+'" readonly style="font-size:12px"></td>'+
       '<td><input class="grid-input" value="'+(r.data_validade||'—')+'" readonly style="font-size:12px;color:'+valColor+'"></td>'+
       '<td style="text-align:center">'+origemLabel+'</td>'+
-      '<td><button class="grid-delete" onclick="editar('+r.id+')" title="Editar" style="color:#3B82F6"><i class="fas fa-pen"></i></button></td>'+
+      '<td><button class="grid-delete" onclick="editar('+r.id+')" title="Editar" aria-label="Editar" style="color:#3B82F6"><i class="fas fa-pen"></i></button></td>'+
     '</tr>';
   }).join('');
 }

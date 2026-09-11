@@ -66,7 +66,7 @@
 <!-- Modal Transação -->
 <div class="modal-overlay" id="modal" style="overflow-y:auto">
   <div class="modal-box modal-box-lg" style="margin:20px auto">
-    <button class="modal-close-x" onclick="fecharModal()">✕</button>
+    <button class="modal-close-x" onclick="fecharModal()" title="Fechar" aria-label="Fechar">✕</button>
     <div class="modal-title" id="modal-titulo"><i class="fas fa-plus"></i> Nova Transação</div>
     <form id="tx-form" onsubmit="salvar(event)" enctype="multipart/form-data">
       {% csrf_token %}

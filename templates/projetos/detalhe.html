@@ -2024,7 +2024,7 @@ function renderRiscos() {
           <td><span style="background:${RISCO_CORES[cl]};color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">${cl}</span></td>
           <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis">${escHtml(r.resposta||'—')}</td>
           <td>${escHtml(r.responsavel||'—')}</td>
-          ${IS_ADMIN?`<td><button onclick="editRisco(${i})" style="background:none;border:none;color:#3B82F6;cursor:pointer"><i class="fas fa-pen"></i></button> <button onclick="removeRisco(${i})" style="background:none;border:none;color:#EF4444;cursor:pointer"><i class="fas fa-xmark"></i></button></td>`:''}
+          ${IS_ADMIN?`<td><button onclick="editRisco(${i})" style="background:none;border:none;color:#3B82F6;cursor:pointer" title="Editar" aria-label="Editar risco"><i class="fas fa-pen"></i></button> <button onclick="removeRisco(${i})" style="background:none;border:none;color:#EF4444;cursor:pointer" title="Remover" aria-label="Remover risco"><i class="fas fa-xmark"></i></button></td>`:''}
         </tr>`}).join('')}
       </tbody></table></div></div>`;
   }

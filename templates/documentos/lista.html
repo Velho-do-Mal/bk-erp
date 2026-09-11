@@ -14,7 +14,7 @@
 <!-- Upload panel (modal) -->
 <div class="modal-overlay" id="upload-panel">
   <div class="modal-box modal-box-lg">
-    <button class="modal-close-x" onclick="document.getElementById('upload-panel').classList.remove('open')">✕</button>
+    <button class="modal-close-x" onclick="document.getElementById('upload-panel').classList.remove('open')" title="Fechar" aria-label="Fechar">✕</button>
     <div class="modal-title"><i class="fas fa-upload"></i> Enviar Documento</div>
     <form id="upload-form" enctype="multipart/form-data" onsubmit="enviarDoc(event)">
       {% csrf_token %}
@@ -52,7 +52,7 @@
 <!-- Edição (modal) -->
 <div class="modal-overlay" id="edit-panel">
   <div class="modal-box modal-box-lg">
-    <button class="modal-close-x" onclick="document.getElementById('edit-panel').classList.remove('open')">✕</button>
+    <button class="modal-close-x" onclick="document.getElementById('edit-panel').classList.remove('open')" title="Fechar" aria-label="Fechar">✕</button>
     <div class="modal-title"><i class="fas fa-pen"></i> Editar Documento</div>
     <form id="edit-form" onsubmit="salvarEdicao(event)">
       <input type="hidden" id="edit-id">
@@ -90,7 +90,7 @@
 <!-- Nova versão (modal) -->
 <div class="modal-overlay" id="versao-panel">
   <div class="modal-box modal-box-lg">
-    <button class="modal-close-x" onclick="document.getElementById('versao-panel').classList.remove('open')">✕</button>
+    <button class="modal-close-x" onclick="document.getElementById('versao-panel').classList.remove('open')" title="Fechar" aria-label="Fechar">✕</button>
     <div class="modal-title"><i class="fas fa-arrows-rotate"></i> Nova Versão do Documento</div>
     <p style="font-size:13px;color:#475569" id="versao-info"></p>
     <p style="font-size:12px;color:#94a3b8;margin-top:-6px">A versão atual não é apagada — fica salva no histórico deste documento.</p>
@@ -112,7 +112,7 @@
 <!-- Histórico de versões (modal) -->
 <div class="modal-overlay" id="historico-panel">
   <div class="modal-box modal-box-lg">
-    <button class="modal-close-x" onclick="document.getElementById('historico-panel').classList.remove('open')">✕</button>
+    <button class="modal-close-x" onclick="document.getElementById('historico-panel').classList.remove('open')" title="Fechar" aria-label="Fechar">✕</button>
     <div class="modal-title"><i class="fas fa-clock-rotate-left"></i> Histórico de Versões</div>
     <div id="historico-lista" style="max-height:400px;overflow-y:auto"></div>
   </div>
