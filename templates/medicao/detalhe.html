@@ -411,8 +411,9 @@
   <div class="card" style="margin-bottom:20px">
     <div style="font-size:14px;font-weight:700;color:#1e3a8a;margin-bottom:14px">Evolução por período</div>
     {% if periodos %}
+    <div class="table-container" style="border:none;border-radius:0;box-shadow:none">
     <div class="table-wrap">
-      <table>
+      <table class="data-table">
         <thead><tr>
           <th>Período</th><th>Data Início</th><th>Data Fim</th><th>Valor Medido</th><th>% do Contrato</th>
         </tr></thead>
@@ -433,6 +434,7 @@
         </tbody>
       </table>
     </div>
+    </div>
     {% else %}
     <div style="color:#94a3b8;font-size:13px;padding:16px 0">Nenhum período registrado.</div>
     {% endif %}
@@ -441,8 +443,9 @@
   <!-- Status por item -->
   <div class="card">
     <div style="font-size:14px;font-weight:700;color:#1e3a8a;margin-bottom:14px">Status por item</div>
+    <div class="table-container" style="border:none;border-radius:0;box-shadow:none">
     <div class="table-wrap">
-      <table>
+      <table class="data-table">
         <thead><tr>
           <th>Cód.</th><th>Descrição</th><th>Valor Total</th><th>Medido</th><th>Saldo</th><th>%</th>
         </tr></thead>
@@ -468,6 +471,7 @@
           {% endfor %}
         </tbody>
       </table>
+    </div>
     </div>
   </div>
 </div>

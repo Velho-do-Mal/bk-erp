@@ -38,18 +38,22 @@
 <!-- KPIs -->
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px">
   <div class="kpi-card kpi-green">
+    <div class="kpi-icon green"><i class="fas fa-arrow-down"></i></div>
     <div class="kpi-label">Receita Total</div>
     <div class="kpi-value moeda" style="color:#16a34a">{{ total_receita|moeda }}</div>
   </div>
   <div class="kpi-card kpi-red">
+    <div class="kpi-icon red"><i class="fas fa-arrow-up"></i></div>
     <div class="kpi-label">Despesa Total</div>
     <div class="kpi-value moeda" style="color:#ef4444">{{ total_despesa|moeda }}</div>
   </div>
   <div class="kpi-card {% if resultado >= 0 %}kpi-blue{% else %}kpi-red{% endif %}">
+    <div class="kpi-icon {% if resultado >= 0 %}blue{% else %}red{% endif %}"><i class="fas fa-scale-balanced"></i></div>
     <div class="kpi-label">Resultado Líquido</div>
     <div class="kpi-value moeda" style="color:{% if resultado >= 0 %}#1e40af{% else %}#ef4444{% endif %}">{{ resultado|moeda }}</div>
   </div>
   <div class="kpi-card kpi-yellow">
+    <div class="kpi-icon orange"><i class="fas fa-percent"></i></div>
     <div class="kpi-label">Margem Líquida</div>
     <div class="kpi-value" style="color:{% if margem >= 0 %}#d97706{% else %}#ef4444{% endif %}">{{ margem }}%</div>
   </div>
@@ -61,8 +65,9 @@
     <div class="card-header" style="background:#f0fdf4;color:#16a34a;font-weight:600;padding:12px 16px;border-bottom:1px solid #bbf7d0">
       <i class="fas fa-plus"></i> Receitas por Categoria — {{ ini|date:"d/m/Y" }} a {{ fim|date:"d/m/Y" }}
     </div>
+    <div class="table-container" style="border:none;border-radius:0;box-shadow:none">
     <div class="table-wrap">
-      <table>
+      <table class="data-table">
         <thead><tr><th>Categoria</th><th style="text-align:right">Valor</th><th style="text-align:right">%</th></tr></thead>
         <tbody>
           {% for r in receitas %}
@@ -86,14 +91,16 @@
         </tfoot>
       </table>
     </div>
+    </div>
   </div>
 
   <div class="card" style="overflow:hidden">
     <div class="card-header" style="background:#fef2f2;color:#dc2626;font-weight:600;padding:12px 16px;border-bottom:1px solid #fecaca">
-      ➖ Despesas por Categoria
+<i class="fas fa-minus"></i> Despesas por Categoria
     </div>
+    <div class="table-container" style="border:none;border-radius:0;box-shadow:none">
     <div class="table-wrap">
-      <table>
+      <table class="data-table">
         <thead><tr><th>Categoria</th><th style="text-align:right">Valor</th><th style="text-align:right">%</th></tr></thead>
         <tbody>
           {% for d in despesas %}
@@ -116,6 +123,7 @@
           </tr>
         </tfoot>
       </table>
+    </div>
     </div>
   </div>
 </div>

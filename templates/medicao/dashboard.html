@@ -7,7 +7,7 @@
 {% block page_sub %}Lista de boletins cadastrados{% endblock %}
 
 {% block topbar_actions %}
-<button class="btn btn-primary btn-sm" onclick="abrirModalNovo()">+ Novo BM</button>
+<button class="btn btn-primary btn-sm" onclick="abrirModalNovo()"><i class="fas fa-plus"></i> Novo BM</button>
 {% endblock %}
 
 {% block content %}
@@ -16,10 +16,12 @@
 <!-- KPIs rápidos -->
 <div class="kpi-grid" style="margin-bottom:20px">
   <div class="kpi-card">
+    <div class="kpi-icon blue"><i class="fas fa-clipboard-list"></i></div>
     <div class="kpi-label">Boletins Cadastrados</div>
     <div class="kpi-value">{{ boletins|length }}</div>
   </div>
   <div class="kpi-card">
+    <div class="kpi-icon teal"><i class="fas fa-building"></i></div>
     <div class="kpi-label">Clientes</div>
     <div class="kpi-value">{{ clientes|length }}</div>
   </div>
@@ -27,9 +29,10 @@
 
 <!-- Lista de boletins -->
 {% if boletins %}
-<div class="card">
+<div class="bk-card" style="padding:0;overflow:hidden">
+  <div class="table-container" style="border:none;border-radius:0;box-shadow:none">
   <div class="table-wrap">
-    <table>
+    <table class="data-table">
       <thead>
         <tr>
           <th>BM</th>
@@ -67,13 +70,14 @@
           <td>
             <div style="display:flex;gap:6px">
               <a href="{% url 'medicao:detalhe' bm.id %}" class="btn btn-secondary btn-sm"><i class="fas fa-pen"></i> Abrir</a>
-              <button class="btn btn-danger btn-sm" onclick="excluirBM({{ bm.id }}, '{{ bm.nome|escapejs }}')">✕</button>
+              <button class="btn btn-danger btn-sm" onclick="excluirBM({{ bm.id }}, '{{ bm.nome|escapejs }}')"><i class="fas fa-trash"></i></button>
             </div>
           </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
+  </div>
   </div>
 </div>
 {% else %}
@@ -184,11 +188,12 @@ function criarBoletim() {
   });
 }
 
-function excluirBM(id, nome) {
-  if (!confirm(`Excluir o boletim "${nome}" e todas as medições? Essa ação não pode ser desfeita.`)) return;
+async function excluirBM(id, nome) {
+  const ok = await bkConfirm(`Excluir o boletim "${nome}" e todas as medições? Essa ação não pode ser desfeita.`, 'Excluir Boletim');
+  if (!ok) return;
   post('/medicao/api/excluir/', {id}).then(res => {
     if (res.ok) window.location.reload();
-    else alert(res.erro);
+    else bkToast(res.erro, 'erro');
   });
 }
 </script>
