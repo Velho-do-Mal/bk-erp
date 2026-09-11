@@ -23,7 +23,7 @@ topbar escuro — quase ilegível.
   .kpi-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:16px; margin-bottom:24px; }
   .kpi-card { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:16px 20px; }
   .kpi-label { font-size:12px; color:#6b7280; font-weight:600; text-transform:uppercase; }
-  .kpi-valor { font-size:26px; font-weight:800; color:#1e40af; margin-top:4px; }
+  .kpi-valor { font-size:26px; font-weight:800; color:var(--bk-blue-dark); margin-top:4px; }
   .kpi-valor.verde { color:#16a34a; }
   .kpi-valor.laranja { color:#d97706; }
 
@@ -34,13 +34,13 @@ topbar escuro — quase ilegível.
     border:none; background:none; color:#6b7280;
     border-bottom:3px solid transparent; margin-bottom:-2px; transition:all .2s;
   }
-  .tab-nav .tab-btn.active { color:#1e40af; border-bottom-color:#1e40af; }
+  .tab-nav .tab-btn.active { color:var(--bk-blue-dark); border-bottom-color:var(--bk-blue-dark); }
   .tab-panel { display:none; }
   .tab-panel.active { display:block; }
 
   /* ── Tabela ── */
   .data-table { width:100%; border-collapse:collapse; font-size:13px; }
-  .data-table th { background:#1e3a8a; color:#fff; font-weight:700; padding:11px 12px; text-align:left; border-bottom:2px solid #1e40af; font-size:12px; text-transform:uppercase; letter-spacing:0.4px; }
+  .data-table th { background:#1e3a8a; color:#fff; font-weight:700; padding:11px 12px; text-align:left; border-bottom:2px solid var(--bk-blue-dark); font-size:12px; text-transform:uppercase; letter-spacing:0.4px; }
   .data-table td { padding:10px 12px; border-bottom:1px solid #e5e7eb; vertical-align:middle; color:#111827; font-size:14px; }
   .data-table tr:hover td { background:#eff6ff; }
 .data-table tbody tr:nth-child(even) td { background:#f8fafc; }
@@ -110,11 +110,11 @@ topbar escuro — quase ilegível.
 
   /* ── Toast ── */
   #toast {
-    position:fixed; bottom:24px; right:24px; background:#1e40af; color:#fff;
+    position:fixed; bottom:24px; right:24px; background:var(--bk-blue-dark); color:#fff;
     padding:12px 20px; border-radius:8px; font-size:13px; font-weight:600;
     display:none; z-index:9999; box-shadow:0 4px 12px rgba(0,0,0,.15);
   }
-  #toast.erro { background:#ef4444; }
+  #toast.erro { background:var(--bk-red); }
   #toast.sucesso { background:#16a34a; }
 </style>
 {% endblock %}

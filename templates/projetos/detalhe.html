@@ -47,9 +47,9 @@
     font-weight: 700;
     padding-left: 8px !important;
   }
-  .eap-table .grid-select.st-concluido     { background: rgba(16,185,129,.14); color: #0f766e; }
+  .eap-table .grid-select.st-concluido     { background: rgba(16,185,129,.14); color: var(--bk-teal-dark); }
   .eap-table .grid-select.st-em-andamento  { background: rgba(59,130,246,.14); color: #1d4ed8; }
-  .eap-table .grid-select.st-atrasado      { background: rgba(239,68,68,.14);  color: #b91c1c; }
+  .eap-table .grid-select.st-atrasado      { background: rgba(239,68,68,.14);  color: var(--bk-red-dark); }
   .eap-table .grid-select.st-nao-iniciado  { background: rgba(100,116,139,.14); color: #475569; }
 
   .eap-status-badge {
@@ -57,9 +57,9 @@
     padding: 3px 10px; border-radius: 20px;
     font-size: 11px; font-weight: 700; white-space: nowrap;
   }
-  .eap-status-badge.st-concluido    { background: rgba(16,185,129,.14); color: #0f766e; }
+  .eap-status-badge.st-concluido    { background: rgba(16,185,129,.14); color: var(--bk-teal-dark); }
   .eap-status-badge.st-em-andamento { background: rgba(59,130,246,.14); color: #1d4ed8; }
-  .eap-status-badge.st-atrasado     { background: rgba(239,68,68,.14);  color: #b91c1c; }
+  .eap-status-badge.st-atrasado     { background: rgba(239,68,68,.14);  color: var(--bk-red-dark); }
   .eap-status-badge.st-nao-iniciado { background: rgba(100,116,139,.14); color: #475569; }
 
   /* Mini barra de progresso inline na coluna "% Concl." da tabela EAP */
@@ -160,12 +160,12 @@
   #modal-anexos{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;}
   #modal-anexos.open{display:flex;}
   .modal-anexos-box{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:24px;width:560px;max-width:95vw;max-height:80vh;overflow-y:auto;color:#e2e8f0;}
-  .modal-anexos-box h3{margin:0 0 16px;font-size:16px;color:#93c5fd;}
+  .modal-anexos-box h3{margin:0 0 16px;font-size:16px;color:var(--bk-blue-light);}
   .anexo-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:#0f172a;margin-bottom:6px;}
   .anexo-nome{flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .anexo-info{font-size:11px;color:#94a3b8;white-space:nowrap;}
   .drop-zone{border:2px dashed #334155;border-radius:8px;padding:20px;text-align:center;cursor:pointer;color:#94a3b8;font-size:13px;margin-top:12px;transition:border-color .2s;}
-  .drop-zone.drag-over{border-color:#3b82f6;color:#93c5fd;}
+  .drop-zone.drag-over{border-color:var(--bk-blue);color:var(--bk-blue-light);}
   .eap-org-shell{
     border:1px solid var(--bk-border);
     border-radius:12px;

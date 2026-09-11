@@ -32,8 +32,8 @@
     border:none; background:none; color:#6b7280; border-bottom:3px solid transparent;
     margin-bottom:-2px; transition:all .2s;
   }
-  .prop-tab-btn.active { color:#1e40af; border-bottom-color:#1e40af; }
-  .prop-tab-btn:hover { color:#1e40af; }
+  .prop-tab-btn.active { color:var(--bk-blue-dark); border-bottom-color:var(--bk-blue-dark); }
+  .prop-tab-btn:hover { color:var(--bk-blue-dark); }
   .prop-tab-panel { display:none; }
   .prop-tab-panel.active { display:block; }
 
@@ -43,7 +43,7 @@
     padding:20px; margin-bottom:18px;
   }
   .section-title {
-    font-size:14px; font-weight:700; color:#1e40af;
+    font-size:14px; font-weight:700; color:var(--bk-blue-dark);
     margin-bottom:14px; display:flex; align-items:center; gap:8px;
   }
 
@@ -56,7 +56,7 @@
     font-size:13px; color:#111; background:#fafafa; transition:border .15s;
   }
   .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-    outline:none; border-color:#1e40af; background:#fff;
+    outline:none; border-color:var(--bk-blue-dark); background:#fff;
   }
   .form-group textarea { resize:vertical; min-height:70px; }
   .form-full { grid-column:1/-1; }
@@ -72,11 +72,11 @@
     width:100%; padding:5px 7px; border:1px solid #e5e7eb; border-radius:4px;
     font-size:13px; background:#fafafa;
   }
-  .edit-table td input:focus { outline:none; border-color:#1e40af; background:#fff; }
-  .edit-table .col-total { font-weight:700; color:#1e40af; padding:5px 10px; }
+  .edit-table td input:focus { outline:none; border-color:var(--bk-blue-dark); background:#fff; }
+  .edit-table .col-total { font-weight:700; color:var(--bk-blue-dark); padding:5px 10px; }
   .edit-table .col-acao { text-align:center; width:36px; }
   .btn-del-row {
-    background:none; border:none; cursor:pointer; color:#ef4444;
+    background:none; border:none; cursor:pointer; color:var(--bk-red);
     font-size:16px; padding:2px 6px;
   }
   .btn-add-row {
@@ -84,7 +84,7 @@
     background:#f1f5f9; border:1px dashed #94a3b8; border-radius:6px;
     cursor:pointer; color:#475569; transition:all .15s;
   }
-  .btn-add-row:hover { background:#e0e7ff; border-color:#1e40af; color:#1e40af; }
+  .btn-add-row:hover { background:#e0e7ff; border-color:var(--bk-blue-dark); color:var(--bk-blue-dark); }
 
   /* ── Custos percentuais ── */
   .perc-row { display:flex; gap:8px; align-items:center; margin-bottom:6px; }
@@ -102,7 +102,7 @@
     padding:14px; text-align:center;
   }
   .resultado-card .rc-label { font-size:11px; color:#6b7280; font-weight:600; text-transform:uppercase; }
-  .resultado-card .rc-valor { font-size:22px; font-weight:800; color:#1e40af; margin-top:4px; }
+  .resultado-card .rc-valor { font-size:22px; font-weight:800; color:var(--bk-blue-dark); margin-top:4px; }
   .resultado-card .rc-valor.verde { color:#16a34a; }
   .resultado-card .rc-valor.laranja { color:#d97706; }
 
@@ -120,19 +120,19 @@
   /* ── Badges de status ── */
   .badge { display:inline-block; border-radius:6px; font-size:12px; font-weight:700; }
   .badge-rascunho { background:#f1f5f9; color:#475569; }
-  .badge-enviada { background:#dbeafe; color:#1e40af; }
+  .badge-enviada { background:#dbeafe; color:var(--bk-blue-dark); }
   .badge-negociacao { background:#fef3c7; color:#d97706; }
   .badge-aprovada { background:#dcfce7; color:#16a34a; }
-  .badge-perdida { background:#fee2e2; color:#ef4444; }
+  .badge-perdida { background:#fee2e2; color:var(--bk-red); }
   .badge-cancelada { background:#f3f4f6; color:#9ca3af; }
 
   /* ── Toast ── */
   #toast {
-    position:fixed; bottom:24px; right:24px; background:#1e40af; color:#fff;
+    position:fixed; bottom:24px; right:24px; background:var(--bk-blue-dark); color:#fff;
     padding:12px 20px; border-radius:8px; font-size:13px; font-weight:600;
     display:none; z-index:9999; box-shadow:0 4px 12px rgba(0,0,0,.15);
   }
-  #toast.erro { background:#ef4444; }
+  #toast.erro { background:var(--bk-red); }
   #toast.sucesso { background:#16a34a; }
 
   /* ── Impressão ── */

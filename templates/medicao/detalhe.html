@@ -36,16 +36,16 @@
     color: #111827; padding: 8px 10px; min-height: 36px; font-size: 13px;
     font-family: inherit;
   }
-  .cell-input:focus { background: #fefce8; box-shadow: inset 0 0 0 2px #f59e0b; }
+  .cell-input:focus { background: #fefce8; box-shadow: inset 0 0 0 2px var(--bk-orange); }
   .cell-select { width: 100%; border: none; outline: none; background: transparent; color: #111827; padding: 8px 10px; min-height: 36px; font-size: 13px; font-family: inherit; }
   .cell-ro { padding: 8px 10px; color: #374151; font-size: 13px; }
   .cell-num { text-align: right; padding: 8px 10px; color: #1d4ed8; font-weight: 600; font-size: 13px; }
   .cell-pct { text-align: right; padding: 8px 10px; font-weight: 700; font-size: 13px; }
   .pct-ok { color: #059669; }
-  .pct-par { color: #b45309; }
+  .pct-par { color: var(--bk-orange-dark); }
   .pct-zero { color: #6b7280; }
   .total-row td { background: #1e3a5f !important; color: #fff !important; font-weight: 700; }
-  .total-row .cell-num { color: #1e40af !important; }
+  .total-row .cell-num { color: var(--bk-blue-dark) !important; }
 
   /* Medição input destacado */
   .cell-input-med {
@@ -67,7 +67,7 @@
     border-bottom: 1px solid #334155;
   }
   .autocomplete-item:hover { background: #2563eb; }
-  .autocomplete-item .ac-code { font-size: 11px; color: #93c5fd; margin-right: 6px; }
+  .autocomplete-item .ac-code { font-size: 11px; color: var(--bk-blue-light); margin-right: 6px; }
 
   /* Períodos lista */
   .periodo-pill {
@@ -78,16 +78,16 @@
   }
   .periodo-pill.ativo { background: #2563eb; color: #fff; border-color: #2563eb; }
   .periodo-pill.inativo { background: #253047; color: #94a3b8; border-color: #334155; }
-  .periodo-pill:hover { border-color: #3b82f6; color: #fff; }
+  .periodo-pill:hover { border-color: var(--bk-blue); color: #fff; }
 
   /* KPI cards medição */
   .kpi-med { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px; }
   .kpi-med-card { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 14px 16px; }
   .kpi-med-label { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: .5px; }
   .kpi-med-value { font-size: 22px; font-weight: 800; margin-top: 4px; color: #111827; }
-  .kpi-med-value.blue { color: #1e40af; }
+  .kpi-med-value.blue { color: var(--bk-blue-dark); }
   .kpi-med-value.green { color: #16a34a; }
-  .kpi-med-value.orange { color: #b45309; }
+  .kpi-med-value.orange { color: var(--bk-orange-dark); }
   /* Cartões de moeda um pouco menores que o padrão desta página (pedido do
      usuário: fonte grande demais nos cartões de valor) — continua com
      peso 800 para se destacar. */

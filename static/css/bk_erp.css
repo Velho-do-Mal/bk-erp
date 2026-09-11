@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════
    BK ERP — Design System
-   Paleta: BK_BG=#0F172A | SURFACE=#1E293B | BLUE=#3B82F6
+   Paleta: BK_BG=#0F172A | SURFACE=#1E293B | BLUE=var(--bk-blue)
    Canvas de conteúdo em cinza-azulado claro (--bk-canvas) com cards
    brancos sobre ele — sidebar/topbar continuam escuras.
 ═══════════════════════════════════════════ */
@@ -224,10 +224,10 @@ h1, h2, h3, h4, h5, h6, .content-title, .topbar-title, .display-font {
 .kpi-card:hover { transform: translateY(-2px); box-shadow: var(--bk-shadow-pop); }
 
 .kpi-label { font-size: 12px; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-.kpi-value { font-family: var(--font-display); font-size: 26px; font-weight: 800; color: #1e40af; margin: 4px 0; }
+.kpi-value { font-family: var(--font-display); font-size: 26px; font-weight: 800; color: var(--bk-blue-dark); margin: 4px 0; }
 .kpi-value.verde    { color: #16a34a; }
 .kpi-value.laranja  { color: #d97706; }
-.kpi-value.vermelho { color: #ef4444; }
+.kpi-value.vermelho { color: var(--bk-red); }
 .kpi-sub { font-size: 12px; color: #6b7280; }
 
 /* Indicador de tendência chamativo (▲/▼ + %), opcional em qualquer kpi-card:
@@ -238,9 +238,9 @@ h1, h2, h3, h4, h5, h6, .content-title, .topbar-title, .display-font {
   padding: 2px 8px; border-radius: 999px;
   position: absolute; top: 14px; right: 14px;
 }
-.kpi-trend.up   { background: #DCFCE7; color: #047857; }
-.kpi-trend.down { background: #FEE2E2; color: #B91C1C; }
-.kpi-trend.flat { background: #FEF3C7; color: #B45309; }
+.kpi-trend.up   { background: #DCFCE7; color: var(--bk-green-dark); }
+.kpi-trend.down { background: #FEE2E2; color: var(--bk-red-dark); }
+.kpi-trend.flat { background: #FEF3C7; color: var(--bk-orange-dark); }
 
 /* Ícone circular de destaque no canto do card, opcional:
    <span class="kpi-icon blue"><i class="fas fa-..."></i></span> */
@@ -303,8 +303,8 @@ tbody td { padding: 12px 14px; font-size: 13px; color: #111827; }
 .badge-teal::before, .badge-purple::before {
   content: ""; width: 6px; height: 6px; border-radius: 50%; flex: none;
 }
-.badge-blue      { background: #dbeafe; color: #1e40af; }
-.badge-blue::before { background: #3b82f6; }
+.badge-blue      { background: #dbeafe; color: var(--bk-blue-dark); }
+.badge-blue::before { background: var(--bk-blue); }
 .badge-green, .badge-success   { background: #dcfce7; color: #16a34a; }
 .badge-green::before, .badge-success::before { background: #16a34a; }
 .badge-orange, .badge-warning  { background: #fef3c7; color: #d97706; }
@@ -313,10 +313,10 @@ tbody td { padding: 12px 14px; font-size: 13px; color: #111827; }
 .badge-red::before, .badge-danger::before { background: #dc2626; }
 .badge-gray, .badge-secondary  { background: #f1f5f9; color: #475569; }
 .badge-gray::before, .badge-secondary::before { background: #94a3b8; }
-.badge-teal      { background: #ccfbf1; color: #0f766e; }
-.badge-teal::before { background: #14b8a6; }
-.badge-purple    { background: #f1ebfd; color: #6d28d9; }
-.badge-purple::before { background: #8b5cf6; }
+.badge-teal      { background: #ccfbf1; color: var(--bk-teal-dark); }
+.badge-teal::before { background: var(--bk-teal); }
+.badge-purple    { background: #f1ebfd; color: var(--bk-purple-dark); }
+.badge-purple::before { background: var(--bk-purple); }
 
 /* Status de proposta (Vendas/Relatórios) — centralizado aqui porque
    antes cada template redefinia essas cores no próprio <style>, correndo
@@ -327,14 +327,14 @@ tbody td { padding: 12px 14px; font-size: 13px; color: #111827; }
 }
 .badge-rascunho   { background: #f1f5f9; color: #475569; }
 .badge-rascunho::before { background: #94a3b8; }
-.badge-enviada    { background: #dbeafe; color: #1e40af; }
-.badge-enviada::before { background: #3b82f6; }
+.badge-enviada    { background: #dbeafe; color: var(--bk-blue-dark); }
+.badge-enviada::before { background: var(--bk-blue); }
 .badge-negociacao { background: #fef3c7; color: #d97706; }
 .badge-negociacao::before { background: #d97706; }
 .badge-aprovada   { background: #dcfce7; color: #16a34a; }
 .badge-aprovada::before { background: #16a34a; }
-.badge-perdida    { background: #fee2e2; color: #ef4444; }
-.badge-perdida::before { background: #ef4444; }
+.badge-perdida    { background: #fee2e2; color: var(--bk-red); }
+.badge-perdida::before { background: var(--bk-red); }
 .badge-cancelada  { background: #f3f4f6; color: #9ca3af; }
 .badge-cancelada::before { background: #9ca3af; }
 
@@ -361,7 +361,7 @@ tbody td { padding: 12px 14px; font-size: 13px; color: #111827; }
 .btn-secondary, .btn-sm.secondary   { background: #f9fafb; color: #374151; border-color: #d1d5db; }
 .btn-secondary:hover, .btn-sm.secondary:hover { background: #f1f5f9; color: #111827; }
 
-.btn-danger, .btn-sm.danger         { background: #fee2e2; color: #b91c1c; border-color: #fca5a5; }
+.btn-danger, .btn-sm.danger         { background: #fee2e2; color: var(--bk-red-dark); border-color: #fca5a5; }
 .btn-danger:hover, .btn-sm.danger:hover       { background: #fecaca; }
 
 .btn-success, .btn-sm.success       { background: #dcfce7; color: #15803d; border-color: #86efac; }
@@ -462,7 +462,7 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   white-space: nowrap;
 }
 .tab-btn:hover { color: #111827; }
-.tab-btn.active { color: #1e40af; border-bottom-color: #1e40af; }
+.tab-btn.active { color: var(--bk-blue-dark); border-bottom-color: var(--bk-blue-dark); }
 .tab-panel { display: none; }
 .tab-panel.active { display: block; }
 
@@ -511,12 +511,12 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 }
 
 /* ── KPI color variants ── */
-.kpi-blue   { border-left: 3px solid #3B82F6; }
-.kpi-green  { border-left: 3px solid #10B981; }
-.kpi-red    { border-left: 3px solid #EF4444; }
-.kpi-yellow { border-left: 3px solid #F59E0B; }
+.kpi-blue   { border-left: 3px solid var(--bk-blue); }
+.kpi-green  { border-left: 3px solid var(--bk-green); }
+.kpi-red    { border-left: 3px solid var(--bk-red); }
+.kpi-yellow { border-left: 3px solid var(--bk-orange); }
 .kpi-orange { border-left: 3px solid #F97316; }
-.kpi-teal   { border-left: 3px solid #14B8A6; }
+.kpi-teal   { border-left: 3px solid var(--bk-teal); }
 
 /* ── Table editable input (fundo claro — a tabela em si já é clara) ── */
 .table input.form-control {
@@ -529,7 +529,7 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 }
 .table input.form-control:focus {
   outline: none;
-  border-color: #3B82F6;
+  border-color: var(--bk-blue);
   box-shadow: 0 0 0 2px rgba(59,130,246,0.15);
 }
 
@@ -594,13 +594,13 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   pointer-events: none;
   z-index: 9999;
   background: #1e293b;
-  border-left: 4px solid #3B82F6;
+  border-left: 4px solid var(--bk-blue);
 }
 #bk-toast.bk-toast-visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
-#bk-toast.sucesso { border-left-color: #10B981; background: #0f2922; }
-#bk-toast.erro    { border-left-color: #EF4444; background: #2a1010; }
-#bk-toast.aviso   { border-left-color: #F59E0B; background: #2a200a; }
-#bk-toast.info    { border-left-color: #3B82F6; background: #0d1f3a; }
+#bk-toast.sucesso { border-left-color: var(--bk-green); background: #0f2922; }
+#bk-toast.erro    { border-left-color: var(--bk-red); background: #2a1010; }
+#bk-toast.aviso   { border-left-color: var(--bk-orange); background: #2a200a; }
+#bk-toast.info    { border-left-color: var(--bk-blue); background: #0d1f3a; }
 
 /* ══════════════════════════════
    MODAL GLOBAL (padrão Vendas)
@@ -678,7 +678,7 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   font-size: 13px;
   width: 260px;
 }
-.search-input:focus { outline: none; border-color: #3B82F6; box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
+.search-input:focus { outline: none; border-color: var(--bk-blue); box-shadow: 0 0 0 2px rgba(59,130,246,0.15); }
 .filter-select {
   padding: 7px 10px;
   border-radius: 7px;
@@ -687,7 +687,7 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   color: #111827;
   font-size: 13px;
 }
-.filter-select:focus { outline: none; border-color: #3B82F6; }
+.filter-select:focus { outline: none; border-color: var(--bk-blue); }
 
 .data-table {
   width: 100%;
@@ -695,12 +695,12 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   font-size: 13px;
 }
 .data-table thead th {
-  background: linear-gradient(150deg, #1e3a8a, #1e40af);
+  background: linear-gradient(150deg, #1e3a8a, var(--bk-blue-dark));
   color: #fff;
   padding: 11px 12px;
   text-align: left;
   font-weight: 700;
-  border-bottom: 2px solid #1e40af;
+  border-bottom: 2px solid var(--bk-blue-dark);
   white-space: nowrap;
   font-size: 12px;
   text-transform: uppercase;
@@ -759,7 +759,7 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 }
 .excel-grid thead th {
   background: #1e3a5f;
-  color: #93C5FD;
+  color: var(--bk-blue-light);
   padding: 10px 12px;
   text-align: left;
   font-weight: 600;
@@ -797,14 +797,14 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 .grid-textarea:focus {
   background: #eff6ff;
   border-radius: 4px;
-  box-shadow: inset 0 0 0 1px #3B82F6;
+  box-shadow: inset 0 0 0 1px var(--bk-blue);
 }
 .grid-select { cursor: pointer; }
 .grid-textarea { resize: vertical; min-height: 34px; }
 .grid-delete {
   background: none;
   border: none;
-  color: #EF4444;
+  color: var(--bk-red);
   cursor: pointer;
   font-size: 16px;
   padding: 4px 10px;
