@@ -108,7 +108,7 @@ function renderTabela(){
   tb.innerHTML=dados.map(function(r){
     var saldoColor=r.saldo>0?'#10B981':(r.saldo===0?'#F59E0B':'#EF4444');
     var valColor=r.data_validade&&new Date(r.data_validade)<new Date()?'#EF4444':'inherit';
-    var origemLabel=r.pedido_origem_id?('<span class="badge badge-teal" title="Entrada automática via pedido">📦 PC</span>'):'—';
+    var origemLabel=r.pedido_origem_id?('<span class="badge badge-teal" title="Entrada automática via pedido"><i class="fas fa-box"></i> PC</span>'):'—';
     return '<tr>'+
       '<td><input class="grid-input" value="'+(r.codigo||'')+'" readonly style="font-family:monospace;color:#374151"></td>'+
       '<td><input class="grid-input" value="'+(r.tipo_label||r.tipo||'')+'" readonly style="font-size:12px"></td>'+
@@ -122,7 +122,7 @@ function renderTabela(){
       '<td><input class="grid-input" value="'+(r.data_compra||'—')+'" readonly style="font-size:12px"></td>'+
       '<td><input class="grid-input" value="'+(r.data_validade||'—')+'" readonly style="font-size:12px;color:'+valColor+'"></td>'+
       '<td style="text-align:center">'+origemLabel+'</td>'+
-      '<td><button class="grid-delete" onclick="editar('+r.id+')" title="Editar" style="color:#3B82F6">✏️</button></td>'+
+      '<td><button class="grid-delete" onclick="editar('+r.id+')" title="Editar" style="color:#3B82F6"><i class="fas fa-pen"></i></button></td>'+
     '</tr>';
   }).join('');
 }

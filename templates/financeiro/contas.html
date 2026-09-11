@@ -51,8 +51,8 @@ function renderTabela(){
       <td>${r.banco||'—'}</td>
       <td>${fmt(r.saldo_inicial)}</td>
       <td style="font-weight:600;color:${r.saldo_atual>=0?'#10B981':'#EF4444'}">${fmt(r.saldo_atual)}</td>
-      <td><span class="badge ${r.ativa?'badge-success':'badge-secondary'}">${r.ativa?'✅ Ativa':'⛔ Inativa'}</span></td>
-      <td class="col-actions"><button class="btn-sm primary" onclick="editar(${r.id})">✏️ Editar</button></td>
+      <td><span class="badge ${r.ativa?'badge-success':'badge-secondary'}">${r.ativa?'<i class="fas fa-check"></i> Ativa':'<i class="fas fa-ban"></i> Inativa'}</span></td>
+      <td class="col-actions"><button class="btn-sm primary" onclick="editar(${r.id})"><i class="fas fa-pen"></i> Editar</button></td>
     </tr>`).join('');
 }
 function abrirModal(r=null){

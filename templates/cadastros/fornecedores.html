@@ -19,6 +19,7 @@
       <tbody id="tbody"></tbody>
     </table>
   </div>
+  <div class="tbl-foot" id="pager"></div>
 </div>
 
 <div class="modal-overlay" id="modal">
@@ -46,23 +47,27 @@
 <script>
 const CSRF='{{ csrf_token }}';
 let dados={{ fornecedores_json|safe }};
+const pager = bkPaginator({ pageSize: 15, container: document.getElementById('pager') });
 
 function filtrar(){
   const q=document.getElementById('busca').value.toLowerCase();
+  pager.reset();
   renderTabela(dados.filter(r=>(r.nome+r.documento+r.email).toLowerCase().includes(q)));
 }
 function renderTabela(list){
-  const tb=document.getElementById('tbody');
-  if(!list.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:#64748b;padding:24px">Nenhum fornecedor cadastrado</td></tr>';return;}
-  tb.innerHTML=list.map(r=>`
-    <tr>
-      <td><strong>${r.nome}</strong></td>
-      <td>${r.documento||'—'}</td>
-      <td>${r.email||'—'}</td>
-      <td>${r.telefone||'—'}</td>
-      <td><span class="badge ${r.ativo?'badge-success':'badge-secondary'}">${r.ativo?'✅ Ativo':'⛔ Inativo'}</span></td>
-      <td class="col-actions"><button class="btn-sm primary" onclick="editar(${r.id})">✏️ Editar</button></td>
-    </tr>`).join('');
+  pager.render(list, (pageItems) => {
+    const tb=document.getElementById('tbody');
+    if(!pageItems.length){tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:#64748b;padding:24px">Nenhum fornecedor cadastrado</td></tr>';return;}
+    tb.innerHTML=pageItems.map(r=>`
+      <tr>
+        <td><strong>${r.nome}</strong></td>
+        <td>${r.documento||'—'}</td>
+        <td>${r.email||'—'}</td>
+        <td>${r.telefone||'—'}</td>
+        <td><span class="badge ${r.ativo?'badge-success':'badge-secondary'}">${r.ativo?'<i class="fas fa-check"></i> Ativo':'<i class="fas fa-ban"></i> Inativo'}</span></td>
+        <td class="col-actions"><button class="btn-sm primary" onclick="editar(${r.id})"><i class="fas fa-pen"></i> Editar</button></td>
+      </tr>`).join('');
+  });
 }
 function abrirModal(r=null){
   document.getElementById('m-id').value=r?.id||'';

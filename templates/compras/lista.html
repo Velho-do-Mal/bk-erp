@@ -35,6 +35,7 @@
       <tbody id="tbody"></tbody>
     </table>
   </div>
+  <div class="tbl-foot" id="pager"></div>
 </div>
 
 <!-- Modal Pedido -->
@@ -107,25 +108,28 @@ let dados={{ pedidos_json|safe }};
 let itens=[];
 const TIPOS_ITEM=[{% for v,l in tipos_item %}{v:'{{ v }}',l:'{{ l }}'},{% endfor %}];
 const STATUS_BADGE={aberta:'badge-blue',aprovacao:'badge-warning',aprovada:'badge-success',entregue:'badge-teal',recebida:'badge-teal',encerrada:'badge-secondary',cancelada:'badge-danger'};
-const STATUS_LABEL={aberta:'📋 Aberta',aprovacao:'⏳ Aprovação',aprovada:'✅ Aprovada',entregue:'📦 Entregue',recebida:'✔️ Recebida',encerrada:'🔒 Encerrada',cancelada:'❌ Cancelada'};
+const STATUS_LABEL={aberta:'<i class="fas fa-clipboard-list"></i> Aberta',aprovacao:'<i class="fas fa-hourglass-half"></i> Aprovação',aprovada:'<i class="fas fa-check"></i> Aprovada',entregue:'<i class="fas fa-box"></i> Entregue',recebida:'<i class="fas fa-check-double"></i> Recebida',encerrada:'<i class="fas fa-lock"></i> Encerrada',cancelada:'<i class="fas fa-xmark"></i> Cancelada'};
 function fmtDate(d){return d?d.substring(0,10):'—';}
 function fmtR(v){return'R$ '+parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});}
+const pager = bkPaginator({ pageSize: 15, container: document.getElementById('pager') });
 
 function renderTabela(){
-  const tb=document.getElementById('tbody');
-  if(!dados.length){tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:#64748b;padding:24px">Nenhum pedido cadastrado</td></tr>';return;}
-  tb.innerHTML=dados.map(function(r){return `
-    <tr>
-      <td><strong>${r.codigo}</strong></td>
-      <td>${r.fornecedor_nome||'—'}</td>
-      <td>${r.centro_custo_nome||'—'}</td>
-      <td>${fmtDate(r.data_pedido)}</td>
-      <td>${fmtDate(r.data_entrega_prevista)}</td>
-      <td style="font-weight:600">${fmtR(r.valor_total)}</td>
-      <td><span class="badge ${STATUS_BADGE[r.status]||'badge-secondary'}">${STATUS_LABEL[r.status]||r.status}</span></td>
-      <td>${r.tem_financeiro?'<span class="badge badge-success">✅ Gerado</span>':'—'}</td>
-      <td class="col-actions"><button class="btn-sm primary" onclick="editar(${r.id})">✏️ Editar</button></td>
-    </tr>`;}).join('');
+  pager.render(dados, (pageItems) => {
+    const tb=document.getElementById('tbody');
+    if(!pageItems.length){tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:#64748b;padding:24px">Nenhum pedido cadastrado</td></tr>';return;}
+    tb.innerHTML=pageItems.map(function(r){return `
+      <tr>
+        <td><strong>${r.codigo}</strong></td>
+        <td>${r.fornecedor_nome||'—'}</td>
+        <td>${r.centro_custo_nome||'—'}</td>
+        <td>${fmtDate(r.data_pedido)}</td>
+        <td>${fmtDate(r.data_entrega_prevista)}</td>
+        <td style="font-weight:600">${fmtR(r.valor_total)}</td>
+        <td><span class="badge ${STATUS_BADGE[r.status]||'badge-secondary'}">${STATUS_LABEL[r.status]||r.status}</span></td>
+        <td>${r.tem_financeiro?'<span class="badge badge-success"><i class="fas fa-check"></i> Gerado</span>':'—'}</td>
+        <td class="col-actions"><button class="btn-sm primary" onclick="editar(${r.id})"><i class="fas fa-pen"></i> Editar</button></td>
+      </tr>`;}).join('');
+  });
 }
 
 function addItem(it){

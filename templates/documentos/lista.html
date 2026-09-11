@@ -146,6 +146,7 @@
       <tbody id="tbody"></tbody>
     </table>
   </div>
+  <div class="tbl-foot" id="pager"></div>
 </div>
 {% endblock %}
 
@@ -153,7 +154,7 @@
 <script>
 const CSRF='{{ csrf_token }}';
 const docs={{ docs_json|safe }};
-const TIPO_MAP={contrato:'📄 Contrato',empresa:'🏢 Doc. Empresa',seguro:'🛡️ Seguro',funcionario:'👤 Doc. Funcionário',cat:'🚨 CAT',procedimento:'📋 Procedimento',medicao:'📏 Medição',nota:'🧾 Nota Fiscal',proposta:'💼 Proposta',outro:'📁 Outro'};
+const TIPO_MAP={contrato:'<i class="fas fa-file-lines"></i> Contrato',empresa:'<i class="fas fa-building"></i> Doc. Empresa',seguro:'<i class="fas fa-shield-halved"></i> Seguro',funcionario:'<i class="fas fa-user"></i> Doc. Funcionário',cat:'<i class="fas fa-triangle-exclamation"></i> CAT',procedimento:'<i class="fas fa-clipboard-list"></i> Procedimento',medicao:'<i class="fas fa-ruler"></i> Medição',nota:'<i class="fas fa-receipt"></i> Nota Fiscal',proposta:'<i class="fas fa-briefcase"></i> Proposta',outro:'<i class="fas fa-folder"></i> Outro'};
 
 function fmtDate(d){if(!d)return'—';return new Date(d+'T00:00:00').toLocaleDateString('pt-BR');}
 
@@ -163,10 +164,10 @@ function badgeValidade(val){
   if(!val) return '<span style="color:#94a3b8;font-size:11px">—</span>';
   const hoje = new Date(); hoje.setHours(0,0,0,0);
   const venc = new Date(val+'T00:00:00');
-  if(venc < hoje) return '<span class="badge badge-danger">🔴 Vencido</span>';
+  if(venc < hoje) return '<span class="badge badge-danger"><i class="fas fa-circle-exclamation"></i> Vencido</span>';
   const diff = Math.round((venc-hoje)/(1000*60*60*24));
-  if(diff <= 30) return `<span class="badge" style="background:#fef3c7;color:#92400e">⚠️ Vence em ${diff}d</span>`;
-  return '<span class="badge badge-success">✅ Em dia</span>';
+  if(diff <= 30) return `<span class="badge" style="background:#fef3c7;color:#92400e"><i class="fas fa-triangle-exclamation"></i> Vence em ${diff}d</span>`;
+  return '<span class="badge badge-success"><i class="fas fa-check"></i> Em dia</span>';
 }
 
 function seloVersao(r){
@@ -174,26 +175,30 @@ function seloVersao(r){
   return ` <a href="javascript:void(0)" onclick="abrirHistorico(${r.id})" class="badge badge-secondary" style="cursor:pointer" title="Ver histórico de versões">v${r.versao} · ${r.total_versoes} versões</a>`;
 }
 
+const pager = bkPaginator({ pageSize: 15, container: document.getElementById('pager') });
+
 function renderTabela(){
-  const tb=document.getElementById('tbody');
-  if(!docs.length){tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:#64748b;padding:24px">Nenhum documento cadastrado</td></tr>';return;}
-  tb.innerHTML=docs.map(r=>`
-    <tr>
-      <td><strong>${r.titulo}</strong>${seloVersao(r)}</td>
-      <td><span class="badge badge-secondary">${TIPO_MAP[r.tipo]||r.tipo}</span></td>
-      <td>${r.projeto_nome||'—'}</td>
-      <td>${r['cliente__nome']||'—'}</td>
-      <td style="font-size:12px;color:#6b7280">${r.arquivo_nome||'—'}</td>
-      <td style="font-size:11px;color:#64748b">${r.tags||'—'}</td>
-      <td>${badgeValidade(r.data_validade)}<br><small style="color:#94a3b8;font-size:10px">${r.data_validade?fmtDate(r.data_validade):''}</small></td>
-      <td style="font-size:12px">${r.criado_em||'—'}</td>
-      <td style="white-space:nowrap">
-        <a href="/documentos/download/${r.id}/" class="btn-sm success" title="Baixar">⬇️</a>
-        <button class="btn-sm" onclick="abrirEdicao(${r.id})" style="margin-left:4px" title="Editar dados">✏️</button>
-        <button class="btn-sm" onclick="abrirNovaVersao(${r.id})" style="margin-left:4px" title="Enviar nova versão">🔄</button>
-        <button class="btn-sm danger" onclick="excluir(${r.id})" style="margin-left:4px" title="Excluir">🗑️</button>
-      </td>
-    </tr>`).join('');
+  pager.render(docs, (pageItems) => {
+    const tb=document.getElementById('tbody');
+    if(!pageItems.length){tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:#64748b;padding:24px">Nenhum documento cadastrado</td></tr>';return;}
+    tb.innerHTML=pageItems.map(r=>`
+      <tr>
+        <td><strong>${r.titulo}</strong>${seloVersao(r)}</td>
+        <td><span class="badge badge-secondary">${TIPO_MAP[r.tipo]||r.tipo}</span></td>
+        <td>${r.projeto_nome||'—'}</td>
+        <td>${r['cliente__nome']||'—'}</td>
+        <td style="font-size:12px;color:#6b7280">${r.arquivo_nome||'—'}</td>
+        <td style="font-size:11px;color:#64748b">${r.tags||'—'}</td>
+        <td>${badgeValidade(r.data_validade)}<br><small style="color:#94a3b8;font-size:10px">${r.data_validade?fmtDate(r.data_validade):''}</small></td>
+        <td style="font-size:12px">${r.criado_em||'—'}</td>
+        <td style="white-space:nowrap">
+          <a href="/documentos/download/${r.id}/" class="btn-sm success" title="Baixar" aria-label="Baixar"><i class="fas fa-download"></i></a>
+          <button class="btn-sm" onclick="abrirEdicao(${r.id})" style="margin-left:4px" title="Editar dados" aria-label="Editar"><i class="fas fa-pen"></i></button>
+          <button class="btn-sm" onclick="abrirNovaVersao(${r.id})" style="margin-left:4px" title="Enviar nova versão" aria-label="Nova versão"><i class="fas fa-arrows-rotate"></i></button>
+          <button class="btn-sm danger" onclick="excluir(${r.id})" style="margin-left:4px" title="Excluir" aria-label="Excluir"><i class="fas fa-trash"></i></button>
+        </td>
+      </tr>`).join('');
+  });
 }
 
 async function enviarDoc(e){
@@ -283,7 +288,7 @@ async function abrirHistorico(id){
         <div style="font-size:12px;color:#6b7280">${v.titulo}</div>
         <div style="font-size:11px;color:#94a3b8">${v.arquivo_nome||'—'} · enviado por ${v.enviado_por||'—'} em ${v.criado_em||'—'}</div>
       </div>
-      <a href="/documentos/download/${v.id}/" class="btn-sm success" title="Baixar esta versão">⬇️</a>
+      <a href="/documentos/download/${v.id}/" class="btn-sm success" title="Baixar esta versão" aria-label="Baixar esta versão"><i class="fas fa-download"></i></a>
     </div>`).join('');
 }
 

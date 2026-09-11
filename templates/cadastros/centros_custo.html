@@ -44,8 +44,8 @@ function renderTabela(){
     <tr>
       <td><strong>${r.nome}</strong></td>
       <td>${r.observacoes||'—'}</td>
-      <td><span class="badge ${r.ativo?'badge-success':'badge-secondary'}">${r.ativo?'✅ Ativo':'⛔ Inativo'}</span></td>
-      <td class="col-actions"><button class="btn-sm primary" onclick="editar(${r.id})">✏️ Editar</button></td>
+      <td><span class="badge ${r.ativo?'badge-success':'badge-secondary'}">${r.ativo?'<i class="fas fa-check"></i> Ativo':'<i class="fas fa-ban"></i> Inativo'}</span></td>
+      <td class="col-actions"><button class="btn-sm primary" onclick="editar(${r.id})"><i class="fas fa-pen"></i> Editar</button></td>
     </tr>`).join('');
 }
 function abrirModal(r=null){

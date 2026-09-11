@@ -60,6 +60,7 @@
       <tbody id="tbody"></tbody>
     </table>
   </div>
+  <div class="tbl-foot" id="pager"></div>
 </div>
 
 <!-- Modal Transação -->
@@ -224,28 +225,31 @@ const clientes={{ clientes_json|safe }};
 const fornecedores={{ fornecedores_json|safe }};
 const colaboradores={{ colaboradores_json|safe }};
 const centros={{ centros_json|safe }};
-const REC_LABEL={semanal:'🔁 Semanal',quinzenal:'🔁 Quinzenal',mensal:'🔁 Mensal',bimestral:'🔁 Bimestral',trimestral:'🔁 Trimestral',semestral:'🔁 Semestral',anual:'🔁 Anual'};
+const REC_LABEL={semanal:'<i class="fas fa-arrows-rotate"></i> Semanal',quinzenal:'<i class="fas fa-arrows-rotate"></i> Quinzenal',mensal:'<i class="fas fa-arrows-rotate"></i> Mensal',bimestral:'<i class="fas fa-arrows-rotate"></i> Bimestral',trimestral:'<i class="fas fa-arrows-rotate"></i> Trimestral',semestral:'<i class="fas fa-arrows-rotate"></i> Semestral',anual:'<i class="fas fa-arrows-rotate"></i> Anual'};
 
 function fmtVal(v){return'R$ '+parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});}
 function fmtDate(d){if(!d)return'—';const p=d.substring(0,10).split('-');return p[2]+'/'+p[1]+'/'+p[0];}
+const pager = bkPaginator({ pageSize: 20, container: document.getElementById('pager') });
 
 function renderTabela(){
-  const tb=document.getElementById('tbody');
-  if(!dados.length){tb.innerHTML='<tr><td colspan="11" style="text-align:center;color:#64748b;padding:24px">Nenhuma transação encontrada</td></tr>';return;}
-  tb.innerHTML=dados.map(r=>`
-    <tr>
-      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.descricao}">${r.descricao}</td>
-      <td><span class="badge ${r.tipo==='entrada'?'badge-success':'badge-danger'}">${r.tipo==='entrada'?'📥 Entrada':'📤 Saída'}</span></td>
-      <td style="font-weight:600;color:${r.tipo==='entrada'?'#10B981':'#EF4444'}">${fmtVal(r.valor)}</td>
-      <td style="font-weight:600;color:#6b7280">${r.valor_pago!=null?fmtVal(r.valor_pago):'—'}</td>
-      <td>${fmtDate(r.data_competencia)}</td>
-      <td>${fmtDate(r.data_vencimento)}</td>
-      <td style="font-size:12px">${r['categoria__pai__nome']?`<span style='color:#6b7280'>${r['categoria__pai__nome']}</span> › ${r['categoria__nome']||'—'}`:(r['categoria__nome']||'—')}</td>
-      <td style="font-size:11px;color:#6b7280">${r.recorrencia?REC_LABEL[r.recorrencia]||r.recorrencia:'—'}</td>
-      <td>${r.anexo_nome?`<a href="/financeiro/transacoes/${r.id}/anexo/" style="font-size:11px;color:#3B82F6">📎 ${r.anexo_nome.substring(0,18)}</a>`:'—'}</td>
-      <td><span class="badge ${r.status==='realizado'?'badge-success':'badge-warning'}" style="cursor:pointer" onclick="toggleStatus(${r.id},this)">${r.status==='realizado'?'✅ Realizado':'⏳ Pendente'}</span></td>
-      <td class="col-actions"><button class="btn-sm primary" onclick="editar(${r.id})">✏️ Editar</button></td>
-    </tr>`).join('');
+  pager.render(dados, (pageItems) => {
+    const tb=document.getElementById('tbody');
+    if(!pageItems.length){tb.innerHTML='<tr><td colspan="11" style="text-align:center;color:#64748b;padding:24px">Nenhuma transação encontrada</td></tr>';return;}
+    tb.innerHTML=pageItems.map(r=>`
+      <tr>
+        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.descricao}">${r.descricao}</td>
+        <td><span class="badge ${r.tipo==='entrada'?'badge-success':'badge-danger'}">${r.tipo==='entrada'?'<i class="fas fa-arrow-down"></i> Entrada':'<i class="fas fa-arrow-up"></i> Saída'}</span></td>
+        <td style="font-weight:600;color:${r.tipo==='entrada'?'#10B981':'#EF4444'}">${fmtVal(r.valor)}</td>
+        <td style="font-weight:600;color:#6b7280">${r.valor_pago!=null?fmtVal(r.valor_pago):'—'}</td>
+        <td>${fmtDate(r.data_competencia)}</td>
+        <td>${fmtDate(r.data_vencimento)}</td>
+        <td style="font-size:12px">${r['categoria__pai__nome']?`<span style='color:#6b7280'>${r['categoria__pai__nome']}</span> › ${r['categoria__nome']||'—'}`:(r['categoria__nome']||'—')}</td>
+        <td style="font-size:11px;color:#6b7280">${r.recorrencia?REC_LABEL[r.recorrencia]||r.recorrencia:'—'}</td>
+        <td>${r.anexo_nome?`<a href="/financeiro/transacoes/${r.id}/anexo/" style="font-size:11px;color:#3B82F6"><i class="fas fa-paperclip"></i> ${r.anexo_nome.substring(0,18)}</a>`:'—'}</td>
+        <td><span class="badge ${r.status==='realizado'?'badge-success':'badge-warning'}" style="cursor:pointer" onclick="toggleStatus(${r.id},this)">${r.status==='realizado'?'<i class="fas fa-check"></i> Realizado':'<i class="fas fa-hourglass-half"></i> Pendente'}</span></td>
+        <td class="col-actions"><button class="btn-sm primary" onclick="editar(${r.id})"><i class="fas fa-pen"></i> Editar</button></td>
+      </tr>`).join('');
+  });
 }
 
 function populateSelects(){

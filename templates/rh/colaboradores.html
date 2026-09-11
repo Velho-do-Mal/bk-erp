@@ -71,6 +71,7 @@
       <tbody id="tbody"></tbody>
     </table>
   </div>
+  <div class="tbl-foot" id="pager"></div>
 </div>
 
 <!-- Modal Colaborador -->
@@ -175,26 +176,29 @@
 <script>
 const CSRF='{{ csrf_token }}';
 let dados={{ colaboradores_json|safe }};
-const STATUS_MAP={ativo:'<span class="badge badge-success">✅ Ativo</span>',afastado:'<span class="badge" style="background:#fef3c7;color:#92400e">⚠️ Afastado</span>',ferias:'<span class="badge" style="background:#dbeafe;color:#1e40af">🌴 Férias</span>',desligado:'<span class="badge badge-danger">❌ Desligado</span>'};
+const STATUS_MAP={ativo:'<span class="badge badge-success"><i class="fas fa-check"></i> Ativo</span>',afastado:'<span class="badge" style="background:#fef3c7;color:#92400e"><i class="fas fa-triangle-exclamation"></i> Afastado</span>',ferias:'<span class="badge" style="background:#dbeafe;color:#1e40af"><i class="fas fa-umbrella-beach"></i> Férias</span>',desligado:'<span class="badge badge-danger"><i class="fas fa-xmark"></i> Desligado</span>'};
 const REGIME_MAP={clt:'CLT',pj:'PJ',estagio:'Estágio',autonomo:'Autônomo',temporario:'Temporário'};
 
 function fmtDate(d){if(!d)return'—';return new Date(d+'T00:00:00').toLocaleDateString('pt-BR');}
 function fmtMoeda(v){if(!v&&v!==0)return'—';return'R$ '+parseFloat(v).toLocaleString('pt-BR',{minimumFractionDigits:2});}
+const pager = bkPaginator({ pageSize: 15, container: document.getElementById('pager') });
 
 function renderTabela(){
-  const tb=document.getElementById('tbody');
-  if(!dados.length){tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:#64748b;padding:24px">Nenhum colaborador cadastrado</td></tr>';return;}
-  tb.innerHTML=dados.map(r=>`<tr>
-    <td><strong>${r.nome}</strong><br><small style="color:#94a3b8">${r.email||''}</small></td>
-    <td style="font-size:12px">${r.cpf||'—'}</td>
-    <td>${r['cargo__nome']||'—'}</td>
-    <td>${r['departamento__nome']||'—'}</td>
-    <td><span class="badge badge-secondary">${REGIME_MAP[r.regime]||r.regime}</span></td>
-    <td style="font-size:12px">${fmtDate(r.data_admissao)}</td>
-    <td style="font-size:12px">${fmtMoeda(r.salario)}</td>
-    <td>${STATUS_MAP[r.status]||r.status}</td>
-    <td><button class="btn-sm primary" onclick="editar(${r.id})">✏️ Editar</button></td>
-  </tr>`).join('');
+  pager.render(dados, (pageItems) => {
+    const tb=document.getElementById('tbody');
+    if(!pageItems.length){tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:#64748b;padding:24px">Nenhum colaborador cadastrado</td></tr>';return;}
+    tb.innerHTML=pageItems.map(r=>`<tr>
+      <td><strong>${r.nome}</strong><br><small style="color:#94a3b8">${r.email||''}</small></td>
+      <td style="font-size:12px">${r.cpf||'—'}</td>
+      <td>${r['cargo__nome']||'—'}</td>
+      <td>${r['departamento__nome']||'—'}</td>
+      <td><span class="badge badge-secondary">${REGIME_MAP[r.regime]||r.regime}</span></td>
+      <td style="font-size:12px">${fmtDate(r.data_admissao)}</td>
+      <td style="font-size:12px">${fmtMoeda(r.salario)}</td>
+      <td>${STATUS_MAP[r.status]||r.status}</td>
+      <td><button class="btn-sm primary" onclick="editar(${r.id})"><i class="fas fa-pen"></i> Editar</button></td>
+    </tr>`).join('');
+  });
 }
 
 function abrirModal(r=null){

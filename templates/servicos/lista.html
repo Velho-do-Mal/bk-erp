@@ -38,6 +38,7 @@
       <tbody id="tbody"></tbody>
     </table>
   </div>
+  <div class="tbl-foot" id="pager"></div>
 </div>
 
 <div class="modal-overlay" id="modal">
@@ -84,8 +85,9 @@
 <script>
 const CSRF='{{ csrf_token }}';
 let dados={{ items_json|safe }};
-const TIPO_LABEL={servico:'🔧 Serviço',produto:'📦 Produto',ambos:'🔀 Ambos'};
+const TIPO_LABEL={servico:'<i class="fas fa-wrench"></i> Serviço',produto:'<i class="fas fa-box"></i> Produto',ambos:'<i class="fas fa-shuffle"></i> Ambos'};
 function fmtR(v){return'R$ '+parseFloat(v||0).toLocaleString('pt-BR',{minimumFractionDigits:2});}
+const pager = bkPaginator({ pageSize: 15, container: document.getElementById('pager') });
 
 function renderTabela(){
   const busca=document.getElementById('busca').value.toLowerCase();
@@ -94,18 +96,21 @@ function renderTabela(){
     const match=(r.nome||'').toLowerCase().includes(busca)||(r.codigo||'').toLowerCase().includes(busca);
     return match&&(!tipo||r.tipo===tipo);
   });
-  const tb=document.getElementById('tbody');
-  if(!filtered.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:#64748b;padding:24px">Nenhum item encontrado</td></tr>';return;}
-  tb.innerHTML=filtered.map(r=>`
-    <tr>
-      <td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;color:#374151">${r.codigo||'—'}</code></td>
-      <td>${TIPO_LABEL[r.tipo]||r.tipo}</td>
-      <td style="font-weight:600">${r.nome}</td>
-      <td><span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:4px;font-size:11px">${r.unidade||'un'}</span></td>
-      <td style="font-weight:600">${fmtR(r.preco_unitario)}</td>
-      <td><span class="badge ${r.ativo?'badge-success':'badge-danger'}" style="cursor:pointer" onclick="toggleAtivo(${r.id},this)">${r.ativo?'✅ Ativo':'⛔ Inativo'}</span></td>
-      <td class="col-actions"><button class="btn-sm primary" onclick="editar(${r.id})">✏️ Editar</button></td>
-    </tr>`).join('');
+  pager.reset();
+  pager.render(filtered, (pageItems) => {
+    const tb=document.getElementById('tbody');
+    if(!pageItems.length){tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:#64748b;padding:24px">Nenhum item encontrado</td></tr>';return;}
+    tb.innerHTML=pageItems.map(r=>`
+      <tr>
+        <td><code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;color:#374151">${r.codigo||'—'}</code></td>
+        <td>${TIPO_LABEL[r.tipo]||r.tipo}</td>
+        <td style="font-weight:600">${r.nome}</td>
+        <td><span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:4px;font-size:11px">${r.unidade||'un'}</span></td>
+        <td style="font-weight:600">${fmtR(r.preco_unitario)}</td>
+        <td><span class="badge ${r.ativo?'badge-success':'badge-danger'}" style="cursor:pointer" onclick="toggleAtivo(${r.id},this)">${r.ativo?'<i class="fas fa-check"></i> Ativo':'<i class="fas fa-ban"></i> Inativo'}</span></td>
+        <td class="col-actions"><button class="btn-sm primary" onclick="editar(${r.id})"><i class="fas fa-pen"></i> Editar</button></td>
+      </tr>`).join('');
+  });
 }
 
 function abrirModal(r=null){
@@ -153,7 +158,7 @@ async function excluir(){
 async function toggleAtivo(id,el){
   const res=await fetch('',{method:'POST',headers:{'Content-Type':'application/json','X-CSRFToken':CSRF},body:JSON.stringify({action:'toggle_ativo',id})});
   const d=await res.json();
-  if(d.ok){el.textContent=d.ativo?'✅ Ativo':'⛔ Inativo';el.className='badge '+(d.ativo?'badge-success':'badge-danger');}
+  if(d.ok){el.innerHTML=d.ativo?'<i class="fas fa-check"></i> Ativo':'<i class="fas fa-ban"></i> Inativo';el.className='badge '+(d.ativo?'badge-success':'badge-danger');}
 }
 
 document.getElementById('modal').addEventListener('click',e=>{if(e.target===document.getElementById('modal'))fecharModal();});

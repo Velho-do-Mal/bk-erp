@@ -116,8 +116,8 @@ function renderizar(data) {
       <td><span class="badge ${r.perfil_val==='admin'?'badge-blue':'badge-success'}">${r.perfil}</span></td>
       <td><span class="badge ${r.ativo?'badge-success':'badge-danger'}">${r.ativo?'Sim':'Não'}</span></td>
       <td style="white-space:nowrap">
-        <button class="btn btn-sm primary" onclick="editar(${r.id})">✏️ Editar</button>
-        <button class="btn btn-sm danger" onclick="excluir(${r.id},'${r.nome}')">🗑️ Desativar</button>
+        <button class="btn btn-sm primary" onclick="editar(${r.id})"><i class="fas fa-pen"></i> Editar</button>
+        <button class="btn btn-sm danger" onclick="excluir(${r.id},'${r.nome}')"><i class="fas fa-trash"></i> Desativar</button>
       </td>
     </tr>`).join('');
 }

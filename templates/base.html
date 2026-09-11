@@ -225,6 +225,44 @@
 
 <script>
 // ══════════════════════════════
+//  PAGINAÇÃO CLIENT-SIDE GENÉRICA
+//  Uso: os dados já chegam prontos em JSON (padrão do sistema), então a
+//  paginação é só uma fatia do array antes de desenhar as linhas.
+//    const pager = bkPaginator({ pageSize: 15, container: document.getElementById('pager') });
+//    function render(list) { pager.render(list, (pageItems) => { ...preenche <tbody>... }); }
+//    // ao trocar o filtro de busca: pager.reset(); render(listaFiltrada);
+// ══════════════════════════════
+function bkPaginator({ pageSize = 15, container } = {}) {
+  const state = { page: 1 };
+  function doRender(items, renderRows) {
+    const total = items.length;
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    if (state.page > totalPages) state.page = totalPages;
+    const start = (state.page - 1) * pageSize;
+    renderRows(items.slice(start, start + pageSize));
+    if (!container) return;
+    if (total <= pageSize) { container.innerHTML = ''; return; }
+    const end = Math.min(start + pageSize, total);
+    const maxBtns = 5;
+    let to = Math.min(totalPages, Math.max(1, state.page - 2) + maxBtns - 1);
+    let from = Math.max(1, to - maxBtns + 1);
+    let btns = '';
+    for (let p = from; p <= to; p++) btns += `<button class="${p === state.page ? 'active' : ''}" data-p="${p}">${p}</button>`;
+    container.innerHTML = `
+      <div class="info">Mostrando <b>${start + 1}–${end}</b> de <b>${total}</b></div>
+      <div class="pager">
+        <button data-p="${state.page - 1}" ${state.page === 1 ? 'disabled' : ''}><i class="fas fa-angle-left"></i></button>
+        ${btns}
+        <button data-p="${state.page + 1}" ${state.page === totalPages ? 'disabled' : ''}><i class="fas fa-angle-right"></i></button>
+      </div>`;
+    container.querySelectorAll('button[data-p]').forEach(b => {
+      b.addEventListener('click', () => { state.page = parseInt(b.dataset.p, 10); doRender(items, renderRows); });
+    });
+  }
+  return { render: doRender, reset() { state.page = 1; } };
+}
+
+// ══════════════════════════════
 //  TOAST GLOBAL
 // ══════════════════════════════
 function bkToast(msg, tipo) {
