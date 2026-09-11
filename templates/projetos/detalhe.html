@@ -7,10 +7,10 @@
 {% block topbar_actions %}
 {% if is_admin %}
 <a href="{% url 'projetos:acessos' projeto.pk %}" class="btn btn-sm" style="background:#f5f3ff;color:#6d28d9;border:1px solid #c4b5fd;">
-  👥 Acessos
+  <i class="fas fa-users"></i> Acessos
 </a>
 <button id="btn-salvar" class="btn btn-primary btn-sm" onclick="salvarProjeto()">
-  💾 Salvar
+  <i class="fas fa-floppy-disk"></i> Salvar
 </button>
 {% endif %}
 <a href="{% url 'projetos:lista' %}" class="btn btn-secondary btn-sm btn-voltar">← Voltar</a>
@@ -219,7 +219,7 @@
   <span class="badge badge-green">🟢 Ativo</span>
   {% endif %}
   {% if projeto.data_inicio %}
-  <span style="color:#6b7280;font-size:13px;">📅 Início: {{ projeto.data_inicio|date:"d/m/Y" }}</span>
+  <span style="color:#6b7280;font-size:13px;"><i class="fas fa-calendar-days"></i> Início: {{ projeto.data_inicio|date:"d/m/Y" }}</span>
   {% endif %}
   {% if projeto.data_conclusao %}
   <span style="color:#6b7280;font-size:13px;">🏁 Conclusão: {{ projeto.data_conclusao|date:"d/m/Y" }}</span>
@@ -233,20 +233,20 @@
 <div class="tabs" id="proj-tabs">
   <button class="tab-btn active" data-group="proj" data-tab="tab-tap">📜 TAP & Requisitos</button>
   <button class="tab-btn" data-group="proj" data-tab="tab-eap">📦 EAP / Curva S Trabalho</button>
-  <button class="tab-btn" data-group="proj" data-tab="tab-gantt">📊 Gantt</button>
-    <button class="tab-btn" data-group="proj" data-tab="tab-fin-analise">📈 Financeiro (Análise)</button>
+  <button class="tab-btn" data-group="proj" data-tab="tab-gantt"><i class="fas fa-chart-column"></i> Gantt</button>
+    <button class="tab-btn" data-group="proj" data-tab="tab-fin-analise"><i class="fas fa-arrow-trend-up"></i> Financeiro (Análise)</button>
   <button class="tab-btn" data-group="proj" data-tab="tab-movimentacao">💸 Movimenta&#231;&#227;o Financeira</button>
-  <button class="tab-btn" data-group="proj" data-tab="tab-kpis">📊 Qualidade (KPIs)</button>
-  <button class="tab-btn" data-group="proj" data-tab="tab-controle">🗂️ Controle de Projetos</button>
-  <button class="tab-btn" data-group="proj" data-tab="tab-riscos">⚠️ Riscos</button>
+  <button class="tab-btn" data-group="proj" data-tab="tab-kpis"><i class="fas fa-chart-column"></i> Qualidade (KPIs)</button>
+  <button class="tab-btn" data-group="proj" data-tab="tab-controle"><i class="fas fa-folder-tree"></i> Controle de Projetos</button>
+  <button class="tab-btn" data-group="proj" data-tab="tab-riscos"><i class="fas fa-triangle-exclamation"></i> Riscos</button>
 
-  <button class="tab-btn" data-group="proj" data-tab="tab-plano-acao">📌 Plano de Ação</button>
+  <button class="tab-btn" data-group="proj" data-tab="tab-plano-acao"><i class="fas fa-thumbtack"></i> Plano de Ação</button>
   <button class="tab-btn" data-group="proj" data-tab="tab-encerramento">🏁 Encerramento</button>
 </div>
 {% if is_admin %}
 <div style="margin-bottom:16px;text-align:right;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
-  <a class="btn btn-secondary btn-sm" href="{% url 'projetos:relatorio_docx' projeto.id %}" style="text-decoration:none;">📄 Relatório (Word)</a>
-  <button class="btn btn-primary btn-sm" onclick="gerarRelatorioGeral()" style="background:linear-gradient(135deg,#0d47a1,#00bcd4);border:none;">🖨️ Imprimir Relatório Geral</button>
+  <a class="btn btn-secondary btn-sm" href="{% url 'projetos:relatorio_docx' projeto.id %}" style="text-decoration:none;"><i class="fas fa-file-lines"></i> Relatório (Word)</a>
+  <button class="btn btn-primary btn-sm" onclick="gerarRelatorioGeral()" style="background:linear-gradient(135deg,#0d47a1,#00bcd4);border:none;"><i class="fas fa-print"></i> Imprimir Relatório Geral</button>
 </div>
 {% endif %}
 
@@ -259,7 +259,7 @@
     <!-- COLUNA ESQUERDA -->
     <div>
       <div class="card">
-        <h3 style="font-size:14px;font-weight:700;margin-bottom:16px;color:#1e40af;">📌 Identificação</h3>
+        <h3 style="font-size:14px;font-weight:700;margin-bottom:16px;color:#1e40af;"><i class="fas fa-thumbtack"></i> Identificação</h3>
         <div class="form-group">
           <label class="form-label">Nome do Projeto</label>
           {% if is_admin %}
@@ -321,7 +321,7 @@
     <!-- COLUNA DIREITA -->
     <div>
       <div class="card">
-        <h3 style="font-size:14px;font-weight:700;margin-bottom:16px;color:#1e40af;">📋 Escopo e Objetivos</h3>
+        <h3 style="font-size:14px;font-weight:700;margin-bottom:16px;color:#1e40af;"><i class="fas fa-clipboard-list"></i> Escopo e Objetivos</h3>
         <div class="form-group">
           <label class="form-label">Objetivo do Projeto</label>
           {% if is_admin %}
@@ -360,7 +360,7 @@
 
   <!-- ALTERAÇÕES DE ESCOPO -->
   <div class="card" style="margin-top:16px;">
-    <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;color:var(--bk-orange);">⚠️ Alterações de Escopo</h3>
+    <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;color:var(--bk-orange);"><i class="fas fa-triangle-exclamation"></i> Alterações de Escopo</h3>
 
     {% if is_admin %}
     <div class="form-group" style="margin-bottom:14px;">
@@ -393,7 +393,7 @@
 
   {% if is_admin %}
   <div style="margin-top:16px;">
-    <button class="btn btn-primary" onclick="salvarProjeto()">💾 Salvar TAP</button>
+    <button class="btn btn-primary" onclick="salvarProjeto()"><i class="fas fa-floppy-disk"></i> Salvar TAP</button>
   </div>
   {% endif %}
 </div>
@@ -454,7 +454,7 @@
 
   <!-- CURVA S TRABALHO -->
   <div class="card">
-    <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;color:var(--bk-teal);">📈 Curva S de Trabalho</h3>
+    <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;color:var(--bk-teal);"><i class="fas fa-arrow-trend-up"></i> Curva S de Trabalho</h3>
     <div id="curva-s-chart" style="height:350px;"></div>
   </div>
 </div>
@@ -465,7 +465,7 @@
 <div class="tab-panel" data-group="proj" id="tab-gantt">
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px">
-      <h3 style="font-size:14px;font-weight:700;margin:0;color:#1e40af;">📊 Diagrama de Gantt</h3>
+      <h3 style="font-size:14px;font-weight:700;margin:0;color:#1e40af;"><i class="fas fa-chart-column"></i> Diagrama de Gantt</h3>
       <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:11px;font-weight:600;color:#475569">
         <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:#64748B;display:inline-block"></span>Não Iniciado</span>
         <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;border-radius:3px;background:#3B82F6;display:inline-block"></span>Em Andamento</span>
@@ -488,11 +488,11 @@
   <!-- ── Configuração do Relatório ── -->
   <div class="card" style="margin-bottom:16px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-      <h3 style="font-size:14px;font-weight:700;color:#1e40af;margin:0">🗂️ Controle de Documentos</h3>
+      <h3 style="font-size:14px;font-weight:700;color:#1e40af;margin:0"><i class="fas fa-folder-tree"></i> Controle de Documentos</h3>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn btn-secondary btn-sm" onclick="imprimirTodos()">🖨️ Imprimir Todos</button>
-        <button class="btn btn-secondary btn-sm" onclick="imprimirAnalise()">🔍 Em Análise</button>
-        <button class="btn btn-primary btn-sm" onclick="imprimirGerencial()">📊 Rel. Gerencial</button>
+        <button class="btn btn-secondary btn-sm" onclick="imprimirTodos()"><i class="fas fa-print"></i> Imprimir Todos</button>
+        <button class="btn btn-secondary btn-sm" onclick="imprimirAnalise()"><i class="fas fa-magnifying-glass"></i> Em Análise</button>
+        <button class="btn btn-primary btn-sm" onclick="imprimirGerencial()"><i class="fas fa-chart-column"></i> Rel. Gerencial</button>
       </div>
     </div>
 
@@ -540,7 +540,7 @@
 
     <div style="display:flex;gap:8px;align-items:center">
       {% if is_admin %}
-      <button class="btn btn-primary btn-sm" onclick="salvarMeta()">💾 Salvar Configuração</button>
+      <button class="btn btn-primary btn-sm" onclick="salvarMeta()"><i class="fas fa-floppy-disk"></i> Salvar Configuração</button>
       {% endif %}
       <span id="ctrl-meta-status" style="font-size:12px;color:#6b7280"></span>
     </div>
@@ -552,11 +552,11 @@
   <!-- Tabela de Documentos -->
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <h4 style="font-size:13px;font-weight:700;margin:0">📄 Documentos do Projeto</h4>
+      <h4 style="font-size:13px;font-weight:700;margin:0"><i class="fas fa-file-lines"></i> Documentos do Projeto</h4>
       {% if is_admin %}
       <div style="display:flex;gap:6px">
         <button class="btn btn-secondary btn-sm" onclick="addDoc()">+ Documento</button>
-        <button class="btn btn-primary btn-sm" onclick="salvarTodosDocumentos()">💾 Salvar</button>
+        <button class="btn btn-primary btn-sm" onclick="salvarTodosDocumentos()"><i class="fas fa-floppy-disk"></i> Salvar</button>
       </div>
       {% endif %}
     </div>
@@ -595,7 +595,7 @@
 <div class="tab-panel" data-group="proj" id="tab-riscos">
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <h3 style="font-size:14px;font-weight:700;color:var(--bk-orange);margin:0">⚠️ Registro de Riscos</h3>
+      <h3 style="font-size:14px;font-weight:700;color:var(--bk-orange);margin:0"><i class="fas fa-triangle-exclamation"></i> Registro de Riscos</h3>
       {% if is_admin %}
       <button class="btn btn-primary btn-sm" onclick="addRisco()">+ Risco</button>
       {% endif %}
@@ -611,7 +611,7 @@
 
 <div class="tab-panel" data-group="proj" id="tab-fin-analise">
   <div class="card">
-    <h3 style="font-size:14px;font-weight:700;color:#3B82F6;margin:0 0 16px 0">📈 Análise Financeira — Planejado × Realizado</h3>
+    <h3 style="font-size:14px;font-weight:700;color:#3B82F6;margin:0 0 16px 0"><i class="fas fa-arrow-trend-up"></i> Análise Financeira — Planejado × Realizado</h3>
     <p style="font-size:12px;color:#6b7280;margin-bottom:16px">Tabela comparativa, fluxo de caixa em barras e custo acumulado em linhas.</p>
 
     <!-- Parecer -->
@@ -684,7 +684,7 @@
 <div class="tab-panel" data-group="proj" id="tab-kpis">
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <h3 style="font-size:14px;font-weight:700;color:#10B981;margin:0">📊 KPIs de Qualidade</h3>
+      <h3 style="font-size:14px;font-weight:700;color:#10B981;margin:0"><i class="fas fa-chart-column"></i> KPIs de Qualidade</h3>
       {% if is_admin %}
       <button class="btn btn-primary btn-sm" onclick="addKPI()">+ KPI</button>
       {% endif %}
@@ -708,7 +708,7 @@
 <div class="tab-panel" data-group="proj" id="tab-plano-acao">
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <h3 style="font-size:14px;font-weight:700;color:#8B5CF6;margin:0">📌 Plano de Ação (5W2H)</h3>
+      <h3 style="font-size:14px;font-weight:700;color:#8B5CF6;margin:0"><i class="fas fa-thumbtack"></i> Plano de Ação (5W2H)</h3>
       {% if is_admin %}
       <button class="btn btn-primary btn-sm" onclick="addAcao()">+ Ação</button>
       {% endif %}
@@ -725,7 +725,7 @@
 <div class="tab-panel" data-group="proj" id="tab-encerramento">
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
     <div class="card">
-      <h3 style="font-size:14px;font-weight:700;margin-bottom:16px;color:#1e40af">📋 Termo de Encerramento</h3>
+      <h3 style="font-size:14px;font-weight:700;margin-bottom:16px;color:#1e40af"><i class="fas fa-clipboard-list"></i> Termo de Encerramento</h3>
       <div class="form-group">
         <label class="form-label">Data de Encerramento</label>
         {% if is_admin %}<input type="date" id="enc-data" class="form-control">{% else %}<div class="readonly-field" id="enc-data-ro"></div>{% endif %}
@@ -735,7 +735,7 @@
         {% if is_admin %}
         <select id="enc-resultado" class="form-control">
           <option value="">— Selecione —</option>
-          <option value="sucesso">✅ Sucesso</option>
+          <option value="sucesso"><i class="fas fa-check"></i> Sucesso</option>
           <option value="parcial">🟡 Sucesso Parcial</option>
           <option value="cancelado">🔴 Cancelado</option>
         </select>
@@ -752,7 +752,7 @@
         {% else %}<div class="readonly-field" style="min-height:70px" id="enc-desvios-ro"></div>{% endif %}
       </div>
       {% if is_admin %}
-      <button class="btn btn-primary" onclick="salvarProjeto()">💾 Salvar Encerramento</button>
+      <button class="btn btn-primary" onclick="salvarProjeto()"><i class="fas fa-floppy-disk"></i> Salvar Encerramento</button>
       {% endif %}
     </div>
     <div class="card">

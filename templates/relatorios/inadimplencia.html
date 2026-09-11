@@ -19,7 +19,7 @@
 {% if por_cliente %}
 <div class="card" style="margin-bottom:20px;overflow:hidden">
   <div class="card-header" style="padding:12px 16px;font-weight:600;border-bottom:1px solid #e5e7eb">
-    👤 Maiores Inadimplentes por Cliente
+    <i class="fas fa-user"></i> Maiores Inadimplentes por Cliente
   </div>
   <div class="table-wrap">
     <table>
@@ -46,7 +46,7 @@
 
 <div class="card" style="overflow:hidden">
   <div class="card-header" style="padding:12px 16px;font-weight:600;border-bottom:1px solid #e5e7eb">
-    ⚠️ Recebimentos em Atraso — até {{ hoje|date:"d/m/Y" }}
+    <i class="fas fa-triangle-exclamation"></i> Recebimentos em Atraso — até {{ hoje|date:"d/m/Y" }}
   </div>
   <div class="table-wrap">
     <table>
@@ -67,7 +67,7 @@
           <td style="color:#6b7280;font-size:13px">{{ c.categoria.nome|default:"—" }}</td>
           <td style="text-align:right;color:#ef4444;font-weight:600">{{ c.valor|moeda }}</td>
           <td class="col-actions">
-            <a href="{% url 'financeiro:transacoes' %}" class="btn btn-sm btn-secondary">✏️ Editar</a>
+            <a href="{% url 'financeiro:transacoes' %}" class="btn btn-sm btn-secondary"><i class="fas fa-pen"></i> Editar</a>
           </td>
         </tr>
         {% empty %}

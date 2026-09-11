@@ -9,9 +9,9 @@
   ← Voltar para Vendas
 </a>
 <button class="btn btn-primary" id="btn-salvar-cabecalho" onclick="salvarCabecalho()" style="font-size:13px;">
-  💾 Salvar
+  <i class="fas fa-floppy-disk"></i> Salvar
 </button>
-<a href="{% url 'vendas:exportar_word' proposta.pk %}" class="btn no-print" style="font-size:13px;background:#1e3a8a;border:1px solid #1e40af;color:#fff;text-decoration:none;padding:6px 14px;border-radius:4px;display:inline-block;">📄 Exportar Word</a>
+<a href="{% url 'vendas:exportar_word' proposta.pk %}" class="btn no-print" style="font-size:13px;background:#1e3a8a;border:1px solid #1e40af;color:#fff;text-decoration:none;padding:6px 14px;border-radius:4px;display:inline-block;"><i class="fas fa-file-lines"></i> Exportar Word</a>
 <div id="status-badge" class="badge badge-{{ proposta.status }}" style="font-size:13px;padding:6px 14px;border-radius:6px;">
   {{ proposta.get_status_display }}
 </div>
@@ -170,10 +170,10 @@
 
 <div class="prop-tabs">
   <button class="prop-tab-btn active" data-tab="orcamento" onclick="trocarAba('orcamento')">
-    📊 Cálculo do Orçamento
+    <i class="fas fa-chart-column"></i> Cálculo do Orçamento
   </button>
   <button class="prop-tab-btn" data-tab="proposta" onclick="trocarAba('proposta')">
-    📄 Proposta
+    <i class="fas fa-file-lines"></i> Proposta
   </button>
 </div>
 
@@ -182,7 +182,7 @@
 
   
   <div class="section-card">
-    <div class="section-title">📋 Dados da Proposta</div>
+    <div class="section-title"><i class="fas fa-clipboard-list"></i> Dados da Proposta</div>
     <div class="form-grid">
       <div class="form-group">
         <label>Código</label>
@@ -281,7 +281,7 @@
   </div>
 
   <div class="section-card">
-    <div class="section-title">📈 Markup / Lucro Desejado
+    <div class="section-title"><i class="fas fa-arrow-trend-up"></i> Markup / Lucro Desejado
       <span style="font-size:11px;color:#6b7280;font-weight:400">
         (% sobre o valor de venda — gera o lucro real)
       </span>
@@ -310,7 +310,7 @@
   
   <div id="resultado-section" style="display:none;">
     <div class="section-card">
-      <div class="section-title">📈 Resultado do Cálculo</div>
+      <div class="section-title"><i class="fas fa-arrow-trend-up"></i> Resultado do Cálculo</div>
       <div class="resultado-grid">
         <div class="resultado-card">
           <div class="rc-label">Custo MOB</div>
@@ -329,15 +329,15 @@
           <div class="rc-valor laranja" id="rc-perc-total">R$ 0,00</div>
         </div>
         <div class="resultado-card">
-          <div class="rc-label">📈 Markup</div>
+          <div class="rc-label"><i class="fas fa-arrow-trend-up"></i> Markup</div>
           <div class="rc-valor" style="color:#7c3aed" id="rc-markup-pct">0,0%</div>
         </div>
         <div class="resultado-card" style="border:2px solid #1e40af;">
-          <div class="rc-label">💰 Valor de Venda</div>
+          <div class="rc-label"><i class="fas fa-sack-dollar"></i> Valor de Venda</div>
           <div class="rc-valor" id="rc-venda">R$ 0,00</div>
         </div>
         <div class="resultado-card" style="border:2px solid #16a34a;">
-          <div class="rc-label">📊 Margem de Lucro</div>
+          <div class="rc-label"><i class="fas fa-chart-column"></i> Margem de Lucro</div>
           <div class="rc-valor verde" id="rc-margem">R$ 0,00</div>
           <div style="font-size:12px;color:#6b7280;margin-top:2px" id="rc-margem-pct">0,0%</div>
         </div>
@@ -368,7 +368,7 @@
         <canvas id="chart-custos" height="220"></canvas>
       </div>
       <div class="grafico-card">
-        <h4>📊 Valor de Venda × Custos × Margem</h4>
+        <h4><i class="fas fa-chart-column"></i> Valor de Venda × Custos × Margem</h4>
         <canvas id="chart-resumo" height="220"></canvas>
       </div>
     </div>
@@ -376,7 +376,7 @@
     <div style="text-align:center;margin-top:16px;">
       <button class="btn" onclick="salvarOrcamento()"
         style="background:#16a34a;color:#fff;padding:10px 32px;font-size:14px;border-radius:8px;">
-        💾 Salvar Orçamento
+        <i class="fas fa-floppy-disk"></i> Salvar Orçamento
       </button>
     </div>
   </div>
@@ -393,11 +393,11 @@
       <div style="display:flex;gap:8px;">
         <button class="btn" onclick="salvarItens()"
           style="font-size:13px;background:#1e40af;color:#fff;">
-          💾 Salvar Itens
+          <i class="fas fa-floppy-disk"></i> Salvar Itens
         </button>
         <a id="btn-exportar-word" href="{% url 'vendas:exportar_word' proposta.pk %}"
           class="btn" style="font-size:13px;background:#fff;border:1px solid #1e40af;color:#1e40af;text-decoration:none;">
-          📄 Exportar Word
+          <i class="fas fa-file-lines"></i> Exportar Word
         </a>
       </div>
     </div>

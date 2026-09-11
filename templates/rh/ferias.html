@@ -40,7 +40,7 @@
 <div class="card mb-4" style="border-color:#fca5a5">
   <div class="card-body" style="background:#fef2f2">
     <div class="fw-semibold mb-2" style="color:#b91c1c">
-      ⚠️ {{ ferias_vencidas|length }} colaborador{{ ferias_vencidas|length|pluralize }} com férias vencidas (Art. 137, CLT — risco de pagamento em dobro)
+      <i class="fas fa-triangle-exclamation"></i> {{ ferias_vencidas|length }} colaborador{{ ferias_vencidas|length|pluralize }} com férias vencidas (Art. 137, CLT — risco de pagamento em dobro)
     </div>
     <ul class="mb-0" style="color:#7f1d1d;font-size:13px">
       {% for fv in ferias_vencidas %}
@@ -137,15 +137,15 @@
             <td class="text-center">{{ f.dias }}</td>
             <td class="text-center">
               {% if f.status == 'agendada' %}
-                <span class="badge" style="background:#dbeafe;color:#1d4ed8">📅 Agendada</span>
+                <span class="badge" style="background:#dbeafe;color:#1d4ed8"><i class="fas fa-calendar-days"></i> Agendada</span>
               {% elif f.status == 'aprovada' %}
                 <span class="badge" style="background:#e0e7ff;color:#4338ca">👍 Aprovada</span>
               {% elif f.status == 'em_gozo' %}
                 <span class="badge badge-warning">🏖️ Em Gozo</span>
               {% elif f.status == 'concluida' %}
-                <span class="badge badge-success">✅ Concluída</span>
+                <span class="badge badge-success"><i class="fas fa-check"></i> Concluída</span>
               {% else %}
-                <span class="badge badge-danger">❌ Cancelada</span>
+                <span class="badge badge-danger"><i class="fas fa-xmark"></i> Cancelada</span>
               {% endif %}
             </td>
             <td class="text-muted small">{{ f.observacoes|default:"—"|truncatechars:40 }}</td>

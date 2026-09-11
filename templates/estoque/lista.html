@@ -5,9 +5,9 @@
 {% block page_sub %}Controle de compras, utilização e saldo{% endblock %}
 
 {% block topbar_actions %}
-<a href="{% url 'estoque:exportar_estoque' %}" class="btn btn-secondary btn-sm" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;">📊 Exportar CSV</a>
-<button class="btn btn-primary" onclick="abrirModal()">➕ Novo Material</button>
-<button class="btn btn-secondary" onclick="salvarUtilizado()">💾 Salvar Utilizado</button>
+<a href="{% url 'estoque:exportar_estoque' %}" class="btn btn-secondary btn-sm" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;"><i class="fas fa-file-csv"></i> Exportar CSV</a>
+<button class="btn btn-primary" onclick="abrirModal()"><i class="fas fa-plus"></i> Novo Material</button>
+<button class="btn btn-secondary" onclick="salvarUtilizado()"><i class="fas fa-floppy-disk"></i> Salvar Utilizado</button>
 {% endblock %}
 
 {% block content %}
@@ -15,18 +15,18 @@
 
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px">
   <div class="kpi-card kpi-blue"><div class="kpi-label">📦 Total de Itens</div><div class="kpi-value">{{ total_itens }}</div></div>
-  <div class="kpi-card kpi-green"><div class="kpi-label">💰 Total Investido</div><div class="kpi-value moeda">{{ total_investido|moeda }}</div></div>
+  <div class="kpi-card kpi-green"><div class="kpi-label"><i class="fas fa-sack-dollar"></i> Total Investido</div><div class="kpi-value moeda">{{ total_investido|moeda }}</div></div>
   <div class="kpi-card {% if itens_criticos > 0 %}kpi-red{% else %}kpi-green{% endif %}">
-    <div class="kpi-label">⚠️ Itens Críticos (saldo ≤ 0)</div><div class="kpi-value">{{ itens_criticos }}</div>
+    <div class="kpi-label"><i class="fas fa-triangle-exclamation"></i> Itens Críticos (saldo ≤ 0)</div><div class="kpi-value">{{ itens_criticos }}</div>
   </div>
   <div class="kpi-card {% if itens_estoque_baixo > 0 %}kpi-orange{% else %}kpi-green{% endif %}">
-    <div class="kpi-label">🔔 Estoque Baixo (≤10% do comprado)</div><div class="kpi-value">{{ itens_estoque_baixo }}</div>
+    <div class="kpi-label"><i class="fas fa-bell"></i> Estoque Baixo (≤10% do comprado)</div><div class="kpi-value">{{ itens_estoque_baixo }}</div>
   </div>
 </div>
 
 <div class="bk-card">
   <div style="font-size:12px;color:#6b7280;margin-bottom:12px">
-    💡 Edite a coluna <strong>Utilizado</strong> diretamente na tabela e clique em <strong>💾 Salvar Utilizado</strong>. Itens marcados como <em>Recebido</em> em Compras entram automaticamente aqui, já classificados por Tipo.
+    💡 Edite a coluna <strong>Utilizado</strong> diretamente na tabela e clique em <strong><i class="fas fa-floppy-disk"></i> Salvar Utilizado</strong>. Itens marcados como <em>Recebido</em> em Compras entram automaticamente aqui, já classificados por Tipo.
   </div>
   <div class="excel-grid-wrap">
     <table class="excel-grid">
@@ -34,7 +34,7 @@
         <tr>
           <th>Código</th><th>Tipo</th><th>Descrição</th><th>Fornecedor</th><th>Centro de Custos</th>
           <th>Qtd. Comprada</th>
-          <th>✏️ Utilizado</th>
+          <th><i class="fas fa-pen"></i> Utilizado</th>
           <th>Saldo</th>
           <th>Valor Total</th><th>Data Compra</th><th>Validade</th><th>Origem</th><th style="width:80px">Ações</th>
         </tr>
@@ -48,7 +48,7 @@
 <div class="modal-overlay" id="modal">
   <div class="modal-box modal-box-lg">
     <button class="modal-close-x" onclick="fecharModal()">✕</button>
-    <div class="modal-title" id="modal-titulo">➕ Novo Material</div>
+    <div class="modal-title" id="modal-titulo"><i class="fas fa-plus"></i> Novo Material</div>
     <input type="hidden" id="m-id">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div><label class="form-label">Código *</label><input id="m-cod" class="form-control" placeholder="Ex: EL-001"></div>
@@ -79,9 +79,9 @@
       <div style="grid-column:1/-1"><label class="form-label">Observações</label><textarea id="m-obs" class="form-control" rows="2"></textarea></div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-danger btn-sm" id="btn-del" onclick="excluir()" style="display:none;margin-right:auto">🗑️ Excluir</button>
-      <button class="btn btn-secondary" onclick="fecharModal()">❌ Cancelar</button>
-      <button class="btn btn-primary" onclick="salvar()">💾 Salvar</button>
+      <button class="btn btn-danger btn-sm" id="btn-del" onclick="excluir()" style="display:none;margin-right:auto"><i class="fas fa-trash"></i> Excluir</button>
+      <button class="btn btn-secondary" onclick="fecharModal()"><i class="fas fa-xmark"></i> Cancelar</button>
+      <button class="btn btn-primary" onclick="salvar()"><i class="fas fa-floppy-disk"></i> Salvar</button>
     </div>
   </div>
 </div>

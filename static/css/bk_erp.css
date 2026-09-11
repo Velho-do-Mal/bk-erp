@@ -1,6 +1,8 @@
 /* ═══════════════════════════════════════════
-   BK ERP — Dark Theme
+   BK ERP — Design System
    Paleta: BK_BG=#0F172A | SURFACE=#1E293B | BLUE=#3B82F6
+   Canvas de conteúdo em cinza-azulado claro (--bk-canvas) com cards
+   brancos sobre ele — sidebar/topbar continuam escuras.
 ═══════════════════════════════════════════ */
 
 :root {
@@ -8,10 +10,15 @@
   --bk-blue-light: #93C5FD;
   --bk-blue-dark:  #1E40AF;
   --bk-teal:       #14B8A6;
+  --bk-teal-dark:  #0F766E;
   --bk-green:      #10B981;
+  --bk-green-dark: #047857;
   --bk-orange:     #F59E0B;
+  --bk-orange-dark:#B45309;
   --bk-red:        #EF4444;
+  --bk-red-dark:   #B91C1C;
   --bk-purple:     #8B5CF6;
+  --bk-purple-dark:#6D28D9;
   --bk-gray:       #64748B;
   --bk-bg:         #0F172A;
   --bk-surface:    #1E293B;
@@ -20,16 +27,43 @@
   --bk-text:       #F1F5F9;
   --bk-text-muted: #94A3B8;
   --bk-input-text: #1E293B;
+
+  /* Canvas claro do conteúdo (fora dos cards) — ver nota de contraste abaixo */
+  --bk-canvas:      #EEF2F8;
+  --bk-canvas-line: #E2E8F3;
+  --bk-shadow-card: 0 1px 2px rgba(15,23,42,.04), 0 10px 24px -14px rgba(15,23,42,.16);
+  --bk-shadow-pop:  0 16px 40px -16px rgba(15,23,42,.30);
+  --bk-radius-lg:   14px;
+  --bk-radius-md:   10px;
+
+  --font-display: 'Sora', 'Inter', 'Segoe UI', Arial, sans-serif;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   background: var(--bk-bg);
-  color: #111827;
+  color: var(--bk-text);
   font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
   font-size: 14px;
   line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6, .content-title, .topbar-title, .display-font {
+  font-family: var(--font-display);
+  letter-spacing: -.01em;
+}
+
+.num, .tabular-nums, .kpi-value, .kpi-valor {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Correção de contraste: todo o conteúdo à direita da sidebar passa a ter
+   um fundo claro explícito (canvas), em vez de herdar o body escuro —
+   evitava texto escuro sobre fundo escuro fora dos cards. */
+.main {
+  background: var(--bk-canvas);
+  color: #1B2333;
 }
 
 /* ── SCROLLBAR ── */
@@ -59,6 +93,17 @@ body {
 .sidebar-logo img {
   width: 40px; height: 40px; border-radius: 10px; object-fit: cover;
 }
+
+/* Monograma vetorial da marca — substitui a antiga logo em JPEG (pixelada
+   em telas HiDPI). Usado na sidebar e replicado na tela de login. */
+.brand-mark {
+  width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0;
+  background: linear-gradient(150deg, var(--bk-blue), var(--bk-blue-dark));
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 800; font-size: 15px; color: #fff;
+  box-shadow: 0 6px 16px -4px rgba(59,130,246,.55);
+}
+.brand-mark.lg { width: 56px; height: 56px; border-radius: 15px; font-size: 20px; }
 
 .sidebar-logo-text { line-height: 1.2; }
 .sidebar-logo-text strong { font-size: 15px; color: var(--bk-text); }
@@ -153,9 +198,9 @@ body {
 .card, .bk-card {
   background: #fff;
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: var(--bk-radius-lg);
   padding: 20px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  box-shadow: var(--bk-shadow-card);
 }
 .bk-card { padding: 24px; margin-bottom: 24px; }
 
@@ -169,17 +214,47 @@ body {
 .kpi-card {
   background: #fff;
   border: 1px solid #e5e7eb;
-  border-radius: 10px;
+  border-radius: var(--bk-radius-lg);
   padding: 16px 20px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  box-shadow: var(--bk-shadow-card);
+  position: relative;
+  overflow: hidden;
+  transition: transform .15s, box-shadow .15s;
 }
+.kpi-card:hover { transform: translateY(-2px); box-shadow: var(--bk-shadow-pop); }
 
 .kpi-label { font-size: 12px; color: #6b7280; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-.kpi-value { font-size: 26px; font-weight: 800; color: #1e40af; margin: 4px 0; }
+.kpi-value { font-family: var(--font-display); font-size: 26px; font-weight: 800; color: #1e40af; margin: 4px 0; }
 .kpi-value.verde    { color: #16a34a; }
 .kpi-value.laranja  { color: #d97706; }
 .kpi-value.vermelho { color: #ef4444; }
 .kpi-sub { font-size: 12px; color: #6b7280; }
+
+/* Indicador de tendência chamativo (▲/▼ + %), opcional em qualquer kpi-card:
+   <span class="kpi-trend up|down|flat">▲ 12,4%</span> */
+.kpi-trend {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 11px; font-weight: 700;
+  padding: 2px 8px; border-radius: 999px;
+  position: absolute; top: 14px; right: 14px;
+}
+.kpi-trend.up   { background: #DCFCE7; color: #047857; }
+.kpi-trend.down { background: #FEE2E2; color: #B91C1C; }
+.kpi-trend.flat { background: #FEF3C7; color: #B45309; }
+
+/* Ícone circular de destaque no canto do card, opcional:
+   <span class="kpi-icon blue"><i class="fas fa-..."></i></span> */
+.kpi-icon {
+  width: 34px; height: 34px; border-radius: 10px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 14px; margin-bottom: 8px;
+}
+.kpi-icon.blue   { background:#E9F1FE; color:var(--bk-blue-dark); }
+.kpi-icon.teal   { background:#E4F8F5; color:var(--bk-teal-dark); }
+.kpi-icon.green  { background:#E4F8EE; color:var(--bk-green-dark); }
+.kpi-icon.orange { background:#FEF3DC; color:var(--bk-orange-dark); }
+.kpi-icon.red    { background:#FDEBEB; color:var(--bk-red-dark); }
+.kpi-icon.purple { background:#F1EBFD; color:var(--bk-purple-dark); }
 
 /* Modificador de TAMANHO (não de cor) para cartões que exibem valores em
    moeda (R$) — pedido do usuário: o padrão de 26px ficava grande demais
@@ -233,15 +308,19 @@ tbody td { padding: 12px 14px; font-size: 13px; color: #111827; }
 .btn {
   display: inline-flex; align-items: center; gap: 6px;
   padding: 8px 16px;
-  border-radius: 8px;
+  border-radius: 9px;
   font-size: 13px; font-weight: 600;
   cursor: pointer; border: 1px solid transparent;
   text-decoration: none;
   transition: all 0.15s;
   line-height: 1.3;
 }
-.btn-primary, .btn-sm.primary       { background: var(--bk-blue); color: #fff; border-color: var(--bk-blue); }
-.btn-primary:hover, .btn-sm.primary:hover     { background: #2563EB; border-color: #2563EB; }
+.btn-primary, .btn-sm.primary {
+  background: linear-gradient(150deg, var(--bk-blue), var(--bk-blue-dark));
+  color: #fff; border-color: var(--bk-blue-dark);
+  box-shadow: 0 6px 16px -6px rgba(59,130,246,.55);
+}
+.btn-primary:hover, .btn-sm.primary:hover     { filter: brightness(1.06); box-shadow: 0 8px 18px -6px rgba(59,130,246,.65); }
 
 .btn-secondary, .btn-sm.secondary   { background: #f9fafb; color: #374151; border-color: #d1d5db; }
 .btn-secondary:hover, .btn-sm.secondary:hover { background: #f1f5f9; color: #111827; }
@@ -580,7 +659,7 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   font-size: 13px;
 }
 .data-table thead th {
-  background: #1e3a8a;
+  background: linear-gradient(150deg, #1e3a8a, #1e40af);
   color: #fff;
   padding: 11px 12px;
   text-align: left;
@@ -605,7 +684,7 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 .data-table tbody tr:nth-child(even) td { background: #f8fafc; }
 .data-table tbody tr:nth-child(even):hover td { background: #eff6ff; }
 .data-table .col-actions { width: 110px; text-align: center; white-space: nowrap; }
-.table-container { background: #fff; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; }
+.table-container { background: #fff; border-radius: var(--bk-radius-md); overflow: hidden; border: 1px solid #e5e7eb; box-shadow: var(--bk-shadow-card); }
 
 /* (sistema de .btn-sm já definido acima, na seção BOTÕES — não duplicar aqui) */
 

@@ -12,12 +12,12 @@
       <label class="form-label" style="font-size:11px">Situação</label>
       <select name="status" class="form-control" style="width:160px">
         <option value="" {% if not status_f %}selected{% endif %}>Todas</option>
-        <option value="atrasado" {% if status_f == 'atrasado' %}selected{% endif %}>⚠️ Atrasadas</option>
-        <option value="hoje" {% if status_f == 'hoje' %}selected{% endif %}>🔔 Vencem Hoje</option>
-        <option value="futuro" {% if status_f == 'futuro' %}selected{% endif %}>📅 Futuras</option>
+        <option value="atrasado" {% if status_f == 'atrasado' %}selected{% endif %}><i class="fas fa-triangle-exclamation"></i> Atrasadas</option>
+        <option value="hoje" {% if status_f == 'hoje' %}selected{% endif %}><i class="fas fa-bell"></i> Vencem Hoje</option>
+        <option value="futuro" {% if status_f == 'futuro' %}selected{% endif %}><i class="fas fa-calendar-days"></i> Futuras</option>
       </select>
     </div>
-    <button type="submit" class="btn btn-primary btn-sm">🔍 Filtrar</button>
+    <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-magnifying-glass"></i> Filtrar</button>
     <a href="?" class="btn btn-secondary btn-sm">✕ Limpar</a>
   </form>
 </div>
@@ -45,7 +45,7 @@
 <!-- Lista -->
 <div class="card" style="overflow:hidden">
   <div class="card-header" style="padding:12px 16px;font-weight:600;border-bottom:1px solid #e5e7eb">
-    📤 Contas a Pagar Pendentes
+    <i class="fas fa-upload"></i> Contas a Pagar Pendentes
   </div>
   <div class="table-wrap">
     <table>
@@ -70,15 +70,15 @@
           <td style="text-align:right;font-weight:600">{{ c.valor|moeda }}</td>
           <td style="text-align:center">
             {% if c.data_vencimento < hoje %}
-              <span class="badge badge-danger">⚠️ Atrasado</span>
+              <span class="badge badge-danger"><i class="fas fa-triangle-exclamation"></i> Atrasado</span>
             {% elif c.data_vencimento == hoje %}
-              <span class="badge badge-warning">🔔 Hoje</span>
+              <span class="badge badge-warning"><i class="fas fa-bell"></i> Hoje</span>
             {% else %}
-              <span class="badge badge-blue">📅 Futuro</span>
+              <span class="badge badge-blue"><i class="fas fa-calendar-days"></i> Futuro</span>
             {% endif %}
           </td>
           <td class="col-actions">
-            <a href="{% url 'financeiro:transacoes' %}" class="btn btn-sm btn-secondary" title="Ver no Financeiro">✏️ Editar</a>
+            <a href="{% url 'financeiro:transacoes' %}" class="btn btn-sm btn-secondary" title="Ver no Financeiro"><i class="fas fa-pen"></i> Editar</a>
           </td>
         </tr>
         {% empty %}

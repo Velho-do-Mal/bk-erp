@@ -30,8 +30,8 @@
         {% endfor %}
       </select>
     </div>
-    <button type="submit" class="btn btn-primary btn-sm">🔍 Filtrar</button>
-    <a href="{% url 'relatorios:exportar_dre' %}?ano={{ ano }}&mes={{ mes }}" class="btn btn-secondary btn-sm">📄 Exportar CSV</a>
+    <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-magnifying-glass"></i> Filtrar</button>
+    <a href="{% url 'relatorios:exportar_dre' %}?ano={{ ano }}&mes={{ mes }}" class="btn btn-secondary btn-sm"><i class="fas fa-file-lines"></i> Exportar CSV</a>
   </form>
 </div>
 
@@ -59,7 +59,7 @@
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
   <div class="card" style="overflow:hidden">
     <div class="card-header" style="background:#f0fdf4;color:#16a34a;font-weight:600;padding:12px 16px;border-bottom:1px solid #bbf7d0">
-      ➕ Receitas por Categoria — {{ ini|date:"d/m/Y" }} a {{ fim|date:"d/m/Y" }}
+      <i class="fas fa-plus"></i> Receitas por Categoria — {{ ini|date:"d/m/Y" }} a {{ fim|date:"d/m/Y" }}
     </div>
     <div class="table-wrap">
       <table>

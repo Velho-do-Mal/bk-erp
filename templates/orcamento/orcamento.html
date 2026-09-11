@@ -138,7 +138,7 @@
   <!-- Topbar -->
   <div class="topbar">
     <div>
-      <h1>🗂 Orçamento</h1>
+      <h1><i class="fas fa-folder-tree"></i> Orçamento</h1>
       <div class="sub">Cadastro de obras, materiais e serviços por orçamento</div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -192,7 +192,7 @@
           <input type="text" id="nome_orcamento" value="{% if orcamento %}{{ orcamento.nome }}{% else %}Orçamento{% endif %}">
         </div>
       </div>
-      <button type="button" class="btn btn-success" onclick="salvarObra()">✔ Salvar obra / orçamento</button>
+      <button type="button" class="btn btn-success" onclick="salvarObra()"><i class="fas fa-check"></i> Salvar obra / orçamento</button>
     </div>
 
     <div class="card">

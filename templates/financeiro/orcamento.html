@@ -42,11 +42,11 @@
 <!-- Dashboards -->
 <div class="dashboard-grid">
     <div class="bk-card">
-        <div class="bk-title" style="font-size:13px;margin-bottom:12px">📊 Previsto vs. Realizado (Saldo Mensal)</div>
+        <div class="bk-title" style="font-size:13px;margin-bottom:12px"><i class="fas fa-chart-column"></i> Previsto vs. Realizado (Saldo Mensal)</div>
         <div id="chart-prev-real" style="height:300px"></div>
     </div>
     <div class="bk-card">
-        <div class="bk-title" style="font-size:13px;margin-bottom:12px">📈 Fluxo de Caixa Acumulado</div>
+        <div class="bk-title" style="font-size:13px;margin-bottom:12px"><i class="fas fa-arrow-trend-up"></i> Fluxo de Caixa Acumulado</div>
         <div id="chart-fluxo-comp" style="height:300px"></div>
     </div>
 </div>
@@ -111,7 +111,7 @@
 
 <!-- ── Resultados Reais (Leitura) ────────────────────────── -->
 <div class="bk-card" style="margin-top:24px">
-    <div class="section-title">📊 Resultados Reais — {{ ano }}</div>
+    <div class="section-title"><i class="fas fa-chart-column"></i> Resultados Reais — {{ ano }}</div>
 
     <div class="header-row" style="background:#f0fdf4;color:#166534">🟢 ENTRADAS REAIS</div>
     <div style="overflow-x:auto">
@@ -163,7 +163,7 @@
 <!-- ── Variação: Previsto − Realizado ───────────────────── -->
 <div class="bk-card" style="margin-top:24px">
     <div class="section-title">
-        📉 Variação: Previsto − Realizado — {{ ano }}
+        <i class="fas fa-arrow-trend-down"></i> Variação: Previsto − Realizado — {{ ano }}
         <span style="font-size:11px;font-weight:400;color:#64748b">
             (+verde = previsto maior &nbsp;|&nbsp; −vermelho = realizado superou o previsto)
         </span>

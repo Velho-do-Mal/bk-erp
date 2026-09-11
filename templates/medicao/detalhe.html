@@ -9,8 +9,8 @@
 {% block topbar_actions %}
 <a href="{% url 'medicao:dashboard' %}" class="btn btn-secondary btn-sm btn-voltar">← Voltar</a>
 {% if periodo_ativo %}
-<button class="btn btn-secondary btn-sm" onclick="abrirImpressaoPeriodo()">🖨 Imprimir Período</button>
-<button class="btn btn-primary btn-sm" onclick="abrirConsolidado()">📊 Consolidado</button>
+<button class="btn btn-secondary btn-sm" onclick="abrirImpressaoPeriodo()"><i class="fas fa-print"></i> Imprimir Período</button>
+<button class="btn btn-primary btn-sm" onclick="abrirConsolidado()"><i class="fas fa-chart-column"></i> Consolidado</button>
 {% endif %}
 {% endblock %}
 
@@ -97,10 +97,10 @@
 
 {% block content %}
 <div class="tabs" data-group="main">
-  <button class="tab-btn active" data-tab="tab-projeto" data-group="main">📋 Cadastro do Projeto</button>
+  <button class="tab-btn active" data-tab="tab-projeto" data-group="main"><i class="fas fa-clipboard-list"></i> Cadastro do Projeto</button>
   <button class="tab-btn" data-tab="tab-itens" data-group="main">📦 Itens do Contrato</button>
   <button class="tab-btn" data-tab="tab-medicao" data-group="main">📐 Medição</button>
-  <button class="tab-btn" data-tab="tab-dashboard" data-group="main">📊 Dashboard</button>
+  <button class="tab-btn" data-tab="tab-dashboard" data-group="main"><i class="fas fa-chart-column"></i> Dashboard</button>
 </div>
 
 <!-- ═══════════════ ABA 1 — CADASTRO DO PROJETO ═══════════════ -->
@@ -167,7 +167,7 @@
       </div>
     </div>
 
-    <button class="btn btn-primary" onclick="salvarBoletim()" style="margin-top:8px">💾 Salvar</button>
+    <button class="btn btn-primary" onclick="salvarBoletim()" style="margin-top:8px"><i class="fas fa-floppy-disk"></i> Salvar</button>
     <span id="msg_projeto" style="margin-left:12px;font-size:13px;color:#16a34a"></span>
   </div>
 </div>
@@ -233,7 +233,7 @@
     </table>
   </div>
   <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
-    <button class="btn btn-primary btn-sm" onclick="salvarTodosItens()">💾 Salvar Itens</button>
+    <button class="btn btn-primary btn-sm" onclick="salvarTodosItens()"><i class="fas fa-floppy-disk"></i> Salvar Itens</button>
     <span id="msg_itens" style="font-size:13px;color:#16a34a"></span>
   </div>
 </div>
@@ -263,12 +263,12 @@
       </span>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-primary btn-sm" onclick="salvarMedicao()">💾 Salvar Medição</button>
-      <button class="btn btn-secondary btn-sm" onclick="abrirImpressaoPeriodo()">🖨 Imprimir BM</button>
-      <button class="btn btn-secondary btn-sm" onclick="abrirConsolidado()">📊 Consolidado</button>
+      <button class="btn btn-primary btn-sm" onclick="salvarMedicao()"><i class="fas fa-floppy-disk"></i> Salvar Medição</button>
+      <button class="btn btn-secondary btn-sm" onclick="abrirImpressaoPeriodo()"><i class="fas fa-print"></i> Imprimir BM</button>
+      <button class="btn btn-secondary btn-sm" onclick="abrirConsolidado()"><i class="fas fa-chart-column"></i> Consolidado</button>
       {% if periodos|length > 0 %}
-      <button class="btn btn-secondary btn-sm" onclick="abrirEditarPeriodo()" title="Alterar datas deste período">✏️ Editar Período</button>
-      <button class="btn btn-danger btn-sm" onclick="confirmarExcluirPeriodo()" title="Exclui este período e retorna ao anterior">🗑️ Excluir Período</button>
+      <button class="btn btn-secondary btn-sm" onclick="abrirEditarPeriodo()" title="Alterar datas deste período"><i class="fas fa-pen"></i> Editar Período</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmarExcluirPeriodo()" title="Exclui este período e retorna ao anterior"><i class="fas fa-trash"></i> Excluir Período</button>
       {% endif %}
     </div>
   </div>
@@ -475,7 +475,7 @@
 <!-- ═══ Modal Editar Período ═══ -->
 <div id="modal_editar_periodo" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.6);align-items:center;justify-content:center">
   <div class="card" style="width:420px;max-width:95vw">
-    <div style="font-size:16px;font-weight:700;color:#1e3a8a;margin-bottom:16px">✏️ Editar Período</div>
+    <div style="font-size:16px;font-weight:700;color:#1e3a8a;margin-bottom:16px"><i class="fas fa-pen"></i> Editar Período</div>
     <div style="display:flex;flex-direction:column;gap:12px">
       <div>
         <label style="font-size:12px;font-weight:600;color:#64748b;margin-bottom:4px;display:block">Data Início</label>
@@ -487,7 +487,7 @@
       </div>
     </div>
     <div style="display:flex;gap:8px;margin-top:18px">
-      <button class="btn btn-primary" onclick="salvarEdicaoPeriodo()">💾 Salvar Alteração</button>
+      <button class="btn btn-primary" onclick="salvarEdicaoPeriodo()"><i class="fas fa-floppy-disk"></i> Salvar Alteração</button>
       <button class="btn btn-secondary" onclick="fecharModal('modal_editar_periodo')">Cancelar</button>
     </div>
     <span id="msg_editar_periodo" style="font-size:13px;color:#16a34a;margin-top:8px;display:block"></span>
@@ -497,13 +497,13 @@
 <!-- ═══ Modal Excluir Período ═══ -->
 <div id="modal_excluir_periodo" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.6);align-items:center;justify-content:center">
   <div class="card" style="width:420px;max-width:95vw">
-    <div style="font-size:16px;font-weight:700;color:#b91c1c;margin-bottom:12px">⚠️ Excluir Período</div>
+    <div style="font-size:16px;font-weight:700;color:#b91c1c;margin-bottom:12px"><i class="fas fa-triangle-exclamation"></i> Excluir Período</div>
     <div id="modal_excluir_texto" style="font-size:14px;color:#374151;margin-bottom:18px;line-height:1.6"></div>
     <div style="background:#1e293b;border:1px solid #ef4444;border-radius:8px;padding:12px 14px;margin-bottom:18px;font-size:13px;color:#fca5a5">
-      ⚠️ Esta ação é irreversível. Todas as medições do período serão excluídas permanentemente.
+      <i class="fas fa-triangle-exclamation"></i> Esta ação é irreversível. Todas as medições do período serão excluídas permanentemente.
     </div>
     <div style="display:flex;gap:8px">
-      <button class="btn btn-danger" onclick="executarExcluirPeriodo()">🗑️ Confirmar Exclusão</button>
+      <button class="btn btn-danger" onclick="executarExcluirPeriodo()"><i class="fas fa-trash"></i> Confirmar Exclusão</button>
       <button class="btn btn-secondary" onclick="fecharModal('modal_excluir_periodo')">Cancelar</button>
     </div>
     <span id="msg_excluir_periodo" style="font-size:13px;color:#16a34a;margin-top:8px;display:block"></span>

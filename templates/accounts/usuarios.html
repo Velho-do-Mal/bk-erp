@@ -5,7 +5,7 @@
 
 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
   <div>
-    <h2 style="font-size:22px;font-weight:800;color:#1e3a8a;margin:0">👥 Usuários</h2>
+    <h2 style="font-size:22px;font-weight:800;color:#1e3a8a;margin:0"><i class="fas fa-users"></i> Usuários</h2>
     {% if plano_info %}
     <p style="font-size:13px;color:#6b7280;margin:4px 0 0">
       Plano {{ plano_info.nome }} — {{ plano_info.total }} usuário(s) ativo(s)
@@ -13,7 +13,7 @@
     </p>
     {% endif %}
   </div>
-  <button class="btn btn-primary btn-sm" onclick="abrirModal()">➕ Novo Usuário</button>
+  <button class="btn btn-primary btn-sm" onclick="abrirModal()"><i class="fas fa-plus"></i> Novo Usuário</button>
 </div>
 
 <div class="table-container">
@@ -85,7 +85,7 @@
 
     <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:8px">
       <button class="btn btn-secondary btn-sm" onclick="fecharModal()">✖ Cancelar</button>
-      <button class="btn btn-primary btn-sm" onclick="salvar()">💾 Salvar</button>
+      <button class="btn btn-primary btn-sm" onclick="salvar()"><i class="fas fa-floppy-disk"></i> Salvar</button>
     </div>
   </div>
 </div>

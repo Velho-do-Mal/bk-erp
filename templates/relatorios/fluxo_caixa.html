@@ -24,8 +24,8 @@
         {% endfor %}
       </select>
     </div>
-    <button type="submit" class="btn btn-primary btn-sm">🔍 Filtrar</button>
-    <a href="{% url 'relatorios:exportar_fluxo' %}?ano={{ ano }}&mes={{ mes }}" class="btn btn-secondary btn-sm">📄 Exportar CSV</a>
+    <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-magnifying-glass"></i> Filtrar</button>
+    <a href="{% url 'relatorios:exportar_fluxo' %}?ano={{ ano }}&mes={{ mes }}" class="btn btn-secondary btn-sm"><i class="fas fa-file-lines"></i> Exportar CSV</a>
   </form>
 </div>
 

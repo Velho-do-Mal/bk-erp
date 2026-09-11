@@ -4,16 +4,16 @@
 {% block page_title %}Pedidos de Compra{% endblock %}
 {% block page_sub %}Integrado com Fornecedores, Financeiro e Estoque{% endblock %}
 {% block topbar_actions %}
-<button class="btn btn-primary" onclick="abrirModal()">➕ Novo Pedido</button>
+<button class="btn btn-primary" onclick="abrirModal()"><i class="fas fa-plus"></i> Novo Pedido</button>
 {% endblock %}
 {% block content %}
 <a href="{% url 'core:dashboard' %}" class="btn btn-secondary btn-sm btn-voltar">← Voltar</a>
 
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px">
   <div class="kpi-card kpi-blue"><div class="kpi-label">🛒 Total de Pedidos</div><div class="kpi-value">{{ total_pedidos }}</div></div>
-  <div class="kpi-card kpi-green"><div class="kpi-label">💰 Valor Total</div><div class="kpi-value moeda">{{ total_valor|moeda }}</div></div>
-  <div class="kpi-card kpi-yellow"><div class="kpi-label">📋 Em Aberto</div><div class="kpi-value">{{ em_aberto }}</div></div>
-  <div class="kpi-card kpi-red"><div class="kpi-label">❌ Canceladas</div><div class="kpi-value">{{ canceladas }}</div></div>
+  <div class="kpi-card kpi-green"><div class="kpi-label"><i class="fas fa-sack-dollar"></i> Valor Total</div><div class="kpi-value moeda">{{ total_valor|moeda }}</div></div>
+  <div class="kpi-card kpi-yellow"><div class="kpi-label"><i class="fas fa-clipboard-list"></i> Em Aberto</div><div class="kpi-value">{{ em_aberto }}</div></div>
+  <div class="kpi-card kpi-red"><div class="kpi-label"><i class="fas fa-xmark"></i> Canceladas</div><div class="kpi-value">{{ canceladas }}</div></div>
 </div>
 
 <div class="bk-card">
@@ -29,7 +29,7 @@
 <div class="modal-overlay" id="modal" style="overflow-y:auto">
   <div class="modal-box modal-box-lg" style="margin:20px auto;max-width:860px">
     <button class="modal-close-x" onclick="fecharModal()">✕</button>
-    <div class="modal-title" id="modal-titulo">➕ Novo Pedido de Compra</div>
+    <div class="modal-title" id="modal-titulo"><i class="fas fa-plus"></i> Novo Pedido de Compra</div>
     <input type="hidden" id="m-id">
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
       <div><label class="form-label">Código *</label><input id="m-cod" class="form-control" placeholder="PC-2026-001"></div>
@@ -48,13 +48,13 @@
       <div><label class="form-label">Entrega Real</label><input id="m-entrega-r" class="form-control" type="date"></div>
       <div><label class="form-label">Status</label>
         <select id="m-status" class="form-control">
-          <option value="aberta">📋 Aberta</option>
+          <option value="aberta"><i class="fas fa-clipboard-list"></i> Aberta</option>
           <option value="aprovacao">⏳ Aguardando Aprovação</option>
-          <option value="aprovada">✅ Aprovada</option>
+          <option value="aprovada"><i class="fas fa-check"></i> Aprovada</option>
           <option value="entregue">📦 Entregue</option>
-          <option value="recebida">✔️ Recebida</option>
-          <option value="encerrada">🔒 Encerrada</option>
-          <option value="cancelada">❌ Cancelada</option>
+          <option value="recebida"><i class="fas fa-check"></i> Recebida</option>
+          <option value="encerrada"><i class="fas fa-lock"></i> Encerrada</option>
+          <option value="cancelada"><i class="fas fa-xmark"></i> Cancelada</option>
         </select>
       </div>
       <div style="grid-column:2/-1"><label class="form-label">Observações</label><input id="m-obs" class="form-control"></div>
@@ -64,7 +64,7 @@
     <div style="margin-top:20px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <h4 style="margin:0;font-size:13px;color:#1e40af">📝 Itens do Pedido</h4>
-        <button type="button" class="btn-sm primary" onclick="addItem()">➕ Adicionar Item</button>
+        <button type="button" class="btn-sm primary" onclick="addItem()"><i class="fas fa-plus"></i> Adicionar Item</button>
       </div>
       <div class="excel-grid-wrap">
         <table class="excel-grid" style="font-size:12px">
@@ -73,16 +73,16 @@
         </table>
       </div>
       <div style="text-align:right;margin-top:10px;font-weight:700;font-size:14px;color:#111827">
-        💰 Total: R$ <span id="total-display">0,00</span>
+        <i class="fas fa-sack-dollar"></i> Total: R$ <span id="total-display">0,00</span>
       </div>
     </div>
 
     <div class="modal-footer">
-      <button class="btn btn-danger btn-sm" id="btn-del" onclick="excluir()" style="display:none;margin-right:auto">🗑️ Excluir</button>
-      <button class="btn-sm success" id="btn-fin" onclick="gerarFinanceiro()" style="display:none">💰 Gerar conta a pagar</button>
-      <button class="btn-sm warning" id="btn-recebido" onclick="marcarRecebido()" style="display:none">✔️ Marcar como Recebido → Estoque</button>
-      <button class="btn btn-secondary" onclick="fecharModal()">❌ Cancelar</button>
-      <button class="btn btn-primary" onclick="salvar()">💾 Salvar</button>
+      <button class="btn btn-danger btn-sm" id="btn-del" onclick="excluir()" style="display:none;margin-right:auto"><i class="fas fa-trash"></i> Excluir</button>
+      <button class="btn-sm success" id="btn-fin" onclick="gerarFinanceiro()" style="display:none"><i class="fas fa-sack-dollar"></i> Gerar conta a pagar</button>
+      <button class="btn-sm warning" id="btn-recebido" onclick="marcarRecebido()" style="display:none"><i class="fas fa-check"></i> Marcar como Recebido → Estoque</button>
+      <button class="btn btn-secondary" onclick="fecharModal()"><i class="fas fa-xmark"></i> Cancelar</button>
+      <button class="btn btn-primary" onclick="salvar()"><i class="fas fa-floppy-disk"></i> Salvar</button>
     </div>
   </div>
 </div>

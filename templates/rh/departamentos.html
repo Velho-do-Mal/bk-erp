@@ -7,7 +7,7 @@
 <div class="content-header">
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
     <div>
-      <h1 class="content-title">🏢 Departamentos</h1>
+      <h1 class="content-title"><i class="fas fa-building"></i> Departamentos</h1>
       <p class="content-subtitle">Gerencie a estrutura organizacional da empresa</p>
     </div>
     <button class="btn btn-primary" onclick="abrirModal()">+ Novo Departamento</button>
@@ -17,8 +17,8 @@
 <!-- Submenu RH -->
 <div class="bk-card" style="margin-bottom:16px;padding:10px 16px">
   <nav style="display:flex;gap:8px;flex-wrap:wrap">
-    <a href="{% url 'rh:colaboradores' %}" class="btn btn-sm btn-secondary">👥 Colaboradores</a>
-    <a href="{% url 'rh:departamentos' %}" class="btn btn-sm btn-primary">🏢 Departamentos</a>
+    <a href="{% url 'rh:colaboradores' %}" class="btn btn-sm btn-secondary"><i class="fas fa-users"></i> Colaboradores</a>
+    <a href="{% url 'rh:departamentos' %}" class="btn btn-sm btn-primary"><i class="fas fa-building"></i> Departamentos</a>
     <a href="{% url 'rh:cargos' %}" class="btn btn-sm btn-secondary">🪪 Cargos</a>
     <a href="{% url 'rh:ferias' %}" class="btn btn-sm btn-secondary">🏖️ Férias</a>
   </nav>
@@ -47,7 +47,7 @@
 <!-- Tabela -->
 <div class="bk-card">
   <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e2e8f0;flex-wrap:wrap;gap:8px">
-    <span style="font-weight:600">🏢 Lista de Departamentos</span>
+    <span style="font-weight:600"><i class="fas fa-building"></i> Lista de Departamentos</span>
     <input type="text" id="filtro" class="form-control" style="width:200px" placeholder="Buscar…" oninput="filtrar()">
   </div>
   <div style="overflow-x:auto">
@@ -79,18 +79,18 @@
           <td class="col-actions">
             <button class="btn btn-sm btn-secondary"
               onclick="editarDept({{ d.id }}, '{{ d.nome|escapejs }}', '{{ d.descricao|default:''|escapejs }}', {{ d.ativo|yesno:'true,false' }})">
-              ✏️ Editar
+              <i class="fas fa-pen"></i> Editar
             </button>
             <button class="btn btn-sm" style="background:#ef4444;color:#fff"
               onclick="excluirDept({{ d.id }}, '{{ d.nome|escapejs }}')">
-              🗑️ Excluir
+              <i class="fas fa-trash"></i> Excluir
             </button>
           </td>
         </tr>
         {% empty %}
         <tr>
           <td colspan="6" style="text-align:center;color:#94a3b8;padding:32px">
-            🏢 Nenhum departamento cadastrado.
+            <i class="fas fa-building"></i> Nenhum departamento cadastrado.
           </td>
         </tr>
         {% endfor %}
@@ -126,7 +126,7 @@
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end">
         <button type="button" class="btn btn-secondary" onclick="fecharModal('modalDept')">Cancelar</button>
-        <button type="submit" class="btn btn-primary">💾 Salvar</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-floppy-disk"></i> Salvar</button>
       </div>
     </form>
   </div>
@@ -147,7 +147,7 @@
       <p style="color:#64748b;font-size:0.875rem">Cargos e colaboradores vinculados perderão a referência de departamento.</p>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
         <button type="button" class="btn btn-secondary btn-sm" onclick="fecharModal('modalExcluir')">Cancelar</button>
-        <button type="submit" class="btn btn-sm" style="background:#ef4444;color:#fff">🗑️ Excluir</button>
+        <button type="submit" class="btn btn-sm" style="background:#ef4444;color:#fff"><i class="fas fa-trash"></i> Excluir</button>
       </div>
     </form>
   </div>

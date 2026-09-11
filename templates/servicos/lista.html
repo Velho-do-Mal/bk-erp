@@ -4,8 +4,8 @@
 {% block page_sub %}Itens utilizados em Propostas e Controle de Documentos{% endblock %}
 
 {% block topbar_actions %}
-<a href="{% url 'servicos:exportar_servicos' %}" class="btn btn-secondary btn-sm" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;">📊 Exportar para Excel</a>
-<button class="btn btn-primary" onclick="abrirModal()">➕ Novo Item</button>
+<a href="{% url 'servicos:exportar_servicos' %}" class="btn btn-secondary btn-sm" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;"><i class="fas fa-chart-column"></i> Exportar para Excel</a>
+<button class="btn btn-primary" onclick="abrirModal()"><i class="fas fa-plus"></i> Novo Item</button>
 {% endblock %}
 
 {% block content %}
@@ -13,7 +13,7 @@
 
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px">
   <div class="kpi-card kpi-blue"><div class="kpi-label">📦 Total Cadastros</div><div class="kpi-value">{{ total }}</div></div>
-  <div class="kpi-card kpi-green"><div class="kpi-label">✅ Ativos</div><div class="kpi-value">{{ ativos }}</div></div>
+  <div class="kpi-card kpi-green"><div class="kpi-label"><i class="fas fa-check"></i> Ativos</div><div class="kpi-value">{{ ativos }}</div></div>
 </div>
 
 <div class="bk-card">
@@ -37,7 +37,7 @@
 <div class="modal-overlay" id="modal">
   <div class="modal-box">
     <button class="modal-close-x" onclick="fecharModal()">✕</button>
-    <div class="modal-title" id="modal-titulo">➕ Novo Item</div>
+    <div class="modal-title" id="modal-titulo"><i class="fas fa-plus"></i> Novo Item</div>
     <input type="hidden" id="m-id">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div><label class="form-label">Código</label><input id="m-cod" class="form-control" placeholder="SVC-001"></div>
@@ -66,9 +66,9 @@
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-danger btn-sm" id="btn-del" onclick="excluir()" style="display:none;margin-right:auto">🗑️ Excluir</button>
-      <button class="btn btn-secondary" onclick="fecharModal()">❌ Cancelar</button>
-      <button class="btn btn-primary" onclick="salvar()">💾 Salvar</button>
+      <button class="btn btn-danger btn-sm" id="btn-del" onclick="excluir()" style="display:none;margin-right:auto"><i class="fas fa-trash"></i> Excluir</button>
+      <button class="btn btn-secondary" onclick="fecharModal()"><i class="fas fa-xmark"></i> Cancelar</button>
+      <button class="btn btn-primary" onclick="salvar()"><i class="fas fa-floppy-disk"></i> Salvar</button>
     </div>
   </div>
 </div>

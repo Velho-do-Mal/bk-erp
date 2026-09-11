@@ -4,8 +4,8 @@
 {% block page_sub %}Central de arquivos: contratos, ARTs, medições, notas, propostas{% endblock %}
 
 {% block topbar_actions %}
-<a href="{% url 'documentos:exportar_documentos' %}" class="btn btn-secondary btn-sm" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;">📊 Exportar CSV</a>
-  <button class="btn btn-primary" onclick="document.getElementById('upload-panel').classList.toggle('open')">📤 Enviar Documento</button>
+<a href="{% url 'documentos:exportar_documentos' %}" class="btn btn-secondary btn-sm" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;"><i class="fas fa-file-csv"></i> Exportar CSV</a>
+  <button class="btn btn-primary" onclick="document.getElementById('upload-panel').classList.toggle('open')"><i class="fas fa-upload"></i> Enviar Documento</button>
 {% endblock %}
 
 {% block content %}
@@ -15,7 +15,7 @@
 <div class="modal-overlay" id="upload-panel">
   <div class="modal-box modal-box-lg">
     <button class="modal-close-x" onclick="document.getElementById('upload-panel').classList.remove('open')">✕</button>
-    <div class="modal-title">📤 Enviar Documento</div>
+    <div class="modal-title"><i class="fas fa-upload"></i> Enviar Documento</div>
     <form id="upload-form" enctype="multipart/form-data" onsubmit="enviarDoc(event)">
       {% csrf_token %}
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
@@ -38,12 +38,12 @@
         </div>
         <div><label class="form-label">Projeto (nome livre)</label><input name="projeto_nome" class="form-control" placeholder="Ex: SE Sertão 230kV"></div>
         <div style="grid-column:1/-1"><label class="form-label">Observações</label><textarea name="observacoes" class="form-control" rows="2"></textarea></div>
-        <div><label class="form-label">📅 Validade <span style="color:#94a3b8;font-size:11px">(deixe em branco se não vence)</span></label><input type="date" name="data_validade" class="form-control"></div>
+        <div><label class="form-label"><i class="fas fa-calendar-days"></i> Validade <span style="color:#94a3b8;font-size:11px">(deixe em branco se não vence)</span></label><input type="date" name="data_validade" class="form-control"></div>
         <div style="grid-column:2/-1"><label class="form-label">📎 Arquivo *</label><input type="file" name="arquivo" class="form-control" required></div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="document.getElementById('upload-panel').classList.remove('open')">❌ Cancelar</button>
-        <button type="submit" class="btn btn-primary">📤 Enviar</button>
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('upload-panel').classList.remove('open')"><i class="fas fa-xmark"></i> Cancelar</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-upload"></i> Enviar</button>
       </div>
     </form>
   </div>
@@ -53,7 +53,7 @@
 <div class="modal-overlay" id="edit-panel">
   <div class="modal-box modal-box-lg">
     <button class="modal-close-x" onclick="document.getElementById('edit-panel').classList.remove('open')">✕</button>
-    <div class="modal-title">✏️ Editar Documento</div>
+    <div class="modal-title"><i class="fas fa-pen"></i> Editar Documento</div>
     <form id="edit-form" onsubmit="salvarEdicao(event)">
       <input type="hidden" id="edit-id">
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
@@ -76,12 +76,12 @@
         </div>
         <div><label class="form-label">Projeto (nome livre)</label><input id="edit-projeto" class="form-control"></div>
         <div style="grid-column:1/-1"><label class="form-label">Observações</label><textarea id="edit-observacoes" class="form-control" rows="2"></textarea></div>
-        <div><label class="form-label">📅 Validade</label><input type="date" id="edit-validade" class="form-control"></div>
+        <div><label class="form-label"><i class="fas fa-calendar-days"></i> Validade</label><input type="date" id="edit-validade" class="form-control"></div>
       </div>
-      <p style="font-size:12px;color:#94a3b8;margin-top:10px">Isso altera apenas os dados do documento. Para substituir o arquivo mantendo o histórico, use "🔄 Nova Versão".</p>
+      <p style="font-size:12px;color:#94a3b8;margin-top:10px">Isso altera apenas os dados do documento. Para substituir o arquivo mantendo o histórico, use "<i class="fas fa-arrows-rotate"></i> Nova Versão".</p>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="document.getElementById('edit-panel').classList.remove('open')">❌ Cancelar</button>
-        <button type="submit" class="btn btn-primary">💾 Salvar</button>
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('edit-panel').classList.remove('open')"><i class="fas fa-xmark"></i> Cancelar</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-floppy-disk"></i> Salvar</button>
       </div>
     </form>
   </div>
@@ -91,19 +91,19 @@
 <div class="modal-overlay" id="versao-panel">
   <div class="modal-box modal-box-lg">
     <button class="modal-close-x" onclick="document.getElementById('versao-panel').classList.remove('open')">✕</button>
-    <div class="modal-title">🔄 Nova Versão do Documento</div>
+    <div class="modal-title"><i class="fas fa-arrows-rotate"></i> Nova Versão do Documento</div>
     <p style="font-size:13px;color:#475569" id="versao-info"></p>
     <p style="font-size:12px;color:#94a3b8;margin-top:-6px">A versão atual não é apagada — fica salva no histórico deste documento.</p>
     <form id="versao-form" enctype="multipart/form-data" onsubmit="enviarNovaVersao(event)">
       <input type="hidden" id="versao-id">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div style="grid-column:1/-1"><label class="form-label">📎 Novo Arquivo *</label><input type="file" name="arquivo" class="form-control" required></div>
-        <div><label class="form-label">📅 Validade <span style="color:#94a3b8;font-size:11px">(deixe em branco pra manter a validade anterior)</span></label><input type="date" name="data_validade" class="form-control"></div>
+        <div><label class="form-label"><i class="fas fa-calendar-days"></i> Validade <span style="color:#94a3b8;font-size:11px">(deixe em branco pra manter a validade anterior)</span></label><input type="date" name="data_validade" class="form-control"></div>
         <div><label class="form-label">Observações da revisão</label><input name="observacoes" class="form-control" placeholder="Ex: revisão trimestral"></div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="document.getElementById('versao-panel').classList.remove('open')">❌ Cancelar</button>
-        <button type="submit" class="btn btn-primary">🔄 Enviar Nova Versão</button>
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('versao-panel').classList.remove('open')"><i class="fas fa-xmark"></i> Cancelar</button>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-arrows-rotate"></i> Enviar Nova Versão</button>
       </div>
     </form>
   </div>
@@ -128,7 +128,7 @@
       <option value="{{ val }}" {% if tipo_f == val %}selected{% endif %}>{{ label }}</option>
       {% endfor %}
     </select>
-    <button type="submit" class="btn btn-primary">🔍 Filtrar</button>
+    <button type="submit" class="btn btn-primary"><i class="fas fa-magnifying-glass"></i> Filtrar</button>
     <a href="{% url 'documentos:lista' %}" class="btn btn-secondary">✕ Limpar</a>
   </form>
 </div>

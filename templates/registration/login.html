@@ -4,48 +4,59 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Login — BK ERP</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%233B82F6'/%3E%3Cstop offset='1' stop-color='%231E40AF'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Ctext x='32' y='43' font-family='Arial,Helvetica,sans-serif' font-weight='800' font-size='26' fill='white' text-anchor='middle'%3EBK%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', sans-serif; background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-  .login-wrap { display: flex; gap: 0; border-radius: 16px; overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,.5); max-width: 860px; width: 100%; }
+  body { font-family: 'Inter', 'Segoe UI', sans-serif; background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .login-wrap { display: flex; gap: 0; border-radius: 18px; overflow: hidden; box-shadow: 0 24px 60px rgba(0,0,0,.5); max-width: 860px; width: 100%; }
   .login-left { background: linear-gradient(160deg,#1e3a8a,#1e40af); color:#fff; padding: 48px 40px; flex: 1; display: flex; flex-direction: column; justify-content: center; }
-  .login-left .brand { font-size: 28px; font-weight: 900; margin-bottom: 12px; }
-  .login-left .tagline { font-size: 15px; opacity: .85; line-height: 1.6; margin-bottom: 32px; }
+  .login-left .brand-row { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+  .login-left .brand-mark { width: 48px; height: 48px; border-radius: 13px; flex-shrink: 0; background: linear-gradient(150deg,#60a5fa,#3B82F6); display: flex; align-items: center; justify-content: center; font-family: 'Sora', sans-serif; font-weight: 800; font-size: 18px; color: #0f172a; box-shadow: 0 8px 20px -6px rgba(59,130,246,.6); }
+  .login-left .brand { font-family: 'Sora', sans-serif; font-size: 22px; font-weight: 800; line-height: 1.15; }
+  .login-left .brand span { display: block; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 500; opacity: .7; margin-top: 2px; }
+  .login-left .tagline { font-size: 15px; opacity: .85; line-height: 1.6; margin-bottom: 28px; }
   .login-left .features { list-style: none; }
-  .login-left .features li { font-size: 13px; opacity: .8; padding: 5px 0; display: flex; align-items: center; gap: 8px; }
+  .login-left .features li { font-size: 13px; opacity: .88; padding: 6px 0; display: flex; align-items: center; gap: 10px; }
+  .login-left .features li i { width: 20px; height: 20px; border-radius: 6px; background: rgba(255,255,255,.12); display: inline-flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; }
   .login-right { background: #fff; padding: 48px 40px; width: 360px; flex-shrink: 0; }
-  .login-right h2 { font-size: 22px; font-weight: 800; color: #1e3a8a; margin-bottom: 6px; }
+  .login-right h2 { font-family: 'Sora', sans-serif; font-size: 22px; font-weight: 800; color: #1e3a8a; margin-bottom: 6px; }
   .login-right .sub { font-size: 13px; color: #6b7280; margin-bottom: 28px; }
   .form-group { margin-bottom: 18px; }
   label { display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 5px; text-transform: uppercase; letter-spacing: .4px; }
-  input[type=text], input[type=password] { width: 100%; padding: 11px 14px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; color: #111827; outline: none; transition: border .15s; }
-  input:focus { border-color: #1e40af; box-shadow: 0 0 0 3px rgba(30,64,175,.1); }
-  .btn-login { width: 100%; padding: 13px; background: #1e40af; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; transition: background .2s; margin-top: 4px; }
-  .btn-login:hover { background: #1e3a8a; }
-  .error-msg { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 6px; padding: 10px 14px; color: #dc2626; font-size: 13px; margin-bottom: 18px; }
+  input[type=text], input[type=password] { width: 100%; padding: 11px 14px; border: 1.5px solid #d1d5db; border-radius: 9px; font-size: 14px; color: #111827; outline: none; transition: border .15s, box-shadow .15s; font-family: inherit; }
+  input:focus { border-color: #1e40af; box-shadow: 0 0 0 4px rgba(30,64,175,.12); }
+  .btn-login { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 13px; background: linear-gradient(150deg,#3B82F6,#1e3a8a); color: #fff; border: none; border-radius: 9px; font-size: 15px; font-weight: 700; cursor: pointer; transition: filter .15s, box-shadow .15s; margin-top: 4px; box-shadow: 0 10px 22px -8px rgba(30,64,175,.55); }
+  .btn-login:hover { filter: brightness(1.06); }
+  .error-msg { display: flex; align-items: center; gap: 8px; background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 10px 14px; color: #dc2626; font-size: 13px; margin-bottom: 18px; }
   .links { margin-top: 20px; text-align: center; font-size: 13px; color: #6b7280; }
   .links a { color: #1e40af; font-weight: 600; text-decoration: none; }
   .links a:hover { text-decoration: underline; }
   .divider { border: none; border-top: 1px solid #e5e7eb; margin: 20px 0; }
   @media (max-width: 640px) {
     .login-left { display: none; }
-    .login-right { width: 100%; border-radius: 16px; }
+    .login-right { width: 100%; border-radius: 18px; }
   }
 </style>
 </head>
 <body>
 <div class="login-wrap">
   <div class="login-left">
-    <div class="brand">🏗️ BK ERP</div>
+    <div class="brand-row">
+      <div class="brand-mark">BK</div>
+      <div class="brand">BK ERP<span>BK Engenharia</span></div>
+    </div>
     <p class="tagline">Sistema de gestão empresarial completo para engenharia e tecnologia.</p>
     <ul class="features">
-      <li>✅ Gestão de Projetos e EAP</li>
-      <li>✅ Financeiro e Fluxo de Caixa</li>
-      <li>✅ Boletim de Medição</li>
-      <li>✅ Orçamentos e Propostas</li>
-      <li>✅ Controle de Estoque e Compras</li>
-      <li>✅ CRM e Gestão de Clientes</li>
-      <li>✅ Documentos e Relatórios</li>
+      <li><i class="fas fa-check"></i>Gestão de Projetos e EAP</li>
+      <li><i class="fas fa-check"></i>Financeiro e Fluxo de Caixa</li>
+      <li><i class="fas fa-check"></i>Boletim de Medição</li>
+      <li><i class="fas fa-check"></i>Orçamentos e Propostas</li>
+      <li><i class="fas fa-check"></i>Controle de Estoque e Compras</li>
+      <li><i class="fas fa-check"></i>CRM e Gestão de Clientes</li>
+      <li><i class="fas fa-check"></i>Documentos e Relatórios</li>
     </ul>
   </div>
   <div class="login-right">
@@ -53,7 +64,7 @@
     <p class="sub">Acesse sua conta para continuar.</p>
 
     {% if form.errors %}
-    <div class="error-msg">⚠️ Usuário ou senha incorretos. Tente novamente.</div>
+    <div class="error-msg"><i class="fas fa-triangle-exclamation"></i>Usuário ou senha incorretos. Tente novamente.</div>
     {% endif %}
 
     {% if next and 'bloqueado' not in next %}{% endif %}
@@ -69,7 +80,7 @@
         <label>Senha</label>
         <input type="password" name="password" autocomplete="current-password" placeholder="••••••••">
       </div>
-      <button type="submit" class="btn-login">🔐 Entrar</button>
+      <button type="submit" class="btn-login"><i class="fas fa-lock"></i>Entrar</button>
     </form>
 
     <hr class="divider">
