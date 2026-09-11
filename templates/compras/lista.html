@@ -10,10 +10,22 @@
 <a href="{% url 'core:dashboard' %}" class="btn btn-secondary btn-sm btn-voltar">← Voltar</a>
 
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px">
-  <div class="kpi-card kpi-blue"><div class="kpi-label">🛒 Total de Pedidos</div><div class="kpi-value">{{ total_pedidos }}</div></div>
-  <div class="kpi-card kpi-green"><div class="kpi-label"><i class="fas fa-sack-dollar"></i> Valor Total</div><div class="kpi-value moeda">{{ total_valor|moeda }}</div></div>
-  <div class="kpi-card kpi-yellow"><div class="kpi-label"><i class="fas fa-clipboard-list"></i> Em Aberto</div><div class="kpi-value">{{ em_aberto }}</div></div>
-  <div class="kpi-card kpi-red"><div class="kpi-label"><i class="fas fa-xmark"></i> Canceladas</div><div class="kpi-value">{{ canceladas }}</div></div>
+  <div class="kpi-card kpi-blue">
+    <div class="kpi-icon blue"><i class="fas fa-cart-shopping"></i></div>
+    <div class="kpi-label">Total de Pedidos</div><div class="kpi-value">{{ total_pedidos }}</div>
+  </div>
+  <div class="kpi-card kpi-green">
+    <div class="kpi-icon green"><i class="fas fa-sack-dollar"></i></div>
+    <div class="kpi-label">Valor Total</div><div class="kpi-value moeda">{{ total_valor|moeda }}</div>
+  </div>
+  <div class="kpi-card kpi-yellow">
+    <div class="kpi-icon orange"><i class="fas fa-clipboard-list"></i></div>
+    <div class="kpi-label">Em Aberto</div><div class="kpi-value">{{ em_aberto }}</div>
+  </div>
+  <div class="kpi-card kpi-red">
+    <div class="kpi-icon red"><i class="fas fa-xmark"></i></div>
+    <div class="kpi-label">Canceladas</div><div class="kpi-value">{{ canceladas }}</div>
+  </div>
 </div>
 
 <div class="bk-card">

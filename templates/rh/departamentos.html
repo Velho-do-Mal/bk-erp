@@ -10,7 +10,7 @@
       <h1 class="content-title"><i class="fas fa-building"></i> Departamentos</h1>
       <p class="content-subtitle">Gerencie a estrutura organizacional da empresa</p>
     </div>
-    <button class="btn btn-primary" onclick="abrirModal()">+ Novo Departamento</button>
+    <button class="btn btn-primary" onclick="abrirModal()"><i class="fas fa-plus"></i> Novo Departamento</button>
   </div>
 </div>
 
@@ -19,26 +19,30 @@
   <nav style="display:flex;gap:8px;flex-wrap:wrap">
     <a href="{% url 'rh:colaboradores' %}" class="btn btn-sm btn-secondary"><i class="fas fa-users"></i> Colaboradores</a>
     <a href="{% url 'rh:departamentos' %}" class="btn btn-sm btn-primary"><i class="fas fa-building"></i> Departamentos</a>
-    <a href="{% url 'rh:cargos' %}" class="btn btn-sm btn-secondary">🪪 Cargos</a>
-    <a href="{% url 'rh:ferias' %}" class="btn btn-sm btn-secondary">🏖️ Férias</a>
+    <a href="{% url 'rh:cargos' %}" class="btn btn-sm btn-secondary"><i class="fas fa-id-badge"></i> Cargos</a>
+    <a href="{% url 'rh:ferias' %}" class="btn btn-sm btn-secondary"><i class="fas fa-umbrella-beach"></i> Férias</a>
   </nav>
 </div>
 
 <!-- KPIs -->
 <div class="kpi-grid" style="margin-bottom:20px">
   <div class="kpi-card kpi-blue">
+    <div class="kpi-icon blue"><i class="fas fa-building"></i></div>
     <div style="font-size:2rem;font-weight:700">{{ total_departamentos }}</div>
     <div style="font-size:0.85rem;opacity:0.8">Total</div>
   </div>
   <div class="kpi-card kpi-green">
+    <div class="kpi-icon green"><i class="fas fa-check"></i></div>
     <div style="font-size:2rem;font-weight:700">{{ total_ativos }}</div>
     <div style="font-size:0.85rem;opacity:0.8">Ativos</div>
   </div>
   <div class="kpi-card kpi-blue">
+    <div class="kpi-icon blue"><i class="fas fa-id-badge"></i></div>
     <div style="font-size:2rem;font-weight:700">{{ total_cargos }}</div>
     <div style="font-size:0.85rem;opacity:0.8">Cargos vinculados</div>
   </div>
-  <div class="kpi-card" style="background:#f59e0b;color:#fff">
+  <div class="kpi-card kpi-orange">
+    <div class="kpi-icon orange"><i class="fas fa-users"></i></div>
     <div style="font-size:2rem;font-weight:700">{{ total_colaboradores }}</div>
     <div style="font-size:0.85rem;opacity:0.8">Colaboradores</div>
   </div>
