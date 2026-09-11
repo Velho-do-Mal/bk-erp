@@ -373,8 +373,9 @@
     {% endif %}
 
     {% if tap.alteracoesEscopo %}
+    <div class="table-container" style="border:none;border-radius:0;box-shadow:none">
     <div class="table-wrap">
-      <table>
+      <table class="data-table">
         <thead><tr><th>Data</th><th>Descrição</th></tr></thead>
         <tbody>
           {% for alt in tap.alteracoesEscopo %}
@@ -385,6 +386,7 @@
           {% endfor %}
         </tbody>
       </table>
+    </div>
     </div>
     {% elif not is_admin %}
     <div class="readonly-field">—</div>
@@ -2009,7 +2011,7 @@ function renderRiscos() {
   if (!riscos.length) {
     div.innerHTML = '<div style="text-align:center;padding:30px;color:#6b7280">Nenhum risco registrado.</div>';
   } else {
-    div.innerHTML = `<div class="table-wrap"><table>
+    div.innerHTML = `<div class="table-container" style="border:none;border-radius:0;box-shadow:none"><div class="table-wrap"><table class="data-table">
       <thead><tr><th>#</th><th>Descrição</th><th>Categoria</th><th>Probabilidade</th><th>Impacto</th><th>Classificação</th><th>Resposta</th><th>Responsável</th>${IS_ADMIN?'<th></th>':''}</tr></thead>
       <tbody>${riscos.map((r,i)=>{
         const cl=classeRisco(r.probabilidade,r.impacto);
@@ -2022,9 +2024,9 @@ function renderRiscos() {
           <td><span style="background:${RISCO_CORES[cl]};color:#fff;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700">${cl}</span></td>
           <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis">${escHtml(r.resposta||'—')}</td>
           <td>${escHtml(r.responsavel||'—')}</td>
-          ${IS_ADMIN?`<td><button onclick="editRisco(${i})" style="background:none;border:none;color:#3B82F6;cursor:pointer">✏️</button> <button onclick="removeRisco(${i})" style="background:none;border:none;color:#EF4444;cursor:pointer">✕</button></td>`:''}
+          ${IS_ADMIN?`<td><button onclick="editRisco(${i})" style="background:none;border:none;color:#3B82F6;cursor:pointer"><i class="fas fa-pen"></i></button> <button onclick="removeRisco(${i})" style="background:none;border:none;color:#EF4444;cursor:pointer"><i class="fas fa-xmark"></i></button></td>`:''}
         </tr>`}).join('')}
-      </tbody></table></div>`;
+      </tbody></table></div></div>`;
   }
 
   // Matriz 5x5
@@ -2189,7 +2191,7 @@ function renderFinanceiro() {
     <div class="kpi-card" style="border-left:3px solid #3B82F6"><div class="kpi-label">Saldo</div><div class="kpi-value moeda" style="color:${saldo>=0?'#10B981':'#EF4444'}">${fmtBRL(saldo)}</div></div>
   `;
 
-  ld.innerHTML = `<table class="table" style="font-size:12px">
+  ld.innerHTML = `<table class="data-table" style="font-size:12px">
     <thead><tr><th>Tipo</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Dt Prevista</th><th>Dt Realizada</th><th>Status</th><th>Recorrência</th>${IS_ADMIN?'<th></th>':''}</tr></thead>
     <tbody>${finances.map((f,i) => {
       const st = f.realizado ? '<span style="color:#10B981;font-weight:600">Realizado</span>' : '<span style="color:#F59E0B">Pendente</span>';
@@ -2372,7 +2374,7 @@ function renderFinanceiroAnalise() {
       <td style="text-align:right;color:${totDiff>=0?'#10B981':'#EF4444'}">${fmtBRL(totDiff)}</td>
       <td style="text-align:right">${fmtBRL(pa)}</td><td style="text-align:right">${fmtBRL(ra)}</td>
     </tr>`;
-    tabelaDiv.innerHTML = `<table class="table" style="font-size:12px">
+    tabelaDiv.innerHTML = `<table class="data-table" style="font-size:12px">
       <thead><tr><th>Mês</th><th style="text-align:right">Planejado</th><th style="text-align:right">Realizado</th>
       <th style="text-align:right">Diferença</th><th style="text-align:right">Acum. Plan.</th><th style="text-align:right">Acum. Real.</th></tr></thead>
       <tbody>${rows}</tbody></table>`;
@@ -2419,7 +2421,7 @@ function renderKPIs() {
     return;
   }
 
-  ld.innerHTML = `<table class="table" style="font-size:12px">
+  ld.innerHTML = `<table class="data-table" style="font-size:12px">
     <thead><tr><th>Nome</th><th>Unidade</th><th>Mês</th><th style="text-align:right">Previsto</th><th style="text-align:right">Realizado</th><th style="text-align:right">Diferença</th>${IS_ADMIN?'<th></th>':''}</tr></thead>
     <tbody>${kpis.map((k,i) => {
       const diff = (parseFloat(k.realizado||0) - parseFloat(k.previsto||0)).toFixed(2);
@@ -2522,7 +2524,7 @@ function renderPlanoAcao() {
   const statusColor = s => s==='concluido'?'#10B981':s==='em_andamento'?'#3B82F6':s==='cancelado'?'#6b7280':'#F59E0B';
   const statusLabel = s => s==='concluido'?'Concluído':s==='em_andamento'?'Em andamento':s==='cancelado'?'Cancelado':'Pendente';
 
-  ld.innerHTML = `<table class="table" style="font-size:12px">
+  ld.innerHTML = `<table class="data-table" style="font-size:12px">
     <thead><tr><th>Ação</th><th>Responsável</th><th>Status</th><th>Prazo</th><th>Risco Relacionado</th>${IS_ADMIN?'<th></th>':''}</tr></thead>
     <tbody>${actionPlan.map((a,i) => `<tr>
       <td>${escHtml(a.descricao||'')}</td>
