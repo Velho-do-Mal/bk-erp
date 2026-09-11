@@ -214,34 +214,34 @@
 <!-- STATUS BAR -->
 <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center;">
   {% if projeto.encerrado %}
-  <span class="badge badge-gray">⚫ Encerrado</span>
+  <span class="badge badge-gray"><i class="fas fa-circle" style="color:#6b7280;font-size:9px;vertical-align:middle"></i> Encerrado</span>
   {% else %}
-  <span class="badge badge-green">🟢 Ativo</span>
+  <span class="badge badge-green"><i class="fas fa-circle" style="color:#16a34a;font-size:9px;vertical-align:middle"></i> Ativo</span>
   {% endif %}
   {% if projeto.data_inicio %}
   <span style="color:#6b7280;font-size:13px;"><i class="fas fa-calendar-days"></i> Início: {{ projeto.data_inicio|date:"d/m/Y" }}</span>
   {% endif %}
   {% if projeto.data_conclusao %}
-  <span style="color:#6b7280;font-size:13px;">🏁 Conclusão: {{ projeto.data_conclusao|date:"d/m/Y" }}</span>
+  <span style="color:#6b7280;font-size:13px;"><i class="fas fa-flag-checkered"></i> Conclusão: {{ projeto.data_conclusao|date:"d/m/Y" }}</span>
   {% endif %}
   {% if projeto.patrocinador %}
-  <span style="color:#6b7280;font-size:13px;">💼 {{ projeto.patrocinador }}</span>
+  <span style="color:#6b7280;font-size:13px;"><i class="fas fa-briefcase"></i> {{ projeto.patrocinador }}</span>
   {% endif %}
 </div>
 
 <!-- ABAS -->
 <div class="tabs" id="proj-tabs">
-  <button class="tab-btn active" data-group="proj" data-tab="tab-tap">📜 TAP & Requisitos</button>
+  <button class="tab-btn active" data-group="proj" data-tab="tab-tap"><i class="fas fa-scroll"></i> TAP & Requisitos</button>
   <button class="tab-btn" data-group="proj" data-tab="tab-eap"><i class="fas fa-box"></i> EAP / Curva S Trabalho</button>
   <button class="tab-btn" data-group="proj" data-tab="tab-gantt"><i class="fas fa-chart-column"></i> Gantt</button>
     <button class="tab-btn" data-group="proj" data-tab="tab-fin-analise"><i class="fas fa-arrow-trend-up"></i> Financeiro (Análise)</button>
-  <button class="tab-btn" data-group="proj" data-tab="tab-movimentacao">💸 Movimenta&#231;&#227;o Financeira</button>
+  <button class="tab-btn" data-group="proj" data-tab="tab-movimentacao"><i class="fas fa-money-bill-wave"></i> Movimenta&#231;&#227;o Financeira</button>
   <button class="tab-btn" data-group="proj" data-tab="tab-kpis"><i class="fas fa-chart-column"></i> Qualidade (KPIs)</button>
   <button class="tab-btn" data-group="proj" data-tab="tab-controle"><i class="fas fa-folder-tree"></i> Controle de Projetos</button>
   <button class="tab-btn" data-group="proj" data-tab="tab-riscos"><i class="fas fa-triangle-exclamation"></i> Riscos</button>
 
   <button class="tab-btn" data-group="proj" data-tab="tab-plano-acao"><i class="fas fa-thumbtack"></i> Plano de Ação</button>
-  <button class="tab-btn" data-group="proj" data-tab="tab-encerramento">🏁 Encerramento</button>
+  <button class="tab-btn" data-group="proj" data-tab="tab-encerramento"><i class="fas fa-flag-checkered"></i> Encerramento</button>
 </div>
 {% if is_admin %}
 <div style="margin-bottom:16px;text-align:right;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
@@ -737,7 +737,7 @@
         {% if is_admin %}
         <select id="enc-resultado" class="form-control">
           <option value="">— Selecione —</option>
-          <option value="sucesso"><i class="fas fa-check"></i> Sucesso</option>
+          <option value="sucesso">Sucesso</option>
           <option value="parcial">🟡 Sucesso Parcial</option>
           <option value="cancelado">🔴 Cancelado</option>
         </select>
@@ -758,7 +758,7 @@
       {% endif %}
     </div>
     <div class="card">
-      <h3 style="font-size:14px;font-weight:700;margin-bottom:16px;color:var(--bk-green)">📚 Lições Aprendidas</h3>
+      <h3 style="font-size:14px;font-weight:700;margin-bottom:16px;color:var(--bk-green)"><i class="fas fa-book"></i> Lições Aprendidas</h3>
       {% if is_admin %}
       <button class="btn btn-secondary btn-sm" style="margin-bottom:12px" onclick="addLicao()">+ Lição</button>
       {% endif %}

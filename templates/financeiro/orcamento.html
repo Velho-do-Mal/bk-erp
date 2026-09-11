@@ -54,11 +54,11 @@
 <!-- ── Orçamento Previsto (Editável) ─────────────────────── -->
 <div class="bk-card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <div class="section-title" style="margin:0">📝 Orçamento Previsto — {{ ano }} <small style="font-weight:400;color:#64748b;font-size:12px">(edite e saia do campo para salvar)</small></div>
+        <div class="section-title" style="margin:0"><i class="fas fa-note-sticky"></i> Orçamento Previsto — {{ ano }} <small style="font-weight:400;color:#64748b;font-size:12px">(edite e saia do campo para salvar)</small></div>
         <span id="save-badge">✓ Salvo</span>
     </div>
 
-    <div class="header-row" style="background:#ecfdf5;color:#065f46">🟢 ENTRADAS</div>
+    <div class="header-row" style="background:#ecfdf5;color:#065f46"><i class="fas fa-circle" style="color:#16a34a;font-size:9px;vertical-align:middle"></i> ENTRADAS</div>
     <div style="overflow-x:auto">
         <table class="excel-table" id="tbl-prev-entrada">
             <thead><tr>
@@ -83,7 +83,7 @@
         </table>
     </div>
 
-    <div class="header-row" style="background:#fef2f2;color:#991b1b;margin-top:8px">🔴 SAÍDAS</div>
+    <div class="header-row" style="background:#fef2f2;color:#991b1b;margin-top:8px"><i class="fas fa-circle" style="color:#dc2626;font-size:9px;vertical-align:middle"></i> SAÍDAS</div>
     <div style="overflow-x:auto">
         <table class="excel-table" id="tbl-prev-saida">
             <thead><tr>
@@ -113,7 +113,7 @@
 <div class="bk-card" style="margin-top:24px">
     <div class="section-title"><i class="fas fa-chart-column"></i> Resultados Reais — {{ ano }}</div>
 
-    <div class="header-row" style="background:#f0fdf4;color:#166534">🟢 ENTRADAS REAIS</div>
+    <div class="header-row" style="background:#f0fdf4;color:#166534"><i class="fas fa-circle" style="color:#16a34a;font-size:9px;vertical-align:middle"></i> ENTRADAS REAIS</div>
     <div style="overflow-x:auto">
         <table class="excel-table" id="tbl-real-entrada">
             <thead><tr>
@@ -136,7 +136,7 @@
         </table>
     </div>
 
-    <div class="header-row" style="background:#fff1f2;color:#9f1239;margin-top:8px">🔴 SAÍDAS REAIS</div>
+    <div class="header-row" style="background:#fff1f2;color:#9f1239;margin-top:8px"><i class="fas fa-circle" style="color:#dc2626;font-size:9px;vertical-align:middle"></i> SAÍDAS REAIS</div>
     <div style="overflow-x:auto">
         <table class="excel-table" id="tbl-real-saida">
             <thead><tr>
@@ -169,7 +169,7 @@
         </span>
     </div>
 
-    <div class="header-row" style="background:#f0f9ff;color:#0369a1">🟢 ENTRADAS — Variação</div>
+    <div class="header-row" style="background:#f0f9ff;color:#0369a1"><i class="fas fa-circle" style="color:#16a34a;font-size:9px;vertical-align:middle"></i> ENTRADAS — Variação</div>
     <div style="overflow-x:auto">
         <table class="excel-table">
             <thead><tr>
@@ -182,7 +182,7 @@
         </table>
     </div>
 
-    <div class="header-row" style="background:#fdf4ff;color:#7e22ce;margin-top:8px">🔴 SAÍDAS — Variação</div>
+    <div class="header-row" style="background:#fdf4ff;color:#7e22ce;margin-top:8px"><i class="fas fa-circle" style="color:#dc2626;font-size:9px;vertical-align:middle"></i> SAÍDAS — Variação</div>
     <div style="overflow-x:auto">
         <table class="excel-table">
             <thead><tr>

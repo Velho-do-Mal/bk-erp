@@ -60,13 +60,13 @@
       <div><label class="form-label">Entrega Real</label><input id="m-entrega-r" class="form-control" type="date"></div>
       <div><label class="form-label">Status</label>
         <select id="m-status" class="form-control">
-          <option value="aberta"><i class="fas fa-clipboard-list"></i> Aberta</option>
+          <option value="aberta">Aberta</option>
           <option value="aprovacao">⏳ Aguardando Aprovação</option>
-          <option value="aprovada"><i class="fas fa-check"></i> Aprovada</option>
+          <option value="aprovada">Aprovada</option>
           <option value="entregue">📦 Entregue</option>
-          <option value="recebida"><i class="fas fa-check"></i> Recebida</option>
-          <option value="encerrada"><i class="fas fa-lock"></i> Encerrada</option>
-          <option value="cancelada"><i class="fas fa-xmark"></i> Cancelada</option>
+          <option value="recebida">Recebida</option>
+          <option value="encerrada">Encerrada</option>
+          <option value="cancelada">Cancelada</option>
         </select>
       </div>
       <div style="grid-column:2/-1"><label class="form-label">Observações</label><input id="m-obs" class="form-control"></div>
@@ -75,7 +75,7 @@
     <!-- Itens do Pedido -->
     <div style="margin-top:20px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <h4 style="margin:0;font-size:13px;color:#1e40af">📝 Itens do Pedido</h4>
+        <h4 style="margin:0;font-size:13px;color:#1e40af"><i class="fas fa-note-sticky"></i> Itens do Pedido</h4>
         <button type="button" class="btn-sm primary" onclick="addItem()"><i class="fas fa-plus"></i> Adicionar Item</button>
       </div>
       <div class="excel-grid-wrap">

@@ -39,7 +39,7 @@
         <div><label class="form-label">Projeto (nome livre)</label><input name="projeto_nome" class="form-control" placeholder="Ex: SE Sertão 230kV"></div>
         <div style="grid-column:1/-1"><label class="form-label">Observações</label><textarea name="observacoes" class="form-control" rows="2"></textarea></div>
         <div><label class="form-label"><i class="fas fa-calendar-days"></i> Validade <span style="color:#94a3b8;font-size:11px">(deixe em branco se não vence)</span></label><input type="date" name="data_validade" class="form-control"></div>
-        <div style="grid-column:2/-1"><label class="form-label">📎 Arquivo *</label><input type="file" name="arquivo" class="form-control" required></div>
+        <div style="grid-column:2/-1"><label class="form-label"><i class="fas fa-paperclip"></i> Arquivo *</label><input type="file" name="arquivo" class="form-control" required></div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" onclick="document.getElementById('upload-panel').classList.remove('open')"><i class="fas fa-xmark"></i> Cancelar</button>
@@ -97,7 +97,7 @@
     <form id="versao-form" enctype="multipart/form-data" onsubmit="enviarNovaVersao(event)">
       <input type="hidden" id="versao-id">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div style="grid-column:1/-1"><label class="form-label">📎 Novo Arquivo *</label><input type="file" name="arquivo" class="form-control" required></div>
+        <div style="grid-column:1/-1"><label class="form-label"><i class="fas fa-paperclip"></i> Novo Arquivo *</label><input type="file" name="arquivo" class="form-control" required></div>
         <div><label class="form-label"><i class="fas fa-calendar-days"></i> Validade <span style="color:#94a3b8;font-size:11px">(deixe em branco pra manter a validade anterior)</span></label><input type="date" name="data_validade" class="form-control"></div>
         <div><label class="form-label">Observações da revisão</label><input name="observacoes" class="form-control" placeholder="Ex: revisão trimestral"></div>
       </div>
@@ -113,7 +113,7 @@
 <div class="modal-overlay" id="historico-panel">
   <div class="modal-box modal-box-lg">
     <button class="modal-close-x" onclick="document.getElementById('historico-panel').classList.remove('open')">✕</button>
-    <div class="modal-title">🕓 Histórico de Versões</div>
+    <div class="modal-title"><i class="fas fa-clock-rotate-left"></i> Histórico de Versões</div>
     <div id="historico-lista" style="max-height:400px;overflow-y:auto"></div>
   </div>
 </div>

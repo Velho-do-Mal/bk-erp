@@ -12,9 +12,9 @@
       <label class="form-label" style="font-size:11px">Situação</label>
       <select name="status" class="form-control" style="width:160px">
         <option value="" {% if not status_f %}selected{% endif %}>Todas</option>
-        <option value="atrasado" {% if status_f == 'atrasado' %}selected{% endif %}><i class="fas fa-triangle-exclamation"></i> Atrasadas</option>
-        <option value="hoje" {% if status_f == 'hoje' %}selected{% endif %}><i class="fas fa-bell"></i> Vencem Hoje</option>
-        <option value="futuro" {% if status_f == 'futuro' %}selected{% endif %}><i class="fas fa-calendar-days"></i> Futuras</option>
+        <option value="atrasado" {% if status_f == 'atrasado' %}selected{% endif %}>Atrasadas</option>
+        <option value="hoje" {% if status_f == 'hoje' %}selected{% endif %}>Vencem Hoje</option>
+        <option value="futuro" {% if status_f == 'futuro' %}selected{% endif %}>Futuras</option>
       </select>
     </div>
     <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-magnifying-glass"></i> Filtrar</button>

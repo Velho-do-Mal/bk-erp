@@ -18,8 +18,8 @@
       <label class="form-label" style="font-size:11px">Tipo</label>
       <select name="tipo" class="filter-select">
         <option value="">Todos</option>
-        <option value="entrada" {% if tipo_f == 'entrada' %}selected{% endif %}><i class="fas fa-download"></i> Entrada</option>
-        <option value="saida"   {% if tipo_f == 'saida'   %}selected{% endif %}><i class="fas fa-upload"></i> Saída</option>
+        <option value="entrada" {% if tipo_f == 'entrada' %}selected{% endif %}>Entrada</option>
+        <option value="saida"   {% if tipo_f == 'saida'   %}selected{% endif %}>Saída</option>
       </select>
     </div>
     <div>
@@ -27,7 +27,7 @@
       <select name="status" class="filter-select">
         <option value="">Todos</option>
         <option value="pendente"  {% if status_f == 'pendente'  %}selected{% endif %}>⏳ Pendente</option>
-        <option value="realizado" {% if status_f == 'realizado' %}selected{% endif %}><i class="fas fa-check"></i> Realizado</option>
+        <option value="realizado" {% if status_f == 'realizado' %}selected{% endif %}>Realizado</option>
       </select>
     </div>
     <div>
@@ -39,7 +39,7 @@
       <input type="date" name="data_fim" class="form-control" style="width:150px" value="{{ fim_f }}">
     </div>
     <div>
-      <label class="form-label" style="font-size:11px">📆 Mês rápido</label>
+      <label class="form-label" style="font-size:11px"><i class="fas fa-calendar-days"></i> Mês rápido</label>
       <input type="month" name="mes" class="form-control" style="width:150px" value="{{ mes_f }}">
     </div>
     <button type="submit" class="btn btn-primary"><i class="fas fa-magnifying-glass"></i> Filtrar</button>
@@ -78,8 +78,8 @@
         <div>
           <label class="form-label">Tipo *</label>
           <select id="m-tipo" name="tipo" class="form-control">
-            <option value="saida"><i class="fas fa-upload"></i> Saída</option>
-            <option value="entrada"><i class="fas fa-download"></i> Entrada</option>
+            <option value="saida">Saída</option>
+            <option value="entrada">Entrada</option>
           </select>
         </div>
         <div>
@@ -102,7 +102,7 @@
           <label class="form-label">Status</label>
           <select id="m-status" name="status" class="form-control" onchange="toggleValorPago()">
             <option value="pendente">⏳ Pendente</option>
-            <option value="realizado"><i class="fas fa-check"></i> Realizado</option>
+            <option value="realizado">Realizado</option>
           </select>
         </div>
         <div id="wrap-valor-pago" style="display:none">
@@ -161,7 +161,7 @@
           <textarea id="m-obs" name="observacoes" class="form-control" rows="2"></textarea>
         </div>
         <div style="grid-column:1/-1">
-          <label class="form-label">📎 Anexo (NF, boleto, contrato…)</label>
+          <label class="form-label"><i class="fas fa-paperclip"></i> Anexo (NF, boleto, contrato…)</label>
           <input type="file" id="m-anexo" name="anexo" class="form-control">
           <div id="m-anexo-atual" style="font-size:12px;color:#6b7280;margin-top:4px"></div>
         </div>
@@ -182,15 +182,15 @@
     <div id="del-rec-desc" style="font-size:13px;color:#374151;margin-bottom:16px;line-height:1.6"></div>
     <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:8px">
       <button class="btn" style="background:#334155;color:#f1f5f9;text-align:left;padding:12px 16px;border-radius:8px;border:1px solid #475569" onclick="executarDelete('somente_esta')">
-        <div style="font-weight:600">🔹 Excluir somente esta</div>
+        <div style="font-weight:600"><i class="fas fa-circle"></i> Excluir somente esta</div>
         <div style="font-size:11px;color:#6b7280;margin-top:3px">Remove apenas este lançamento</div>
       </button>
       <button class="btn" style="background:#422006;color:#fed7aa;text-align:left;padding:12px 16px;border-radius:8px;border:1px solid #92400e" onclick="executarDelete('proximas')">
-        <div style="font-weight:600">🔶 Excluir esta e as próximas</div>
+        <div style="font-weight:600"><i class="fas fa-diamond"></i> Excluir esta e as próximas</div>
         <div style="font-size:11px;color:#fdba74;margin-top:3px">Remove este e todos os futuros do grupo</div>
       </button>
       <button class="btn" style="background:#450a0a;color:#fca5a5;text-align:left;padding:12px 16px;border-radius:8px;border:1px solid #991b1b" onclick="executarDelete('todas')">
-        <div style="font-weight:600">🔴 Excluir todas (passadas e futuras)</div>
+        <div style="font-weight:600"><i class="fas fa-circle" style="color:#dc2626;font-size:9px;vertical-align:middle"></i> Excluir todas (passadas e futuras)</div>
         <div style="font-size:11px;color:#fca5a5;margin-top:3px">Remove todos os lançamentos do grupo</div>
       </button>
     </div>

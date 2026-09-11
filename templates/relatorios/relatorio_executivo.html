@@ -185,11 +185,11 @@
                 <td>
                     {% if p.status != 'encerrado' and p.data_conclusao %}
                         {% if p.data_conclusao < today %}
-                            <span class="badge bg-red">🔴 Atrasado</span>
+                            <span class="badge bg-red"><i class="fas fa-circle" style="color:#dc2626;font-size:9px;vertical-align:middle"></i> Atrasado</span>
                         {% elif p.dias_para_conclusao <= 3 %}
-                            <span class="badge bg-orange">🟡 No Limite</span>
+                            <span class="badge bg-orange"><i class="fas fa-circle" style="color:#d97706;font-size:9px;vertical-align:middle"></i> No Limite</span>
                         {% else %}
-                            <span class="badge bg-green">🟢 No Prazo</span>
+                            <span class="badge bg-green"><i class="fas fa-circle" style="color:#16a34a;font-size:9px;vertical-align:middle"></i> No Prazo</span>
                         {% endif %}
                     {% else %}
                         <span style="color:#94a3b8">—</span>
