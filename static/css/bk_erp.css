@@ -318,6 +318,26 @@ tbody td { padding: 12px 14px; font-size: 13px; color: #111827; }
 .badge-purple    { background: #f1ebfd; color: #6d28d9; }
 .badge-purple::before { background: #8b5cf6; }
 
+/* Status de proposta (Vendas/Relatórios) — centralizado aqui porque
+   antes cada template redefinia essas cores no próprio <style>, correndo
+   o risco de um dia ficarem diferentes entre uma tela e outra. */
+.badge-rascunho::before, .badge-enviada::before, .badge-negociacao::before,
+.badge-aprovada::before, .badge-perdida::before, .badge-cancelada::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%; flex: none;
+}
+.badge-rascunho   { background: #f1f5f9; color: #475569; }
+.badge-rascunho::before { background: #94a3b8; }
+.badge-enviada    { background: #dbeafe; color: #1e40af; }
+.badge-enviada::before { background: #3b82f6; }
+.badge-negociacao { background: #fef3c7; color: #d97706; }
+.badge-negociacao::before { background: #d97706; }
+.badge-aprovada   { background: #dcfce7; color: #16a34a; }
+.badge-aprovada::before { background: #16a34a; }
+.badge-perdida    { background: #fee2e2; color: #ef4444; }
+.badge-perdida::before { background: #ef4444; }
+.badge-cancelada  { background: #f3f4f6; color: #9ca3af; }
+.badge-cancelada::before { background: #9ca3af; }
+
 /* ══════════════════════════════
    BOTÕES — sistema único (funciona em qualquer combinação de classes)
 ══════════════════════════════ */

@@ -35,26 +35,32 @@
 <!-- KPIs -->
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px">
   <div class="kpi-card">
+    <div class="kpi-icon blue"><i class="fas fa-address-book"></i></div>
     <div class="kpi-label">Total de Leads</div>
     <div class="kpi-value">{{ total_leads }}</div>
   </div>
   <div class="kpi-card kpi-blue">
+    <div class="kpi-icon blue"><i class="fas fa-filter"></i></div>
     <div class="kpi-label">Valor Total do Pipeline</div>
     <div class="kpi-value moeda" style="color:#1e40af">{{ total_valor|moeda }}</div>
   </div>
   <div class="kpi-card kpi-orange">
+    <div class="kpi-icon orange"><i class="fas fa-hourglass-half"></i></div>
     <div class="kpi-label">Pipeline em Aberto</div>
     <div class="kpi-value moeda" style="color:#d97706">{{ pipeline_aberto|moeda }}</div>
   </div>
   <div class="kpi-card kpi-green">
+    <div class="kpi-icon green"><i class="fas fa-trophy"></i></div>
     <div class="kpi-label">Ganhos (Fechamento)</div>
     <div class="kpi-value" style="color:#16a34a">{{ ganhos }}</div>
   </div>
   <div class="kpi-card kpi-red">
+    <div class="kpi-icon red"><i class="fas fa-circle-xmark"></i></div>
     <div class="kpi-label">Perdidos</div>
     <div class="kpi-value" style="color:#ef4444">{{ perdidos }}</div>
   </div>
   <div class="kpi-card">
+    <div class="kpi-icon purple"><i class="fas fa-percent"></i></div>
     <div class="kpi-label">Taxa de Conversão</div>
     <div class="kpi-value">{{ taxa_conversao }}%</div>
   </div>
@@ -66,8 +72,9 @@
     <div class="card-header" style="padding:12px 16px;font-weight:600;border-bottom:1px solid #e5e7eb">
       <i class="fas fa-bullseye"></i> Por Estágio
     </div>
+    <div class="table-container" style="border:none;border-radius:0;box-shadow:none">
     <div class="table-wrap">
-      <table>
+      <table class="data-table">
         <thead><tr><th>Estágio</th><th style="text-align:center">Qtd.</th><th style="text-align:right">Valor</th></tr></thead>
         <tbody>
           {% for r in por_estagio %}
@@ -82,14 +89,16 @@
         </tbody>
       </table>
     </div>
+    </div>
   </div>
 
   <div class="card" style="overflow:hidden">
     <div class="card-header" style="padding:12px 16px;font-weight:600;border-bottom:1px solid #e5e7eb">
-      🏷️ Por Categoria
+      <i class="fas fa-tag"></i> Por Categoria
     </div>
+    <div class="table-container" style="border:none;border-radius:0;box-shadow:none">
     <div class="table-wrap">
-      <table>
+      <table class="data-table">
         <thead><tr><th>Categoria</th><th style="text-align:center">Qtd.</th><th style="text-align:right">Valor</th></tr></thead>
         <tbody>
           {% for r in por_categoria %}
@@ -104,16 +113,18 @@
         </tbody>
       </table>
     </div>
+    </div>
   </div>
 </div>
 
 <!-- Lista -->
-<div class="card" style="overflow:hidden">
-  <div class="card-header" style="padding:12px 16px;font-weight:600;border-bottom:1px solid #e5e7eb">
+<div class="bk-card" style="padding:0;overflow:hidden">
+  <div style="padding:14px 18px;font-weight:600;border-bottom:1px solid #e5e7eb;font-size:14px">
     <i class="fas fa-bullseye"></i> Leads / CRM
   </div>
+  <div class="table-container" style="border:none;border-radius:0;box-shadow:none">
   <div class="table-wrap">
-    <table>
+    <table class="data-table">
       <thead>
         <tr>
           <th>Nome</th>
@@ -141,6 +152,7 @@
         {% endfor %}
       </tbody>
     </table>
+  </div>
   </div>
 </div>
 {% endblock %}

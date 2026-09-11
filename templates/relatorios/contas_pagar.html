@@ -25,30 +25,35 @@
 <!-- KPIs -->
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px">
   <div class="kpi-card kpi-red">
+    <div class="kpi-icon red"><i class="fas fa-triangle-exclamation"></i></div>
     <div class="kpi-label">Em Atraso</div>
     <div class="kpi-value moeda" style="color:#ef4444">{{ atrasado|moeda }}</div>
   </div>
   <div class="kpi-card kpi-orange">
+    <div class="kpi-icon orange"><i class="fas fa-bell"></i></div>
     <div class="kpi-label">Vence Hoje</div>
     <div class="kpi-value moeda" style="color:#d97706">{{ vence_hoje|moeda }}</div>
   </div>
   <div class="kpi-card kpi-blue">
+    <div class="kpi-icon blue"><i class="fas fa-calendar-days"></i></div>
     <div class="kpi-label">Futuras</div>
     <div class="kpi-value moeda" style="color:#1e40af">{{ futuro|moeda }}</div>
   </div>
   <div class="kpi-card">
+    <div class="kpi-icon teal"><i class="fas fa-file-invoice-dollar"></i></div>
     <div class="kpi-label">Total Pendente</div>
     <div class="kpi-value moeda">{{ total|moeda }}</div>
   </div>
 </div>
 
 <!-- Lista -->
-<div class="card" style="overflow:hidden">
-  <div class="card-header" style="padding:12px 16px;font-weight:600;border-bottom:1px solid #e5e7eb">
-    <i class="fas fa-upload"></i> Contas a Pagar Pendentes
+<div class="bk-card" style="padding:0;overflow:hidden">
+  <div style="padding:14px 18px;font-weight:600;border-bottom:1px solid #e5e7eb;font-size:14px">
+    <i class="fas fa-file-invoice"></i> Contas a Pagar Pendentes
   </div>
+  <div class="table-container" style="border:none;border-radius:0;box-shadow:none">
   <div class="table-wrap">
-    <table>
+    <table class="data-table">
       <thead>
         <tr>
           <th>Vencimento</th>
@@ -86,6 +91,7 @@
         {% endfor %}
       </tbody>
     </table>
+  </div>
   </div>
 </div>
 {% endblock %}

@@ -7,10 +7,12 @@
 
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:20px">
   <div class="kpi-card kpi-red">
+    <div class="kpi-icon red"><i class="fas fa-triangle-exclamation"></i></div>
     <div class="kpi-label">Total em Atraso</div>
     <div class="kpi-value moeda" style="color:#ef4444">{{ total|moeda }}</div>
   </div>
   <div class="kpi-card kpi-orange">
+    <div class="kpi-icon orange"><i class="fas fa-file-invoice"></i></div>
     <div class="kpi-label">Qtd. Recebimentos</div>
     <div class="kpi-value" style="color:#d97706">{{ count }}</div>
   </div>
@@ -21,8 +23,9 @@
   <div class="card-header" style="padding:12px 16px;font-weight:600;border-bottom:1px solid #e5e7eb">
     <i class="fas fa-user"></i> Maiores Inadimplentes por Cliente
   </div>
+  <div class="table-container" style="border:none;border-radius:0;box-shadow:none">
   <div class="table-wrap">
-    <table>
+    <table class="data-table">
       <thead>
         <tr>
           <th>Cliente</th>
@@ -41,6 +44,7 @@
       </tbody>
     </table>
   </div>
+  </div>
 </div>
 {% endif %}
 
@@ -48,8 +52,9 @@
   <div class="card-header" style="padding:12px 16px;font-weight:600;border-bottom:1px solid #e5e7eb">
     <i class="fas fa-triangle-exclamation"></i> Recebimentos em Atraso — até {{ hoje|date:"d/m/Y" }}
   </div>
+  <div class="table-container" style="border:none;border-radius:0;box-shadow:none">
   <div class="table-wrap">
-    <table>
+    <table class="data-table">
       <thead>
         <tr>
           <th>Vencimento</th>
@@ -71,10 +76,11 @@
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="5" style="text-align:center;color:#6b7280;padding:32px">Nenhuma inadimplência. 🎉</td></tr>
+        <tr><td colspan="5" style="text-align:center;color:#6b7280;padding:32px"><i class="fas fa-circle-check" style="color:#16a34a;margin-right:6px"></i>Nenhuma inadimplência.</td></tr>
         {% endfor %}
       </tbody>
     </table>
+  </div>
   </div>
 </div>
 {% endblock %}
