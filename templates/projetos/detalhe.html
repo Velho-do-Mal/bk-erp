@@ -2237,7 +2237,7 @@ function renderCurvaSFinanceira() {
   Plotly.newPlot('fin-curva-s', [
     {x:labels, y:prevAcum, mode:'lines+markers', name:'Previsto', line:{color:'#0d47a1'}},
     {x:labels, y:realAcum, mode:'lines+markers', name:'Realizado', line:{color:'#10B981'}},
-  ], {template:'plotly_dark', margin:{t:30,b:40,l:60,r:20}, xaxis:{title:'Mês'}, yaxis:{title:'Valor (R$)'},
+  ], {template:'plotly_dark', margin:{t:30,b:40,l:60,r:20}, xaxis:{title:'Mês', type:'category'}, yaxis:{title:'Valor (R$)'},
       paper_bgcolor:'transparent', plot_bgcolor:'transparent', font:{color:'#9CA3AF'}}, {responsive:true});
 }
 
@@ -2384,7 +2384,7 @@ function renderFinanceiroAnalise() {
     {x:allKeys, y:realV, type:'bar', name:'Realizado', marker:{color:'#EF4444', opacity:0.7}},
   ], {barmode:'group', template:'plotly_dark', margin:{t:20,b:40,l:60,r:20},
       paper_bgcolor:'transparent', plot_bgcolor:'transparent', font:{color:'#9CA3AF'},
-      xaxis:{title:'Mês'}, yaxis:{title:'Valor (R$)'}}, {responsive:true});
+      xaxis:{title:'Mês', type:'category'}, yaxis:{title:'Valor (R$)'}}, {responsive:true});
 
   // Gráfico linhas acumulado
   Plotly.newPlot('fin-analise-linhas', [
@@ -2392,7 +2392,7 @@ function renderFinanceiroAnalise() {
     {x:allKeys, y:realAcum, mode:'lines+markers', name:'Realizado Acum.', line:{color:'#EF4444', width:2.5}},
   ], {template:'plotly_dark', margin:{t:20,b:40,l:60,r:20},
       paper_bgcolor:'transparent', plot_bgcolor:'transparent', font:{color:'#9CA3AF'},
-      xaxis:{title:'Mês'}, yaxis:{title:'Valor Acumulado (R$)'}}, {responsive:true});
+      xaxis:{title:'Mês', type:'category'}, yaxis:{title:'Valor Acumulado (R$)'}}, {responsive:true});
 
   // Gráfico diferença
   const diffColors = diffV.map(d => d >= 0 ? '#10B981' : '#EF4444');
@@ -2400,7 +2400,7 @@ function renderFinanceiroAnalise() {
     {x:allKeys, y:diffV, type:'bar', marker:{color:diffColors}, name:'Diferença'},
   ], {template:'plotly_dark', margin:{t:20,b:40,l:60,r:20},
       paper_bgcolor:'transparent', plot_bgcolor:'transparent', font:{color:'#9CA3AF'},
-      xaxis:{title:'Mês'}, yaxis:{title:'Diferença (R$)'},
+      xaxis:{title:'Mês', type:'category'}, yaxis:{title:'Diferença (R$)'},
       shapes:[{type:'line', x0:allKeys[0], x1:allKeys[allKeys.length-1], y0:0, y1:0, line:{color:'#6B7280', dash:'dash', width:1}}]
   }, {responsive:true});
 }
