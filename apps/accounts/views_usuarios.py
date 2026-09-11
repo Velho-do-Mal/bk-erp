@@ -35,6 +35,18 @@ def usuarios(request):
             ativo   = data.get('ativo', True)
             uid     = data.get('id')
             modulos_raw = data.get('modulos_permitidos') or []
+
+            # Só um superadmin da plataforma pode atribuir (ou manter) o
+            # perfil 'superadmin'. Sem esta checagem, um admin de empresa
+            # comum conseguia se autopromover (ou promover qualquer usuário)
+            # a superadmin por este endpoint — e perfil='superadmin' dá
+            # acesso cross-empresa a todo o sistema via TenantMiddleware,
+            # independente do campo `empresa` do usuário. Ver
+            # apps/saas/middleware.py (TenantMiddleware) para o porquê.
+            if perfil not in dict(User.PERFIL_CHOICES):
+                perfil = 'cliente'
+            if perfil == 'superadmin' and not request.user.is_superadmin:
+                return JsonResponse({'ok': False, 'error': 'Apenas um super administrador pode atribuir este perfil.'})
             # Só valida/salva módulos para perfil 'cliente' — admin/superadmin
             # sempre têm acesso total (dentro do que a empresa contratou) e
             # não usam essa lista. Além de ser uma chave de módulo válida,
