@@ -4,7 +4,7 @@
 {% block page_sub %}Itens utilizados em Propostas e Controle de Documentos{% endblock %}
 
 {% block topbar_actions %}
-<a href="{% url 'servicos:exportar_servicos' %}" class="btn btn-secondary btn-sm" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;"><i class="fas fa-chart-column"></i> Exportar para Excel</a>
+<a href="{% url 'servicos:exportar_servicos' %}" class="btn btn-secondary btn-sm" style="background:#f0fdf4;color:#16a34a;border-color:#86efac;"><i class="fas fa-file-excel"></i> Exportar para Excel</a>
 <button class="btn btn-primary" onclick="abrirModal()"><i class="fas fa-plus"></i> Novo Item</button>
 {% endblock %}
 
@@ -12,13 +12,19 @@
 <a href="{% url 'core:dashboard' %}" class="btn btn-secondary btn-sm btn-voltar">← Voltar</a>
 
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px">
-  <div class="kpi-card kpi-blue"><div class="kpi-label">📦 Total Cadastros</div><div class="kpi-value">{{ total }}</div></div>
-  <div class="kpi-card kpi-green"><div class="kpi-label"><i class="fas fa-check"></i> Ativos</div><div class="kpi-value">{{ ativos }}</div></div>
+  <div class="kpi-card kpi-blue">
+    <div class="kpi-icon blue"><i class="fas fa-box"></i></div>
+    <div class="kpi-label">Total Cadastros</div><div class="kpi-value">{{ total }}</div>
+  </div>
+  <div class="kpi-card kpi-green">
+    <div class="kpi-icon green"><i class="fas fa-check"></i></div>
+    <div class="kpi-label">Ativos</div><div class="kpi-value">{{ ativos }}</div>
+  </div>
 </div>
 
 <div class="bk-card">
   <div class="table-toolbar">
-    <input id="busca" class="search-input" placeholder="🔍 Buscar por nome, código..." oninput="renderTabela()">
+    <input id="busca" class="search-input" placeholder="Buscar por nome, código..." oninput="renderTabela()">
     <select id="filtro-tipo" class="filter-select" onchange="renderTabela()">
       <option value="">Todos os tipos</option>
       <option value="servico">🔧 Serviço</option>

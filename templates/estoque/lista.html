@@ -14,19 +14,27 @@
 <a href="{% url 'core:dashboard' %}" class="btn btn-secondary btn-sm btn-voltar">← Voltar</a>
 
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px">
-  <div class="kpi-card kpi-blue"><div class="kpi-label">📦 Total de Itens</div><div class="kpi-value">{{ total_itens }}</div></div>
-  <div class="kpi-card kpi-green"><div class="kpi-label"><i class="fas fa-sack-dollar"></i> Total Investido</div><div class="kpi-value moeda">{{ total_investido|moeda }}</div></div>
+  <div class="kpi-card kpi-blue">
+    <div class="kpi-icon blue"><i class="fas fa-box"></i></div>
+    <div class="kpi-label">Total de Itens</div><div class="kpi-value">{{ total_itens }}</div>
+  </div>
+  <div class="kpi-card kpi-green">
+    <div class="kpi-icon green"><i class="fas fa-sack-dollar"></i></div>
+    <div class="kpi-label">Total Investido</div><div class="kpi-value moeda">{{ total_investido|moeda }}</div>
+  </div>
   <div class="kpi-card {% if itens_criticos > 0 %}kpi-red{% else %}kpi-green{% endif %}">
-    <div class="kpi-label"><i class="fas fa-triangle-exclamation"></i> Itens Críticos (saldo ≤ 0)</div><div class="kpi-value">{{ itens_criticos }}</div>
+    <div class="kpi-icon {% if itens_criticos > 0 %}red{% else %}green{% endif %}"><i class="fas fa-triangle-exclamation"></i></div>
+    <div class="kpi-label">Itens Críticos (saldo ≤ 0)</div><div class="kpi-value">{{ itens_criticos }}</div>
   </div>
   <div class="kpi-card {% if itens_estoque_baixo > 0 %}kpi-orange{% else %}kpi-green{% endif %}">
-    <div class="kpi-label"><i class="fas fa-bell"></i> Estoque Baixo (≤10% do comprado)</div><div class="kpi-value">{{ itens_estoque_baixo }}</div>
+    <div class="kpi-icon {% if itens_estoque_baixo > 0 %}orange{% else %}green{% endif %}"><i class="fas fa-bell"></i></div>
+    <div class="kpi-label">Estoque Baixo (≤10% do comprado)</div><div class="kpi-value">{{ itens_estoque_baixo }}</div>
   </div>
 </div>
 
 <div class="bk-card">
   <div style="font-size:12px;color:#6b7280;margin-bottom:12px">
-    💡 Edite a coluna <strong>Utilizado</strong> diretamente na tabela e clique em <strong><i class="fas fa-floppy-disk"></i> Salvar Utilizado</strong>. Itens marcados como <em>Recebido</em> em Compras entram automaticamente aqui, já classificados por Tipo.
+    <i class="fas fa-lightbulb"></i> Edite a coluna <strong>Utilizado</strong> diretamente na tabela e clique em <strong><i class="fas fa-floppy-disk"></i> Salvar Utilizado</strong>. Itens marcados como <em>Recebido</em> em Compras entram automaticamente aqui, já classificados por Tipo.
   </div>
   <div class="excel-grid-wrap">
     <table class="excel-grid">
