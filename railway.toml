@@ -2,7 +2,14 @@
 buildCommand = "pip install -r requirements.txt && python manage.py collectstatic --noinput"
 
 [deploy]
-startCommand = "python manage.py migrate --noinput && gunicorn bk_erp.wsgi:application --bind 0.0.0.0:$PORT"
+# --workers 3: antes rodava com o padrão do Gunicorn (1 worker) — uma
+# requisição lenta (relatório grande, export) travava todo mundo. 3 é um
+# ponto de partida conservador pro plano hobby/starter do Railway; dá pra
+# subir depois olhando uso de CPU/memória real.
+# --timeout 60: acima do padrão (30s) porque a geração de relatório
+# Word/Gantt em Projetos pode legitimamente passar de 30s num projeto grande.
+# createcachetable é idempotente (pula se a tabela já existe — ver settings.py).
+startCommand = "python manage.py migrate --noinput && python manage.py createcachetable && gunicorn bk_erp.wsgi:application --bind 0.0.0.0:$PORT --workers 3 --timeout 60"
 
 [[crons]]
 schedule = "0 7 * * *"

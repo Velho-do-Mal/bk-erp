@@ -31,7 +31,27 @@ if not SECRET_KEY:
         RuntimeWarning,
     )
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
+ALLOWED_HOSTS = os.environ.get(
+    'ALLOWED_HOSTS',
+    'bk-erp-production.up.railway.app,localhost,127.0.0.1'
+).split(',')
+
+# ── Segurança de transporte/cookies em produção ─────────────────────────────
+# Só ativa quando DEBUG=False (produção) — em dev local (HTTP puro, sem TLS)
+# essas flags quebrariam login/CSRF. O Railway termina o HTTPS no proxy dele
+# e repassa a requisição por HTTP internamente, por isso SECURE_PROXY_SSL_HEADER
+# é obrigatório: sem ele, o Django acha que toda requisição é HTTP e ou
+# recusa os cookies "Secure" ou entra em loop de redirect com SECURE_SSL_REDIRECT.
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    # HSTS: começa com um valor moderado (1 dia) em vez do 1 ano recomendado
+    # a longo prazo — o site já está em produção e HSTS é uma promessa que o
+    # navegador guarda em cache; melhor validar por um tempo antes de comprometer
+    # por 1 ano com include_subdomains/preload.
+    SECURE_HSTS_SECONDS = int(os.environ.get('SECURE_HSTS_SECONDS', str(60 * 60 * 24)))
 
 # Duração do período de trial gratuito no autocadastro (/cadastro/).
 # Ajustável por variável de ambiente sem precisar de deploy de código.
@@ -160,6 +180,20 @@ LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/login/'
 
 AUTH_USER_MODEL = 'accounts.User'
+
+# Cache compartilhado entre processos (tabela no próprio banco — não exige
+# Redis nem nenhum serviço novo). Sem isso, django_ratelimit usava o cache
+# padrão do Django (LocMemCache, por processo): com mais de 1 worker do
+# Gunicorn, cada worker teria seu próprio contador e o rate limit de
+# /cadastro/ ficaria, na prática, "limite × nº de workers". A tabela
+# 'django_cache' é criada por `python manage.py createcachetable` (ver
+# railway.toml — comando idempotente, seguro de rodar a cada deploy).
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'django_cache',
+    }
+}
 
 # Upload limits (logos e anexos)
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024   # 10 MB (JSON body)
