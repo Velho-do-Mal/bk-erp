@@ -136,15 +136,16 @@ def centros_custo(request):
 
 @login_required
 def exportar_clientes(request):
-    empresa = _empresa(request)
-    qs = Cliente.objects.filter(empresa=empresa).values('id', 'nome', 'documento', 'email', 'telefone', 'ativo')
+    qs = _qs_empresa(Cliente.objects, request).values('id', 'nome', 'documento', 'email', 'telefone', 'ativo')
     rows = [list(r.values()) for r in qs]
     return exportar_csv('clientes.csv', ['ID', 'Nome', 'Documento', 'E-mail', 'Telefone', 'Ativo'], rows)
 
 
 @login_required
 def exportar_fornecedores(request):
-    empresa = _empresa(request)
-    qs = Fornecedor.objects.filter(empresa=empresa).values('id', 'nome', 'cnpj', 'email', 'telefone', 'ativo')
+    # CORRIGIDO: .values(..., 'cnpj') — Fornecedor não tem esse campo (o
+    # campo real é 'documento'), então o Django lançava FieldError e a
+    # rota dava Erro 500 sempre que alguém clicava em "Exportar CSV".
+    qs = _qs_empresa(Fornecedor.objects, request).values('id', 'nome', 'documento', 'email', 'telefone', 'ativo')
     rows = [list(r.values()) for r in qs]
-    return exportar_csv('fornecedores.csv', ['ID', 'Nome', 'CNPJ', 'E-mail', 'Telefone', 'Ativo'], rows)
+    return exportar_csv('fornecedores.csv', ['ID', 'Nome', 'Documento', 'E-mail', 'Telefone', 'Ativo'], rows)
