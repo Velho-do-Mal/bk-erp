@@ -159,6 +159,7 @@ def lista(request):
                 if _qs_empresa(Transacao.objects, request).filter(referencia=ref).exists():
                     return JsonResponse({'ok': False, 'msg': 'Já existe lançamento para este pedido.'})
                 t = Transacao.objects.create(
+                    empresa=po.empresa,
                     descricao=f"Pedido de Compra {po.codigo}",
                     tipo='saida',
                     valor=po.valor_total,
