@@ -7,7 +7,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.db.models import Sum, Count, Q
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, TruncMonth
 from django.utils import timezone
 from apps.core.exportacao import exportar_csv
 from apps.financeiro.models import Transacao, Categoria
@@ -56,23 +56,41 @@ def dashboard_relatorios(request):
     hoje = timezone.now().date()
     qs = _qs_empresa(Transacao.objects, request)
 
-    # Resumo dos últimos 12 meses para tabela comparativa
-    meses = []
+    # Resumo dos últimos 12 meses para tabela comparativa.
+    # Antes eram 2 queries (entrada/saída) por mês = 24 queries. Calcula os
+    # 12 meses de referência do mesmo jeito de sempre (sem tocar no banco),
+    # descobre o período mínimo que cobre todos eles, e traz os totais de
+    # todo o intervalo agrupados por mês/tipo numa única query — depois só
+    # casa cada linha do resultado com o mês de referência correspondente.
+    refs = []
     for i in range(11, -1, -1):
         ref = hoje.replace(day=1) - timedelta(days=i * 28)
-        ref = ref.replace(day=1)
-        ini, fim = _periodo_range(ref.year, ref.month)
-        # CORRIGIDO (design financeiro): realizado agora reflete o valor de
-        # fato pago/recebido (valor_pago), com fallback pra `valor` pra
-        # registros já realizados antes desta mudança — ver models.py e o
-        # comentário equivalente em apps/financeiro/views.py.
-        rec = qs.filter(tipo='entrada', status='realizado', data_pagamento__gte=ini, data_pagamento__lte=fim).aggregate(s=Sum(Coalesce('valor_pago', 'valor')))['s'] or 0
-        desp = qs.filter(tipo='saida', status='realizado', data_pagamento__gte=ini, data_pagamento__lte=fim).aggregate(s=Sum(Coalesce('valor_pago', 'valor')))['s'] or 0
+        refs.append(ref.replace(day=1))
+
+    ini_geral, _ = _periodo_range(refs[0].year, refs[0].month)
+    _, fim_geral = _periodo_range(refs[-1].year, refs[-1].month)
+
+    totais_por_mes = {}  # {(ano, mes): {'entrada': x, 'saida': y}}
+    linhas = (
+        qs.filter(status='realizado', data_pagamento__gte=ini_geral, data_pagamento__lte=fim_geral)
+        .annotate(mes_ref=TruncMonth('data_pagamento'))
+        .values('mes_ref', 'tipo')
+        .annotate(total=Sum(Coalesce('valor_pago', 'valor')))
+    )
+    for linha in linhas:
+        chave = (linha['mes_ref'].year, linha['mes_ref'].month)
+        totais_por_mes.setdefault(chave, {'entrada': 0, 'saida': 0})
+        totais_por_mes[chave][linha['tipo']] = float(linha['total'] or 0)
+
+    meses = []
+    for ref in refs:
+        t = totais_por_mes.get((ref.year, ref.month), {'entrada': 0, 'saida': 0})
+        rec, desp = t['entrada'], t['saida']
         meses.append({
             'label': ref.strftime('%b/%y'),
-            'receita': float(rec),
-            'despesa': float(desp),
-            'resultado': float(rec - desp),
+            'receita': rec,
+            'despesa': desp,
+            'resultado': rec - desp,
         })
 
     totais = {
@@ -378,13 +396,18 @@ def exportar_fluxo(request):
     transacoes = qs.filter(data_vencimento__gte=ini, data_vencimento__lte=fim).select_related('categoria').order_by('data_vencimento', 'tipo')
     for t in transacoes:
         sinal = '' if t.tipo == 'entrada' else '-'
+        # Mesma regra usada na tela (fluxo_caixa) e no resto do módulo
+        # Financeiro: valor de fato pago/recebido quando disponível, com
+        # fallback pro previsto — senão o CSV saía com números diferentes
+        # dos mostrados na tela sempre que houvesse pagamento parcial/desconto.
+        valor_efetivo = t.valor_pago if t.valor_pago is not None else t.valor
         writer.writerow([
             t.data_vencimento.strftime('%d/%m/%Y'),
             t.descricao or '',
             'Entrada' if t.tipo == 'entrada' else 'Saída',
             t.categoria.nome if t.categoria else '',
             t.get_status_display(),
-            f"{sinal}{t.valor:.2f}".replace('.', ','),
+            f"{sinal}{valor_efetivo:.2f}".replace('.', ','),
         ])
 
     return response
@@ -424,13 +447,12 @@ def relatorio_executivo(request):
     total_receitas = 0
     total_despesas = 0
 
-    # Categorias Financeiras (Exemplo baseado nos slides)
-    fin_categorias = {
-        'Operacional': {'p': 140000, 'r': 108900},
-        'Marketing': {'p': 93200, 'r': 78200},
-        'Tecnologia': {'p': 98200, 'r': 63300},
-        'Administrativo': {'p': 135500, 'r': 145200},
-    }
+    # Categorias Financeiras — agrupado pela descrição de cada lançamento
+    # (é o único agrupamento real disponível nos dados de projeto; não há
+    # distinção planejado/realizado no nível do lançamento, então "p" fica
+    # igual a "r" — o gráfico mostra o valor real em ambas as barras em vez
+    # de inventar uma meta de planejamento que não existe).
+    fin_categorias = {}
 
     for p in ativos:
         # Status de Prazo
@@ -464,27 +486,19 @@ def relatorio_executivo(request):
         finances = dados.get('finances', [])
         for f in finances:
             val = float(f.get('valor', 0) or 0)
+            categoria = f.get('descricao') or 'Outros'
+            if categoria not in fin_categorias:
+                fin_categorias[categoria] = {'p': 0, 'r': 0}
             if f.get('tipo') == 'receita':
                 total_receitas += val
+                fin_categorias[categoria]['r'] += val
+                fin_categorias[categoria]['p'] += val
             else:
                 total_despesas += val
-
-    # Fallback para dados de exemplo se estiver vazio
-    if total_docs == 0:
-        total_docs = 291
-        docs_status = {
-            'concluido': 131,
-            'em_analise': 87,
-            'atrasado': 44,
-            'nao_iniciado': 29,
-        }
-
-    if total_receitas == 0:
-        total_receitas = 182500
-        total_despesas = 145200
+                fin_categorias[categoria]['r'] += val
+                fin_categorias[categoria]['p'] += val
 
     saldo_final = total_receitas - total_despesas
-    variacao_fluxo = 4.2
 
     return render(request, 'relatorios/relatorio_executivo.html', {
         'projetos_ativos': ativos,
@@ -504,15 +518,17 @@ def relatorio_executivo(request):
         'fin_receitas': total_receitas,
         'fin_despesas': total_despesas,
         'fin_saldo': saldo_final,
-        'fin_variacao': variacao_fluxo,
+        # Não há como calcular uma "variação %" real (exigiria um período
+        # anterior pra comparar, que este agregado por projeto não guarda) —
+        # em vez de inventar uma porcentagem, o indicador de saúde financeira
+        # usa só o fato real disponível: o saldo do período é positivo ou não.
+        'fin_saldo_positivo': saldo_final >= 0,
         'fin_categorias_json': safe_json_dumps(fin_categorias),
 
-        # Dados para Gráfico de Linhas
-        'fin_evolucao_json': safe_json_dumps({
-            'labels': ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
-            'planejado': [120000, 135000, 110000, 145000, 130000, 150000],
-            'realizado': [105000, 128000, 115000, 142000, 125000, 148000],
-        }),
+        # Idem: não há data por lançamento nos dados agregados de projeto,
+        # então não dá pra montar uma evolução mensal real — melhor não
+        # mostrar nenhuma do que inventar uma tendência de 6 meses.
+        'fin_evolucao_json': safe_json_dumps({'labels': [], 'planejado': [], 'realizado': []}),
     })
 
 

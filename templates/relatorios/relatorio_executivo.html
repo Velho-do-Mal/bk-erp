@@ -117,12 +117,22 @@
                 <div style="display:flex; justify-content:space-between; align-items:center">
                     <div>
                         <span class="fin-lbl">Fluxo de Caixa</span>
-                        <div style="font-size:20px; font-weight:800; color:#059669">↑ {{ fin_variacao }}%</div>
-                        <span style="font-size:10px; color:#64748b">Variação Positiva</span>
+                        {% if fin_saldo_positivo %}
+                        <div style="font-size:20px; font-weight:800; color:#059669">↑ Positivo</div>
+                        <span style="font-size:10px; color:#64748b">Receitas superam despesas no período</span>
+                        {% else %}
+                        <div style="font-size:20px; font-weight:800; color:#dc2626">↓ Negativo</div>
+                        <span style="font-size:10px; color:#64748b">Despesas superam receitas no período</span>
+                        {% endif %}
                     </div>
                     <div style="text-align:center">
+                        {% if fin_saldo_positivo %}
                         <div style="width:50px; height:50px; background:#10b981; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:24px">✓</div>
-                        <div style="font-size:9px; font-weight:700; margin-top:5px; color:#10b981">HEALTH OK</div>
+                        <div style="font-size:9px; font-weight:700; margin-top:5px; color:#10b981">SALDO OK</div>
+                        {% else %}
+                        <div style="width:50px; height:50px; background:#dc2626; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-size:24px">!</div>
+                        <div style="font-size:9px; font-weight:700; margin-top:5px; color:#dc2626">ATENÇÃO</div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
