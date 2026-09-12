@@ -212,7 +212,7 @@ def nova_versao(request, pk):
         return JsonResponse({'ok': False, 'erro': err}, status=400)
 
     raiz_id = original.documento_original_id or original.id
-    grupo = Documento.objects.filter(Q(pk=raiz_id) | Q(documento_original_id=raiz_id))
+    grupo = _qs_empresa(Documento.objects, request).filter(Q(pk=raiz_id) | Q(documento_original_id=raiz_id))
     ultima_versao = grupo.order_by('-versao').values_list('versao', flat=True).first() or original.versao
 
     novo = Documento()
@@ -250,7 +250,7 @@ def historico(request, pk):
     """Lista todas as versões (vigente e antigas) do grupo de um documento."""
     doc = get_object_or_404(_qs_empresa(Documento.objects, request), pk=pk)
     raiz_id = doc.documento_original_id or doc.id
-    qs = Documento.objects.filter(
+    qs = _qs_empresa(Documento.objects, request).filter(
         Q(pk=raiz_id) | Q(documento_original_id=raiz_id)
     ).order_by('-versao')
 
