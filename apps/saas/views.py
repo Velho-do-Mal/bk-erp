@@ -3,6 +3,8 @@ from django_ratelimit.decorators import ratelimit
 from django.conf import settings
 from django.shortcuts import render, redirect
 from django.contrib.auth import login
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError
 from django.contrib import messages
 from django.http import JsonResponse
 import datetime
@@ -36,7 +38,15 @@ def cadastro(request):
         if not email:        erros.append('E-mail é obrigatório.')
         if not username:     erros.append('Nome de usuário é obrigatório.')
         if not senha:        erros.append('Senha é obrigatória.')
-        if len(senha) < 6:   erros.append('Senha deve ter pelo menos 6 caracteres.')
+        elif senha:
+            # Mesma política de senha usada no resto do sistema (ver
+            # AUTH_PASSWORD_VALIDATORS em settings.py) — antes o autocadastro
+            # só exigia 6 caracteres, mais fraco que a troca de senha via
+            # admin (mínimo 8, não pode ser comum nem só números).
+            try:
+                validate_password(senha)
+            except ValidationError as e:
+                erros.extend(e.messages)
         if User.objects.filter(username=username).exists():
             erros.append('Nome de usuário já existe.')
 
