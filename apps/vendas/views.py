@@ -1,5 +1,6 @@
 import io
 import json
+import logging
 from apps.core.json_utils import safe_json_dumps
 from decimal import Decimal
 from datetime import date
@@ -15,6 +16,9 @@ from django.contrib import messages
 
 from .models import Proposta, ItemProposta, Lead
 from apps.cadastros.models import Cliente
+
+logger = logging.getLogger(__name__)
+
 
 def _empresa(request):
     """Retorna a empresa do usuário ou None para superadmin."""
@@ -153,6 +157,7 @@ def _criar_projeto_a_partir_de_proposta(proposta):
         }
 
         projeto = Projeto.objects.create(
+            empresa=proposta.empresa,
             nome=nome_projeto,
             status='planejamento',
             data_inicio=proposta.data_emissao,
@@ -166,7 +171,11 @@ def _criar_projeto_a_partir_de_proposta(proposta):
         proposta.save(update_fields=['projeto_ref_id'])
         return projeto
 
-    except Exception as e:
+    except Exception:
+        # Não interrompe a aprovação da proposta por causa disso (decisão de
+        # produto existente), mas antes esse erro desaparecia por completo —
+        # sem isso, ninguém saberia depois por que um projeto não foi criado.
+        logger.exception('Falha ao criar projeto automaticamente a partir da proposta %s', proposta.pk)
         return None
 
 
@@ -224,6 +233,7 @@ def lista(request):
                 if _qs_empresa(Transacao.objects, request).filter(referencia=ref).exists():
                     return JsonResponse({'ok': False, 'msg': 'Ja existe lancamento para esta proposta.'})
                 t = Transacao.objects.create(
+                    empresa=prop.empresa,
                     descricao=f"Proposta {prop.codigo} — {prop.titulo}",
                     tipo='entrada',
                     valor=prop.valor_total,
@@ -279,12 +289,16 @@ def lista(request):
 def proposta_nova(request):
     """Cria uma nova proposta e redireciona para a pagina de detalhe."""
     from datetime import date as dt
+    empresa = _empresa(request)
+    if empresa is not None and not empresa.pode_criar_proposta():
+        messages.error(request, f'Limite de propostas do plano {empresa.plano} atingido. Fale com o suporte para fazer upgrade.')
+        return redirect('vendas:lista')
     p = Proposta.objects.create(
         codigo='',
         titulo='Nova Proposta',
         data_emissao=dt.today(),
         status='rascunho',
-        empresa=_empresa(request),
+        empresa=empresa,
     )
     return redirect('vendas:proposta_detalhe', pk=p.pk)
 
@@ -690,8 +704,7 @@ def exportar_propostas(request):
     # Também trocado cliente__nome (fica vazio para propostas originadas de
     # um Lead, sem Cliente ainda) por get_cliente_nome(), que já resolve
     # cliente OU lead corretamente (ver apps/vendas/models.py).
-    empresa = _empresa(request)
-    propostas = Proposta.objects.filter(empresa=empresa).select_related('cliente', 'lead')
+    propostas = _qs_empresa(Proposta.objects, request).select_related('cliente', 'lead')
     rows = [
         [p.id, p.titulo, p.get_cliente_nome(), p.get_status_display(),
          float(p.valor_total), p.criado_em.strftime('%d/%m/%Y') if p.criado_em else '']
