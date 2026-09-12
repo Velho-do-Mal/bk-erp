@@ -169,26 +169,43 @@ def dashboard_financeiro(request):
         'id', 'descricao', 'tipo', 'valor', 'valor_pago', 'status', 'data_competencia', 'categoria__nome', 'conta__nome'
     ))
 
-    meses_raw = (
-        _qs_base()
+    # Fluxo de Caixa (gráfico principal): janela fixa de 12 meses pra
+    # frente a partir do mês atual — é uma visão de planejamento, então
+    # sempre parte do saldo real de hoje (`saldo`, já calculado acima) e
+    # projeta os 12 meses seguintes, independente do filtro de
+    # data/modo da tela (que continua valendo só pros outros cards).
+    MESES_ABREV = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
+    mes_ini_fluxo = date(hoje.year, hoje.month, 1)
+    mes_fim_fluxo = mes_ini_fluxo + relativedelta(months=12) - timedelta(days=1)
+
+    fluxo_raw = (
+        _qs_empresa(Transacao.objects, request)
+        .filter(data_competencia__gte=mes_ini_fluxo, data_competencia__lte=mes_fim_fluxo)
         .annotate(mes=TruncMonth('data_competencia'))
         .values('mes', 'tipo')
         .annotate(total=Sum(Coalesce('valor_pago', 'valor')))
-        .order_by('mes')
     )
 
-    meses_data = {}
-    for m in meses_raw:
+    fluxo_por_mes = {}
+    for m in fluxo_raw:
         key = m['mes'].strftime('%Y-%m') if m['mes'] else ''
-        if key not in meses_data:
-            meses_data[key] = {'entrada': 0, 'saida': 0}
-        meses_data[key][m['tipo']] = float(m['total'] or 0)
+        if key not in fluxo_por_mes:
+            fluxo_por_mes[key] = {'entrada': 0, 'saida': 0}
+        fluxo_por_mes[key][m['tipo']] = float(m['total'] or 0)
 
-    keys_sorted = sorted(meses_data.keys())
-    acum = 0.0
-    for k in keys_sorted:
-        acum += meses_data[k].get('entrada', 0) - meses_data[k].get('saida', 0)
-        meses_data[k]['acumulado'] = round(acum, 2)
+    meses_data = {}
+    acum = float(saldo)
+    for i in range(12):
+        mes_ref = mes_ini_fluxo + relativedelta(months=i)
+        key = mes_ref.strftime('%Y-%m')
+        vals = fluxo_por_mes.get(key, {'entrada': 0, 'saida': 0})
+        acum += vals['entrada'] - vals['saida']
+        meses_data[key] = {
+            'label': MESES_ABREV[mes_ref.month - 1],
+            'entrada': vals['entrada'],
+            'saida': vals['saida'],
+            'acumulado': round(acum, 2),
+        }
 
     cat_saida = (
         _qs_base()
@@ -320,10 +337,7 @@ def transacoes(request):
         rid = request.POST.get('id') or None
         empresa = _empresa(request)
         if rid:
-            qs = Transacao.objects.filter(id=int(rid))
-            if empresa:
-                qs = qs.filter(empresa=empresa)
-            obj = get_object_or_404(qs.model, pk=int(rid), **({'empresa': empresa} if empresa else {}))
+            obj = get_object_or_404(Transacao, pk=int(rid), **({'empresa': empresa} if empresa else {}))
         else:
             obj = Transacao()
         obj.descricao = request.POST.get('descricao', '').strip()
@@ -583,6 +597,7 @@ def _gerar_recorrencia(origem: Transacao):
         if venc_proxima:
             venc_proxima = delta_fn(venc_proxima)
         Transacao.objects.create(
+            empresa=origem.empresa,
             descricao=origem.descricao,
             tipo=origem.tipo,
             valor=origem.valor,
@@ -687,8 +702,8 @@ def orcamento(request):
 
     # Q já importado no topo do arquivo — sem mais NameError
     # Orçamento: só categorias pai (as subcategorias ficam dentro do pai)
-    categorias_entrada = Categoria.objects.filter(Q(tipo='entrada') | Q(tipo='ambos'), empresa=_empresa(request), pai__isnull=True).prefetch_related('subcategorias').order_by('nome')
-    categorias_saida = Categoria.objects.filter(Q(tipo='saida') | Q(tipo='ambos'), empresa=_empresa(request), pai__isnull=True).prefetch_related('subcategorias').order_by('nome')
+    categorias_entrada = _qs_empresa(Categoria.objects, request).filter(Q(tipo='entrada') | Q(tipo='ambos'), pai__isnull=True).prefetch_related('subcategorias').order_by('nome')
+    categorias_saida = _qs_empresa(Categoria.objects, request).filter(Q(tipo='saida') | Q(tipo='ambos'), pai__isnull=True).prefetch_related('subcategorias').order_by('nome')
 
     orcamentos_raw = _qs_empresa(Orcamento.objects, request).filter(ano=ano_selecionado).values('categoria_id', 'mes', 'valor')
 
@@ -704,7 +719,7 @@ def orcamento(request):
         _qs_empresa(Transacao.objects, request).filter(data_competencia__year=ano_selecionado, status='realizado')
         .annotate(mes_num=ExtractMonth('data_competencia'))
         .values('categoria_id', 'mes_num')
-        .annotate(total=Sum('valor'))
+        .annotate(total=Sum(Coalesce('valor_pago', 'valor')))
     )
 
     reais_map = {}

@@ -111,7 +111,10 @@
 <!-- Fluxo de Caixa -->
 <div class="bk-card" style="margin-bottom:18px">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-    <div class="bk-title" style="font-size:14px;margin:0"><i class="fas fa-chart-column"></i> Fluxo de Caixa — Entradas × Saídas × Acumulado</div>
+    <div>
+      <div class="bk-title" style="font-size:14px;margin:0"><i class="fas fa-chart-column"></i> Fluxo de Caixa — Entradas × Saídas × Acumulado</div>
+      <div style="font-size:11px;color:#64748b;margin-top:2px">Próximos 12 meses, a partir do saldo atual</div>
+    </div>
     <div style="display:flex;gap:12px">
       <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#10B981">
         <span style="width:12px;height:12px;background:#10B981;border-radius:2px;display:inline-block"></span>Entradas
@@ -119,8 +122,8 @@
       <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#EF4444">
         <span style="width:12px;height:12px;background:#EF4444;border-radius:2px;display:inline-block"></span>Saídas
       </span>
-      <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#60A5FA">
-        <span style="width:20px;height:2px;background:#60A5FA;display:inline-block"></span>Acumulado
+      <span style="display:flex;align-items:center;gap:4px;font-size:11px;color:#94A3B8">
+        <span style="width:20px;height:2px;background:#475569;display:inline-block"></span>Acumulado
       </span>
     </div>
   </div>
@@ -239,51 +242,55 @@ if (!ultimas.length) {
   }).join('');
 }
 
-// ── Fluxo de Caixa: barras + linha acumulado ────────────
+// ── Fluxo de Caixa: colunas (entradas ↑ / saídas ↓) + linha acumulado ──
 (function(){
-  const keys     = Object.keys(meses).sort();
+  const keys = Object.keys(meses).sort();
   if (!keys.length) {
     document.getElementById('chart-fluxo').innerHTML =
-      '<p style="text-align:center;color:#64748b;padding:60px">Nenhum dado no período selecionado.</p>';
+      '<p style="text-align:center;color:#64748b;padding:60px">Nenhum dado no período.</p>';
     return;
   }
+  const labels  = keys.map(k => meses[k]?.label || k);
   const entradas = keys.map(k => meses[k]?.entrada  || 0);
-  const saidas   = keys.map(k => meses[k]?.saida    || 0);
+  // Saídas plotadas como valor negativo, pra desenhar a barra pra baixo.
+  const saidas   = keys.map(k => -(meses[k]?.saida || 0));
   const acum     = keys.map(k => meses[k]?.acumulado || 0);
 
   Plotly.newPlot('chart-fluxo', [
     {
-      x: keys, y: entradas, name: 'Entradas',
-      type: 'bar', marker: {color:'#10B981', opacity:0.85},
+      x: labels, y: entradas, name: 'Entradas',
+      type: 'bar', marker: {color:'#10B981'},
       hovertemplate: '<b>%{x}</b><br>Entradas: R$ %{y:,.2f}<extra></extra>'
     },
     {
-      x: keys, y: saidas, name: 'Saídas',
-      type: 'bar', marker: {color:'#EF4444', opacity:0.85},
-      hovertemplate: '<b>%{x}</b><br>Saídas: R$ %{y:,.2f}<extra></extra>'
+      x: labels, y: saidas, name: 'Saídas',
+      type: 'bar', marker: {color:'#EF4444'},
+      hovertemplate: '<b>%{x}</b><br>Saídas: R$ %{customdata:,.2f}<extra></extra>',
+      customdata: keys.map(k => meses[k]?.saida || 0)
     },
     {
-      x: keys, y: acum, name: 'Acumulado',
+      x: labels, y: acum, name: 'Acumulado',
       type: 'scatter', mode: 'lines+markers', yaxis: 'y2',
-      line: {color:'#60A5FA', width:2.5},
-      marker: {color:'#60A5FA', size:6},
+      line: {color:'#475569', width:2.5},
+      marker: {color:'#475569', size:6},
       hovertemplate: '<b>%{x}</b><br>Acumulado: R$ %{y:,.2f}<extra></extra>'
     }
   ], Object.assign({}, BG, {
-    barmode: 'group',
+    barmode: 'relative',
     font:    {color:'#94A3B8', size:11},
-    margin:  {t:10, b:60, l:80, r:80},
-    legend:  {orientation:'h', y:-0.18, font:{color:'#94A3B8'}, bgcolor:'transparent'},
+    margin:  {t:10, b:40, l:80, r:80},
+    showlegend: false,
     xaxis: {type:'category', gridcolor:'#1E293B', tickfont:{color:'#94A3B8'}},
     yaxis: {
       title: {text:'R$ (Entradas / Saídas)', font:{size:11, color:'#94A3B8'}},
-      gridcolor:'#1E293B', tickfont:{color:'#94A3B8'}, tickprefix:'R$ '
+      gridcolor:'#1E293B', tickfont:{color:'#94A3B8'}, tickprefix:'R$ ',
+      zeroline:true, zerolinecolor:'#475569', zerolinewidth:1.5
     },
     yaxis2: {
-      title: {text:'R$ (Acumulado)', font:{size:11, color:'#60A5FA'}},
+      title: {text:'R$ (Acumulado)', font:{size:11, color:'#94A3B8'}},
       overlaying:'y', side:'right',
-      tickfont:{color:'#60A5FA'}, tickprefix:'R$ ',
-      showgrid:false, zeroline:true, zerolinecolor:'#334155', zerolinewidth:1
+      tickfont:{color:'#94A3B8'}, tickprefix:'R$ ',
+      showgrid:false
     },
   }), CFG);
 })();
