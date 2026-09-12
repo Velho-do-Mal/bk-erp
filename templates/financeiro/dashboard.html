@@ -270,7 +270,7 @@ if (!ultimas.length) {
     },
     {
       x: labels, y: acum, name: 'Acumulado',
-      type: 'scatter', mode: 'lines+markers', yaxis: 'y2',
+      type: 'scatter', mode: 'lines+markers',
       line: {color:'#475569', width:2.5},
       marker: {color:'#475569', size:6},
       hovertemplate: '<b>%{x}</b><br>Acumulado: R$ %{y:,.2f}<extra></extra>'
@@ -278,19 +278,15 @@ if (!ultimas.length) {
   ], Object.assign({}, BG, {
     barmode: 'relative',
     font:    {color:'#94A3B8', size:11},
-    margin:  {t:10, b:40, l:80, r:80},
+    margin:  {t:10, b:40, l:90, r:20},
     showlegend: false,
     xaxis: {type:'category', gridcolor:'#1E293B', tickfont:{color:'#94A3B8'}},
+    // Um eixo Y só pra tudo (barras e linha) — evita a leitura enganosa
+    // de duas escalas diferentes lado a lado.
     yaxis: {
-      title: {text:'R$ (Entradas / Saídas)', font:{size:11, color:'#94A3B8'}},
+      title: {text:'R$', font:{size:11, color:'#94A3B8'}},
       gridcolor:'#1E293B', tickfont:{color:'#94A3B8'}, tickprefix:'R$ ',
       zeroline:true, zerolinecolor:'#475569', zerolinewidth:1.5
-    },
-    yaxis2: {
-      title: {text:'R$ (Acumulado)', font:{size:11, color:'#94A3B8'}},
-      overlaying:'y', side:'right',
-      tickfont:{color:'#94A3B8'}, tickprefix:'R$ ',
-      showgrid:false
     },
   }), CFG);
 })();

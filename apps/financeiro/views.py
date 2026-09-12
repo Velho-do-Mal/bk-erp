@@ -170,28 +170,36 @@ def dashboard_financeiro(request):
     ))
 
     # Fluxo de Caixa (gráfico principal): janela fixa de 12 meses pra
-    # frente a partir do mês atual — é uma visão de planejamento, então
-    # sempre parte do saldo real de hoje (`saldo`, já calculado acima) e
-    # projeta os 12 meses seguintes, independente do filtro de
-    # data/modo da tela (que continua valendo só pros outros cards).
+    # frente a partir do mês atual — visão de planejamento, independente
+    # do filtro de data/modo da tela (que continua valendo só pros outros
+    # cards). Parte do saldo real de hoje (`saldo`, já calculado acima —
+    # soma de tudo que já foi realizado, de qualquer data) e soma a cada
+    # mês só o que ainda está PENDENTE, no mês em que está previsto
+    # vencer (`data_vencimento`) — mesma lógica já usada na Projeção
+    # 30/60/90 dias. O que já foi realizado não entra de novo aqui: já
+    # está dentro do saldo de partida, somar de novo seria contar em
+    # dobro. Pendências já vencidas (vencimento antes do mês atual)
+    # caem no primeiro mês da janela, junto com o "Contas Vencidas".
     MESES_ABREV = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
     mes_ini_fluxo = date(hoje.year, hoje.month, 1)
     mes_fim_fluxo = mes_ini_fluxo + relativedelta(months=12) - timedelta(days=1)
 
     fluxo_raw = (
         _qs_empresa(Transacao.objects, request)
-        .filter(data_competencia__gte=mes_ini_fluxo, data_competencia__lte=mes_fim_fluxo)
-        .annotate(mes=TruncMonth('data_competencia'))
+        .filter(status='pendente', data_vencimento__lte=mes_fim_fluxo)
+        .annotate(mes=TruncMonth(Coalesce('data_vencimento', 'data_competencia')))
         .values('mes', 'tipo')
-        .annotate(total=Sum(Coalesce('valor_pago', 'valor')))
+        .annotate(total=Sum('valor'))
     )
 
     fluxo_por_mes = {}
     for m in fluxo_raw:
-        key = m['mes'].strftime('%Y-%m') if m['mes'] else ''
-        if key not in fluxo_por_mes:
-            fluxo_por_mes[key] = {'entrada': 0, 'saida': 0}
-        fluxo_por_mes[key][m['tipo']] = float(m['total'] or 0)
+        if not m['mes']:
+            continue
+        mes_efetivo = max(m['mes'], mes_ini_fluxo)
+        key = mes_efetivo.strftime('%Y-%m')
+        fluxo_por_mes.setdefault(key, {'entrada': 0, 'saida': 0})
+        fluxo_por_mes[key][m['tipo']] += float(m['total'] or 0)
 
     meses_data = {}
     acum = float(saldo)
