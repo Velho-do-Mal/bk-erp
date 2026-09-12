@@ -160,6 +160,11 @@ def novo(request):
         raise Http404
 
     if request.method == 'POST':
+        empresa = _empresa(request)
+        if empresa is not None and not empresa.pode_criar_projeto():
+            messages.error(request, f'Limite de projetos do plano {empresa.plano} atingido. Fale com o suporte para fazer upgrade.')
+            return redirect('projetos:novo')
+
         nome = request.POST.get('nome', 'Novo Projeto')
         status = request.POST.get('status', 'rascunho')
         data_inicio = request.POST.get('data_inicio') or None
@@ -192,7 +197,7 @@ def novo(request):
         }
 
         p = Projeto.objects.create(
-            empresa=_empresa(request),
+            empresa=empresa,
             nome=nome,
             status=status,
             data_inicio=data_inicio,
@@ -357,15 +362,9 @@ def controle_docs(request, pk):
         """Retorna 'CLIENTE' se em análise, 'BK' caso contrário."""
         return 'CLIENTE' if status == 'em_analise' else 'BK'
 
-    def _calcular_dias(doc):
-        """Calcula dias BK e dias CLIENTE via histórico de eventos."""
-        eventos = list(
-            _qs_empresa(StatusEventoDocumento.objects, request)
-            .filter(documento=doc)
-            .order_by('data_evento', 'id')
-            .values('data_evento', 'status', 'responsavel')
-        )
-
+    def _calcular_dias(doc, eventos):
+        """Calcula dias BK e dias CLIENTE via histórico de eventos (já
+        pré-carregado por documento — ver eventos_por_doc mais abaixo)."""
         if not eventos:
             # Estimar pelo status atual e datas
             ini = doc.data_inicio or date.today()
@@ -571,8 +570,20 @@ def controle_docs(request, pk):
 
         return JsonResponse({'meta': meta, 'docs': docs})
 
+    # Uma única query pra todos os documentos, em vez de uma por documento
+    # dentro do loop abaixo — com muitos documentos no Controle isso era
+    # N+1 (uma query de histórico de status para cada linha da tabela).
+    eventos_por_doc = {}
+    for ev in (
+        _qs_empresa(StatusEventoDocumento.objects, request)
+        .filter(documento__in=docs_qs)
+        .order_by('data_evento', 'id')
+        .values('documento_id', 'data_evento', 'status', 'responsavel')
+    ):
+        eventos_por_doc.setdefault(ev['documento_id'], []).append(ev)
+
     for doc in docs_qs:
-        dias_bk, dias_cli = _calcular_dias(doc)
+        dias_bk, dias_cli = _calcular_dias(doc, eventos_por_doc.get(doc.id, []))
         docs.append({
             'id': doc.id,
             'codigo': doc.servico_nome,
