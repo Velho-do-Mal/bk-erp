@@ -2,7 +2,10 @@
 BK ERP — Log de Auditoria.
 Uso nas views: registrar_auditoria(request, acao, modelo, objeto_id, detalhe='')
 """
+import logging
 from django.db import models
+
+logger = logging.getLogger(__name__)
 
 
 class AuditLog(models.Model):
@@ -56,4 +59,8 @@ def registrar(request, acao, modelo, objeto_id='', detalhe=''):
             ip=ip or None,
         )
     except Exception:
-        pass  # nunca quebra a requisição
+        # Nunca quebra a requisição por causa do log de auditoria — mas antes
+        # a falha desaparecia por completo, sem deixar rastro nenhum de que
+        # uma ação deixou de ser auditada. Agora pelo menos fica no log da
+        # aplicação (relevante se auditoria for requisito de compliance).
+        logger.exception('Falha ao registrar auditoria: acao=%s modelo=%s objeto_id=%s', acao, modelo, objeto_id)
