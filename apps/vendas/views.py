@@ -696,6 +696,64 @@ def exportar_word(request, pk):
 
 
 
+# ─── Dashboard HTML e planilha do orçamento (USO INTERNO) ─────────────
+# Mostram custos, impostos, markup e lucro — nunca enviar ao cliente.
+
+CORES_COMPOSICAO = ['#1E40AF', '#3B82F6', '#F59E0B', '#16A34A']
+
+
+@login_required
+def proposta_dashboard(request, pk):
+    """Dashboard HTML imprimível (A4) com o cálculo do orçamento, para a diretoria."""
+    import math
+    from .orcamento_dados import montar_dados_orcamento
+
+    proposta = tenant_get_or_404(Proposta, request, pk=pk)
+    dados = montar_dados_orcamento(proposta)
+
+    # Geometria do gráfico de rosca (SVG puro, sem dependência de CDN — imprime nítido).
+    raio = 70
+    circ = 2 * math.pi * raio
+    acumulado = 0.0
+    rosca = []
+    for i, c in enumerate(dados['composicao']):
+        tamanho = circ * c['pct'] / 100
+        rosca.append({
+            'nome': c['nome'], 'valor': c['valor'], 'pct': c['pct'],
+            'cor': CORES_COMPOSICAO[i],
+            'dash': round(tamanho, 3), 'gap': round(circ - tamanho, 3),
+            'offset': round(-acumulado, 3),
+        })
+        acumulado += tamanho
+
+    ctx = {
+        'proposta': proposta,
+        'cliente_nome': proposta.get_cliente_nome(),
+        'd': dados,
+        'rosca': rosca,
+        'raio': raio,
+        'empresa': _empresa(request),
+        'hoje': date.today(),
+    }
+    return render(request, 'vendas/proposta_dashboard.html', ctx)
+
+
+@login_required
+def exportar_planilha(request, pk):
+    """Planilha Excel interna do orçamento (fórmulas vivas, para discutir com a gerência)."""
+    from .orcamento_xlsx import gerar_planilha_orcamento
+
+    proposta = tenant_get_or_404(Proposta, request, pk=pk)
+    conteudo = gerar_planilha_orcamento(proposta)
+    codigo = ''.join(ch for ch in (proposta.codigo or f'proposta-{proposta.pk}') if ch.isalnum() or ch in '-_') or f'proposta-{proposta.pk}'
+    response = HttpResponse(
+        conteudo,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = f'attachment; filename="orcamento-{codigo}.xlsx"'
+    return response
+
+
 @login_required
 def exportar_propostas(request):
     # CORRIGIDO: .values(..., 'data_criacao') — Proposta não tem esse campo

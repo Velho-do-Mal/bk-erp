@@ -8,6 +8,8 @@ urlpatterns = [
     path('vendas/propostas/nova/', views.proposta_nova, name='proposta_nova'),
     path('vendas/propostas/<int:pk>/', views.proposta_detalhe, name='proposta_detalhe'),
     path('vendas/propostas/<int:pk>/exportar-word/', views.exportar_word, name='exportar_word'),
+    path('vendas/propostas/<int:pk>/dashboard/', views.proposta_dashboard, name='proposta_dashboard'),
+    path('vendas/propostas/<int:pk>/exportar-planilha/', views.exportar_planilha, name='exportar_planilha'),
     path('exportar-propostas/', views.exportar_propostas, name='exportar_propostas'),
     path('exportar-leads-clientes/', views.exportar_leads_clientes, name='exportar_leads_clientes'),
 ]

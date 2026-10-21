@@ -12,6 +12,12 @@
   <i class="fas fa-floppy-disk"></i> Salvar
 </button>
 <a href="{% url 'vendas:exportar_word' proposta.pk %}" class="btn no-print" style="font-size:13px;background:#1e3a8a;border:1px solid #1e40af;color:#fff;text-decoration:none;padding:6px 14px;border-radius:4px;display:inline-block;"><i class="fas fa-file-lines"></i> Exportar Word</a>
+<button type="button" class="btn no-print" onclick="abrirDashboard()" title="Dashboard interno com MOB, custos, impostos, lucro e resultados detalhados" style="font-size:13px;background:#0f766e;border:1px solid #115e59;color:#fff;padding:6px 14px;border-radius:4px;">
+  <i class="fas fa-chart-pie"></i> Dashboard
+</button>
+<button type="button" class="btn no-print" onclick="baixarPlanilha()" title="Planilha Excel interna com fórmulas" style="font-size:13px;background:#15803d;border:1px solid #166534;color:#fff;padding:6px 14px;border-radius:4px;">
+  <i class="fas fa-file-excel"></i> Planilha
+</button>
 <div id="status-badge" class="badge badge-{{ proposta.status }}" style="font-size:13px;padding:6px 14px;border-radius:6px;">
   {{ proposta.get_status_display }}
 </div>
@@ -164,6 +170,8 @@
   const URL_SALVAR = "{% url 'vendas:proposta_detalhe' proposta.pk %}";
   const URL_WORD   = "{% url 'vendas:exportar_word' proposta.pk %}";
   const URL_LISTA  = "{% url 'vendas:lista' %}";
+  const URL_DASHBOARD = "{% url 'vendas:proposta_dashboard' proposta.pk %}";
+  const URL_PLANILHA  = "{% url 'vendas:exportar_planilha' proposta.pk %}";
   const CSRF_TOKEN = "{{ csrf_token }}";
 </script>
 
@@ -804,6 +812,33 @@ async function salvarOrcamento() {
   const r = await postJSON({ action: 'save_orcamento', dados_orcamento: dadosOrcamento });
   if (r.ok) toast('Orçamento salvo!', 'sucesso');
   else toast('Erro ao salvar orçamento.', 'erro');
+}
+
+// ─── Dashboard HTML e planilha (uso interno) ──────────────────────────────────
+// Ambos leem o orçamento SALVO no servidor. Por isso, antes de abrir, o
+// cálculo atual da tela é recalculado e salvo — assim o dashboard nunca fica
+// defasado em relação ao que está na tela.
+async function salvarOrcamentoAtual() {
+  calcular();                                   // recalcula com os valores atuais da tela
+  const r = dadosOrcamento.resultado || {};
+  if (!r.valor_venda) return false;             // cálculo inválido (ex.: impostos + markup ≥ 100%)
+  const resp = await postJSON({ action: 'save_orcamento', dados_orcamento: dadosOrcamento });
+  return !!resp.ok;
+}
+
+async function abrirDashboard() {
+  // Abre a janela já no clique (evita bloqueio de pop-up) e navega após salvar.
+  const janela = window.open('', '_blank');
+  const ok = await salvarOrcamentoAtual();
+  if (!ok) toast('Dashboard aberto com o último orçamento salvo (cálculo atual incompleto).', 'erro');
+  if (janela) janela.location.href = URL_DASHBOARD;
+  else window.location.href = URL_DASHBOARD;
+}
+
+async function baixarPlanilha() {
+  const ok = await salvarOrcamentoAtual();
+  if (!ok) toast('Planilha gerada com o último orçamento salvo (cálculo atual incompleto).', 'erro');
+  window.location.href = URL_PLANILHA;
 }
 
 // ─── Itens da Proposta ────────────────────────────────────────────────────────

@@ -22,3 +22,23 @@ def moeda(value):
         return f"R$ {sinal}{inteiro_fmt},{decimal}"
     except (InvalidOperation, TypeError, ValueError):
         return "R$ 0,00"
+
+
+@register.filter
+def num_br(value, casas=2):
+    """Número pt-BR sem símbolo: 1.234,56 (casas decimais opcionais: |num_br:0)."""
+    try:
+        casas = int(casas)
+        v = Decimal(str(value or 0))
+        inteiro, _, dec = f"{abs(v):.{casas}f}".partition(".")
+        inteiro_fmt = "{:,}".format(int(inteiro)).replace(",", ".")
+        sinal = "-" if v < 0 else ""
+        return f"{sinal}{inteiro_fmt}" + (f",{dec}" if casas else "")
+    except (InvalidOperation, TypeError, ValueError):
+        return "0"
+
+
+@register.filter
+def pct_br(value, casas=1):
+    """Percentual pt-BR: 21,7%"""
+    return f"{num_br(value, casas)}%"
